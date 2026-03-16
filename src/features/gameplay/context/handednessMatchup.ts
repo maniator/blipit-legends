@@ -1,6 +1,6 @@
 import { fnv1a } from "@storage/hash";
 
-import type { Handedness } from "./index";
+import type { Handedness } from "./playerTypes";
 
 export type EffectiveBatterSide = "R" | "L";
 

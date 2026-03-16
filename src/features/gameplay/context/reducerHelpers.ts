@@ -1,4 +1,5 @@
-import type { GameAction, State, StrikeoutEntry } from "./index";
+import type { StrikeoutEntry } from "./gameLogTypes";
+import type { GameAction, State } from "./gameStateTypes";
 
 /** Shared logger context passed to handlers that emit play-by-play messages. */
 export interface ReducerCtx {

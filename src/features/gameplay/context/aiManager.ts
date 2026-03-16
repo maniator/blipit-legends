@@ -6,7 +6,8 @@
  */
 
 import type { AiDecision } from "./aiTypes";
-import type { DecisionType, State } from "./index";
+import type { DecisionType } from "./decisionTypes";
+import type { State } from "./gameStateTypes";
 import { PINCH_HITTER_CONTACT_WEIGHT, PINCH_HITTER_POWER_WEIGHT } from "./playerTypes";
 
 export {

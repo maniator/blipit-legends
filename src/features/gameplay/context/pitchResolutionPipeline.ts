@@ -15,7 +15,9 @@ import {
 import { ZERO_MODS } from "@feat/gameplay/context/resolvePlayerMods";
 import getRandomInt from "@feat/gameplay/utils/getRandomInt";
 
-import type { GameAction, OnePitchModifier, State, Strategy } from "./index";
+import type { OnePitchModifier } from "./decisionTypes";
+import type { GameAction, State } from "./gameStateTypes";
+import type { Strategy } from "./playerTypes";
 
 export interface ResolvePitchOptions {
   currentState: State;

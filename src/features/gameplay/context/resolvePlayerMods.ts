@@ -1,4 +1,4 @@
-import type { PlayerCustomization, ResolvedPlayerMods } from "./index";
+import type { PlayerCustomization, ResolvedPlayerMods } from "./playerTypes";
 
 /**
  * ## Stat Wiring Inventory

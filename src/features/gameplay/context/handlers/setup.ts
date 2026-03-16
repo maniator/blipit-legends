@@ -1,12 +1,7 @@
-import type {
-  GameAction,
-  Handedness,
-  PitcherLogEntry,
-  ResolvedPlayerMods,
-  State,
-  TeamCustomPlayerOverrides,
-} from "../index";
+import type { PitcherLogEntry } from "../gameLogTypes";
+import type { GameAction, State } from "../gameStateTypes";
 import { createPitcherLogEntry, pushPitcherLogEntry } from "../pitcherLog";
+import type { Handedness, ResolvedPlayerMods, TeamCustomPlayerOverrides } from "../playerTypes";
 import { buildResolvedMods } from "../resolvePlayerMods";
 
 /** Computes the defensive slot assignments for a lineup from player overrides. */

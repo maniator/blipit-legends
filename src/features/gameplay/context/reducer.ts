@@ -1,4 +1,6 @@
 /// <reference types="vite/client" />
+import type { DecisionType } from "./decisionTypes";
+import type { GameAction, State } from "./gameStateTypes";
 import {
   buildHandednessMatchup,
   getHandednessOutcomeModifiers,
@@ -9,8 +11,9 @@ import { handleDecisionsAction } from "./handlers/decisions";
 import { handleLifecycleAction } from "./handlers/lifecycle";
 import { handleSetupAction } from "./handlers/setup";
 import { handleSimAction } from "./handlers/sim";
-import type { DecisionType, GameAction, LogAction, State, Strategy } from "./index";
 import { warnIfImpossible } from "./invariants";
+import type { LogAction } from "./logReducer";
+import type { Strategy } from "./playerTypes";
 import { PINCH_HITTER_CONTACT_WEIGHT, PINCH_HITTER_POWER_WEIGHT } from "./playerTypes";
 import { applyHandlersInOrder } from "./reducerHelpers";
 import { ZERO_MODS } from "./resolvePlayerMods";

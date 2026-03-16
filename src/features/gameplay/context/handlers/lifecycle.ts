@@ -1,4 +1,4 @@
-import type { GameAction, State } from "../index";
+import type { GameAction, State } from "../gameStateTypes";
 import { backfillRestoredState, createFreshGameState } from "../initialState";
 
 /**

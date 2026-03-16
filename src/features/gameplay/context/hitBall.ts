@@ -3,11 +3,14 @@ import { Hit } from "@shared/constants/hitTypes";
 import { generateRoster } from "@shared/utils/roster";
 
 import { advanceRunners } from "./advanceRunners";
-import { DecisionType, OnePitchModifier, PlayLogEntry, State, Strategy } from "./index";
+import type { DecisionType, OnePitchModifier } from "./decisionTypes";
+import type { PlayLogEntry } from "./gameLogTypes";
+import type { State } from "./gameStateTypes";
 import { updateActivePitcherLog } from "./pitcherLog";
 import type { BattedBallType } from "./pitchSimulation";
 import { computeFatigueFactor } from "./pitchSimulation";
 import { incrementPitcherFatigue, nextBatter, playerOut } from "./playerOut";
+import type { Strategy } from "./playerTypes";
 import { ZERO_MODS } from "./resolvePlayerMods";
 import { stratMod } from "./strategy";
 

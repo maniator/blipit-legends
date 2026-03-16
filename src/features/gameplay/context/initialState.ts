@@ -1,13 +1,8 @@
 import { generateGameInstanceId } from "@storage/generateId";
 
-import type {
-  Handedness,
-  PitcherLogEntry,
-  PlayLogEntry,
-  ResolvedPlayerMods,
-  State,
-  TeamCustomPlayerOverrides,
-} from "./index";
+import type { PitcherLogEntry, PlayLogEntry } from "./gameLogTypes";
+import type { State } from "./gameStateTypes";
+import type { Handedness, ResolvedPlayerMods, TeamCustomPlayerOverrides } from "./playerTypes";
 import { buildResolvedMods } from "./resolvePlayerMods";
 
 /** Fallback team names used when a very old save is missing the `teams` field. */

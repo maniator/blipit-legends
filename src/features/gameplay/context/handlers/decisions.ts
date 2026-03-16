@@ -1,5 +1,7 @@
-import type { DecisionType, GameAction, OnePitchModifier, State, Strategy } from "../index";
+import type { DecisionType, OnePitchModifier } from "../decisionTypes";
+import type { GameAction, State } from "../gameStateTypes";
 import { createPitcherLogEntry, pushPitcherLogEntry } from "../pitcherLog";
+import type { Strategy } from "../playerTypes";
 import type { ReducerCtx } from "../reducerHelpers";
 import { withDecisionLog } from "../reducerHelpers";
 

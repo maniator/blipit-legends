@@ -1,20 +1,15 @@
-import { appLog } from "@shared/utils/logger";
-
 import { type BallgameDb, getDb } from "@storage/db";
-import { generatePlayerId, generateSeed, generateTeamId } from "@storage/generateId";
-import { fnv1a } from "@storage/hash";
+import { generateSeed, generateTeamId } from "@storage/generateId";
 import type {
   CreateCustomTeamInput,
   CustomTeamDoc,
   CustomTeamMetadata,
   PlayerDoc,
-  TeamPlayer,
-  TeamRoster,
   UpdateCustomTeamInput,
 } from "@storage/types";
 
+import { buildNewTeamDoc } from "./customTeamDocBuilder";
 import {
-  buildPlayerSig,
   buildTeamFingerprint,
   exportCustomPlayer as exportCustomPlayerJson,
   exportCustomTeams as exportCustomTeamsJson,
@@ -24,235 +19,17 @@ import {
   type ImportPlayerResult,
   parseExportedCustomPlayer as parseExportedCustomPlayerJson,
 } from "./customTeamExportImport";
-
-const SCHEMA_VERSION = 1;
-const ROSTER_SCHEMA_VERSION = 1;
-const PLAYER_SCHEMA_VERSION = 1;
-
-const STAT_MIN = 0;
-const STAT_MAX = 100;
+import { importPlayerIntoTeam, orchestrateTeamImport } from "./customTeamImportOrchestrator";
+import { assembleRoster, removePlayerDocs, writePlayerDocs } from "./customTeamPlayerDocs";
+import { populateRoster } from "./customTeamRosterPersistence";
+import {
+  buildRoster,
+  requireNonEmpty,
+  ROSTER_SCHEMA_VERSION,
+  sanitizeAbbreviation,
+} from "./customTeamSanitizers";
 
 type GetDb = () => Promise<BallgameDb>;
-
-function requireNonEmpty(value: unknown, fieldPath: string): string {
-  if (typeof value !== "string" || value.trim().length === 0) {
-    throw new Error(`${fieldPath} must be a non-empty string`);
-  }
-  return value.trim();
-}
-
-/**
- * Sanitizes an abbreviation: trims, uppercases, and enforces 2–3 characters.
- * Throws if the result is outside that range so stored docs are always valid.
- */
-function sanitizeAbbreviation(value: string): string {
-  const abbr = value.trim().toUpperCase();
-  if (abbr.length < 2 || abbr.length > 3) {
-    throw new Error(`abbreviation must be 2–3 characters (got "${abbr}")`);
-  }
-  return abbr;
-}
-
-function clampStat(value: number): number {
-  return Math.max(STAT_MIN, Math.min(STAT_MAX, value));
-}
-
-function sanitizePlayer(player: TeamPlayer, index: number): TeamPlayer {
-  const name = requireNonEmpty(player.name, `roster player[${index}].name`);
-  if (!["batter", "pitcher", "two-way"].includes(player.role)) {
-    throw new Error(`roster player[${index}].role must be "batter", "pitcher", or "two-way"`);
-  }
-  if (!player.batting || typeof player.batting !== "object") {
-    throw new Error(`roster player[${index}].batting is required`);
-  }
-  const sanitized: TeamPlayer = {
-    ...player,
-    name,
-    batting: {
-      contact: clampStat(Number(player.batting.contact) || 0),
-      power: clampStat(Number(player.batting.power) || 0),
-      speed: clampStat(Number(player.batting.speed) || 0),
-    },
-    ...(player.pitching && {
-      pitching: {
-        ...(player.pitching.velocity !== undefined && {
-          velocity: clampStat(Number(player.pitching.velocity)),
-        }),
-        ...(player.pitching.control !== undefined && {
-          control: clampStat(Number(player.pitching.control)),
-        }),
-        ...(player.pitching.movement !== undefined && {
-          movement: clampStat(Number(player.pitching.movement)),
-        }),
-      },
-    }),
-  };
-  // Preserve the existing playerSeed or generate a new one at creation time.
-  // The seed is stored permanently so the fingerprint can be re-verified.
-  const playerSeed = player.playerSeed ?? generateSeed();
-  // Always persist a content fingerprint so global duplicate detection works
-  // without re-reading all teams. The fingerprint covers the immutable identity
-  // fields (name, role, batting, pitching) plus the per-player seed.
-  const fingerprint = buildPlayerSig({ ...sanitized, playerSeed });
-  // Derive a stable team-independent identity from the player's seed.
-  // "pl_" prefix distinguishes it from team IDs and raw nanoid strings.
-  // Using fnv1a(playerSeed) means the same player always gets the same globalPlayerId
-  // regardless of which team they belong to, enabling cross-team career aggregation.
-  const globalPlayerId = player.globalPlayerId ?? `pl_${fnv1a(playerSeed)}`;
-  return { ...sanitized, playerSeed, fingerprint, globalPlayerId };
-}
-
-function buildRoster(input: CreateCustomTeamInput["roster"]): TeamRoster {
-  if (!Array.isArray(input.lineup) || input.lineup.length < 1) {
-    throw new Error("roster.lineup must have at least 1 player");
-  }
-  return {
-    schemaVersion: ROSTER_SCHEMA_VERSION,
-    lineup: input.lineup.map((p, i) => sanitizePlayer(p, i)),
-    bench: (input.bench ?? []).map((p, i) => sanitizePlayer(p, i)),
-    pitchers: (input.pitchers ?? []).map((p, i) => sanitizePlayer(p, i)),
-  };
-}
-
-/** Converts a sanitized TeamPlayer into a PlayerDoc for a given team/section/index. */
-function toPlayerDoc(
-  player: TeamPlayer,
-  teamId: string,
-  section: "lineup" | "bench" | "pitchers",
-  orderIndex: number,
-): PlayerDoc {
-  // Backfill globalPlayerId for players imported from legacy bundles (created before
-  // globalPlayerId was added to the schema). The v4 players schema requires this field;
-  // without the backfill, bulkUpsert throws a validation error and the whole import fails.
-  // Use playerSeed first (gives the canonical stable identity), fall back to player.id
-  // (always present in TeamPlayer) so every player gets a unique value even if both
-  // playerSeed and globalPlayerId are absent.
-  const globalPlayerId = player.globalPlayerId ?? `pl_${fnv1a(player.playerSeed ?? player.id)}`;
-  return {
-    ...player,
-    globalPlayerId,
-    // Use a team-scoped composite primary key to prevent cross-team collisions
-    // when two different teams contain a player with the same original ID.
-    id: `${teamId}:${player.id}`,
-    playerId: player.id,
-    teamId,
-    section,
-    orderIndex,
-    schemaVersion: PLAYER_SCHEMA_VERSION,
-  };
-}
-
-/** Returns all PlayerDocs for a team. Sorting by section and orderIndex is handled by assembleRoster. */
-async function fetchPlayerDocs(db: BallgameDb, teamId: string): Promise<PlayerDoc[]> {
-  const docs = await db.players.find({ selector: { teamId } }).exec();
-  return docs.map((d) => d.toJSON() as unknown as PlayerDoc);
-}
-
-/** Assembles a TeamRoster from a list of PlayerDocs for a team. */
-function assembleRoster(playerDocs: PlayerDoc[], existingRoster: TeamRoster): TeamRoster {
-  const toTeamPlayer = ({
-    teamId: _teamId,
-    section: _section,
-    orderIndex: _orderIndex,
-    schemaVersion: _schemaVersion,
-    playerId,
-    id: compositeId,
-    ...rest
-  }: PlayerDoc): TeamPlayer => ({
-    ...rest,
-    // Reconstruct the original player ID: `playerId` is set on v2 docs;
-    // fall back to `id` for legacy docs that were not migrated yet.
-    id: playerId ?? compositeId,
-  });
-  const lineup = playerDocs
-    .filter((p) => p.section === "lineup")
-    .sort((a, b) => a.orderIndex - b.orderIndex)
-    .map(toTeamPlayer);
-  const bench = playerDocs
-    .filter((p) => p.section === "bench")
-    .sort((a, b) => a.orderIndex - b.orderIndex)
-    .map(toTeamPlayer);
-  const pitchers = playerDocs
-    .filter((p) => p.section === "pitchers")
-    .sort((a, b) => a.orderIndex - b.orderIndex)
-    .map(toTeamPlayer);
-  return {
-    schemaVersion: existingRoster.schemaVersion,
-    lineup,
-    bench,
-    pitchers,
-  };
-}
-
-/**
- * Writes all players from a roster into the `players` collection using bulkUpsert.
- * Existing docs with matching IDs are updated; new player IDs are inserted.
- * Returns the Set of composite doc IDs that were written, for use with removePlayerDocs.
- */
-async function writePlayerDocs(
-  db: BallgameDb,
-  teamId: string,
-  roster: TeamRoster,
-): Promise<Set<string>> {
-  const allDocs = [
-    ...roster.lineup.map((p, i) => toPlayerDoc(p, teamId, "lineup", i)),
-    ...roster.bench.map((p, i) => toPlayerDoc(p, teamId, "bench", i)),
-    ...roster.pitchers.map((p, i) => toPlayerDoc(p, teamId, "pitchers", i)),
-  ];
-  if (allDocs.length > 0) {
-    await db.players.bulkUpsert(allDocs);
-  }
-  return new Set(allDocs.map((d) => d.id));
-}
-
-/**
- * Removes all player docs for a given team from the `players` collection.
- * When `exceptIds` is provided, only docs whose IDs are NOT in that set are removed.
- */
-async function removePlayerDocs(
-  db: BallgameDb,
-  teamId: string,
-  exceptIds?: Set<string>,
-): Promise<void> {
-  const existing = await db.players.find({ selector: { teamId } }).exec();
-  const toRemove = exceptIds ? existing.filter((p) => !exceptIds.has(p.id)) : existing;
-  await Promise.all(toRemove.map((p) => p.remove()));
-}
-
-/**
- * Populates the roster of a team from the `players` collection.
- * If no player docs exist yet (legacy team), falls back to the embedded roster,
- * backfills the `players` collection, and then clears the embedded arrays so there
- * is a single source of truth going forward.
- */
-async function populateRoster(db: BallgameDb, team: CustomTeamDoc): Promise<CustomTeamDoc> {
-  const playerDocs = await fetchPlayerDocs(db, team.id);
-  if (playerDocs.length > 0) {
-    return { ...team, roster: assembleRoster(playerDocs, team.roster) };
-  }
-  // Legacy team: no player docs yet — backfill from embedded roster.
-  if (
-    team.roster.lineup.length > 0 ||
-    team.roster.bench.length > 0 ||
-    team.roster.pitchers.length > 0
-  ) {
-    await writePlayerDocs(db, team.id, team.roster);
-    // Clear the embedded arrays now that players live in the `players` collection,
-    // eliminating the two-sources-of-truth issue for future reads.
-    const emptyRoster = {
-      schemaVersion: team.roster.schemaVersion,
-      lineup: [],
-      bench: [],
-      pitchers: [],
-    };
-    const doc = await db.customTeams.findOne(team.id).exec();
-    if (doc) {
-      await doc.patch({ roster: emptyRoster });
-    }
-    return { ...team, roster: assembleRoster(await fetchPlayerDocs(db, team.id), team.roster) };
-  }
-  return team;
-}
 
 function buildStore(getDbFn: GetDb) {
   return {
@@ -302,33 +79,9 @@ function buildStore(getDbFn: GetDb) {
         );
       }
       const roster = buildRoster(input.roster);
-      const now = new Date().toISOString();
       const id = meta?.id ?? generateTeamId();
       const teamSeed = generateSeed();
-      const sanitizedAbbrev =
-        input.abbreviation !== undefined ? sanitizeAbbreviation(input.abbreviation) : undefined;
-      const doc: CustomTeamDoc = {
-        id,
-        schemaVersion: SCHEMA_VERSION,
-        createdAt: now,
-        updatedAt: now,
-        name,
-        ...(sanitizedAbbrev !== undefined && { abbreviation: sanitizedAbbrev }),
-        ...(input.nickname !== undefined && { nickname: input.nickname }),
-        ...(input.city !== undefined && { city: input.city }),
-        ...(input.slug !== undefined && { slug: input.slug }),
-        source: input.source ?? "custom",
-        // Store empty embedded arrays — players live in the `players` collection.
-        roster: { schemaVersion: ROSTER_SCHEMA_VERSION, lineup: [], bench: [], pitchers: [] },
-        metadata: {
-          ...(input.metadata?.notes !== undefined && { notes: input.metadata.notes }),
-          ...(input.metadata?.tags !== undefined && { tags: input.metadata.tags }),
-          archived: input.metadata?.archived ?? false,
-        },
-        ...(input.statsProfile !== undefined && { statsProfile: input.statsProfile }),
-        teamSeed,
-      };
-      doc.fingerprint = buildTeamFingerprint(doc);
+      const doc = buildNewTeamDoc({ ...input, name }, id, teamSeed);
       const db = await getDbFn();
       await db.customTeams.insert(doc);
       // Write player docs into the dedicated players collection.
@@ -421,7 +174,6 @@ function buildStore(getDbFn: GetDb) {
       await doc.patch(patch);
     },
 
-    /** Permanently removes a custom team. */
     /**
      * Deletes a custom team.
      * @param id  The team id to delete.
@@ -499,36 +251,31 @@ function buildStore(getDbFn: GetDb) {
       json: string,
       options?: ImportCustomTeamsOptions,
     ): Promise<ImportCustomTeamsResult> {
-      const existing = await this.listCustomTeams({ includeArchived: true, withRoster: false });
+      // Query team docs and player docs directly from the DB without calling
+      // listCustomTeams() / populateRoster().  populateRoster() can write to
+      // db.players and patch team docs (legacy backfill) as a side effect, so
+      // even a blocked import (requiresDuplicateConfirmation: true) would mutate
+      // the DB.  By reading collections directly we get the same roster data
+      // without any writes.
+      const db = await getDbFn();
+      const rawTeamDocs = (await db.customTeams.find().exec()).map(
+        (d) => d.toJSON() as CustomTeamDoc,
+      );
+      const allPlayerDocs = (await db.players.find().exec()).map((d) => d.toJSON() as PlayerDoc);
+      // Assemble rosters read-only: use player docs for modern teams, fall back to
+      // embedded roster arrays for legacy teams that have not been backfilled yet.
+      const existing: CustomTeamDoc[] = rawTeamDocs.map((team) => {
+        const teamPlayerDocs = allPlayerDocs.filter((p) => p.teamId === team.id);
+        if (teamPlayerDocs.length > 0) {
+          return { ...team, roster: assembleRoster(teamPlayerDocs, team.roster) };
+        }
+        // Legacy team: players still in embedded arrays (no backfill write here).
+        return team;
+      });
       const result = importCustomTeamsParser(json, existing, undefined, options);
       if (!result.requiresDuplicateConfirmation) {
-        const db = await getDbFn();
         for (const team of result.teams) {
-          // Store the imported team doc with empty embedded arrays.
-          const teamDoc: CustomTeamDoc = {
-            ...team,
-            roster: { schemaVersion: ROSTER_SCHEMA_VERSION, lineup: [], bench: [], pitchers: [] },
-          };
-          await db.customTeams.upsert(teamDoc);
-          // Upsert new player docs first (safe), then remove stale docs whose composite
-          // IDs no longer appear in the imported roster. On failure, roll back the team
-          // upsert so no empty-roster team is left behind.
-          try {
-            const newDocIds = await writePlayerDocs(db, team.id, team.roster);
-            await removePlayerDocs(db, team.id, newDocIds);
-          } catch (err) {
-            await db.customTeams
-              .findOne(team.id)
-              .exec()
-              .then((d) => d?.remove())
-              .catch((rollbackErr) => {
-                appLog.warn(
-                  `[importCustomTeams] rollback failed for team ${team.id}:`,
-                  rollbackErr,
-                );
-              });
-            throw err;
-          }
+          await orchestrateTeamImport(db, team, ROSTER_SCHEMA_VERSION);
         }
       }
       return result;
@@ -536,22 +283,6 @@ function buildStore(getDbFn: GetDb) {
 
     /**
      * Imports a single player from a signed player export bundle into a target team's roster.
-     *
-     * Identity checks (using `globalPlayerId`):
-     *   - If the player already exists on the **same** target team → returns
-     *     `{ status: "alreadyOnThisTeam" }` (idempotent no-op).
-     *   - If the player already exists on a **different** team → returns
-     *     `{ status: "conflict", conflictingTeamId, conflictingTeamName }` so the UI
-     *     can surface "That player already belongs to [team name]".
-     *
-     * On success the player is appended to the specified roster `section` and the
-     * target team is updated in the DB.  The player's original `playerSeed` and
-     * `globalPlayerId` are preserved so career stats and duplicate detection remain intact.
-     *
-     * @param targetTeamId  Team to add the player to.
-     * @param playerJson    Signed JSON string produced by `exportPlayer` / `exportCustomPlayer`.
-     * @param section       Which roster section to append the player to.
-     * @throws If the target team is not found, or if the player bundle is invalid/tampered.
      */
     async importPlayer(
       targetTeamId: string,
@@ -560,9 +291,6 @@ function buildStore(getDbFn: GetDb) {
     ): Promise<ImportPlayerResult> {
       const player = parseExportedCustomPlayerJson(playerJson);
 
-      // globalPlayerId is required for cross-team identity enforcement.
-      // Every bundle produced by exportPlayer / exportCustomPlayer includes it.
-      // Re-export the player from the source team to get a valid bundle.
       if (!player.globalPlayerId) {
         throw new Error(
           "Imported player bundle must include a globalPlayerId. Re-export the player from the source team to get a valid bundle.",
@@ -577,61 +305,9 @@ function buildStore(getDbFn: GetDb) {
         targetTeamDoc.toJSON() as unknown as CustomTeamDoc,
       );
 
-      // Cross-team identity check: query the globalPlayerId index directly — one
-      // DB round-trip instead of hydrating every team's roster in memory.
-      const matchingDocs = await db.players
-        .find({ selector: { globalPlayerId: player.globalPlayerId } })
-        .exec();
-      if (matchingDocs.length > 0) {
-        const matchingPlayerDocs = matchingDocs.map((doc) => doc.toJSON() as unknown as PlayerDoc);
-
-        // (1) If any match has a non-null teamId different from the target, it is a conflict.
-        const conflictingMatch = matchingPlayerDocs.find(
-          (doc) => doc.teamId !== null && doc.teamId !== undefined && doc.teamId !== targetTeamId,
-        );
-        if (conflictingMatch) {
-          const owningTeamDoc = conflictingMatch.teamId
-            ? await db.customTeams.findOne(conflictingMatch.teamId).exec()
-            : null;
-          const owningTeamName =
-            (owningTeamDoc?.toJSON() as unknown as CustomTeamDoc | undefined)?.name ??
-            "another team";
-          return {
-            status: "conflict",
-            conflictingTeamId: conflictingMatch.teamId ?? "",
-            conflictingTeamName: owningTeamName,
-          };
-        }
-
-        // (2) If any match is already on the target team, treat as a no-op.
-        const alreadyOnThisTeam = matchingPlayerDocs.some((doc) => doc.teamId === targetTeamId);
-        if (alreadyOnThisTeam) {
-          return { status: "alreadyOnThisTeam" };
-        }
-        // (3) Only free-agent matches (teamId null/undefined) remain — allow the import.
-      }
-
-      // Append to the target section and persist.
-      // Defensively remap the local player.id if it already exists in the target roster to
-      // avoid duplicate local IDs (the canonical identity is globalPlayerId, not the local id).
-      const allTargetIds = new Set([
-        ...targetTeam.roster.lineup.map((p) => p.id),
-        ...targetTeam.roster.bench.map((p) => p.id),
-        ...targetTeam.roster.pitchers.map((p) => p.id),
-      ]);
-      const playerToAppend: TeamPlayer = allTargetIds.has(player.id)
-        ? { ...player, id: generatePlayerId() }
-        : player;
-      const updatedSection = [...targetTeam.roster[section], playerToAppend];
-      await this.updateCustomTeam(targetTeamId, {
-        roster: {
-          lineup: section === "lineup" ? updatedSection : targetTeam.roster.lineup,
-          bench: section === "bench" ? updatedSection : targetTeam.roster.bench,
-          pitchers: section === "pitchers" ? updatedSection : targetTeam.roster.pitchers,
-        },
-      });
-
-      return { status: "success", finalLocalId: playerToAppend.id };
+      return importPlayerIntoTeam(db, player, targetTeamId, targetTeam, section, (id, updates) =>
+        this.updateCustomTeam(id, updates),
+      );
     },
   };
 }

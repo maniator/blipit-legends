@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import type { PitcherLogEntry } from "./index";
+import type { PitcherLogEntry } from "./gameLogTypes";
 import {
   activePitcherLogIdx,
   createPitcherLogEntry,

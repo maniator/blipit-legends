@@ -1,19 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { useSaveSlotActions } from "./useSaveSlotActions";
+import { makeSaveDoc } from "@test/helpers/saves";
 
-const makeSaveDoc = (id: string, name = "Test Save") => ({
-  id,
-  name,
-  seed: "abc",
-  homeTeamId: "Yankees",
-  awayTeamId: "Mets",
-  progressIdx: 0,
-  schemaVersion: 1,
-  updatedAt: Date.now(),
-  createdAt: Date.now(),
-  setup: { strategy: "normal" as const, managedTeam: 0 as const, managerMode: false },
-});
+import { useSaveSlotActions } from "./useSaveSlotActions";
 
 describe("useSaveSlotActions", () => {
   it("handleDelete: calls deleteSave with the id", async () => {
@@ -59,7 +48,7 @@ describe("useSaveSlotActions", () => {
   it("handleExport: calls exportSave with slot id", async () => {
     const exportSave = vi.fn().mockResolvedValue('{"version":1}');
     const { handleExport } = useSaveSlotActions({ deleteSave: vi.fn(), exportSave });
-    handleExport(makeSaveDoc("save-1", "My Save"));
+    handleExport(makeSaveDoc({ id: "save-1", name: "My Save" }));
     await new Promise((r) => setTimeout(r, 0));
     expect(exportSave).toHaveBeenCalledWith("save-1");
   });
@@ -69,7 +58,7 @@ describe("useSaveSlotActions", () => {
     const exportSave = vi.fn().mockRejectedValue(err);
     const onError = vi.fn();
     const { handleExport } = useSaveSlotActions({ deleteSave: vi.fn(), exportSave, onError });
-    handleExport(makeSaveDoc("save-1"));
+    handleExport(makeSaveDoc({ id: "save-1" }));
     await Promise.resolve();
     await Promise.resolve();
     expect(onError).toHaveBeenCalledWith("Failed to export save", err);

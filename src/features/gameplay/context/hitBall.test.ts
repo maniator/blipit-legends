@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { makeLogs, makeState, mockRandom } from "@test/testHelpers";
 
 import { handleBallInPlay, hitBall } from "./hitBall";
-import type { ModPreset, TeamCustomPlayerOverrides } from "./index";
+import type { ModPreset, TeamCustomPlayerOverrides } from "./playerTypes";
 
 afterEach(() => vi.restoreAllMocks());
 

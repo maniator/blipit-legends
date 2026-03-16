@@ -1,6 +1,6 @@
 import { appLog } from "@shared/utils/logger";
 
-import type { State } from "./index";
+import type { State } from "./gameStateTypes";
 
 export interface InvariantViolation {
   message: string;

@@ -25,15 +25,15 @@
               "name": "J. Slugger",
               "role": "batter",
               "batting": {
-                "contact": 70,
-                "power": 75,
-                "speed": 60
+                "contact": 51,
+                "power": 54,
+                "speed": 45
               },
               "position": "LF",
               "handedness": "R",
               "playerSeed": "seed_e2e_slugger",
-              "sig": "2cf78055",
-              "fingerprint": "2cf78055",
+              "sig": "57b6dc12",
+              "fingerprint": "57b6dc12",
               "globalPlayerId": "e2e_batter_slugger"
             },
             {
@@ -41,15 +41,15 @@
               "name": "M. Contact",
               "role": "batter",
               "batting": {
-                "contact": 80,
-                "power": 55,
-                "speed": 70
+                "contact": 58,
+                "power": 40,
+                "speed": 52
               },
               "position": "CF",
               "handedness": "L",
               "playerSeed": "seed_e2e_contact",
-              "sig": "f91ad496",
-              "fingerprint": "f91ad496",
+              "sig": "b603e779",
+              "fingerprint": "b603e779",
               "globalPlayerId": "e2e_batter_contact"
             }
           ],
@@ -65,16 +65,16 @@
                 "speed": 20
               },
               "pitching": {
-                "velocity": 65,
-                "control": 65,
-                "movement": 55
+                "velocity": 56,
+                "control": 56,
+                "movement": 48
               },
               "position": "SP",
               "handedness": "R",
               "pitchingRole": "SP",
               "playerSeed": "seed_e2e_career_p",
-              "sig": "aada29e6",
-              "fingerprint": "aada29e6"
+              "sig": "62096cc0",
+              "fingerprint": "62096cc0"
             }
           ]
         },
@@ -82,5 +82,5 @@
       }
     ]
   },
-  "sig": "21aff57f"
+  "sig": "0dcbe0b7"
 }

@@ -1,6 +1,8 @@
+import type { StrikeoutEntry } from "./gameLogTypes";
 import { checkGameOver, nextHalfInning } from "./gameOver";
-import type { State, Strategy, StrikeoutEntry } from "./index";
+import type { State } from "./gameStateTypes";
 import { updateActivePitcherLog } from "./pitcherLog";
+import type { Strategy } from "./playerTypes";
 
 /**
  * Increments the pitching team's pitch count.

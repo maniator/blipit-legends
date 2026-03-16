@@ -1,11 +1,13 @@
 import getRandomInt from "@feat/gameplay/utils/getRandomInt";
 import { Hit } from "@shared/constants/hitTypes";
 
+import type { DecisionType, OnePitchModifier } from "./decisionTypes";
 import { checkWalkoff } from "./gameOver";
+import type { State } from "./gameStateTypes";
 import { addInningRuns, hitBall } from "./hitBall";
-import { DecisionType, OnePitchModifier, State, Strategy } from "./index";
 import { updateActivePitcherLog } from "./pitcherLog";
 import { incrementPitchCount, playerOut } from "./playerOut";
+import type { Strategy } from "./playerTypes";
 
 export const buntAttempt = (
   state: State,

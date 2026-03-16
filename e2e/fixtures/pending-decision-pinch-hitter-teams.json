@@ -157,30 +157,30 @@
               "name": "J. Lee",
               "role": "batter",
               "batting": {
-                "contact": 60,
-                "power": 50,
+                "contact": 56,
+                "power": 46,
                 "eye": 50,
-                "speed": 50
+                "speed": 48
               },
               "position": "LF",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "2ef40c03"
+              "sig": "9b448db2"
             },
             {
               "id": "vis_ph2",
               "name": "K. Patel",
               "role": "batter",
               "batting": {
-                "contact": 50,
-                "power": 60,
+                "contact": 46,
+                "power": 56,
                 "eye": 50,
-                "speed": 50
+                "speed": 48
               },
               "position": "DH",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "c42af20e"
+              "sig": "1e12fbcf"
             }
           ],
           "pitchers": [
@@ -387,5 +387,5 @@
       }
     ]
   },
-  "sig": "b86f2b33"
+  "sig": "578687ce"
 }

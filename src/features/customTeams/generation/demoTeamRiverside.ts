@@ -1,4 +1,4 @@
-import type { DemoTeamDef } from "./demoTeams";
+import type { DemoTeamDef } from "./demoTeamTypes";
 
 /**
  * Riverside Rockets — one of the demo starter teams seeded on first launch.

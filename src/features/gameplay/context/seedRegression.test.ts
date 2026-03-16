@@ -18,7 +18,7 @@
  */
 
 import { selectPitchType } from "@feat/gameplay/constants/pitchTypes";
-import type { GameAction, LogAction, State } from "@feat/gameplay/context/index";
+import type { GameAction, State } from "@feat/gameplay/context/index";
 import {
   computeSwingRate,
   resolveBattedBallType,
@@ -30,21 +30,11 @@ import { restoreRng } from "@shared/utils/rng";
 import { generateRoster } from "@shared/utils/roster";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { makeState } from "@test/testHelpers";
-
-import reducerFactory from "./reducer";
+import { makeReducer, makeState } from "@test/testHelpers";
 
 // ---------------------------------------------------------------------------
 // Helpers — identical pattern to battingStats.test.ts
 // ---------------------------------------------------------------------------
-
-const makeReducer = () => {
-  const logs: string[] = [];
-  const dispatch = (a: LogAction) => {
-    if (a.type === "log") logs.push(a.payload);
-  };
-  return { reducer: reducerFactory(dispatch), logs };
-};
 
 const nextPitchAction = (state: State): GameAction => {
   const pitchType = selectPitchType(state.balls, state.strikes, getRandomInt(100));

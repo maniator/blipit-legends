@@ -5,7 +5,8 @@
  * field of game state. They are pure functions — they take state and return
  * the updated pitcherGameLog without mutating input.
  */
-import type { PitcherLogEntry, State } from "./index";
+import type { PitcherLogEntry } from "./gameLogTypes";
+import type { State } from "./gameStateTypes";
 
 /**
  * Creates a new PitcherLogEntry for a pitcher entering the game.

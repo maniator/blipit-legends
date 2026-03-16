@@ -30,6 +30,7 @@ afterAll(() => vi.unstubAllGlobals());
 import { SaveStore } from "@feat/saves/storage/saveStore";
 
 import type { SaveDoc } from "@storage/types";
+import { makeSaveDoc } from "@test/helpers/saves";
 
 import SavesPage from "./index";
 
@@ -52,26 +53,24 @@ function renderSavesPage(initialPath = "/saves") {
   );
 }
 
-const makeSave = (overrides: Partial<SaveDoc> = {}): SaveDoc =>
-  ({
-    id: "save_1",
-    name: "Team A vs Team B",
-    seed: "abc123",
-    homeTeamId: "TeamB",
-    awayTeamId: "TeamA",
-    createdAt: 1000000,
-    updatedAt: 1000000,
-    progressIdx: 0,
-    schemaVersion: 1,
-    ...overrides,
-  }) as SaveDoc;
+/** SavesPage-specific defaults that differ from the shared makeSaveDoc defaults. */
+const pageDefaults = {
+  name: "Team A vs Team B",
+  seed: "abc123",
+  homeTeamId: "TeamB",
+  awayTeamId: "TeamA",
+  createdAt: 1000000,
+  updatedAt: 1000000,
+} as const;
 
 describe("SavesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     confirmMock.mockReturnValue(true);
     vi.mocked(SaveStore.listSaves).mockResolvedValue([]);
-    vi.mocked(SaveStore.importRxdbSave).mockResolvedValue(makeSave({ id: "imported_save" }));
+    vi.mocked(SaveStore.importRxdbSave).mockResolvedValue(
+      makeSaveDoc({ ...pageDefaults, id: "imported_save" }),
+    );
   });
 
   it("renders the saves page", async () => {
@@ -86,14 +85,14 @@ describe("SavesPage", () => {
   });
 
   it("shows saves list when saves exist", async () => {
-    vi.mocked(SaveStore.listSaves).mockResolvedValue([makeSave()]);
+    vi.mocked(SaveStore.listSaves).mockResolvedValue([makeSaveDoc({ ...pageDefaults })]);
     renderSavesPage();
     await waitFor(() => expect(screen.getByTestId("saves-list")).toBeInTheDocument());
     expect(screen.getByText("Team A vs Team B")).toBeInTheDocument();
   });
 
   it("calls onLoadSave when Load button is clicked", async () => {
-    const save = makeSave();
+    const save = makeSaveDoc({ ...pageDefaults });
     vi.mocked(SaveStore.listSaves).mockResolvedValue([save]);
     const user = userEvent.setup();
     renderSavesPage();
@@ -103,7 +102,7 @@ describe("SavesPage", () => {
   });
 
   it("deletes a save when Delete button is clicked", async () => {
-    const save = makeSave();
+    const save = makeSaveDoc({ ...pageDefaults });
     vi.mocked(SaveStore.listSaves).mockResolvedValue([save]);
     const user = userEvent.setup();
     renderSavesPage();
@@ -135,7 +134,7 @@ describe("SavesPage", () => {
   });
 
   it("calls onLoadSave after successful paste import", async () => {
-    const importedSave = makeSave({ id: "pasted_save" });
+    const importedSave = makeSaveDoc({ ...pageDefaults, id: "pasted_save" });
     vi.mocked(SaveStore.importRxdbSave).mockResolvedValue(importedSave);
     const user = userEvent.setup();
     renderSavesPage();
@@ -183,7 +182,7 @@ describe("SavesPage", () => {
   });
 
   it("calls onLoadSave after successful file import", async () => {
-    const importedSave = makeSave({ id: "imported_save" });
+    const importedSave = makeSaveDoc({ ...pageDefaults, id: "imported_save" });
     vi.mocked(SaveStore.importRxdbSave).mockResolvedValue(importedSave);
     const user = userEvent.setup();
     renderSavesPage();
@@ -197,7 +196,7 @@ describe("SavesPage", () => {
   });
 
   it("calls exportRxdbSave when Export button is clicked", async () => {
-    const save = makeSave();
+    const save = makeSaveDoc({ ...pageDefaults });
     vi.mocked(SaveStore.listSaves).mockResolvedValue([save]);
     vi.mocked(SaveStore.exportRxdbSave).mockResolvedValue(JSON.stringify({ test: "data" }));
     const user = userEvent.setup();

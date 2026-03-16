@@ -17,7 +17,7 @@
  */
 
 import { selectPitchType } from "@feat/gameplay/constants/pitchTypes";
-import type { GameAction, LogAction, State } from "@feat/gameplay/context/index";
+import type { GameAction, State } from "@feat/gameplay/context/index";
 import {
   computeSwingRate,
   resolveBattedBallType,
@@ -29,9 +29,7 @@ import { restoreRng } from "@shared/utils/rng";
 import { generateRoster } from "@shared/utils/roster";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { makeState } from "@test/testHelpers";
-
-import reducerFactory from "./reducer";
+import { makeReducer, makeState } from "@test/testHelpers";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -41,14 +39,6 @@ import reducerFactory from "./reducer";
 const parseSeed = (s: string): number => parseInt(s, 36) >>> 0;
 
 const SEED_30NL0I = parseSeed("30nl0i");
-
-const makeReducer = () => {
-  const logs: string[] = [];
-  const dispatch = (a: LogAction) => {
-    if (a.type === "log") logs.push(a.payload);
-  };
-  return { reducer: reducerFactory(dispatch), logs };
-};
 
 /**
  * Decide the next pitch action mirroring the logic in `usePitchDispatch`.

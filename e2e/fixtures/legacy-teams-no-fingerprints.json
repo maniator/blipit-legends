@@ -22,9 +22,9 @@
               "position": "C",
               "handedness": "R",
               "batting": {
-                "contact": 72,
-                "power": 65,
-                "speed": 55
+                "contact": 56,
+                "power": 50,
+                "speed": 44
               }
             },
             {
@@ -34,9 +34,9 @@
               "position": "1B",
               "handedness": "R",
               "batting": {
-                "contact": 68,
-                "power": 78,
-                "speed": 45
+                "contact": 53,
+                "power": 61,
+                "speed": 36
               }
             },
             {
@@ -46,9 +46,9 @@
               "position": "2B",
               "handedness": "L",
               "batting": {
-                "contact": 75,
-                "power": 58,
-                "speed": 70
+                "contact": 55,
+                "power": 42,
+                "speed": 53
               }
             },
             {
@@ -58,9 +58,9 @@
               "position": "3B",
               "handedness": "R",
               "batting": {
-                "contact": 70,
-                "power": 72,
-                "speed": 60
+                "contact": 51,
+                "power": 53,
+                "speed": 46
               }
             },
             {
@@ -70,9 +70,9 @@
               "position": "SS",
               "handedness": "S",
               "batting": {
-                "contact": 74,
-                "power": 55,
-                "speed": 72
+                "contact": 55,
+                "power": 41,
+                "speed": 54
               }
             },
             {
@@ -82,9 +82,9 @@
               "position": "LF",
               "handedness": "L",
               "batting": {
-                "contact": 65,
-                "power": 80,
-                "speed": 58
+                "contact": 48,
+                "power": 59,
+                "speed": 43
               }
             },
             {
@@ -94,9 +94,9 @@
               "position": "CF",
               "handedness": "R",
               "batting": {
-                "contact": 71,
-                "power": 60,
-                "speed": 75
+                "contact": 51,
+                "power": 43,
+                "speed": 56
               }
             },
             {
@@ -106,9 +106,9 @@
               "position": "RF",
               "handedness": "R",
               "batting": {
-                "contact": 69,
-                "power": 74,
-                "speed": 62
+                "contact": 50,
+                "power": 54,
+                "speed": 46
               }
             },
             {
@@ -118,9 +118,9 @@
               "position": "DH",
               "handedness": "L",
               "batting": {
-                "contact": 66,
-                "power": 82,
-                "speed": 48
+                "contact": 50,
+                "power": 62,
+                "speed": 38
               }
             }
           ],
@@ -132,9 +132,9 @@
               "position": "1B",
               "handedness": "R",
               "batting": {
-                "contact": 60,
-                "power": 65,
-                "speed": 55
+                "contact": 50,
+                "power": 54,
+                "speed": 46
               }
             }
           ],
@@ -150,9 +150,9 @@
                 "speed": 30
               },
               "pitching": {
-                "velocity": 88,
-                "control": 75,
-                "movement": 70
+                "velocity": 60,
+                "control": 51,
+                "movement": 49
               },
               "pitchingRole": "SP"
             },
@@ -167,9 +167,9 @@
                 "speed": 28
               },
               "pitching": {
-                "velocity": 82,
-                "control": 80,
-                "movement": 76
+                "velocity": 55,
+                "control": 53,
+                "movement": 52
               },
               "pitchingRole": "RP"
             }
@@ -181,5 +181,5 @@
       }
     ]
   },
-  "sig": "d453a38d"
+  "sig": "c1d29ed5"
 }

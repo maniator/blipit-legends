@@ -25,15 +25,15 @@
               "name": "A. Starter",
               "role": "batter",
               "batting": {
-                "contact": 70,
-                "power": 70,
-                "speed": 70
+                "contact": 50,
+                "power": 50,
+                "speed": 50
               },
               "position": "CF",
               "handedness": "R",
               "playerSeed": "seed_starter_1",
-              "fingerprint": "a98bd695",
-              "sig": "a98bd695",
+              "fingerprint": "659e1a87",
+              "sig": "659e1a87",
               "globalPlayerId": "e2e_starter_1"
             }
           ],
@@ -82,5 +82,5 @@
       }
     ]
   },
-  "sig": "1781e63b"
+  "sig": "274945fd"
 }

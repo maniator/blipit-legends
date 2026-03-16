@@ -11,21 +11,9 @@ vi.mock("@storage/saveIO", () => ({
 
 import { readFileAsText } from "@storage/saveIO";
 import type { SaveDoc } from "@storage/types";
+import { makeSaveDoc } from "@test/helpers/saves";
 
 import { friendlyImportError, useImportSave } from "./useImportSave";
-
-const makeSave = (id = "save_1"): SaveDoc =>
-  ({
-    id,
-    name: "Test Save",
-    seed: "abc",
-    homeTeamId: "Home",
-    awayTeamId: "Away",
-    createdAt: 1000,
-    updatedAt: 2000,
-    progressIdx: 0,
-    schemaVersion: 1,
-  }) as SaveDoc;
 
 describe("friendlyImportError", () => {
   it("returns signature message for error containing 'signature'", () => {
@@ -87,7 +75,7 @@ describe("useImportSave", () => {
     });
 
     it("calls importFn with trimmed textarea value", async () => {
-      mockImportFn.mockResolvedValue(makeSave());
+      mockImportFn.mockResolvedValue(makeSaveDoc());
       const { result } = renderImportHook();
       act(() => result.current.setPasteJson('  {"v":1}  '));
       act(() => result.current.handlePasteImport());
@@ -101,11 +89,11 @@ describe("useImportSave", () => {
       act(() => result.current.setPasteJson('{"v":1}'));
       act(() => result.current.handlePasteImport());
       expect(result.current.importing).toBe(true);
-      await act(async () => resolve(makeSave()));
+      await act(async () => resolve(makeSaveDoc()));
     });
 
     it("calls onSuccess and resets importing after successful import", async () => {
-      const save = makeSave();
+      const save = makeSaveDoc();
       mockImportFn.mockResolvedValue(save);
       const { result } = renderImportHook();
       act(() => result.current.setPasteJson('{"v":1}'));
@@ -138,7 +126,7 @@ describe("useImportSave", () => {
   describe("handleFileImport", () => {
     it("reads file and calls importFn on success", async () => {
       vi.mocked(readFileAsText).mockResolvedValue('{"file":true}');
-      const save = makeSave("file_save");
+      const save = makeSaveDoc({ id: "file_save" });
       mockImportFn.mockResolvedValue(save);
       const { result } = renderImportHook();
       const file = new File(["{}"], "save.json", { type: "application/json" });

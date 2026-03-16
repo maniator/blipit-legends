@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import { makeState } from "@test/testHelpers";
 
-import type { PlayLogEntry, ResolvedPlayerMods, TeamCustomPlayerOverrides } from "./index";
+import type { PlayLogEntry } from "./gameLogTypes";
 import { backfillRestoredState, createFreshGameState } from "./initialState";
+import type { ResolvedPlayerMods, TeamCustomPlayerOverrides } from "./playerTypes";
 
 /** Builds a pre-staminaMod ResolvedPlayerMods entry (6 fields, no staminaMod). */
 function makeOldMods(

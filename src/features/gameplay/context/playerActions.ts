@@ -3,11 +3,13 @@ import { pitchName, pitchStrikeZoneMod } from "@feat/gameplay/constants/pitchTyp
 import getRandomInt from "@feat/gameplay/utils/getRandomInt";
 import { Hit } from "@shared/constants/hitTypes";
 
+import type { OnePitchModifier } from "./decisionTypes";
+import type { State } from "./gameStateTypes";
 import { hitBall } from "./hitBall";
-import { OnePitchModifier, State, Strategy } from "./index";
 import { updateActivePitcherLog } from "./pitcherLog";
 import { computeFatigueFactor } from "./pitchSimulation";
 import { incrementPitchCount, playerOut } from "./playerOut";
+import type { Strategy } from "./playerTypes";
 import { ZERO_MODS } from "./resolvePlayerMods";
 import { stratMod } from "./strategy";
 

@@ -13,26 +13,13 @@ vi.stubGlobal("confirm", confirmMock);
 afterAll(() => vi.unstubAllGlobals());
 
 import type { SaveDoc } from "@storage/types";
+import { makeSaveDoc } from "@test/helpers/saves";
 
 import { DELETE_SAVE_CONFIRM_MSG } from "./index";
 import SaveSlotList from "./index";
 
-const makeSave = (overrides: Partial<SaveDoc> = {}): SaveDoc =>
-  ({
-    id: "save_1",
-    name: "Test Save",
-    seed: "abc",
-    homeTeamId: "Home",
-    awayTeamId: "Away",
-    createdAt: 1000,
-    updatedAt: 2000,
-    progressIdx: 0,
-    schemaVersion: 1,
-    ...overrides,
-  }) as SaveDoc;
-
 const defaultProps = {
-  saves: [makeSave()],
+  saves: [makeSaveDoc()],
   onLoad: vi.fn(),
   onExport: vi.fn(),
   onDelete: vi.fn(),

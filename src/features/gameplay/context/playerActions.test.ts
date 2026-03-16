@@ -7,9 +7,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { makeLogs, makeState } from "@test/testHelpers";
 
-import type { ModPreset } from "./index";
-import type { TeamCustomPlayerOverrides } from "./index";
 import { playerWait } from "./playerActions";
+import type { ModPreset, TeamCustomPlayerOverrides } from "./playerTypes";
 
 afterEach(() => {
   vi.restoreAllMocks();

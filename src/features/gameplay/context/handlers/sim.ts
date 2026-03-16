@@ -3,11 +3,12 @@ import { pitchName } from "@feat/gameplay/constants/pitchTypes";
 import { Hit } from "@shared/constants/hitTypes";
 
 import { checkWalkoff } from "../gameOver";
+import type { GameAction, State } from "../gameStateTypes";
 import { handleBallInPlay, hitBall } from "../hitBall";
-import type { GameAction, State, Strategy } from "../index";
 import type { BattedBallType } from "../pitchSimulation";
 import { buntAttempt, playerStrike, playerWait, stealAttempt } from "../playerActions";
 import { incrementPitchCount } from "../playerOut";
+import type { Strategy } from "../playerTypes";
 import type { ReducerCtx } from "../reducerHelpers";
 import { withDecisionLog, withStrikeoutLog } from "../reducerHelpers";
 

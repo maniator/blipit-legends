@@ -6,7 +6,7 @@
  * maps to a final ball-in-play result.
  */
 
-import type { Strategy } from "../index";
+import type { Strategy } from "../playerTypes";
 
 /** Broad contact quality categories. */
 export type ContactQuality = "weak" | "medium" | "hard";

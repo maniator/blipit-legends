@@ -1,4 +1,5 @@
-import type { State, Strategy } from "./index";
+import type { State } from "./gameStateTypes";
+import type { Strategy } from "./playerTypes";
 
 /**
  * AI manager strategy selection — mirrors the choices a human manager can make.

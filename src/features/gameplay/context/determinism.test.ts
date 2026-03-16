@@ -14,20 +14,10 @@ import { restoreRng } from "@shared/utils/rng";
 import { generateRoster } from "@shared/utils/roster";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { makeState } from "@test/testHelpers";
-
-import reducerFactory from "./reducer";
+import { makeReducer, makeState } from "@test/testHelpers";
 
 // A fixed seed to use across tests — arbitrary but stable.
 const FIXED_SEED = 0x12ab34cd;
-
-const makeReducer = () => {
-  const logs: string[] = [];
-  const dispatch = (a: LogAction) => {
-    if (a.type === "log") logs.push(a.payload);
-  };
-  return { reducer: reducerFactory(dispatch), logs };
-};
 
 /**
  * Drives the reducer forward using a repeating pattern of hits and strikeouts

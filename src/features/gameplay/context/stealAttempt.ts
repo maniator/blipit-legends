@@ -1,6 +1,6 @@
 import getRandomInt from "@feat/gameplay/utils/getRandomInt";
 
-import type { State } from "./index";
+import type { State } from "./gameStateTypes";
 import { playerOut } from "./playerOut";
 
 export const stealAttempt = (

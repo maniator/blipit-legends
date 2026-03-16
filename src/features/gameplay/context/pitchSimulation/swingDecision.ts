@@ -8,7 +8,8 @@
 import type { PitchType } from "@feat/gameplay/constants/pitchTypes";
 import { pitchSwingRateMod } from "@feat/gameplay/constants/pitchTypes";
 
-import type { OnePitchModifier, Strategy } from "../index";
+import type { OnePitchModifier } from "../decisionTypes";
+import type { Strategy } from "../playerTypes";
 
 /** Per-strategy swing-rate multipliers (relative to "balanced" = 1.0). */
 const SWING_RATE_MODS: Record<Strategy, number> = {

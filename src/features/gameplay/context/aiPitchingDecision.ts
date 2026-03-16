@@ -1,13 +1,13 @@
 import { random } from "@shared/utils/rng";
 
 import type { AiDecision, AiDecisionReason } from "./aiTypes";
+import type { State } from "./gameStateTypes";
 import {
   buildHandednessMatchup,
   getHandednessOutcomeModifiers,
   resolvePitcherHandedness,
   resolvePlayerHandedness,
 } from "./handednessMatchup";
-import type { State } from "./index";
 import { computeFatigueFactor } from "./pitchSimulation";
 
 /** Pitch-count reference thresholds used to derive fatigue-factor limits below. */
