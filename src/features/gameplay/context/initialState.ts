@@ -49,6 +49,7 @@ export const createFreshGameState = (
   lineupPositions: [[], []] as [string[], string[]],
   pitcherBattersFaced: [0, 0] as [number, number],
   pitcherPitchCount: [0, 0] as [number, number],
+  batterPlateAppearances: [{}, {}] as [Record<string, number>, Record<string, number>],
   substitutedOut: [[], []] as [string[], string[]],
   baseRunnerIds: [null, null, null] as [string | null, string | null, string | null],
   resolvedMods: [{}, {}] as [
@@ -73,10 +74,10 @@ export const createFreshGameState = (
  * that stored null rather than omitting the field entirely.
  */
 /**
- * Ensures every entry in a resolved-mods map has `staminaMod` present.
- * Saves written before `staminaMod` was added to `ResolvedPlayerMods` lack
- * the field; without this backfill `computeFatigueFactor` would receive
- * `undefined` and return `NaN`, silently breaking the fatigue model.
+ * Ensures every entry in a resolved-mods map has stamina fields present.
+ * Saves written before fatigue fields were added to `ResolvedPlayerMods` may
+ * lack one or both keys; without backfill the fatigue model could receive
+ * `undefined` and produce invalid math.
  */
 const backfillTeamMods = (
   teamMods: Record<string, ResolvedPlayerMods>,
@@ -84,7 +85,10 @@ const backfillTeamMods = (
   Object.fromEntries(
     Object.entries(teamMods).map(([id, m]) => [
       id,
-      m.staminaMod !== undefined ? m : { ...m, staminaMod: 0 },
+      {
+        ...m,
+        staminaMod: m.staminaMod ?? 0,
+      },
     ]),
   );
 
@@ -124,6 +128,7 @@ export const backfillRestoredState = (restored: State): State => {
     lineupPositions: base.lineupPositions ?? [[], []],
     pitcherBattersFaced: base.pitcherBattersFaced ?? [0, 0],
     pitcherPitchCount: base.pitcherPitchCount ?? [0, 0],
+    batterPlateAppearances: base.batterPlateAppearances ?? [{}, {}],
     substitutedOut: base.substitutedOut ?? [[], []],
     baseRunnerIds: base.baseRunnerIds ?? [null, null, null],
     resolvedMods:

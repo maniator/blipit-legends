@@ -12,12 +12,37 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  computeBatterFatigueFactor,
   computeFatigueFactor,
   computeSwingRate,
   resolveBattedBallType,
   resolveContactQuality,
   resolveSwingOutcome,
 } from "./pitchSimulation";
+
+describe("computeBatterFatigueFactor", () => {
+  it("returns no penalties for fresh batters", () => {
+    const result = computeBatterFatigueFactor(2, 0);
+    expect(result.fatigueFactor).toBe(1);
+    expect(result.contactPenalty).toBe(0);
+    expect(result.powerPenalty).toBe(0);
+  });
+
+  it("increases penalties as plate appearances rise", () => {
+    const mid = computeBatterFatigueFactor(6, 0);
+    const late = computeBatterFatigueFactor(9, 0);
+    expect(late.fatigueFactor).toBeGreaterThan(mid.fatigueFactor);
+    expect(late.contactPenalty).toBeGreaterThanOrEqual(mid.contactPenalty);
+    expect(late.powerPenalty).toBeGreaterThanOrEqual(mid.powerPenalty);
+  });
+
+  it("higher stamina delays fatigue onset", () => {
+    const low = computeBatterFatigueFactor(6, -20);
+    const high = computeBatterFatigueFactor(6, 20);
+    expect(high.fatigueFactor).toBeLessThanOrEqual(low.fatigueFactor);
+    expect(high.contactPenalty).toBeLessThanOrEqual(low.contactPenalty);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // computeFatigueFactor

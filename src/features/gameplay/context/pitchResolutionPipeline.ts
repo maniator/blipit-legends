@@ -7,6 +7,7 @@ import {
   resolvePlayerHandedness,
 } from "@feat/gameplay/context/handednessMatchup";
 import {
+  computeBatterFatigueFactor,
   computeFatigueFactor,
   computeSwingRate,
   resolveBattedBallType,
@@ -82,6 +83,12 @@ export function resolvePitch({
     pitcherMods.staminaMod,
   );
 
+  const batterPlateAppearances = (currentState.batterPlateAppearances ?? [{}, {}])[battingTeam];
+  const batterPaCount = batterId ? (batterPlateAppearances[batterId] ?? 0) : 0;
+  const batterFatigue = computeBatterFatigueFactor(batterPaCount, batterMods.staminaMod);
+  const effectiveBatterContactMod = batterMods.contactMod - batterFatigue.contactPenalty;
+  const effectiveBatterPowerMod = batterMods.powerMod - batterFatigue.powerPenalty;
+
   // 2. Determine swing vs. take.
   const swingRoll = getRandomInt(1000);
   const swingRate = computeSwingRate(currentStrikes, {
@@ -98,7 +105,7 @@ export function resolvePitch({
     const swingOutcome = resolveSwingOutcome(outcomeRoll, {
       pitcherVelocityMod: pitcherMods.velocityMod,
       pitcherMovementMod: pitcherMods.movementMod,
-      batterContactMod: batterMods.contactMod,
+      batterContactMod: effectiveBatterContactMod,
       fatigueFactor,
       whiffRateMultiplier: matchupMods.whiffRateMultiplier,
     });
@@ -113,7 +120,7 @@ export function resolvePitch({
       const typeRoll = getRandomInt(100);
       const battedBallType = resolveBattedBallType(contactRoll, typeRoll, {
         strategy: effectiveStrategy,
-        batterPowerMod: batterMods.powerMod,
+        batterPowerMod: effectiveBatterPowerMod,
         pitcherVelocityMod: pitcherMods.velocityMod,
         pitcherMovementMod: pitcherMods.movementMod,
         fatigueFactor,
