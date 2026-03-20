@@ -134,7 +134,7 @@ describe("stripTeamPlayerSigs", () => {
     });
     const cleaned = stripTeamPlayerSigs(team);
     expect("sig" in cleaned.roster.lineup[0]).toBe(false);
-    expect("sig" in cleaned.roster.bench[0]).toBe(false);
+    expect("sig" in (cleaned.roster.bench ?? [])[0]).toBe(false);
     expect("sig" in cleaned.roster.pitchers[0]).toBe(false);
   });
 

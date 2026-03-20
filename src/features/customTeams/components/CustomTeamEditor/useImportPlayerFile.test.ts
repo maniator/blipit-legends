@@ -5,7 +5,12 @@ import { CustomTeamStore } from "@feat/customTeams/storage/customTeamStore";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { TeamPlayer, TeamWithRoster } from "@storage/types";
+import type {
+  TeamBatterPlayer,
+  TeamPitcherPlayer,
+  TeamPlayer,
+  TeamWithRoster,
+} from "@storage/types";
 
 import type { EditorAction, EditorPlayer } from "./editorState";
 import type { PendingPlayerImport } from "./useImportPlayerFile";
@@ -38,16 +43,27 @@ afterAll(() => vi.unstubAllGlobals());
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const makePlayerJson = (overrides: Partial<TeamPlayer> = {}): string => {
-  const player: TeamPlayer = {
-    id: "p_src",
-    name: "Imported Batter",
-    role: "batter",
-    batting: { contact: 70, power: 60, speed: 55 },
-    ...overrides,
-  };
+function makePlayerJson(overrides?: Partial<TeamBatterPlayer> & { role?: "batter" }): string;
+function makePlayerJson(overrides: Partial<TeamPitcherPlayer> & { role: "pitcher" }): string;
+function makePlayerJson(overrides: Partial<TeamPlayer> = {}): string {
+  const player: TeamPlayer =
+    overrides.role === "pitcher"
+      ? {
+          id: "p_src",
+          name: "Imported Pitcher",
+          role: "pitcher",
+          pitching: { velocity: 70, control: 60, movement: 55, stamina: 60 },
+          ...(overrides as Partial<TeamPitcherPlayer>),
+        }
+      : {
+          id: "p_src",
+          name: "Imported Batter",
+          role: "batter",
+          batting: { contact: 70, power: 60, speed: 55, stamina: 50 },
+          ...(overrides as Partial<TeamBatterPlayer>),
+        };
   return exportCustomPlayer(player);
-};
+}
 
 const makeTeamDoc = (id: string, name: string, players: TeamPlayer[] = []): TeamWithRoster => ({
   id,

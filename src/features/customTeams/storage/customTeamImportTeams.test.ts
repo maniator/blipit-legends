@@ -238,13 +238,13 @@ describe("importCustomTeams", () => {
     const t = result.teams[0];
     const allIds = [
       ...t.roster.lineup.map((p) => p.id),
-      ...t.roster.bench.map((p) => p.id),
+      ...(t.roster.bench ?? []).map((p) => p.id),
       ...t.roster.pitchers.map((p) => p.id),
     ];
     // All IDs within the roster must be unique
     expect(new Set(allIds).size).toBe(allIds.length);
     // The bench player (second occurrence of the shared ID) must have been remapped
-    expect(t.roster.bench[0].id).not.toBe(sharedId);
+    expect(t.roster.bench?.[0]?.id).not.toBe(sharedId);
     // The lineup player (first occurrence) keeps the original ID
     expect(t.roster.lineup[0].id).toBe(sharedId);
   });
@@ -326,7 +326,7 @@ describe("exportCustomTeams / importCustomTeams — full player and team field r
     const json = exportCustomTeams([team]);
     const result = importCustomTeams(json, []);
     expect(result.teams[0].roster.lineup[0].handedness).toBe("L");
-    expect(result.teams[0].roster.bench[0].handedness).toBe("S");
+    expect(result.teams[0].roster.bench?.[0]?.handedness).toBe("S");
     expect(result.teams[0].roster.pitchers[0].handedness).toBe("R");
   });
 
@@ -349,7 +349,7 @@ describe("exportCustomTeams / importCustomTeams — full player and team field r
     const json = exportCustomTeams([team]);
     const result = importCustomTeams(json, []);
     expect(result.teams[0].roster.lineup[0].position).toBe("SS");
-    expect(result.teams[0].roster.bench[0].position).toBe("C");
+    expect(result.teams[0].roster.bench?.[0]?.position).toBe("C");
     expect(result.teams[0].roster.pitchers[0].position).toBe("P");
   });
 
@@ -406,14 +406,14 @@ describe("exportCustomTeams / importCustomTeams — full player and team field r
       isBenchEligible: true,
       isPitcherEligible: false,
     });
-    const twoWay = makePlayer({
-      role: "two-way",
+    const extraBatter = makePlayer({
+      role: "batter",
       isBenchEligible: true,
       isPitcherEligible: true,
-      pitching: { velocity: 80, control: 75, movement: 70 },
+      batting: { contact: 80, power: 75, speed: 70, stamina: 50 },
     });
     const team = makeTeam({
-      roster: { schemaVersion: 1, lineup: [bench, twoWay], bench: [], pitchers: [] },
+      roster: { schemaVersion: 1, lineup: [bench, extraBatter], bench: [], pitchers: [] },
     });
     const json = exportCustomTeams([team]);
     const result = importCustomTeams(json, []);

@@ -14,10 +14,14 @@ export type {
   TeamCareerSummary,
 } from "@feat/careerStats/storage/types";
 export type {
+  BatterPlayerRecord,
   CreateCustomTeamInput,
   CustomTeamMetadata,
   ExportedCustomTeams,
+  PitcherPlayerRecord,
   PlayerRecord,
+  TeamBatterPlayer,
+  TeamPitcherPlayer,
   TeamPlayer,
   TeamPlayerBatting,
   TeamPlayerPitching,

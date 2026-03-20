@@ -101,9 +101,13 @@ describe("createCustomTeam", () => {
     });
     const id = await store.createCustomTeam(makeInput({ roster: { lineup: [player] } }));
     const team = await store.getCustomTeam(id);
-    expect(team?.roster.lineup[0].batting.contact).toBe(100);
-    expect(team?.roster.lineup[0].batting.power).toBe(0);
-    expect(team?.roster.lineup[0].batting.speed).toBe(50);
+    const lineupPlayer = team?.roster.lineup[0];
+    if (!lineupPlayer || lineupPlayer.role !== "batter") {
+      throw new Error("Expected first lineup player to be a batter in test setup");
+    }
+    expect(lineupPlayer.batting.contact).toBe(100);
+    expect(lineupPlayer.batting.power).toBe(0);
+    expect(lineupPlayer.batting.speed).toBe(50);
   });
 
   it("clamps pitching stats to 0–100", async () => {
@@ -129,7 +133,7 @@ describe("createCustomTeam", () => {
     const player = makePlayer({ role: "invalid" as "batter" });
     await expect(
       store.createCustomTeam(makeInput({ roster: { lineup: [player] } })),
-    ).rejects.toThrow('roster lineup[0].role must be "batter", "pitcher", or "two-way"');
+    ).rejects.toThrow('roster lineup[0].role must be "batter" or "pitcher"');
   });
 
   it("stores bench and pitchers arrays", async () => {
@@ -143,8 +147,8 @@ describe("createCustomTeam", () => {
       makeInput({ roster: { lineup: [makePlayer()], bench: [bench], pitchers: [pitcher] } }),
     );
     const team = await store.getCustomTeam(id);
-    expect(team?.roster.bench).toHaveLength(1);
-    expect(team?.roster.bench[0].name).toBe("Bench Guy");
+    expect(team?.roster.bench ?? []).toHaveLength(1);
+    expect(team?.roster.bench?.[0]?.name).toBe("Bench Guy");
     expect(team?.roster.pitchers).toHaveLength(1);
     expect(team?.roster.pitchers[0].name).toBe("Pitcher Joe");
   });

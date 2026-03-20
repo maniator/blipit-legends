@@ -36,7 +36,7 @@ export async function orchestrateTeamImport(
     const clampedRoster = {
       ...team.roster,
       lineup: team.roster.lineup.map((p, i) => sanitizeImported(p, "lineup", i)),
-      bench: team.roster.bench.map((p, i) => sanitizeImported(p, "bench", i)),
+      bench: (team.roster.bench ?? []).map((p, i) => sanitizeImported(p, "bench", i)),
       pitchers: team.roster.pitchers.map((p, i) => sanitizeImported(p, "pitchers", i)),
     };
     const newDocIds = await writePlayerRecords(db, team.id, clampedRoster);
@@ -106,17 +106,23 @@ export async function importPlayerIntoTeam(
   // Append to the target section and persist.
   const allTargetIds = new Set([
     ...targetTeam.roster.lineup.map((p) => p.id),
-    ...targetTeam.roster.bench.map((p) => p.id),
+    ...(targetTeam.roster.bench ?? []).map((p) => p.id),
     ...targetTeam.roster.pitchers.map((p) => p.id),
   ]);
   const playerToInsert: TeamPlayer = allTargetIds.has(player.id)
     ? { ...player, id: generatePlayerId() }
     : player;
-  const updatedSection = [...targetTeam.roster[section], playerToInsert];
+  const currentSection =
+    section === "lineup"
+      ? targetTeam.roster.lineup
+      : section === "bench"
+        ? (targetTeam.roster.bench ?? [])
+        : targetTeam.roster.pitchers;
+  const updatedSection = [...currentSection, playerToInsert];
   await updateFn(targetTeamId, {
     roster: {
       lineup: section === "lineup" ? updatedSection : targetTeam.roster.lineup,
-      bench: section === "bench" ? updatedSection : targetTeam.roster.bench,
+      bench: section === "bench" ? updatedSection : (targetTeam.roster.bench ?? []),
       pitchers: section === "pitchers" ? updatedSection : targetTeam.roster.pitchers,
     },
   });

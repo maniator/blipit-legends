@@ -268,7 +268,7 @@ describe("players collection", () => {
         orderIndex: 0,
         name: "Pitcher",
         role: "pitcher",
-        batting: { contact: 20, power: 10, speed: 15 },
+        pitching: { velocity: 70, control: 65, movement: 60, stamina: 60 },
         createdAt: "2024-01-01T00:00:00.000Z",
 
         updatedAt: "2024-01-01T00:00:00.000Z",

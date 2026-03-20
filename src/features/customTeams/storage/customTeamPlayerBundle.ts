@@ -109,12 +109,22 @@ export function parseExportedCustomPlayer(json: string): TeamPlayer {
     throw new Error("Invalid player file: missing required field: name");
   if (typeof playerObj["role"] !== "string")
     throw new Error("Invalid player file: missing required field: role");
-  if (!["batter", "pitcher", "two-way"].includes(playerObj["role"] as string))
+  if (!["batter", "pitcher"].includes(playerObj["role"] as string))
     throw new Error(
-      `Invalid player file: invalid role "${playerObj["role"] as string}" — must be "batter", "pitcher", or "two-way"`,
+      `Invalid player file: invalid role "${playerObj["role"] as string}" — must be "batter" or "pitcher"`,
     );
-  if (!playerObj["batting"] || typeof playerObj["batting"] !== "object")
+  if (
+    playerObj["role"] === "batter" &&
+    (!playerObj["batting"] || typeof playerObj["batting"] !== "object")
+  ) {
     throw new Error("Invalid player file: missing required field: batting");
+  }
+  if (
+    playerObj["role"] === "pitcher" &&
+    (!playerObj["pitching"] || typeof playerObj["pitching"] !== "object")
+  ) {
+    throw new Error("Invalid player file: missing required field: pitching");
+  }
 
   // ── Bundle signature ───────────────────────────────────────────────────────
   const expectedBundleSig = fnv1a(PLAYER_EXPORT_KEY + JSON.stringify(obj["payload"]));

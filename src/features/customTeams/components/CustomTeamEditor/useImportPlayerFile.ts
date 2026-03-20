@@ -70,9 +70,9 @@ export function useImportPlayerFile({
             name: importedPlayer.name,
             position: importedPlayer.position ?? "",
             handedness: importedPlayer.handedness ?? "R",
-            contact: importedPlayer.batting.contact,
-            power: importedPlayer.batting.power,
-            speed: importedPlayer.batting.speed,
+            contact: importedPlayer.role === "batter" ? importedPlayer.batting.contact : 40,
+            power: importedPlayer.role === "batter" ? importedPlayer.batting.power : 40,
+            speed: importedPlayer.role === "batter" ? importedPlayer.batting.speed : 40,
             // Only carry pitching stats when importing into the pitchers section.
             ...(section === "pitchers" &&
               importedPlayer.pitching && {
@@ -117,7 +117,7 @@ export function useImportPlayerFile({
             } else {
               // Create mode: manual cross-team check using stable player id.
               const owningTeam = allTeams.find((t: TeamWithRoster) =>
-                [...t.roster.lineup, ...t.roster.bench, ...t.roster.pitchers].some(
+                [...t.roster.lineup, ...(t.roster.bench ?? []), ...t.roster.pitchers].some(
                   (p: TeamPlayer) => p.id === importedPlayer.id,
                 ),
               );
@@ -161,7 +161,7 @@ export function useImportPlayerFile({
             });
 
           const existingTeamWithPlayer = allTeams.find((t: TeamWithRoster) =>
-            [...t.roster.lineup, ...t.roster.bench, ...t.roster.pitchers].some(
+            [...t.roster.lineup, ...(t.roster.bench ?? []), ...t.roster.pitchers].some(
               (p: TeamPlayer) => (p.fingerprint ?? buildPlayerSig(p)) === incomingFp,
             ),
           );

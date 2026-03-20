@@ -73,7 +73,7 @@ export function importCustomTeams(
   const existingPlayerIds = new Set(
     existingTeams.flatMap((t) => [
       ...t.roster.lineup.map((p) => p.id),
-      ...t.roster.bench.map((p) => p.id),
+      ...(t.roster.bench ?? []).map((p) => p.id),
       ...t.roster.pitchers.map((p) => p.id),
     ]),
   );
@@ -86,7 +86,7 @@ export function importCustomTeams(
   // fall back to `buildPlayerSig(p)` for players that lack a stored fingerprint.
   const existingPlayerSigs = new Set<string>();
   for (const t of existingTeams) {
-    for (const p of [...t.roster.lineup, ...t.roster.bench, ...t.roster.pitchers]) {
+    for (const p of [...t.roster.lineup, ...(t.roster.bench ?? []), ...t.roster.pitchers]) {
       existingPlayerSigs.add(p.fingerprint ?? buildPlayerSig(p));
     }
   }

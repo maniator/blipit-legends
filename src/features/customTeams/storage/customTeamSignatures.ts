@@ -68,7 +68,7 @@ export function stripTeamPlayerSigs(team: TeamWithRoster): TeamWithRoster {
     roster: {
       ...team.roster,
       lineup: team.roster.lineup.map(stripPlayerSig),
-      bench: team.roster.bench.map(stripPlayerSig),
+      bench: (team.roster.bench ?? []).map(stripPlayerSig),
       pitchers: team.roster.pitchers.map(stripPlayerSig),
     },
   };

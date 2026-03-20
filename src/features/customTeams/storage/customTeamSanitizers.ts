@@ -60,32 +60,40 @@ export function clampStat(value: number): number {
  * Does not validate totals — call `validatePlayerStatCaps` after this if needed.
  */
 export function clampPlayerStats(player: TeamPlayer): TeamPlayer {
+  const clampedBatting = (batting: NonNullable<TeamPlayer["batting"]>) => ({
+    contact: clampStat(batting.contact),
+    power: clampStat(batting.power),
+    speed: clampStat(batting.speed),
+    ...(batting.stamina !== undefined && {
+      stamina: clampStat(batting.stamina),
+    }),
+  });
+
+  const clampedPitching = (pitching: NonNullable<TeamPlayer["pitching"]>) => ({
+    ...(pitching.velocity !== undefined && {
+      velocity: clampStat(pitching.velocity),
+    }),
+    ...(pitching.control !== undefined && {
+      control: clampStat(pitching.control),
+    }),
+    ...(pitching.movement !== undefined && {
+      movement: clampStat(pitching.movement),
+    }),
+    ...(pitching.stamina !== undefined && {
+      stamina: clampStat(pitching.stamina),
+    }),
+  });
+
+  if (player.role === "pitcher") {
+    return {
+      ...player,
+      pitching: clampedPitching(player.pitching),
+    };
+  }
+
   return {
     ...player,
-    batting: {
-      contact: clampStat(player.batting.contact),
-      power: clampStat(player.batting.power),
-      speed: clampStat(player.batting.speed),
-      ...(player.batting.stamina !== undefined && {
-        stamina: clampStat(player.batting.stamina),
-      }),
-    },
-    ...(player.pitching && {
-      pitching: {
-        ...(player.pitching.velocity !== undefined && {
-          velocity: clampStat(player.pitching.velocity),
-        }),
-        ...(player.pitching.control !== undefined && {
-          control: clampStat(player.pitching.control),
-        }),
-        ...(player.pitching.movement !== undefined && {
-          movement: clampStat(player.pitching.movement),
-        }),
-        ...(player.pitching.stamina !== undefined && {
-          stamina: clampStat(player.pitching.stamina),
-        }),
-      },
-    }),
+    batting: clampedBatting(player.batting),
   };
 }
 
@@ -145,85 +153,70 @@ export function sanitizePlayer(
   const name = requireNonEmpty(player.name, `roster ${section}[${index}].name`);
   const position = requireNonEmpty(player.position, `roster ${section}[${index}].position`);
   const handedness = requireHandedness(player.handedness, `roster ${section}[${index}].handedness`);
-  if (!["batter", "pitcher", "two-way"].includes(player.role)) {
-    throw new Error(`roster ${section}[${index}].role must be "batter", "pitcher", or "two-way"`);
+  if (player.role !== "batter" && player.role !== "pitcher") {
+    throw new Error(`roster ${section}[${index}].role must be "batter" or "pitcher"`);
   }
-  if (!player.batting || typeof player.batting !== "object") {
+  if (player.role === "batter" && (!player.batting || typeof player.batting !== "object")) {
     throw new Error(`roster ${section}[${index}].batting is required`);
   }
-  if (player.role !== "batter" && (!player.pitching || typeof player.pitching !== "object")) {
-    throw new Error(`roster ${section}[${index}].pitching is required for role "${player.role}"`);
+  if (player.role === "pitcher" && (!player.pitching || typeof player.pitching !== "object")) {
+    throw new Error(`roster ${section}[${index}].pitching is required`);
   }
-  if (player.role !== "batter") {
-    if (player.pitching?.velocity === undefined) {
-      throw new Error(`roster ${section}[${index}].pitching.velocity is required`);
-    }
-    if (player.pitching?.control === undefined) {
-      throw new Error(`roster ${section}[${index}].pitching.control is required`);
-    }
-    if (player.pitching?.movement === undefined) {
-      throw new Error(`roster ${section}[${index}].pitching.movement is required`);
-    }
-    if (player.pitching?.stamina === undefined) {
-      throw new Error(`roster ${section}[${index}].pitching.stamina is required`);
-    }
-  }
-  const sanitized: TeamPlayer = {
-    ...player,
+  const sanitizedBase = {
+    id: player.id,
     name,
     position,
     handedness,
-    batting: {
-      contact: clampStat(
-        requireFiniteNumber(player.batting.contact, `roster ${section}[${index}].batting.contact`),
-      ),
-      power: clampStat(
-        requireFiniteNumber(player.batting.power, `roster ${section}[${index}].batting.power`),
-      ),
-      speed: clampStat(
-        requireFiniteNumber(player.batting.speed, `roster ${section}[${index}].batting.speed`),
-      ),
-      stamina: clampStat(
-        requireFiniteNumber(player.batting.stamina, `roster ${section}[${index}].batting.stamina`),
-      ),
-    },
-    ...(player.pitching && {
-      pitching: {
-        ...(player.pitching.velocity !== undefined && {
-          velocity: clampStat(
-            requireFiniteNumber(
-              player.pitching.velocity,
-              `roster ${section}[${index}].pitching.velocity`,
-            ),
-          ),
-        }),
-        ...(player.pitching.control !== undefined && {
-          control: clampStat(
-            requireFiniteNumber(
-              player.pitching.control,
-              `roster ${section}[${index}].pitching.control`,
-            ),
-          ),
-        }),
-        ...(player.pitching.movement !== undefined && {
-          movement: clampStat(
-            requireFiniteNumber(
-              player.pitching.movement,
-              `roster ${section}[${index}].pitching.movement`,
-            ),
-          ),
-        }),
-        ...(player.pitching.stamina !== undefined && {
-          stamina: clampStat(
-            requireFiniteNumber(
-              player.pitching.stamina,
-              `roster ${section}[${index}].pitching.stamina`,
-            ),
-          ),
-        }),
-      },
-    }),
+    isBenchEligible: player.isBenchEligible,
+    isPitcherEligible: player.isPitcherEligible,
+    jerseyNumber: player.jerseyNumber,
+    fingerprint: player.fingerprint,
+    sig: player.sig,
   };
+
+  const sanitizeBatting = (batting: NonNullable<TeamPlayer["batting"]>) => ({
+    contact: clampStat(
+      requireFiniteNumber(batting.contact, `roster ${section}[${index}].batting.contact`),
+    ),
+    power: clampStat(
+      requireFiniteNumber(batting.power, `roster ${section}[${index}].batting.power`),
+    ),
+    speed: clampStat(
+      requireFiniteNumber(batting.speed, `roster ${section}[${index}].batting.speed`),
+    ),
+    stamina: clampStat(
+      requireFiniteNumber(batting.stamina, `roster ${section}[${index}].batting.stamina`),
+    ),
+  });
+
+  const sanitizePitching = (pitching: NonNullable<TeamPlayer["pitching"]>) => ({
+    velocity: clampStat(
+      requireFiniteNumber(pitching.velocity, `roster ${section}[${index}].pitching.velocity`),
+    ),
+    control: clampStat(
+      requireFiniteNumber(pitching.control, `roster ${section}[${index}].pitching.control`),
+    ),
+    movement: clampStat(
+      requireFiniteNumber(pitching.movement, `roster ${section}[${index}].pitching.movement`),
+    ),
+    stamina: clampStat(
+      requireFiniteNumber(pitching.stamina, `roster ${section}[${index}].pitching.stamina`),
+    ),
+  });
+
+  const sanitized: TeamPlayer =
+    player.role === "pitcher"
+      ? {
+          ...sanitizedBase,
+          role: "pitcher",
+          pitching: sanitizePitching(player.pitching),
+          pitchingRole: player.pitchingRole,
+        }
+      : {
+          ...sanitizedBase,
+          role: "batter",
+          batting: sanitizeBatting(player.batting),
+        };
   // Enforce stat caps AFTER clamping so individual-stat clamping always runs first.
   // e.g. {contact:150, power:0, speed:50} → clamps to {100,0,50} = 150 (valid).
   validatePlayerStatCaps(sanitized, { section, index });

@@ -17,13 +17,10 @@ export interface TeamPlayerPitching {
 }
 
 /** A single player on a custom team roster. */
-export interface TeamPlayer {
+interface TeamPlayerBase {
   /** Stable ID within the team. */
   id: string;
   name: string;
-  role: "batter" | "pitcher" | "two-way";
-  batting: TeamPlayerBatting;
-  pitching?: TeamPlayerPitching;
   position?: string;
   handedness?: "R" | "L" | "S";
   isBenchEligible?: boolean;
@@ -31,7 +28,7 @@ export interface TeamPlayer {
   jerseyNumber?: number | null;
   /**
    * Pitcher role eligibility: SP = starter only, RP = reliever only, SP/RP = both (swingman).
-   * Only meaningful for pitchers (role === "pitcher" or "two-way").
+   * Only meaningful for pitchers (role === "pitcher").
    * Absent on older saves — backfill as "SP" for index 0, "RP" for others when needed.
    */
   pitchingRole?: "SP" | "RP" | "SP/RP";
@@ -54,11 +51,27 @@ export interface TeamPlayer {
   sig?: string;
 }
 
+export interface TeamBatterPlayer extends TeamPlayerBase {
+  role: "batter";
+  batting: TeamPlayerBatting;
+  pitching?: never;
+  pitchingRole?: never;
+}
+
+export interface TeamPitcherPlayer extends TeamPlayerBase {
+  role: "pitcher";
+  batting?: never;
+  pitching: TeamPlayerPitching;
+  pitchingRole?: "SP" | "RP" | "SP/RP";
+}
+
+export type TeamPlayer = TeamBatterPlayer | TeamPitcherPlayer;
+
 /** Roster embedded in a custom team document. */
 export interface TeamRoster {
   schemaVersion: number;
   lineup: TeamPlayer[];
-  bench: TeamPlayer[];
+  bench?: TeamPlayer[];
   pitchers: TeamPlayer[];
 }
 
@@ -99,7 +112,7 @@ export interface TeamRecord {
  * `id` is a stable global player ID (e.g. "pl_<fnv1a(id)>") — NOT team-scoped.
  * Moving a player between teams updates `teamId` without changing player identity.
  */
-export interface PlayerRecord {
+interface PlayerRecordBase {
   /**
    * Stable global player ID — e.g. the player's `globalPlayerId`.
    * Primary key. NOT team-scoped or composite.
@@ -114,22 +127,33 @@ export interface PlayerRecord {
   /** Zero-based position within the section — used for ordering when assembling the roster. */
   orderIndex: number;
   name: string;
-  role: "batter" | "pitcher" | "two-way";
-  /** Optional when role is "pitcher" — batters always have stats, pitchers may not. */
-  batting?: TeamPlayerBatting;
-  pitching?: TeamPlayerPitching;
   position?: string;
   handedness?: "R" | "L" | "S";
   isBenchEligible?: boolean;
   isPitcherEligible?: boolean;
   jerseyNumber?: number | null;
-  pitchingRole?: "SP" | "RP" | "SP/RP";
   /** Persistent FNV-1a content fingerprint covering immutable identity fields. */
   fingerprint?: string;
   createdAt: string;
   updatedAt: string;
   schemaVersion: number;
 }
+
+export interface BatterPlayerRecord extends PlayerRecordBase {
+  role: "batter";
+  batting: TeamPlayerBatting;
+  pitching?: never;
+  pitchingRole?: never;
+}
+
+export interface PitcherPlayerRecord extends PlayerRecordBase {
+  role: "pitcher";
+  batting?: never;
+  pitching: TeamPlayerPitching;
+  pitchingRole?: "SP" | "RP" | "SP/RP";
+}
+
+export type PlayerRecord = BatterPlayerRecord | PitcherPlayerRecord;
 
 /** View type: TeamRecord with an assembled roster attached. Not a stored document.
  *  Returned by `populateRoster` and used throughout the adapter/component layer.

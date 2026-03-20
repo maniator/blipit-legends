@@ -200,7 +200,6 @@ describe("importCustomTeams — stat cap enforcement", () => {
             id: "p_overcap_pitch",
             name: "Over Cap Pitcher",
             role: "pitcher" as const,
-            batting: { contact: 30, power: 20, speed: 25, stamina: 50 },
             pitching: { velocity: 70, control: 60, movement: 55, stamina: 60 }, // 185 > 160
             position: "P",
             handedness: "R" as const,
@@ -246,6 +245,7 @@ describe("importCustomTeams — stat cap enforcement", () => {
     const imported = await store.getCustomTeam("ct_overstat_clamp_test");
     expect(imported).not.toBeNull();
     const player = imported!.roster.lineup[0];
+    if (player.role !== "batter") throw new Error("Expected batter");
     // contact was clamped from 120 → 100
     expect(player.batting.contact).toBe(100);
     expect(player.batting.power).toBe(20);

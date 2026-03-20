@@ -83,7 +83,7 @@ describe("assembleRoster", () => {
     const players = await fetchTeamPlayers(db, teamId);
     const roster = assembleRoster(players);
     expect(roster.lineup.map((p) => p.name)).toEqual(["L1", "L2"]);
-    expect(roster.bench.map((p) => p.name)).toEqual(["B1"]);
+    expect((roster.bench ?? []).map((p) => p.name)).toEqual(["B1"]);
     expect(roster.pitchers.map((p) => p.name)).toEqual(["P1"]);
   });
 

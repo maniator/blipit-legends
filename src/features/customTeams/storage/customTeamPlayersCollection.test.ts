@@ -107,7 +107,7 @@ describe("players collection integration", () => {
     expect(team?.roster.lineup[0].name).toBe("Batter A");
     expect(team?.roster.lineup[1].name).toBe("Batter B");
     expect(team?.roster.bench).toHaveLength(1);
-    expect(team?.roster.bench[0].name).toBe("Bench C");
+    expect(team?.roster.bench?.[0]?.name).toBe("Bench C");
     expect(team?.roster.pitchers).toHaveLength(1);
     expect(team?.roster.pitchers[0].name).toBe("Pitcher D");
   });
@@ -236,7 +236,7 @@ describe("players collection integration", () => {
     );
     const team = await store.getCustomTeam(id);
     expect(team?.roster.lineup.map((p) => p.name)).toEqual(["Lineup 0", "Lineup 1", "Lineup 2"]);
-    expect(team?.roster.bench.map((p) => p.name)).toEqual(["Bench 0", "Bench 1"]);
+    expect((team?.roster.bench ?? []).map((p) => p.name)).toEqual(["Bench 0", "Bench 1"]);
     expect(team?.roster.pitchers.map((p) => p.name)).toEqual(["Pitcher 0"]);
   });
 
