@@ -148,10 +148,15 @@ export function useImportPlayerFile({
             buildPlayerSig({
               name: p.name,
               role: p.velocity !== undefined ? "pitcher" : "batter",
-              batting: { contact: p.contact, power: p.power, speed: p.speed },
+              batting: { contact: p.contact, power: p.power, speed: p.speed, stamina: 50 },
               pitching:
                 p.velocity !== undefined
-                  ? { velocity: p.velocity, control: p.control ?? 60, movement: p.movement ?? 60 }
+                  ? {
+                      velocity: p.velocity,
+                      control: p.control ?? 60,
+                      movement: p.movement ?? 60,
+                      stamina: 60,
+                    }
                   : undefined,
             });
 

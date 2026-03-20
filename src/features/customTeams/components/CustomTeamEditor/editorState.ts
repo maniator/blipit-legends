@@ -265,19 +265,38 @@ export function editorStateToCreateInput(state: EditorState): CreateCustomTeamIn
 
 const editorToTeamPlayer =
   (role: "batter" | "pitcher") =>
-  (p: EditorPlayer): TeamPlayer => ({
-    id: p.id,
-    name: p.name.trim(),
-    role,
-    position: p.position || undefined,
-    handedness: p.handedness || undefined,
-    batting: { contact: p.contact, power: p.power, speed: p.speed },
-    ...(role === "pitcher" &&
-      p.velocity !== undefined && {
-        pitching: { velocity: p.velocity, control: p.control ?? 60, movement: p.movement ?? 60 },
-      }),
-    ...(role === "pitcher" && p.pitchingRole !== undefined && { pitchingRole: p.pitchingRole }),
-  });
+  (p: EditorPlayer): TeamPlayer => {
+    const trimmedPosition = p.position.trim();
+    const pitcherRoleFromPosition =
+      trimmedPosition === "SP" || trimmedPosition === "RP" || trimmedPosition === "SP/RP"
+        ? trimmedPosition
+        : undefined;
+    const normalizedPitchingRole = p.pitchingRole ?? pitcherRoleFromPosition ?? "SP/RP";
+
+    const base: TeamPlayer = {
+      id: p.id,
+      name: p.name.trim(),
+      role,
+      position: role === "pitcher" ? normalizedPitchingRole : trimmedPosition || "DH",
+      handedness: p.handedness,
+      batting: { contact: p.contact, power: p.power, speed: p.speed, stamina: 50 },
+    };
+
+    if (role === "pitcher") {
+      return {
+        ...base,
+        pitching: {
+          velocity: p.velocity ?? 60,
+          control: p.control ?? 60,
+          movement: p.movement ?? 60,
+          stamina: 60,
+        },
+        pitchingRole: normalizedPitchingRole,
+      };
+    }
+
+    return base;
+  };
 
 /**
  * Converts a single `EditorPlayer` to a `TeamPlayer` with the given role.

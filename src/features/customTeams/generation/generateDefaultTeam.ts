@@ -10,8 +10,8 @@ export interface GeneratedPlayer {
   role: "batter" | "pitcher";
   position?: string;
   handedness?: "R" | "L" | "S";
-  batting: { contact: number; power: number; speed: number };
-  pitching?: { velocity: number; control: number; movement: number };
+  batting: { contact: number; power: number; speed: number; stamina: number };
+  pitching?: { velocity: number; control: number; movement: number; stamina: number };
   pitchingRole?: "SP" | "RP" | "SP/RP";
 }
 
@@ -88,21 +88,31 @@ export function generateDefaultCustomTeamDraft(seed: string | number): CustomTea
   };
 
   /** Generate batting stats using the full HITTER_STAT_CAP budget, distributed naturally. */
-  const randBatterStats = (): { contact: number; power: number; speed: number } => {
+  const randBatterStats = (): {
+    contact: number;
+    power: number;
+    speed: number;
+    stamina: number;
+  } => {
     const [ec, ep, es] = splitBudgetNatural(rng, {
       budget: HITTER_STAT_CAP - 3 * 20,
       maxEach: 100 - 20,
     });
-    return { contact: 20 + ec, power: 20 + ep, speed: 20 + es };
+    return { contact: 20 + ec, power: 20 + ep, speed: 20 + es, stamina: 50 };
   };
 
   /** Generate pitching stats using the full PITCHER_STAT_CAP budget, distributed naturally. */
-  const randPitcherPitchingStats = (): { velocity: number; control: number; movement: number } => {
+  const randPitcherPitchingStats = (): {
+    velocity: number;
+    control: number;
+    movement: number;
+    stamina: number;
+  } => {
     const [ev, ec, em] = splitBudgetNatural(rng, {
       budget: PITCHER_STAT_CAP - 3 * 25,
       maxEach: 100 - 25,
     });
-    return { velocity: 25 + ev, control: 25 + ec, movement: 25 + em };
+    return { velocity: 25 + ev, control: 25 + ec, movement: 25 + em, stamina: 60 };
   };
 
   // Shuffle batting positions so the batting order varies per seed.
