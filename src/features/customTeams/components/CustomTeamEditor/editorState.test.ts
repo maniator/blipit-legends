@@ -576,7 +576,7 @@ describe("editorStateToCreateInput", () => {
     expect(p.pitching?.movement).toBe(65);
   });
 
-  it("omits pitching block for pitcher with no velocity set", () => {
+  it("throws when pitcher is missing pitching stats", () => {
     const benchPitcher = makePlayer("No-stats Pitcher");
     const state = {
       ...initEditorState(),
@@ -585,8 +585,7 @@ describe("editorStateToCreateInput", () => {
       lineup: [makePlayer()],
       pitchers: [benchPitcher],
     };
-    const input = editorStateToCreateInput(state);
-    expect(input.roster.pitchers![0].pitching).toBeUndefined();
+    expect(() => editorStateToCreateInput(state)).toThrow("Pitcher is missing pitching stats.");
   });
 });
 
