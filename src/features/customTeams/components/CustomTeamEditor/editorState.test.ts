@@ -644,7 +644,7 @@ describe("editorReducer — additional cases", () => {
             id: "d1",
             name: "Batter One",
             role: "batter" as const,
-            batting: { contact: 70, power: 65, speed: 60 },
+            batting: { contact: 70, power: 65, speed: 60, stamina: 50 },
           },
         ],
         bench: [
@@ -652,7 +652,7 @@ describe("editorReducer — additional cases", () => {
             id: "d2",
             name: "Bench Guy",
             role: "batter" as const,
-            batting: { contact: 55, power: 50, speed: 55 },
+            batting: { contact: 55, power: 50, speed: 55, stamina: 50 },
           },
         ],
         pitchers: [
@@ -660,8 +660,8 @@ describe("editorReducer — additional cases", () => {
             id: "d3",
             name: "Ace Pitcher",
             role: "pitcher" as const,
-            batting: { contact: 30, power: 25, speed: 30 },
-            pitching: { velocity: 90, control: 72, movement: 68 },
+            batting: { contact: 30, power: 25, speed: 30, stamina: 50 },
+            pitching: { velocity: 90, control: 72, movement: 68, stamina: 60 },
           },
         ],
       },

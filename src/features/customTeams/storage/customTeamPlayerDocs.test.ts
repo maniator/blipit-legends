@@ -71,7 +71,13 @@ describe("assembleRoster", () => {
       roster: {
         lineup: [makePlayer({ name: "L1" }), makePlayer({ name: "L2" })],
         bench: [makePlayer({ name: "B1" })],
-        pitchers: [makePlayer({ name: "P1", role: "pitcher" })],
+        pitchers: [
+          makePlayer({
+            name: "P1",
+            role: "pitcher",
+            pitching: { velocity: 55, control: 55, movement: 50, stamina: 60 },
+          }),
+        ],
       },
     });
     const players = await fetchTeamPlayers(db, teamId);
