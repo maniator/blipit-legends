@@ -97,7 +97,7 @@ describe("createCustomTeam", () => {
 
   it("clamps batting stats to 0–100", async () => {
     const player = makePlayer({
-      batting: { contact: 150, power: -10, speed: 50 },
+      batting: { contact: 150, power: -10, speed: 50, stamina: 50 },
     });
     const id = await store.createCustomTeam(makeInput({ roster: { lineup: [player] } }));
     const team = await store.getCustomTeam(id);
@@ -109,7 +109,7 @@ describe("createCustomTeam", () => {
   it("clamps pitching stats to 0–100", async () => {
     const player = makePlayer({
       role: "pitcher",
-      pitching: { velocity: 200, control: -5, movement: 55 },
+      pitching: { velocity: 200, control: -5, movement: 55, stamina: 90 },
     });
     const id = await store.createCustomTeam(makeInput({ roster: { lineup: [player] } }));
     const team = await store.getCustomTeam(id);
@@ -134,7 +134,11 @@ describe("createCustomTeam", () => {
 
   it("stores bench and pitchers arrays", async () => {
     const bench = makePlayer({ name: "Bench Guy" });
-    const pitcher = makePlayer({ name: "Pitcher Joe", role: "pitcher" });
+    const pitcher = makePlayer({
+      name: "Pitcher Joe",
+      role: "pitcher",
+      pitching: { velocity: 60, control: 55, movement: 40, stamina: 65 },
+    });
     const id = await store.createCustomTeam(
       makeInput({ roster: { lineup: [makePlayer()], bench: [bench], pitchers: [pitcher] } }),
     );
@@ -246,7 +250,7 @@ describe("createCustomTeam — no playerSeed stored", () => {
               id: "p_s2",
               name: "Pitcher No Seed",
               role: "pitcher",
-              pitching: { velocity: 55, control: 55, movement: 50 },
+              pitching: { velocity: 55, control: 55, movement: 50, stamina: 60 },
             }),
           ],
         },
@@ -266,7 +270,7 @@ describe("createCustomTeam — stat cap enforcement", () => {
       store.createCustomTeam(
         makeInput({
           roster: {
-            lineup: [makePlayer({ batting: { contact: 60, power: 55, speed: 50 } })], // 165 > 150
+            lineup: [makePlayer({ batting: { contact: 60, power: 55, speed: 50, stamina: 50 } })], // 165 > 150
             bench: [],
             pitchers: [],
           },
@@ -283,7 +287,7 @@ describe("createCustomTeam — stat cap enforcement", () => {
             lineup: [
               makePlayer({
                 role: "pitcher",
-                pitching: { velocity: 70, control: 60, movement: 55 }, // 185 > 160
+                pitching: { velocity: 70, control: 60, movement: 55, stamina: 60 }, // 185 > 160
               }),
             ],
             bench: [],
@@ -299,7 +303,7 @@ describe("createCustomTeam — stat cap enforcement", () => {
       store.createCustomTeam(
         makeInput({
           roster: {
-            lineup: [makePlayer({ batting: { contact: 50, power: 50, speed: 50 } })], // 150 = cap
+            lineup: [makePlayer({ batting: { contact: 50, power: 50, speed: 50, stamina: 50 } })], // 150 = cap
             bench: [],
             pitchers: [],
           },

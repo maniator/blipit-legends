@@ -17,7 +17,9 @@ export const makePlayer = (overrides: Partial<TeamPlayer> = {}): TeamPlayer => (
   id: generatePlayerId(),
   name: "Alice",
   role: "batter",
-  batting: { contact: 50, power: 50, speed: 50 },
+  batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+  position: "CF",
+  handedness: "R",
   ...overrides,
 });
 

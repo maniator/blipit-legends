@@ -118,36 +118,45 @@ function clampMod(offset: number): ModPreset {
  */
 export function customTeamToPlayerOverrides(team: TeamWithRoster): TeamCustomPlayerOverrides {
   const overrides: TeamCustomPlayerOverrides = {};
-  const allPlayers = [...team.roster.lineup, ...team.roster.bench, ...team.roster.pitchers];
-  for (const player of allPlayers) {
+  for (const player of [...team.roster.lineup, ...team.roster.bench]) {
     overrides[player.id] = {
       nickname: player.name,
-      ...(player.position ? { position: player.position } : {}),
-      ...(player.handedness ? { handedness: player.handedness } : {}),
+      position: player.position!,
+      handedness: player.handedness!,
       contactMod: clampMod(player.batting.contact - 60),
       powerMod: clampMod(player.batting.power - 60),
       speedMod: clampMod(player.batting.speed - 60),
-      ...(player.pitching && {
-        velocityMod: clampMod((player.pitching.velocity ?? 60) - 60),
-        controlMod: clampMod((player.pitching.control ?? 60) - 60),
-        movementMod: clampMod((player.pitching.movement ?? 60) - 60),
-        staminaMod: clampMod((player.pitching.stamina ?? 60) - 60),
-      }),
+      staminaMod: clampMod(player.batting.stamina! - 60),
     };
   }
+
+  for (const player of team.roster.pitchers) {
+    const pitching = player.pitching as NonNullable<typeof player.pitching>;
+    const existing = overrides[player.id] ?? {
+      nickname: player.name,
+      position: player.position!,
+      handedness: player.handedness!,
+    };
+    overrides[player.id] = {
+      ...existing,
+      velocityMod: clampMod(pitching.velocity! - 60),
+      controlMod: clampMod(pitching.control! - 60),
+      movementMod: clampMod(pitching.movement! - 60),
+      staminaMod: clampMod(pitching.stamina! - 60),
+    };
+  }
+
   return overrides;
 }
 
 /**
  * Returns a lookup of playerId -> handedness for every rostered player.
- * Players missing explicit handedness are omitted and resolved later via
- * deterministic fallback in gameplay.
  */
 export function customTeamToHandednessMap(team: TeamWithRoster): Record<string, Handedness> {
   const handednessByPlayer: Record<string, Handedness> = {};
   const allPlayers = [...team.roster.lineup, ...team.roster.bench, ...team.roster.pitchers];
   for (const player of allPlayers) {
-    if (player.handedness) handednessByPlayer[player.id] = player.handedness;
+    handednessByPlayer[player.id] = player.handedness!;
   }
   return handednessByPlayer;
 }
@@ -201,8 +210,7 @@ export function validateCustomTeamForGame(team: TeamWithRoster): string | null {
   // Validate starting lineup has exactly one of each required position (no duplicates, no missing).
   const lineupPosCounts = new Map<string, number>();
   for (const player of lineup) {
-    const pos = player.position ?? "";
-    if (pos) lineupPosCounts.set(pos, (lineupPosCounts.get(pos) ?? 0) + 1);
+    lineupPosCounts.set(player.position!, (lineupPosCounts.get(player.position!) ?? 0) + 1);
   }
   const duplicatePos = BATTING_POSITIONS.filter((pos) => (lineupPosCounts.get(pos) ?? 0) > 1);
   const missingPos = BATTING_POSITIONS.filter((pos) => !lineupPosCounts.has(pos));

@@ -92,8 +92,10 @@ describe("importPlayer", () => {
       id: "p_pitcher_src",
       name: "Import Pitcher",
       role: "pitcher",
-      batting: { contact: 30, power: 20, speed: 25 },
-      pitching: { velocity: 60, control: 55, movement: 45 },
+      batting: { contact: 30, power: 20, speed: 25, stamina: 50 },
+      pitching: { velocity: 60, control: 55, movement: 45, stamina: 60 },
+      position: "P",
+      handedness: "R",
     };
     const pitcherJson = exportCustomPlayer(pitcher);
 
@@ -120,7 +122,9 @@ describe("importPlayer", () => {
       id: "p_gid_preserved",
       name: "GID Preserved",
       role: "batter",
-      batting: { contact: 50, power: 50, speed: 50 },
+      batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+      position: "CF",
+      handedness: "R",
     };
     const json = exportCustomPlayer(player);
 
@@ -149,7 +153,9 @@ describe("importPlayer", () => {
       id: "p_seed_check",
       name: "Seed Preserved",
       role: "batter",
-      batting: { contact: 50, power: 50, speed: 50 },
+      batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+      position: "CF",
+      handedness: "R",
     };
     const json = exportCustomPlayer(player);
 
@@ -231,7 +237,9 @@ describe("importPlayer", () => {
       id: "p_no_team",
       name: "No Team Player",
       role: "batter",
-      batting: { contact: 50, power: 50, speed: 50 },
+      batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+      position: "CF",
+      handedness: "R",
     };
     const json = exportCustomPlayer(player);
     await expect(store.importPlayer("ct_nonexistent", json, "lineup")).rejects.toThrow(

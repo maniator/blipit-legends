@@ -7,8 +7,7 @@ import type { TeamPlayer, TeamWithRoster, UpdateCustomTeamInput } from "@storage
 import { type ImportPlayerResult } from "./customTeamExportBundles";
 import { resolvePlayerConflict } from "./customTeamIdentity";
 import { removeTeamPlayerRecords, writePlayerRecords } from "./customTeamPlayerDocs";
-import { clampPlayerStats, validatePlayerStatCaps } from "./customTeamSanitizers";
-import { buildPlayerSig } from "./customTeamSignatures";
+import { sanitizePlayer } from "./customTeamSanitizers";
 
 /**
  * Orchestrates the upsert of a single team and its player docs during an import.
@@ -27,31 +26,19 @@ export async function orchestrateTeamImport(
   };
   await db.teams.upsert(teamDoc);
   try {
-    // Clamp per-stat values to [0, 100] first, then enforce total caps.
-    // This mirrors what sanitizePlayer does on create/update, preventing crafted
-    // bundles from storing per-stat values outside the valid range.
-    // After clamping, recompute each player's fingerprint so that identity invariants
-    // (duplicate detection, sig verification) remain valid for the stored stat values.
-    const recomputeFingerprint = (p: TeamPlayer): TeamPlayer => ({
-      ...p,
-      fingerprint: buildPlayerSig(p),
-    });
-    const clampAndRefp = (p: TeamPlayer): TeamPlayer => recomputeFingerprint(clampPlayerStats(p));
+    // Run the same strict sanitizer used by create/update so imported players
+    // must include required identity/stat fields and valid role-specific stats.
+    const sanitizeImported = (
+      p: TeamPlayer,
+      section: "lineup" | "bench" | "pitchers",
+      index: number,
+    ): TeamPlayer => sanitizePlayer(p, { section, index });
     const clampedRoster = {
       ...team.roster,
-      lineup: team.roster.lineup.map(clampAndRefp),
-      bench: team.roster.bench.map(clampAndRefp),
-      pitchers: team.roster.pitchers.map(clampAndRefp),
+      lineup: team.roster.lineup.map((p, i) => sanitizeImported(p, "lineup", i)),
+      bench: team.roster.bench.map((p, i) => sanitizeImported(p, "bench", i)),
+      pitchers: team.roster.pitchers.map((p, i) => sanitizeImported(p, "pitchers", i)),
     };
-    clampedRoster.lineup.forEach((p, i) =>
-      validatePlayerStatCaps(p, { section: "lineup", index: i }),
-    );
-    clampedRoster.bench.forEach((p, i) =>
-      validatePlayerStatCaps(p, { section: "bench", index: i }),
-    );
-    clampedRoster.pitchers.forEach((p, i) =>
-      validatePlayerStatCaps(p, { section: "pitchers", index: i }),
-    );
     const newDocIds = await writePlayerRecords(db, team.id, clampedRoster);
     await removeTeamPlayerRecords(db, team.id, newDocIds);
   } catch (err) {

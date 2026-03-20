@@ -18,6 +18,20 @@ export function requireNonEmpty(value: unknown, fieldPath: string): string {
   return value.trim();
 }
 
+function requireFiniteNumber(value: unknown, fieldPath: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(`${fieldPath} must be a finite number`);
+  }
+  return value;
+}
+
+function requireHandedness(value: unknown, fieldPath: string): "R" | "L" | "S" {
+  if (value !== "R" && value !== "L" && value !== "S") {
+    throw new Error(`${fieldPath} must be one of "R", "L", or "S"`);
+  }
+  return value;
+}
+
 /**
  * Sanitizes an abbreviation: trims, uppercases, and enforces 2–3 characters.
  * Throws if the result is outside that range so stored docs are always valid.
@@ -129,36 +143,83 @@ export function sanitizePlayer(
   { index, section = "player" }: SanitizePlayerOptions,
 ): TeamPlayer {
   const name = requireNonEmpty(player.name, `roster ${section}[${index}].name`);
+  const position = requireNonEmpty(player.position, `roster ${section}[${index}].position`);
+  const handedness = requireHandedness(player.handedness, `roster ${section}[${index}].handedness`);
   if (!["batter", "pitcher", "two-way"].includes(player.role)) {
     throw new Error(`roster ${section}[${index}].role must be "batter", "pitcher", or "two-way"`);
   }
   if (!player.batting || typeof player.batting !== "object") {
     throw new Error(`roster ${section}[${index}].batting is required`);
   }
+  if (player.role !== "batter" && (!player.pitching || typeof player.pitching !== "object")) {
+    throw new Error(`roster ${section}[${index}].pitching is required for role "${player.role}"`);
+  }
+  if (player.role !== "batter") {
+    if (player.pitching?.velocity === undefined) {
+      throw new Error(`roster ${section}[${index}].pitching.velocity is required`);
+    }
+    if (player.pitching?.control === undefined) {
+      throw new Error(`roster ${section}[${index}].pitching.control is required`);
+    }
+    if (player.pitching?.movement === undefined) {
+      throw new Error(`roster ${section}[${index}].pitching.movement is required`);
+    }
+    if (player.pitching?.stamina === undefined) {
+      throw new Error(`roster ${section}[${index}].pitching.stamina is required`);
+    }
+  }
   const sanitized: TeamPlayer = {
     ...player,
     name,
+    position,
+    handedness,
     batting: {
-      contact: clampStat(Number(player.batting.contact) || 0),
-      power: clampStat(Number(player.batting.power) || 0),
-      speed: clampStat(Number(player.batting.speed) || 0),
-      ...(player.batting.stamina !== undefined && {
-        stamina: clampStat(Number(player.batting.stamina) || 0),
-      }),
+      contact: clampStat(
+        requireFiniteNumber(player.batting.contact, `roster ${section}[${index}].batting.contact`),
+      ),
+      power: clampStat(
+        requireFiniteNumber(player.batting.power, `roster ${section}[${index}].batting.power`),
+      ),
+      speed: clampStat(
+        requireFiniteNumber(player.batting.speed, `roster ${section}[${index}].batting.speed`),
+      ),
+      stamina: clampStat(
+        requireFiniteNumber(player.batting.stamina, `roster ${section}[${index}].batting.stamina`),
+      ),
     },
     ...(player.pitching && {
       pitching: {
         ...(player.pitching.velocity !== undefined && {
-          velocity: clampStat(Number(player.pitching.velocity) || 0),
+          velocity: clampStat(
+            requireFiniteNumber(
+              player.pitching.velocity,
+              `roster ${section}[${index}].pitching.velocity`,
+            ),
+          ),
         }),
         ...(player.pitching.control !== undefined && {
-          control: clampStat(Number(player.pitching.control) || 0),
+          control: clampStat(
+            requireFiniteNumber(
+              player.pitching.control,
+              `roster ${section}[${index}].pitching.control`,
+            ),
+          ),
         }),
         ...(player.pitching.movement !== undefined && {
-          movement: clampStat(Number(player.pitching.movement) || 0),
+          movement: clampStat(
+            requireFiniteNumber(
+              player.pitching.movement,
+              `roster ${section}[${index}].pitching.movement`,
+            ),
+          ),
         }),
         ...(player.pitching.stamina !== undefined && {
-          stamina: clampStat(Number(player.pitching.stamina) || 0),
+          stamina: clampStat(
+            requireFiniteNumber(
+              player.pitching.stamina,
+              `roster ${section}[${index}].pitching.stamina`,
+            ),
+          ),
         }),
       },
     }),
