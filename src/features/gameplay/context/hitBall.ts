@@ -9,7 +9,12 @@ import type { State } from "./gameStateTypes";
 import { updateActivePitcherLog } from "./pitcherLog";
 import type { BattedBallType } from "./pitchSimulation";
 import { computeFatigueFactor } from "./pitchSimulation";
-import { incrementPitcherFatigue, nextBatter, playerOut } from "./playerOut";
+import {
+  incrementBatterPlateAppearances,
+  incrementPitcherFatigue,
+  nextBatter,
+  playerOut,
+} from "./playerOut";
 import type { Strategy } from "./playerTypes";
 import { resolveBatterPlayerId } from "./resolveBatterPlayerId";
 import { ZERO_MODS } from "./resolvePlayerMods";
@@ -380,9 +385,14 @@ const processConfirmedHit = (
   // Increment pitcher fatigue: batter reached base (hit or walk) — at-bat complete.
   const withFatigue = incrementPitcherFatigue(withRuns);
 
+  // Increment batter plate appearances: at-bat completed with a hit or walk.
+  const withBatterWorkload = playerId
+    ? incrementBatterPlateAppearances(withFatigue, battingTeam, playerId)
+    : withFatigue;
+
   // nextBatter: batter reached base, rotate lineup to next batter.
   return nextBatter({
-    ...withFatigue,
+    ...withBatterWorkload,
     playLog: [...base.playLog, playEntry],
   });
 };
