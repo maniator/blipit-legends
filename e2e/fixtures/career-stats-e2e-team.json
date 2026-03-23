@@ -26,12 +26,13 @@
               "batting": {
                 "contact": 51,
                 "power": 54,
-                "speed": 45
+                "speed": 45,
+                "stamina": 50
               },
               "position": "LF",
               "handedness": "R",
-              "sig": "87a59d02",
-              "fingerprint": "87a59d02"
+              "sig": "cf359ac7",
+              "fingerprint": "cf359ac7"
             },
             {
               "id": "e2e_batter_contact",
@@ -40,12 +41,13 @@
               "batting": {
                 "contact": 58,
                 "power": 40,
-                "speed": 52
+                "speed": 52,
+                "stamina": 50
               },
               "position": "CF",
               "handedness": "L",
-              "sig": "0fb77a56",
-              "fingerprint": "0fb77a56"
+              "sig": "40c894fb",
+              "fingerprint": "40c894fb"
             }
           ],
           "bench": [],
@@ -57,18 +59,20 @@
               "batting": {
                 "contact": 20,
                 "power": 20,
-                "speed": 20
+                "speed": 20,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 56,
                 "control": 56,
-                "movement": 48
+                "movement": 48,
+                "stamina": 60
               },
               "position": "SP",
               "handedness": "R",
               "pitchingRole": "SP",
-              "sig": "ad741f22",
-              "fingerprint": "ad741f22"
+              "sig": "e052dd8f",
+              "fingerprint": "e052dd8f"
             }
           ]
         },
@@ -76,5 +80,5 @@
       }
     ]
   },
-  "sig": "005f007a"
+  "sig": "2329f66f"
 }
