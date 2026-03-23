@@ -25,11 +25,12 @@
               "batting": {
                 "contact": 25,
                 "power": 27,
-                "speed": 47
+                "speed": 47,
+                "stamina": 50
               },
-              "fingerprint": "03b67711",
+              "fingerprint": "6dd9e6ae",
               "id": "p_-882756226_L0",
-              "sig": "03b67711"
+              "sig": "6dd9e6ae"
             },
             {
               "name": "Ben Zavala",
@@ -39,11 +40,12 @@
               "batting": {
                 "contact": 21,
                 "power": 39,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
-              "fingerprint": "77a6726d",
+              "fingerprint": "5e96e26a",
               "id": "p_-882756226_L1",
-              "sig": "77a6726d"
+              "sig": "5e96e26a"
             },
             {
               "name": "Nathan Young",
@@ -53,11 +55,12 @@
               "batting": {
                 "contact": 26,
                 "power": 31,
-                "speed": 34
+                "speed": 34,
+                "stamina": 50
               },
-              "fingerprint": "cdec26c4",
+              "fingerprint": "7fdf2d95",
               "id": "p_-882756226_L2",
-              "sig": "cdec26c4"
+              "sig": "7fdf2d95"
             },
             {
               "name": "Carlos Reed",
@@ -67,11 +70,12 @@
               "batting": {
                 "contact": 44,
                 "power": 37,
-                "speed": 29
+                "speed": 29,
+                "stamina": 50
               },
-              "fingerprint": "57e8c8cc",
+              "fingerprint": "3f12dbad",
               "id": "p_-882756226_L3",
-              "sig": "57e8c8cc"
+              "sig": "3f12dbad"
             },
             {
               "name": "Quinn Zavala",
@@ -81,11 +85,12 @@
               "batting": {
                 "contact": 32,
                 "power": 26,
-                "speed": 46
+                "speed": 46,
+                "stamina": 50
               },
-              "fingerprint": "f384d41e",
+              "fingerprint": "31bcef13",
               "id": "p_-882756226_L4",
-              "sig": "f384d41e"
+              "sig": "31bcef13"
             },
             {
               "name": "Oscar Davis",
@@ -95,11 +100,12 @@
               "batting": {
                 "contact": 48,
                 "power": 41,
-                "speed": 26
+                "speed": 26,
+                "stamina": 50
               },
-              "fingerprint": "a6b35efb",
+              "fingerprint": "bc652ddc",
               "id": "p_-882756226_L5",
-              "sig": "a6b35efb"
+              "sig": "bc652ddc"
             },
             {
               "name": "Danny Baker",
@@ -109,11 +115,12 @@
               "batting": {
                 "contact": 50,
                 "power": 39,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
-              "fingerprint": "76784156",
+              "fingerprint": "6aa609fb",
               "id": "p_-882756226_L6",
-              "sig": "76784156"
+              "sig": "6aa609fb"
             },
             {
               "name": "Gary Reed",
@@ -123,11 +130,12 @@
               "batting": {
                 "contact": 37,
                 "power": 23,
-                "speed": 23
+                "speed": 23,
+                "stamina": 50
               },
-              "fingerprint": "b0341ea2",
+              "fingerprint": "e83133e7",
               "id": "p_-882756226_L7",
-              "sig": "b0341ea2"
+              "sig": "e83133e7"
             },
             {
               "name": "Marcus Hill",
@@ -137,11 +145,12 @@
               "batting": {
                 "contact": 25,
                 "power": 37,
-                "speed": 41
+                "speed": 41,
+                "stamina": 50
               },
-              "fingerprint": "a6bf68e7",
+              "fingerprint": "319390d8",
               "id": "p_-882756226_L8",
-              "sig": "a6bf68e7"
+              "sig": "319390d8"
             }
           ],
           "bench": [
@@ -153,11 +162,12 @@
               "batting": {
                 "contact": 25,
                 "power": 31,
-                "speed": 36
+                "speed": 36,
+                "stamina": 50
               },
-              "fingerprint": "e328c7f4",
+              "fingerprint": "e0902a85",
               "id": "p_-882756226_B0",
-              "sig": "e328c7f4"
+              "sig": "e0902a85"
             },
             {
               "name": "Henry Young",
@@ -167,11 +177,12 @@
               "batting": {
                 "contact": 37,
                 "power": 40,
-                "speed": 44
+                "speed": 44,
+                "stamina": 50
               },
-              "fingerprint": "2f5d11f3",
+              "fingerprint": "05cebb84",
               "id": "p_-882756226_B1",
-              "sig": "2f5d11f3"
+              "sig": "05cebb84"
             },
             {
               "name": "Ben Grant",
@@ -181,11 +192,12 @@
               "batting": {
                 "contact": 21,
                 "power": 44,
-                "speed": 48
+                "speed": 48,
+                "stamina": 50
               },
-              "fingerprint": "7b47488b",
+              "fingerprint": "78b323ec",
               "id": "p_-882756226_B2",
-              "sig": "7b47488b"
+              "sig": "78b323ec"
             },
             {
               "name": "Karl Scott",
@@ -195,11 +207,12 @@
               "batting": {
                 "contact": 48,
                 "power": 45,
-                "speed": 42
+                "speed": 42,
+                "stamina": 50
               },
-              "fingerprint": "04c7be5d",
+              "fingerprint": "abc4cdda",
               "id": "p_-882756226_B3",
-              "sig": "04c7be5d"
+              "sig": "abc4cdda"
             }
           ],
           "pitchers": [
@@ -211,17 +224,19 @@
               "batting": {
                 "contact": 44,
                 "power": 47,
-                "speed": 24
+                "speed": 24,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 51,
                 "control": 38,
-                "movement": 44
+                "movement": 44,
+                "stamina": 60
               },
               "pitchingRole": "SP",
-              "fingerprint": "3d6fe7ad",
+              "fingerprint": "8d2a15ee",
               "id": "p_-882756226_P0",
-              "sig": "3d6fe7ad"
+              "sig": "8d2a15ee"
             },
             {
               "name": "Upton Moore",
@@ -231,17 +246,19 @@
               "batting": {
                 "contact": 49,
                 "power": 39,
-                "speed": 42
+                "speed": 42,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 51,
                 "control": 39,
-                "movement": 39
+                "movement": 39,
+                "stamina": 60
               },
               "pitchingRole": "RP",
-              "fingerprint": "283243ca",
+              "fingerprint": "1ddb06e7",
               "id": "p_-882756226_P1",
-              "sig": "283243ca"
+              "sig": "1ddb06e7"
             },
             {
               "name": "Quinn Davis",
@@ -251,17 +268,19 @@
               "batting": {
                 "contact": 29,
                 "power": 36,
-                "speed": 44
+                "speed": 44,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 46,
                 "control": 28,
-                "movement": 40
+                "movement": 40,
+                "stamina": 60
               },
               "pitchingRole": "RP",
-              "fingerprint": "0ca07f97",
+              "fingerprint": "29ffdd3e",
               "id": "p_-882756226_P2",
-              "sig": "0ca07f97"
+              "sig": "29ffdd3e"
             },
             {
               "name": "Pete Baker",
@@ -271,17 +290,19 @@
               "batting": {
                 "contact": 25,
                 "power": 50,
-                "speed": 48
+                "speed": 48,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 47,
                 "control": 36,
-                "movement": 25
+                "movement": 25,
+                "stamina": 60
               },
               "pitchingRole": "RP",
-              "fingerprint": "8a7aba9d",
+              "fingerprint": "11cecc4e",
               "id": "p_-882756226_P3",
-              "sig": "8a7aba9d"
+              "sig": "11cecc4e"
             },
             {
               "name": "Zane Grant",
@@ -291,17 +312,19 @@
               "batting": {
                 "contact": 26,
                 "power": 21,
-                "speed": 30
+                "speed": 30,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 27,
                 "control": 31,
-                "movement": 26
+                "movement": 26,
+                "stamina": 60
               },
               "pitchingRole": "SP/RP",
-              "fingerprint": "048ab6b6",
+              "fingerprint": "375cbfd9",
               "id": "p_-882756226_P4",
-              "sig": "048ab6b6"
+              "sig": "375cbfd9"
             }
           ]
         },
@@ -331,11 +354,12 @@
               "batting": {
                 "contact": 38,
                 "power": 23,
-                "speed": 23
+                "speed": 23,
+                "stamina": 50
               },
-              "fingerprint": "cdfc6662",
+              "fingerprint": "bb2c85a7",
               "id": "p_-882756227_L0",
-              "sig": "cdfc6662"
+              "sig": "bb2c85a7"
             },
             {
               "name": "Tom Kent",
@@ -345,11 +369,12 @@
               "batting": {
                 "contact": 50,
                 "power": 36,
-                "speed": 32
+                "speed": 32,
+                "stamina": 50
               },
-              "fingerprint": "d7f55048",
+              "fingerprint": "50208f29",
               "id": "p_-882756227_L1",
-              "sig": "d7f55048"
+              "sig": "50208f29"
             },
             {
               "name": "Leo Vega",
@@ -359,11 +384,12 @@
               "batting": {
                 "contact": 26,
                 "power": 32,
-                "speed": 38
+                "speed": 38,
+                "stamina": 50
               },
-              "fingerprint": "25c2eba2",
+              "fingerprint": "a0bffae7",
               "id": "p_-882756227_L2",
-              "sig": "25c2eba2"
+              "sig": "a0bffae7"
             },
             {
               "name": "Oscar Grant",
@@ -373,11 +399,12 @@
               "batting": {
                 "contact": 33,
                 "power": 40,
-                "speed": 34
+                "speed": 34,
+                "stamina": 50
               },
-              "fingerprint": "1dadb860",
+              "fingerprint": "b3e0f691",
               "id": "p_-882756227_L3",
-              "sig": "1dadb860"
+              "sig": "b3e0f691"
             },
             {
               "name": "Xavier Young",
@@ -387,11 +414,12 @@
               "batting": {
                 "contact": 21,
                 "power": 21,
-                "speed": 47
+                "speed": 47,
+                "stamina": 50
               },
-              "fingerprint": "2b12a1a5",
+              "fingerprint": "a2594472",
               "id": "p_-882756227_L4",
-              "sig": "2b12a1a5"
+              "sig": "a2594472"
             },
             {
               "name": "Ivan Evans",
@@ -401,11 +429,12 @@
               "batting": {
                 "contact": 23,
                 "power": 48,
-                "speed": 38
+                "speed": 38,
+                "stamina": 50
               },
-              "fingerprint": "9ce2fdc6",
+              "fingerprint": "555593ab",
               "id": "p_-882756227_L5",
-              "sig": "9ce2fdc6"
+              "sig": "555593ab"
             },
             {
               "name": "Yogi Irwin",
@@ -415,11 +444,12 @@
               "batting": {
                 "contact": 31,
                 "power": 25,
-                "speed": 38
+                "speed": 38,
+                "stamina": 50
               },
-              "fingerprint": "f26a9978",
+              "fingerprint": "cf3927d9",
               "id": "p_-882756227_L6",
-              "sig": "f26a9978"
+              "sig": "cf3927d9"
             },
             {
               "name": "Quinn Quinn",
@@ -429,11 +459,12 @@
               "batting": {
                 "contact": 23,
                 "power": 43,
-                "speed": 38
+                "speed": 38,
+                "stamina": 50
               },
-              "fingerprint": "f12f34fc",
+              "fingerprint": "9173439d",
               "id": "p_-882756227_L7",
-              "sig": "f12f34fc"
+              "sig": "9173439d"
             },
             {
               "name": "Ray Hill",
@@ -443,11 +474,12 @@
               "batting": {
                 "contact": 26,
                 "power": 48,
-                "speed": 30
+                "speed": 30,
+                "stamina": 50
               },
-              "fingerprint": "f236b45f",
+              "fingerprint": "754a3c20",
               "id": "p_-882756227_L8",
-              "sig": "f236b45f"
+              "sig": "754a3c20"
             }
           ],
           "bench": [
@@ -459,11 +491,12 @@
               "batting": {
                 "contact": 32,
                 "power": 50,
-                "speed": 24
+                "speed": 24,
+                "stamina": 50
               },
-              "fingerprint": "635194d6",
+              "fingerprint": "3e21947b",
               "id": "p_-882756227_B0",
-              "sig": "635194d6"
+              "sig": "3e21947b"
             },
             {
               "name": "Marcus Adams",
@@ -473,11 +506,12 @@
               "batting": {
                 "contact": 21,
                 "power": 21,
-                "speed": 25
+                "speed": 25,
+                "stamina": 50
               },
-              "fingerprint": "bcaea889",
+              "fingerprint": "64b816d6",
               "id": "p_-882756227_B1",
-              "sig": "bcaea889"
+              "sig": "64b816d6"
             },
             {
               "name": "Sam Irwin",
@@ -487,11 +521,12 @@
               "batting": {
                 "contact": 50,
                 "power": 46,
-                "speed": 37
+                "speed": 37,
+                "stamina": 50
               },
-              "fingerprint": "d4980fc6",
+              "fingerprint": "1dea89ab",
               "id": "p_-882756227_B2",
-              "sig": "d4980fc6"
+              "sig": "1dea89ab"
             },
             {
               "name": "Upton Scott",
@@ -501,11 +536,12 @@
               "batting": {
                 "contact": 22,
                 "power": 20,
-                "speed": 47
+                "speed": 47,
+                "stamina": 50
               },
-              "fingerprint": "c734d95f",
+              "fingerprint": "6d5c0b20",
               "id": "p_-882756227_B3",
-              "sig": "c734d95f"
+              "sig": "6d5c0b20"
             }
           ],
           "pitchers": [
@@ -517,17 +553,19 @@
               "batting": {
                 "contact": 45,
                 "power": 21,
-                "speed": 23
+                "speed": 23,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 32,
                 "control": 33,
-                "movement": 31
+                "movement": 31,
+                "stamina": 60
               },
               "pitchingRole": "SP",
-              "fingerprint": "e47522bd",
+              "fingerprint": "d21b7286",
               "id": "p_-882756227_P0",
-              "sig": "e47522bd"
+              "sig": "d21b7286"
             },
             {
               "name": "Jake Kent",
@@ -537,17 +575,19 @@
               "batting": {
                 "contact": 30,
                 "power": 36,
-                "speed": 31
+                "speed": 31,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 49,
                 "control": 49,
-                "movement": 43
+                "movement": 43,
+                "stamina": 60
               },
               "pitchingRole": "RP",
-              "fingerprint": "ce061831",
+              "fingerprint": "7da9e38a",
               "id": "p_-882756227_P1",
-              "sig": "ce061831"
+              "sig": "7da9e38a"
             },
             {
               "name": "Leo Lane",
@@ -557,17 +597,19 @@
               "batting": {
                 "contact": 38,
                 "power": 22,
-                "speed": 48
+                "speed": 48,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 38,
                 "control": 32,
-                "movement": 49
+                "movement": 49,
+                "stamina": 60
               },
               "pitchingRole": "RP",
-              "fingerprint": "53c9dd9b",
+              "fingerprint": "3141ede0",
               "id": "p_-882756227_P2",
-              "sig": "53c9dd9b"
+              "sig": "3141ede0"
             },
             {
               "name": "Frank Quinn",
@@ -577,17 +619,19 @@
               "batting": {
                 "contact": 34,
                 "power": 40,
-                "speed": 29
+                "speed": 29,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 40,
                 "control": 50,
-                "movement": 33
+                "movement": 33,
+                "stamina": 60
               },
               "pitchingRole": "SP/RP",
-              "fingerprint": "665e5f53",
+              "fingerprint": "7e435f60",
               "id": "p_-882756227_P3",
-              "sig": "665e5f53"
+              "sig": "7e435f60"
             },
             {
               "name": "Carlos Nash",
@@ -597,17 +641,19 @@
               "batting": {
                 "contact": 46,
                 "power": 37,
-                "speed": 46
+                "speed": 46,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 48,
                 "control": 50,
-                "movement": 30
+                "movement": 30,
+                "stamina": 60
               },
               "pitchingRole": "RP",
-              "fingerprint": "edaf4f15",
+              "fingerprint": "5b87d134",
               "id": "p_-882756227_P4",
-              "sig": "edaf4f15"
+              "sig": "5b87d134"
             }
           ]
         },
@@ -637,11 +683,12 @@
               "batting": {
                 "contact": 36,
                 "power": 32,
-                "speed": 30
+                "speed": 30,
+                "stamina": 50
               },
-              "fingerprint": "acd5846f",
+              "fingerprint": "0649a370",
               "id": "p_-882756229_L0",
-              "sig": "acd5846f"
+              "sig": "0649a370"
             },
             {
               "name": "Leo Xiong",
@@ -651,11 +698,12 @@
               "batting": {
                 "contact": 39,
                 "power": 43,
-                "speed": 37
+                "speed": 37,
+                "stamina": 50
               },
-              "fingerprint": "8d558de3",
+              "fingerprint": "a77ffd34",
               "id": "p_-882756229_L1",
-              "sig": "8d558de3"
+              "sig": "a77ffd34"
             },
             {
               "name": "Sam Scott",
@@ -665,11 +713,12 @@
               "batting": {
                 "contact": 27,
                 "power": 25,
-                "speed": 31
+                "speed": 31,
+                "stamina": 50
               },
-              "fingerprint": "b98b294b",
+              "fingerprint": "87201fac",
               "id": "p_-882756229_L2",
-              "sig": "b98b294b"
+              "sig": "87201fac"
             },
             {
               "name": "Xavier Scott",
@@ -679,11 +728,12 @@
               "batting": {
                 "contact": 26,
                 "power": 38,
-                "speed": 42
+                "speed": 42,
+                "stamina": 50
               },
-              "fingerprint": "0c25bef8",
+              "fingerprint": "b637e859",
               "id": "p_-882756229_L3",
-              "sig": "0c25bef8"
+              "sig": "b637e859"
             },
             {
               "name": "Carlos Nash",
@@ -693,11 +743,12 @@
               "batting": {
                 "contact": 40,
                 "power": 26,
-                "speed": 20
+                "speed": 20,
+                "stamina": 50
               },
-              "fingerprint": "2e15e887",
+              "fingerprint": "6fa2d278",
               "id": "p_-882756229_L4",
-              "sig": "2e15e887"
+              "sig": "6fa2d278"
             },
             {
               "name": "Nathan Scott",
@@ -707,11 +758,12 @@
               "batting": {
                 "contact": 20,
                 "power": 25,
-                "speed": 47
+                "speed": 47,
+                "stamina": 50
               },
-              "fingerprint": "7a2c3e1e",
+              "fingerprint": "1bfded13",
               "id": "p_-882756229_L5",
-              "sig": "7a2c3e1e"
+              "sig": "1bfded13"
             },
             {
               "name": "Jake Vega",
@@ -721,11 +773,12 @@
               "batting": {
                 "contact": 31,
                 "power": 49,
-                "speed": 28
+                "speed": 28,
+                "stamina": 50
               },
-              "fingerprint": "732ee71e",
+              "fingerprint": "e83cc813",
               "id": "p_-882756229_L6",
-              "sig": "732ee71e"
+              "sig": "e83cc813"
             },
             {
               "name": "Wade Scott",
@@ -735,11 +788,12 @@
               "batting": {
                 "contact": 49,
                 "power": 43,
-                "speed": 24
+                "speed": 24,
+                "stamina": 50
               },
-              "fingerprint": "5b7964a7",
+              "fingerprint": "9d4c0e98",
               "id": "p_-882756229_L7",
-              "sig": "5b7964a7"
+              "sig": "9d4c0e98"
             },
             {
               "name": "Wade Vega",
@@ -749,11 +803,12 @@
               "batting": {
                 "contact": 22,
                 "power": 30,
-                "speed": 42
+                "speed": 42,
+                "stamina": 50
               },
-              "fingerprint": "a19de934",
+              "fingerprint": "5b83a9c5",
               "id": "p_-882756229_L8",
-              "sig": "a19de934"
+              "sig": "5b83a9c5"
             }
           ],
           "bench": [
@@ -765,11 +820,12 @@
               "batting": {
                 "contact": 37,
                 "power": 20,
-                "speed": 49
+                "speed": 49,
+                "stamina": 50
               },
-              "fingerprint": "5eafa55d",
+              "fingerprint": "93b3a2da",
               "id": "p_-882756229_B0",
-              "sig": "5eafa55d"
+              "sig": "93b3a2da"
             },
             {
               "name": "Victor Quinn",
@@ -779,11 +835,12 @@
               "batting": {
                 "contact": 40,
                 "power": 50,
-                "speed": 48
+                "speed": 48,
+                "stamina": 50
               },
-              "fingerprint": "280f66b4",
+              "fingerprint": "b4fa7245",
               "id": "p_-882756229_B1",
-              "sig": "280f66b4"
+              "sig": "b4fa7245"
             },
             {
               "name": "Oscar Walsh",
@@ -793,11 +850,12 @@
               "batting": {
                 "contact": 49,
                 "power": 20,
-                "speed": 41
+                "speed": 41,
+                "stamina": 50
               },
-              "fingerprint": "bc388170",
+              "fingerprint": "6bd155a1",
               "id": "p_-882756229_B2",
-              "sig": "bc388170"
+              "sig": "6bd155a1"
             },
             {
               "name": "Marcus Kent",
@@ -807,11 +865,12 @@
               "batting": {
                 "contact": 44,
                 "power": 27,
-                "speed": 26
+                "speed": 26,
+                "stamina": 50
               },
-              "fingerprint": "f2de7bf9",
+              "fingerprint": "89c30546",
               "id": "p_-882756229_B3",
-              "sig": "f2de7bf9"
+              "sig": "89c30546"
             }
           ],
           "pitchers": [
@@ -823,17 +882,19 @@
               "batting": {
                 "contact": 36,
                 "power": 29,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 52,
                 "control": 39,
-                "movement": 33
+                "movement": 33,
+                "stamina": 60
               },
               "pitchingRole": "SP",
-              "fingerprint": "291b69bc",
+              "fingerprint": "58678777",
               "id": "p_-882756229_P0",
-              "sig": "291b69bc"
+              "sig": "58678777"
             },
             {
               "name": "Yogi Zavala",
@@ -843,17 +904,19 @@
               "batting": {
                 "contact": 39,
                 "power": 24,
-                "speed": 30
+                "speed": 30,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 47,
                 "control": 35,
-                "movement": 41
+                "movement": 41,
+                "stamina": 60
               },
               "pitchingRole": "RP",
-              "fingerprint": "fa5808c1",
+              "fingerprint": "7a8f3ffc",
               "id": "p_-882756229_P1",
-              "sig": "fa5808c1"
+              "sig": "7a8f3ffc"
             },
             {
               "name": "Eric Vega",
@@ -863,17 +926,19 @@
               "batting": {
                 "contact": 33,
                 "power": 23,
-                "speed": 42
+                "speed": 42,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 38,
                 "control": 36,
-                "movement": 42
+                "movement": 42,
+                "stamina": 60
               },
               "pitchingRole": "RP",
-              "fingerprint": "1807be48",
+              "fingerprint": "36bdf111",
               "id": "p_-882756229_P2",
-              "sig": "1807be48"
+              "sig": "36bdf111"
             },
             {
               "name": "Danny Quinn",
@@ -883,17 +948,19 @@
               "batting": {
                 "contact": 32,
                 "power": 21,
-                "speed": 32
+                "speed": 32,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 38,
                 "control": 50,
-                "movement": 43
+                "movement": 43,
+                "stamina": 60
               },
               "pitchingRole": "RP",
-              "fingerprint": "d2e55eaa",
+              "fingerprint": "a0073659",
               "id": "p_-882756229_P3",
-              "sig": "d2e55eaa"
+              "sig": "a0073659"
             },
             {
               "name": "Gary Vega",
@@ -903,17 +970,19 @@
               "batting": {
                 "contact": 22,
                 "power": 31,
-                "speed": 41
+                "speed": 41,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 52,
                 "control": 36,
-                "movement": 49
+                "movement": 49,
+                "stamina": 60
               },
               "pitchingRole": "SP/RP",
-              "fingerprint": "4dacc571",
+              "fingerprint": "35a6e80a",
               "id": "p_-882756229_P4",
-              "sig": "4dacc571"
+              "sig": "35a6e80a"
             }
           ]
         },
@@ -943,11 +1012,12 @@
               "batting": {
                 "contact": 34,
                 "power": 24,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
-              "fingerprint": "bb6cc493",
+              "fingerprint": "8b665824",
               "id": "p_-882756230_L0",
-              "sig": "bb6cc493"
+              "sig": "8b665824"
             },
             {
               "name": "Ben Urban",
@@ -957,11 +1027,12 @@
               "batting": {
                 "contact": 42,
                 "power": 29,
-                "speed": 37
+                "speed": 37,
+                "stamina": 50
               },
-              "fingerprint": "105e2bd3",
+              "fingerprint": "42c04964",
               "id": "p_-882756230_L1",
-              "sig": "105e2bd3"
+              "sig": "42c04964"
             },
             {
               "name": "Ivan Owen",
@@ -971,11 +1042,12 @@
               "batting": {
                 "contact": 24,
                 "power": 25,
-                "speed": 42
+                "speed": 42,
+                "stamina": 50
               },
-              "fingerprint": "267405a7",
+              "fingerprint": "7b13d198",
               "id": "p_-882756230_L2",
-              "sig": "267405a7"
+              "sig": "7b13d198"
             },
             {
               "name": "Carlos Baker",
@@ -985,11 +1057,12 @@
               "batting": {
                 "contact": 48,
                 "power": 37,
-                "speed": 22
+                "speed": 22,
+                "stamina": 50
               },
-              "fingerprint": "13812984",
+              "fingerprint": "07e7ce55",
               "id": "p_-882756230_L3",
-              "sig": "13812984"
+              "sig": "07e7ce55"
             },
             {
               "name": "Aaron Jones",
@@ -999,11 +1072,12 @@
               "batting": {
                 "contact": 31,
                 "power": 22,
-                "speed": 21
+                "speed": 21,
+                "stamina": 50
               },
-              "fingerprint": "2653fedc",
+              "fingerprint": "f2602cfd",
               "id": "p_-882756230_L4",
-              "sig": "2653fedc"
+              "sig": "f2602cfd"
             },
             {
               "name": "Danny Ford",
@@ -1013,11 +1087,12 @@
               "batting": {
                 "contact": 36,
                 "power": 21,
-                "speed": 28
+                "speed": 28,
+                "stamina": 50
               },
-              "fingerprint": "fcfeefa8",
+              "fingerprint": "32fcea89",
               "id": "p_-882756230_L5",
-              "sig": "fcfeefa8"
+              "sig": "32fcea89"
             },
             {
               "name": "Quinn Evans",
@@ -1027,11 +1102,12 @@
               "batting": {
                 "contact": 32,
                 "power": 37,
-                "speed": 36
+                "speed": 36,
+                "stamina": 50
               },
-              "fingerprint": "b6176375",
+              "fingerprint": "b268f682",
               "id": "p_-882756230_L6",
-              "sig": "b6176375"
+              "sig": "b268f682"
             },
             {
               "name": "Victor Turner",
@@ -1041,11 +1117,12 @@
               "batting": {
                 "contact": 28,
                 "power": 24,
-                "speed": 35
+                "speed": 35,
+                "stamina": 50
               },
-              "fingerprint": "702c1928",
+              "fingerprint": "72c13709",
               "id": "p_-882756230_L7",
-              "sig": "702c1928"
+              "sig": "72c13709"
             },
             {
               "name": "Oscar Evans",
@@ -1055,11 +1132,12 @@
               "batting": {
                 "contact": 24,
                 "power": 24,
-                "speed": 41
+                "speed": 41,
+                "stamina": 50
               },
-              "fingerprint": "b3c1e067",
+              "fingerprint": "e4960758",
               "id": "p_-882756230_L8",
-              "sig": "b3c1e067"
+              "sig": "e4960758"
             }
           ],
           "bench": [
@@ -1071,11 +1149,12 @@
               "batting": {
                 "contact": 39,
                 "power": 49,
-                "speed": 23
+                "speed": 23,
+                "stamina": 50
               },
-              "fingerprint": "e1f271c5",
+              "fingerprint": "e9788c12",
               "id": "p_-882756230_B0",
-              "sig": "e1f271c5"
+              "sig": "e9788c12"
             },
             {
               "name": "Yogi Grant",
@@ -1085,11 +1164,12 @@
               "batting": {
                 "contact": 23,
                 "power": 26,
-                "speed": 47
+                "speed": 47,
+                "stamina": 50
               },
-              "fingerprint": "08fba7cd",
+              "fingerprint": "db17e04a",
               "id": "p_-882756230_B1",
-              "sig": "08fba7cd"
+              "sig": "db17e04a"
             },
             {
               "name": "Victor Adams",
@@ -1099,11 +1179,12 @@
               "batting": {
                 "contact": 47,
                 "power": 40,
-                "speed": 47
+                "speed": 47,
+                "stamina": 50
               },
-              "fingerprint": "b8044930",
+              "fingerprint": "aabca961",
               "id": "p_-882756230_B2",
-              "sig": "b8044930"
+              "sig": "aabca961"
             },
             {
               "name": "Quinn Irwin",
@@ -1113,11 +1194,12 @@
               "batting": {
                 "contact": 28,
                 "power": 41,
-                "speed": 30
+                "speed": 30,
+                "stamina": 50
               },
-              "fingerprint": "2d924785",
+              "fingerprint": "dfe4ded2",
               "id": "p_-882756230_B3",
-              "sig": "2d924785"
+              "sig": "dfe4ded2"
             }
           ],
           "pitchers": [
@@ -1129,17 +1211,19 @@
               "batting": {
                 "contact": 32,
                 "power": 43,
-                "speed": 49
+                "speed": 49,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 26,
                 "control": 44,
-                "movement": 39
+                "movement": 39,
+                "stamina": 60
               },
               "pitchingRole": "SP",
-              "fingerprint": "07ee7a45",
+              "fingerprint": "a687c3ec",
               "id": "p_-882756230_P0",
-              "sig": "07ee7a45"
+              "sig": "a687c3ec"
             },
             {
               "name": "Oscar Park",
@@ -1149,17 +1233,19 @@
               "batting": {
                 "contact": 37,
                 "power": 35,
-                "speed": 49
+                "speed": 49,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 25,
                 "control": 47,
-                "movement": 39
+                "movement": 39,
+                "stamina": 60
               },
               "pitchingRole": "RP",
-              "fingerprint": "446f557e",
+              "fingerprint": "332554bb",
               "id": "p_-882756230_P1",
-              "sig": "446f557e"
+              "sig": "332554bb"
             },
             {
               "name": "Leo Reed",
@@ -1169,17 +1255,19 @@
               "batting": {
                 "contact": 26,
                 "power": 35,
-                "speed": 42
+                "speed": 42,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 35,
                 "control": 31,
-                "movement": 36
+                "movement": 36,
+                "stamina": 60
               },
               "pitchingRole": "RP",
-              "fingerprint": "d635602e",
+              "fingerprint": "34a5c715",
               "id": "p_-882756230_P2",
-              "sig": "d635602e"
+              "sig": "34a5c715"
             },
             {
               "name": "Ben Grant",
@@ -1189,17 +1277,19 @@
               "batting": {
                 "contact": 45,
                 "power": 31,
-                "speed": 36
+                "speed": 36,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 33,
                 "control": 52,
-                "movement": 44
+                "movement": 44,
+                "stamina": 60
               },
               "pitchingRole": "SP/RP",
-              "fingerprint": "43de72bb",
+              "fingerprint": "ded4e338",
               "id": "p_-882756230_P3",
-              "sig": "43de72bb"
+              "sig": "ded4e338"
             },
             {
               "name": "Ben Xiong",
@@ -1209,17 +1299,19 @@
               "batting": {
                 "contact": 36,
                 "power": 45,
-                "speed": 38
+                "speed": 38,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 36,
                 "control": 35,
-                "movement": 48
+                "movement": 48,
+                "stamina": 60
               },
               "pitchingRole": "RP",
-              "fingerprint": "87bf5aa5",
+              "fingerprint": "46bacabe",
               "id": "p_-882756230_P4",
-              "sig": "87bf5aa5"
+              "sig": "46bacabe"
             }
           ]
         },
@@ -1249,11 +1341,12 @@
               "batting": {
                 "contact": 35,
                 "power": 31,
-                "speed": 40
+                "speed": 40,
+                "stamina": 50
               },
-              "fingerprint": "8b6963aa",
+              "fingerprint": "5fd47b1f",
               "id": "p_-882756231_L0",
-              "sig": "8b6963aa"
+              "sig": "5fd47b1f"
             },
             {
               "name": "Carlos Grant",
@@ -1263,11 +1356,12 @@
               "batting": {
                 "contact": 43,
                 "power": 48,
-                "speed": 43
+                "speed": 43,
+                "stamina": 50
               },
-              "fingerprint": "42baf423",
+              "fingerprint": "3a477174",
               "id": "p_-882756231_L1",
-              "sig": "42baf423"
+              "sig": "3a477174"
             },
             {
               "name": "Marcus Evans",
@@ -1277,11 +1371,12 @@
               "batting": {
                 "contact": 22,
                 "power": 27,
-                "speed": 32
+                "speed": 32,
+                "stamina": 50
               },
-              "fingerprint": "660f2545",
+              "fingerprint": "ded23692",
               "id": "p_-882756231_L2",
-              "sig": "660f2545"
+              "sig": "ded23692"
             },
             {
               "name": "Frank Davis",
@@ -1291,11 +1386,12 @@
               "batting": {
                 "contact": 47,
                 "power": 26,
-                "speed": 34
+                "speed": 34,
+                "stamina": 50
               },
-              "fingerprint": "4b626e38",
+              "fingerprint": "037f5799",
               "id": "p_-882756231_L3",
-              "sig": "4b626e38"
+              "sig": "037f5799"
             },
             {
               "name": "Carlos Park",
@@ -1305,11 +1401,12 @@
               "batting": {
                 "contact": 34,
                 "power": 46,
-                "speed": 22
+                "speed": 22,
+                "stamina": 50
               },
-              "fingerprint": "5a64ccae",
+              "fingerprint": "c62bfbe3",
               "id": "p_-882756231_L4",
-              "sig": "5a64ccae"
+              "sig": "c62bfbe3"
             },
             {
               "name": "Upton Reed",
@@ -1319,11 +1416,12 @@
               "batting": {
                 "contact": 28,
                 "power": 40,
-                "speed": 29
+                "speed": 29,
+                "stamina": 50
               },
-              "fingerprint": "3fa4d8d4",
+              "fingerprint": "28883665",
               "id": "p_-882756231_L5",
-              "sig": "3fa4d8d4"
+              "sig": "28883665"
             },
             {
               "name": "Leo Kent",
@@ -1333,11 +1431,12 @@
               "batting": {
                 "contact": 28,
                 "power": 31,
-                "speed": 35
+                "speed": 35,
+                "stamina": 50
               },
-              "fingerprint": "da2ef699",
+              "fingerprint": "ba0114e6",
               "id": "p_-882756231_L6",
-              "sig": "da2ef699"
+              "sig": "ba0114e6"
             },
             {
               "name": "Zane Irwin",
@@ -1347,11 +1446,12 @@
               "batting": {
                 "contact": 46,
                 "power": 24,
-                "speed": 26
+                "speed": 26,
+                "stamina": 50
               },
-              "fingerprint": "ff2f2d50",
+              "fingerprint": "2bed9681",
               "id": "p_-882756231_L7",
-              "sig": "ff2f2d50"
+              "sig": "2bed9681"
             },
             {
               "name": "Quinn Lane",
@@ -1361,11 +1461,12 @@
               "batting": {
                 "contact": 34,
                 "power": 33,
-                "speed": 47
+                "speed": 47,
+                "stamina": 50
               },
-              "fingerprint": "c98c077a",
+              "fingerprint": "7bf29bef",
               "id": "p_-882756231_L8",
-              "sig": "c98c077a"
+              "sig": "7bf29bef"
             }
           ],
           "bench": [
@@ -1377,11 +1478,12 @@
               "batting": {
                 "contact": 33,
                 "power": 27,
-                "speed": 34
+                "speed": 34,
+                "stamina": 50
               },
-              "fingerprint": "12d4afcf",
+              "fingerprint": "7d262bd0",
               "id": "p_-882756231_B0",
-              "sig": "12d4afcf"
+              "sig": "7d262bd0"
             },
             {
               "name": "Aaron Vega",
@@ -1391,11 +1493,12 @@
               "batting": {
                 "contact": 29,
                 "power": 46,
-                "speed": 32
+                "speed": 32,
+                "stamina": 50
               },
-              "fingerprint": "a9d4ee71",
+              "fingerprint": "6125d70e",
               "id": "p_-882756231_B1",
-              "sig": "a9d4ee71"
+              "sig": "6125d70e"
             },
             {
               "name": "Gary Jones",
@@ -1405,11 +1508,12 @@
               "batting": {
                 "contact": 40,
                 "power": 47,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
-              "fingerprint": "3c4f4f71",
+              "fingerprint": "7a74da0e",
               "id": "p_-882756231_B2",
-              "sig": "3c4f4f71"
+              "sig": "7a74da0e"
             },
             {
               "name": "Henry Davis",
@@ -1419,11 +1523,12 @@
               "batting": {
                 "contact": 26,
                 "power": 34,
-                "speed": 47
+                "speed": 47,
+                "stamina": 50
               },
-              "fingerprint": "03997878",
+              "fingerprint": "e2bde4d9",
               "id": "p_-882756231_B3",
-              "sig": "03997878"
+              "sig": "e2bde4d9"
             }
           ],
           "pitchers": [
@@ -1435,17 +1540,19 @@
               "batting": {
                 "contact": 26,
                 "power": 20,
-                "speed": 40
+                "speed": 40,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 34,
                 "control": 50,
-                "movement": 48
+                "movement": 48,
+                "stamina": 60
               },
               "pitchingRole": "SP",
-              "fingerprint": "e9543525",
+              "fingerprint": "eacbca24",
               "id": "p_-882756231_P0",
-              "sig": "e9543525"
+              "sig": "eacbca24"
             },
             {
               "name": "Wade Nash",
@@ -1455,17 +1562,19 @@
               "batting": {
                 "contact": 46,
                 "power": 22,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 36,
                 "control": 42,
-                "movement": 28
+                "movement": 28,
+                "stamina": 60
               },
               "pitchingRole": "RP",
-              "fingerprint": "74fb4714",
+              "fingerprint": "72465da7",
               "id": "p_-882756231_P1",
-              "sig": "74fb4714"
+              "sig": "72465da7"
             },
             {
               "name": "Henry Zavala",
@@ -1475,17 +1584,19 @@
               "batting": {
                 "contact": 35,
                 "power": 21,
-                "speed": 34
+                "speed": 34,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 53,
                 "control": 45,
-                "movement": 43
+                "movement": 43,
+                "stamina": 60
               },
               "pitchingRole": "RP",
-              "fingerprint": "34bd17aa",
+              "fingerprint": "7853aa9f",
               "id": "p_-882756231_P2",
-              "sig": "34bd17aa"
+              "sig": "7853aa9f"
             },
             {
               "name": "Henry Reed",
@@ -1495,17 +1606,19 @@
               "batting": {
                 "contact": 20,
                 "power": 49,
-                "speed": 33
+                "speed": 33,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 49,
                 "control": 45,
-                "movement": 38
+                "movement": 38,
+                "stamina": 60
               },
               "pitchingRole": "SP/RP",
-              "fingerprint": "277a3ee3",
+              "fingerprint": "24167760",
               "id": "p_-882756231_P3",
-              "sig": "277a3ee3"
+              "sig": "24167760"
             },
             {
               "name": "Xavier Nash",
@@ -1515,17 +1628,19 @@
               "batting": {
                 "contact": 41,
                 "power": 44,
-                "speed": 27
+                "speed": 27,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 51,
                 "control": 30,
-                "movement": 27
+                "movement": 27,
+                "stamina": 60
               },
               "pitchingRole": "RP",
-              "fingerprint": "b9d77510",
+              "fingerprint": "37713f79",
               "id": "p_-882756231_P4",
-              "sig": "b9d77510"
+              "sig": "37713f79"
             }
           ]
         },
@@ -1536,5 +1651,5 @@
       }
     ]
   },
-  "sig": "eb81aa8c"
+  "sig": "94c20623"
 }

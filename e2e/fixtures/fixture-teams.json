@@ -27,12 +27,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "C",
               "handedness": "R",
-              "sig": "0c4fbd08",
-              "fingerprint": "0c4fbd08"
+              "sig": "de10cde9",
+              "fingerprint": "de10cde9"
             },
             {
               "id": "p_fix_away_2",
@@ -41,12 +42,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "1B",
               "handedness": "R",
-              "sig": "c2ce2993",
-              "fingerprint": "c2ce2993"
+              "sig": "7d39e724",
+              "fingerprint": "7d39e724"
             },
             {
               "id": "p_fix_away_3",
@@ -55,12 +57,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "2B",
               "handedness": "R",
-              "sig": "66104afe",
-              "fingerprint": "66104afe"
+              "sig": "4b22ee73",
+              "fingerprint": "4b22ee73"
             },
             {
               "id": "p_fix_away_4",
@@ -69,12 +72,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "3B",
               "handedness": "R",
-              "sig": "db881a41",
-              "fingerprint": "db881a41"
+              "sig": "92aea71e",
+              "fingerprint": "92aea71e"
             },
             {
               "id": "p_fix_away_5",
@@ -83,12 +87,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "SS",
               "handedness": "R",
-              "sig": "b8f783a4",
-              "fingerprint": "b8f783a4"
+              "sig": "74986875",
+              "fingerprint": "74986875"
             },
             {
               "id": "p_fix_away_6",
@@ -97,12 +102,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "LF",
               "handedness": "R",
-              "sig": "a586ceef",
-              "fingerprint": "a586ceef"
+              "sig": "644232f0",
+              "fingerprint": "644232f0"
             },
             {
               "id": "p_fix_away_7",
@@ -111,12 +117,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "CF",
               "handedness": "R",
-              "sig": "986b630a",
-              "fingerprint": "986b630a"
+              "sig": "fd1b017f",
+              "fingerprint": "fd1b017f"
             },
             {
               "id": "p_fix_away_8",
@@ -125,12 +132,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "RF",
               "handedness": "R",
-              "sig": "2475c1dd",
-              "fingerprint": "2475c1dd"
+              "sig": "2368685a",
+              "fingerprint": "2368685a"
             },
             {
               "id": "p_fix_away_9",
@@ -139,12 +147,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "DH",
               "handedness": "R",
-              "sig": "c2c3b6e0",
-              "fingerprint": "c2c3b6e0"
+              "sig": "93612211",
+              "fingerprint": "93612211"
             }
           ],
           "bench": [],
@@ -156,18 +165,20 @@
               "batting": {
                 "contact": 20,
                 "power": 20,
-                "speed": 20
+                "speed": 20,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 50,
                 "control": 50,
-                "movement": 50
+                "movement": 50,
+                "stamina": 60
               },
               "position": "SP",
               "handedness": "R",
               "pitchingRole": "SP",
-              "sig": "553d31f4",
-              "fingerprint": "553d31f4"
+              "sig": "52e55e8f",
+              "fingerprint": "52e55e8f"
             }
           ]
         }
@@ -195,12 +206,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "C",
               "handedness": "R",
-              "sig": "c2632169",
-              "fingerprint": "c2632169"
+              "sig": "73bc4bb6",
+              "fingerprint": "73bc4bb6"
             },
             {
               "id": "p_fix_home_2",
@@ -209,12 +221,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "1B",
               "handedness": "R",
-              "sig": "61f80d12",
-              "fingerprint": "61f80d12"
+              "sig": "aa0c2d97",
+              "fingerprint": "aa0c2d97"
             },
             {
               "id": "p_fix_home_3",
@@ -223,12 +236,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "2B",
               "handedness": "R",
-              "sig": "66f59bd7",
-              "fingerprint": "66f59bd7"
+              "sig": "82720888",
+              "fingerprint": "82720888"
             },
             {
               "id": "p_fix_home_4",
@@ -237,12 +251,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "3B",
               "handedness": "R",
-              "sig": "cd5e2010",
-              "fingerprint": "cd5e2010"
+              "sig": "c4226641",
+              "fingerprint": "c4226641"
             },
             {
               "id": "p_fix_home_5",
@@ -251,12 +266,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "SS",
               "handedness": "R",
-              "sig": "7507f60d",
-              "fingerprint": "7507f60d"
+              "sig": "63a10d8a",
+              "fingerprint": "63a10d8a"
             },
             {
               "id": "p_fix_home_6",
@@ -265,12 +281,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "LF",
               "handedness": "R",
-              "sig": "074cbd66",
-              "fingerprint": "074cbd66"
+              "sig": "e6bc08cb",
+              "fingerprint": "e6bc08cb"
             },
             {
               "id": "p_fix_home_7",
@@ -279,12 +296,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "CF",
               "handedness": "R",
-              "sig": "b62a879b",
-              "fingerprint": "b62a879b"
+              "sig": "fecbdffc",
+              "fingerprint": "fecbdffc"
             },
             {
               "id": "p_fix_home_8",
@@ -293,12 +311,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "RF",
               "handedness": "R",
-              "sig": "db8ac054",
-              "fingerprint": "db8ac054"
+              "sig": "fb06fce5",
+              "fingerprint": "fb06fce5"
             },
             {
               "id": "p_fix_home_9",
@@ -307,12 +326,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "DH",
               "handedness": "R",
-              "sig": "c39ce0f1",
-              "fingerprint": "c39ce0f1"
+              "sig": "f86d5e8e",
+              "fingerprint": "f86d5e8e"
             }
           ],
           "bench": [],
@@ -324,18 +344,20 @@
               "batting": {
                 "contact": 20,
                 "power": 20,
-                "speed": 20
+                "speed": 20,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 50,
                 "control": 50,
-                "movement": 50
+                "movement": 50,
+                "stamina": 60
               },
               "position": "SP",
               "handedness": "R",
               "pitchingRole": "SP",
-              "sig": "88baaf89",
-              "fingerprint": "88baaf89"
+              "sig": "0d8c8b22",
+              "fingerprint": "0d8c8b22"
             }
           ]
         }
@@ -363,12 +385,13 @@
               "batting": {
                 "contact": 50,
                 "power": 50,
-                "speed": 50
+                "speed": 50,
+                "stamina": 50
               },
               "position": "CF",
               "handedness": "R",
-              "sig": "cc064f0d",
-              "fingerprint": "cc064f0d"
+              "sig": "249cf88a",
+              "fingerprint": "249cf88a"
             }
           ],
           "bench": [],
@@ -377,5 +400,5 @@
       }
     ]
   },
-  "sig": "7417bb7e"
+  "sig": "992d254c"
 }
