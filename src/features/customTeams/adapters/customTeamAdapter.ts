@@ -158,7 +158,9 @@ export function customTeamToHandednessMap(team: TeamWithRoster): Record<string, 
   const handednessByPlayer: Record<string, Handedness> = {};
   const allPlayers = [...team.roster.lineup, ...(team.roster.bench ?? []), ...team.roster.pitchers];
   for (const player of allPlayers) {
-    handednessByPlayer[player.id] = player.handedness!;
+    if (player.handedness) {
+      handednessByPlayer[player.id] = player.handedness;
+    }
   }
   return handednessByPlayer;
 }

@@ -397,3 +397,85 @@ describe("useImportPlayerFile — error paths", () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 });
+
+describe("useImportPlayerFile — role/section mismatch", () => {
+  it("rejects a pitcher exported into the lineup section", async () => {
+    const pitcherJson = makePlayerJson({ role: "pitcher", name: "Ace Pitcher" });
+    _fileContent = pitcherJson;
+
+    const { result, dispatch } = renderImportHook();
+    act(() => {
+      result.current("lineup")(makeChangeEvent(pitcherJson));
+    });
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "SET_ERROR",
+          error: expect.stringContaining('"Ace Pitcher" is a pitcher'),
+        }),
+      );
+    });
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ error: expect.stringContaining("Lineup/Bench") }),
+    );
+  });
+
+  it("rejects a pitcher exported into the bench section", async () => {
+    const pitcherJson = makePlayerJson({ role: "pitcher", name: "Relief Pitcher" });
+    _fileContent = pitcherJson;
+
+    const { result, dispatch } = renderImportHook();
+    act(() => {
+      result.current("bench")(makeChangeEvent(pitcherJson));
+    });
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "SET_ERROR",
+          error: expect.stringContaining('"Relief Pitcher" is a pitcher'),
+        }),
+      );
+    });
+  });
+
+  it("rejects a batter exported into the pitchers section", async () => {
+    const batterJson = makePlayerJson({ role: "batter", name: "Slugger" });
+    _fileContent = batterJson;
+
+    const { result, dispatch } = renderImportHook();
+    act(() => {
+      result.current("pitchers")(makeChangeEvent(batterJson));
+    });
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "SET_ERROR",
+          error: expect.stringContaining('"Slugger" is a batter'),
+        }),
+      );
+    });
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ error: expect.stringContaining("Pitchers") }),
+    );
+  });
+
+  it("allows a pitcher into the pitchers section (no rejection)", async () => {
+    const pitcherJson = makePlayerJson({ role: "pitcher", name: "Valid Pitcher" });
+    _fileContent = pitcherJson;
+
+    const { result, dispatch } = renderImportHook();
+    act(() => {
+      result.current("pitchers")(makeChangeEvent(pitcherJson));
+    });
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "ADD_PLAYER", section: "pitchers" }),
+      );
+    });
+    expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: "SET_ERROR" }));
+  });
+});
