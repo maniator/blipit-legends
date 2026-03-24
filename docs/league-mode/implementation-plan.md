@@ -42,11 +42,11 @@ See [data-model.md](data-model.md) for the full field-level schema definitions a
 
 - [ ] Create `src/features/leagues/utils/scheduleGenerator.ts`
 - [ ] Implement `generateSchedule(options: GenerateScheduleOptions): ScheduledGameSlot[]`
-  - Input: team IDs, season preset (Quick 10 / Short 30 / Standard 60 / Full 162 / Custom N), series length per matchup (default 3), division weighting flag
+  - Input: team IDs, season preset (Quick 18 / Short 30 / Standard 60 / Full 162 / Custom N), series length per matchup (default 3), division weighting flag
   - Output: flat array of `ScheduledGameSlot` objects with `homeTeamId`, `awayTeamId`, `gameDay` (integer), `seriesId`
 - [ ] Validate even matchup distribution across all teams (every team plays the same total games ±1)
 - [ ] If `divisionWeightedSchedule: true`, each division-rival matchup gets ~1.4× the games of inter-division matchups (mirrors MLB division weighting)
-- [ ] Compute `tradeDeadlineGameDay` = `Math.floor(totalGames / 2)`; write it to the `leagueSeason` doc at schedule creation
+- [ ] Compute `tradeDeadlineGameDay` = `Math.floor(totalGameDays / 2)` where `totalGameDays` is the highest `gameDay` value in the generated schedule; write it to the `leagueSeason` doc at schedule creation
 - [ ] Write unit tests:
   - 4-team league, Quick (18 games/team, seriesLength=3) — verify each team plays 18 games, home/away balanced
   - 8-team / 2-division league, Standard (60) — verify division weighting
@@ -56,7 +56,7 @@ See [data-model.md](data-model.md) for the full field-level schema definitions a
 
 | Preset | Total Regular-Season Games per Team |
 |---|---|
-| Quick | 10 |
+| Quick | ~18 |
 | Short | 30 |
 | Standard | 60 |
 | Full | 162 |
@@ -304,7 +304,7 @@ See [trades.md](trades.md) for full flow diagram and constraint table.
   - Validates: trade deadline not passed, no PENDING games for either team that day, roster minimums (≥9 batters, ≥1 pitcher each side post-trade)
   - Writes a `TradeRecord` (immutable) to `tradeRecords` collection
   - Updates `TeamRecord.rosterPlayerIds` for both teams atomically
-- [ ] Enforce deadline in `LeagueRosterPage`: disable `TradePanel` and show a "Trade Deadline Passed" banner when `currentGameDay > tradeDeadlineGameDay`
+- [ ] Enforce deadline in `LeagueRosterPage`: disable `TradePanel` and show a "Trade Deadline Passed" banner when `currentGameDay >= tradeDeadlineGameDay`
 - [ ] Add `TradeHistory` view to `LeagueRosterPage`: read-only list of `TradeRecord` docs sorted by date
 
 ---
@@ -341,6 +341,24 @@ Number of teams that advance: configurable (2 / 4 / 8); default = `min(4, Math.f
 
 ---
 
+## Phase 10 — Multi-Season *(Future)*
+
+> *(Future phase — not part of the initial implementation target.)*
+
+**Goal:** After a champion is crowned, allow a new season to begin with the same teams; preserve history.
+
+### Checklist
+
+- [ ] Add "Start New Season" button to `LeagueDetailPage` (enabled only when `leagueSeason.status === COMPLETE`)
+- [ ] `leagueStore.startNewSeason(leagueId)`:
+  - Creates a new `LeagueSeason` doc with `seasonNumber = previousSeason.seasonNumber + 1`
+  - Inherits teams and divisions from the league doc
+  - Rosters carry over as-is (no automatic roster reset — players stay on their current teams after trades)
+  - Generates a fresh schedule via `generateSchedule`
+- [ ] `LeagueDetailPage` shows a season picker (dropdown) to browse historical seasons
+- [ ] Historical season data is read-only: schedule, standings, bracket, and box scores are all preserved in RxDB
+- [ ] `StatsHubPage` league tab: season picker filters stats to the selected season (or "All Time")
+
 ---
 
 ## Phase 11 — AI Manager v2: Pre-Game Decisions *(Future)*
@@ -368,20 +386,3 @@ See [ai-manager-v2.md](ai-manager-v2.md) for the full scope, module plan, and te
 - [ ] Add `lineupOrder` and `benchPriority` optional fields to `GameSaveSetup` (empty arrays = v1 fallback; fully backward-compatible)
 - [ ] Wire all three helpers into `headlessSim.ts` and Watch/Manage `GamePage` setup path
 - [ ] Unit tests: `aiBattingOrder.test.ts`, `aiBenchStrategy.test.ts`, `aiStarterSelection.test.ts`
-
-
-> *(Future phase — not part of the initial implementation target.)*
-
-**Goal:** After a champion is crowned, allow a new season to begin with the same teams; preserve history.
-
-### Checklist
-
-- [ ] Add "Start New Season" button to `LeagueDetailPage` (enabled only when `leagueSeason.status === COMPLETE`)
-- [ ] `leagueStore.startNewSeason(leagueId)`:
-  - Creates a new `LeagueSeason` doc with `seasonNumber = previousSeason.seasonNumber + 1`
-  - Inherits teams and divisions from the league doc
-  - Rosters carry over as-is (no automatic roster reset — players stay on their current teams after trades)
-  - Generates a fresh schedule via `generateSchedule`
-- [ ] `LeagueDetailPage` shows a season picker (dropdown) to browse historical seasons
-- [ ] Historical season data is read-only: schedule, standings, bracket, and box scores are all preserved in RxDB
-- [ ] `StatsHubPage` league tab: season picker filters stats to the selected season (or "All Time")

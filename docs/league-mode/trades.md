@@ -22,7 +22,7 @@ The deadline is a **game day number** stored on `LeagueSeasonRecord.tradeDeadlin
 | Minimum | Game day 2 |
 | Maximum | `gamesPerTeam - 1` (at least one game must remain after the deadline) |
 
-Once `leagueSeason.currentGameDay > tradeDeadlineGameDay`:
+Once `leagueSeason.currentGameDay >= tradeDeadlineGameDay`:
 - `LeagueRosterPage` shows a **"Trade Deadline Passed"** banner in place of the trade UI
 - `tradeStore.executeTrade` also validates this server-side and throws if violated
 
@@ -34,7 +34,7 @@ All constraints are validated in `tradeStore.executeTrade` before any writes. Va
 
 | Constraint | Rule | Error message |
 |---|---|---|
-| Deadline | `currentGameDay <= tradeDeadlineGameDay` | "The trade deadline has passed for this season." |
+| Deadline | `currentGameDay < tradeDeadlineGameDay` | "The trade deadline has passed for this season." |
 | Same league | Both `fromTeamId` and `toTeamId` are in `leagueSeason.teamIdsAtStart` | "One or both teams are not in this league." |
 | Different teams | `fromTeamId !== toTeamId` | "A team cannot trade with itself." |
 | No active game | Neither team has a PENDING `ScheduledGameRecord` for `currentGameDay` that is flagged for Watch (i.e. it's currently being played live) | "Cannot trade while a live game is in progress." |

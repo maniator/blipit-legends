@@ -79,6 +79,7 @@ flowchart TD
 | 8 | Trades | *Future* | Roster moves, deadline gate, immutable trade records |
 | 9 | Playoffs | *Future* | Bracket generation, series scheduling, champion crowning |
 | 10 | Multi-Season | *Future* | Season rollover, historical browsing, new season start |
+| 11 | AI Manager v2 | *Future* | Rest-aware pitcher selection, batting order construction, bench strategy |
 
 ---
 

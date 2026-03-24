@@ -283,7 +283,7 @@ const leaguesSchemaV1: RxJsonSchema<LeagueRecord> = {
 stateDiagram-v2
     [*] --> SCHEDULED : season created
     SCHEDULED --> IN_PROGRESS : first game committed
-    IN_PROGRESS --> TRADE_DEADLINE_PASSED : currentGameDay exceeds tradeDeadlineGameDay
+    IN_PROGRESS --> TRADE_DEADLINE_PASSED : currentGameDay reaches or exceeds tradeDeadlineGameDay
     TRADE_DEADLINE_PASSED --> PLAYOFFS : all regular games resolved
     IN_PROGRESS --> PLAYOFFS : all regular games resolved before deadline
     PLAYOFFS --> COMPLETE : finals series clinched
@@ -325,8 +325,9 @@ export interface LeagueSeasonRecord {
   /** Total regular-season games per team. */
   gamesPerTeam: number;
   /**
-   * The game day number (1-based) after which trades are not allowed.
-   * Future (Phase 8): game day after which trades are disallowed.
+   * The game day number (1-based) on or after which trades are not allowed
+   * (`currentGameDay >= tradeDeadlineGameDay` → blocked).
+   * Future (Phase 8): computed as `Math.floor(totalGameDays / 2)` at schedule creation; user-adjustable.
    */
   tradeDeadlineGameDay: number;
   /**
@@ -334,7 +335,7 @@ export interface LeagueSeasonRecord {
    * Defined as the lowest game day number that still has at least one PENDING
    * ScheduledGameRecord. Advances to the next game day once all games on the
    * current day are COMPLETED or CANCELLED.
-   * Starts at 1 when the season is created; 0 means no games have been played yet.
+   * Initialized to 1 when the season schedule is generated.
    */
   currentGameDay: number;
   /** Future (Phase 9): playoff series format. */
