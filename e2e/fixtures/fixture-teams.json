@@ -32,8 +32,8 @@
               },
               "position": "C",
               "handedness": "R",
-              "sig": "de10cde9",
-              "fingerprint": "de10cde9"
+              "sig": "7849fa16",
+              "fingerprint": "7849fa16"
             },
             {
               "id": "p_fix_away_2",
@@ -47,8 +47,8 @@
               },
               "position": "1B",
               "handedness": "R",
-              "sig": "7d39e724",
-              "fingerprint": "7d39e724"
+              "sig": "9557c44f",
+              "fingerprint": "9557c44f"
             },
             {
               "id": "p_fix_away_3",
@@ -62,8 +62,8 @@
               },
               "position": "2B",
               "handedness": "R",
-              "sig": "4b22ee73",
-              "fingerprint": "4b22ee73"
+              "sig": "b14be5ec",
+              "fingerprint": "b14be5ec"
             },
             {
               "id": "p_fix_away_4",
@@ -77,8 +77,8 @@
               },
               "position": "3B",
               "handedness": "R",
-              "sig": "92aea71e",
-              "fingerprint": "92aea71e"
+              "sig": "4ec33c55",
+              "fingerprint": "4ec33c55"
             },
             {
               "id": "p_fix_away_5",
@@ -92,8 +92,8 @@
               },
               "position": "SS",
               "handedness": "R",
-              "sig": "74986875",
-              "fingerprint": "74986875"
+              "sig": "6935f972",
+              "fingerprint": "6935f972"
             },
             {
               "id": "p_fix_away_6",
@@ -107,8 +107,8 @@
               },
               "position": "LF",
               "handedness": "R",
-              "sig": "644232f0",
-              "fingerprint": "644232f0"
+              "sig": "014b9acb",
+              "fingerprint": "014b9acb"
             },
             {
               "id": "p_fix_away_7",
@@ -122,8 +122,8 @@
               },
               "position": "CF",
               "handedness": "R",
-              "sig": "fd1b017f",
-              "fingerprint": "fd1b017f"
+              "sig": "3471a9a8",
+              "fingerprint": "3471a9a8"
             },
             {
               "id": "p_fix_away_8",
@@ -137,8 +137,8 @@
               },
               "position": "RF",
               "handedness": "R",
-              "sig": "2368685a",
-              "fingerprint": "2368685a"
+              "sig": "29b10321",
+              "fingerprint": "29b10321"
             },
             {
               "id": "p_fix_away_9",
@@ -152,8 +152,8 @@
               },
               "position": "DH",
               "handedness": "R",
-              "sig": "93612211",
-              "fingerprint": "93612211"
+              "sig": "46f0444e",
+              "fingerprint": "46f0444e"
             }
           ],
           "bench": [],
@@ -211,8 +211,8 @@
               },
               "position": "C",
               "handedness": "R",
-              "sig": "73bc4bb6",
-              "fingerprint": "73bc4bb6"
+              "sig": "b449013d",
+              "fingerprint": "b449013d"
             },
             {
               "id": "p_fix_home_2",
@@ -226,8 +226,8 @@
               },
               "position": "1B",
               "handedness": "R",
-              "sig": "aa0c2d97",
-              "fingerprint": "aa0c2d97"
+              "sig": "5d2d88b0",
+              "fingerprint": "5d2d88b0"
             },
             {
               "id": "p_fix_home_3",
@@ -241,8 +241,8 @@
               },
               "position": "2B",
               "handedness": "R",
-              "sig": "82720888",
-              "fingerprint": "82720888"
+              "sig": "ca8c14d3",
+              "fingerprint": "ca8c14d3"
             },
             {
               "id": "p_fix_home_4",
@@ -256,8 +256,8 @@
               },
               "position": "3B",
               "handedness": "R",
-              "sig": "c4226641",
-              "fingerprint": "c4226641"
+              "sig": "8824c07e",
+              "fingerprint": "8824c07e"
             },
             {
               "id": "p_fix_home_5",
@@ -271,8 +271,8 @@
               },
               "position": "SS",
               "handedness": "R",
-              "sig": "63a10d8a",
-              "fingerprint": "63a10d8a"
+              "sig": "4e360391",
+              "fingerprint": "4e360391"
             },
             {
               "id": "p_fix_home_6",
@@ -286,8 +286,8 @@
               },
               "position": "LF",
               "handedness": "R",
-              "sig": "e6bc08cb",
-              "fingerprint": "e6bc08cb"
+              "sig": "096658b4",
+              "fingerprint": "096658b4"
             },
             {
               "id": "p_fix_home_7",
@@ -301,8 +301,8 @@
               },
               "position": "CF",
               "handedness": "R",
-              "sig": "fecbdffc",
-              "fingerprint": "fecbdffc"
+              "sig": "d9c2ea37",
+              "fingerprint": "d9c2ea37"
             },
             {
               "id": "p_fix_home_8",
@@ -316,8 +316,8 @@
               },
               "position": "RF",
               "handedness": "R",
-              "sig": "fb06fce5",
-              "fingerprint": "fb06fce5"
+              "sig": "40a7fb22",
+              "fingerprint": "40a7fb22"
             },
             {
               "id": "p_fix_home_9",
@@ -331,8 +331,8 @@
               },
               "position": "DH",
               "handedness": "R",
-              "sig": "f86d5e8e",
-              "fingerprint": "f86d5e8e"
+              "sig": "e9dc1c05",
+              "fingerprint": "e9dc1c05"
             }
           ],
           "bench": [],
@@ -390,8 +390,8 @@
               },
               "position": "CF",
               "handedness": "R",
-              "sig": "249cf88a",
-              "fingerprint": "249cf88a"
+              "sig": "23912e91",
+              "fingerprint": "23912e91"
             }
           ],
           "bench": [],
@@ -400,5 +400,5 @@
       }
     ]
   },
-  "sig": "992d254c"
+  "sig": "38c11c06"
 }

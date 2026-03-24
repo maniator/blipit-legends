@@ -252,6 +252,46 @@ describe("sanitizePlayer", () => {
     );
     expect(result.role).toBe("pitcher");
   });
+
+  it("throws when batting.stamina is undefined (legacy export missing stamina)", () => {
+    const player = {
+      ...makePlayer(),
+      batting: { contact: 50, power: 50, speed: 50 },
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(player, { index: 0, section: "lineup" })).toThrow(
+      "roster lineup[0].batting.stamina must be a finite number",
+    );
+  });
+
+  it("throws when batting.stamina is null (malformed import)", () => {
+    const player = {
+      ...makePlayer(),
+      batting: { contact: 50, power: 50, speed: 50, stamina: null },
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(player, { index: 1, section: "bench" })).toThrow(
+      "roster bench[1].batting.stamina must be a finite number",
+    );
+  });
+
+  it("throws when pitching.stamina is undefined (legacy pitcher export missing stamina)", () => {
+    const player = {
+      ...makePlayer({ role: "pitcher" }),
+      pitching: { velocity: 60, control: 50, movement: 50 },
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(player, { index: 0, section: "pitchers" })).toThrow(
+      "roster pitchers[0].pitching.stamina must be a finite number",
+    );
+  });
+
+  it("throws when pitching.stamina is null (malformed pitcher import)", () => {
+    const player = {
+      ...makePlayer({ role: "pitcher" }),
+      pitching: { velocity: 60, control: 50, movement: 50, stamina: null },
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(player, { index: 2, section: "pitchers" })).toThrow(
+      "roster pitchers[2].pitching.stamina must be a finite number",
+    );
+  });
 });
 
 describe("buildRoster", () => {
