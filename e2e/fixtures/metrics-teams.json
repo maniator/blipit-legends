@@ -28,9 +28,9 @@
                 "speed": 47,
                 "stamina": 50
               },
-              "fingerprint": "6dd9e6ae",
+              "fingerprint": "4528f2a5",
               "id": "p_-882756226_L0",
-              "sig": "6dd9e6ae"
+              "sig": "4528f2a5"
             },
             {
               "name": "Ben Zavala",
@@ -43,9 +43,9 @@
                 "speed": 50,
                 "stamina": 50
               },
-              "fingerprint": "5e96e26a",
+              "fingerprint": "7ed47b71",
               "id": "p_-882756226_L1",
-              "sig": "5e96e26a"
+              "sig": "7ed47b71"
             },
             {
               "name": "Nathan Young",
@@ -58,9 +58,9 @@
                 "speed": 34,
                 "stamina": 50
               },
-              "fingerprint": "7fdf2d95",
+              "fingerprint": "c5de3092",
               "id": "p_-882756226_L2",
-              "sig": "7fdf2d95"
+              "sig": "c5de3092"
             },
             {
               "name": "Carlos Reed",
@@ -73,9 +73,9 @@
                 "speed": 29,
                 "stamina": 50
               },
-              "fingerprint": "3f12dbad",
+              "fingerprint": "a49bb97a",
               "id": "p_-882756226_L3",
-              "sig": "3f12dbad"
+              "sig": "a49bb97a"
             },
             {
               "name": "Quinn Zavala",
@@ -88,9 +88,9 @@
                 "speed": 46,
                 "stamina": 50
               },
-              "fingerprint": "31bcef13",
+              "fingerprint": "a1d5f58c",
               "id": "p_-882756226_L4",
-              "sig": "31bcef13"
+              "sig": "a1d5f58c"
             },
             {
               "name": "Oscar Davis",
@@ -103,9 +103,9 @@
                 "speed": 26,
                 "stamina": 50
               },
-              "fingerprint": "bc652ddc",
+              "fingerprint": "55ff4a97",
               "id": "p_-882756226_L5",
-              "sig": "bc652ddc"
+              "sig": "55ff4a97"
             },
             {
               "name": "Danny Baker",
@@ -118,9 +118,9 @@
                 "speed": 50,
                 "stamina": 50
               },
-              "fingerprint": "6aa609fb",
+              "fingerprint": "0ab1b164",
               "id": "p_-882756226_L6",
-              "sig": "6aa609fb"
+              "sig": "0ab1b164"
             },
             {
               "name": "Gary Reed",
@@ -133,9 +133,9 @@
                 "speed": 23,
                 "stamina": 50
               },
-              "fingerprint": "e83133e7",
+              "fingerprint": "35528980",
               "id": "p_-882756226_L7",
-              "sig": "e83133e7"
+              "sig": "35528980"
             },
             {
               "name": "Marcus Hill",
@@ -148,9 +148,9 @@
                 "speed": 41,
                 "stamina": 50
               },
-              "fingerprint": "319390d8",
+              "fingerprint": "b5e97823",
               "id": "p_-882756226_L8",
-              "sig": "319390d8"
+              "sig": "b5e97823"
             }
           ],
           "bench": [
@@ -165,9 +165,9 @@
                 "speed": 36,
                 "stamina": 50
               },
-              "fingerprint": "e0902a85",
+              "fingerprint": "70ddfd42",
               "id": "p_-882756226_B0",
-              "sig": "e0902a85"
+              "sig": "70ddfd42"
             },
             {
               "name": "Henry Young",
@@ -180,9 +180,9 @@
                 "speed": 44,
                 "stamina": 50
               },
-              "fingerprint": "05cebb84",
+              "fingerprint": "1d66d1af",
               "id": "p_-882756226_B1",
-              "sig": "05cebb84"
+              "sig": "1d66d1af"
             },
             {
               "name": "Ben Grant",
@@ -195,9 +195,9 @@
                 "speed": 48,
                 "stamina": 50
               },
-              "fingerprint": "78b323ec",
+              "fingerprint": "7b024727",
               "id": "p_-882756226_B2",
-              "sig": "78b323ec"
+              "sig": "7b024727"
             },
             {
               "name": "Karl Scott",
@@ -210,9 +210,9 @@
                 "speed": 42,
                 "stamina": 50
               },
-              "fingerprint": "abc4cdda",
+              "fingerprint": "56c108a1",
               "id": "p_-882756226_B3",
-              "sig": "abc4cdda"
+              "sig": "56c108a1"
             }
           ],
           "pitchers": [
@@ -357,9 +357,9 @@
                 "speed": 23,
                 "stamina": 50
               },
-              "fingerprint": "bb2c85a7",
+              "fingerprint": "91c43c40",
               "id": "p_-882756227_L0",
-              "sig": "bb2c85a7"
+              "sig": "91c43c40"
             },
             {
               "name": "Tom Kent",
@@ -372,9 +372,9 @@
                 "speed": 32,
                 "stamina": 50
               },
-              "fingerprint": "50208f29",
+              "fingerprint": "b90c4156",
               "id": "p_-882756227_L1",
-              "sig": "50208f29"
+              "sig": "b90c4156"
             },
             {
               "name": "Leo Vega",
@@ -387,9 +387,9 @@
                 "speed": 38,
                 "stamina": 50
               },
-              "fingerprint": "a0bffae7",
+              "fingerprint": "df919080",
               "id": "p_-882756227_L2",
-              "sig": "a0bffae7"
+              "sig": "df919080"
             },
             {
               "name": "Oscar Grant",
@@ -402,9 +402,9 @@
                 "speed": 34,
                 "stamina": 50
               },
-              "fingerprint": "b3e0f691",
+              "fingerprint": "d5d9f8ce",
               "id": "p_-882756227_L3",
-              "sig": "b3e0f691"
+              "sig": "d5d9f8ce"
             },
             {
               "name": "Xavier Young",
@@ -417,9 +417,9 @@
                 "speed": 47,
                 "stamina": 50
               },
-              "fingerprint": "a2594472",
+              "fingerprint": "48e1da49",
               "id": "p_-882756227_L4",
-              "sig": "a2594472"
+              "sig": "48e1da49"
             },
             {
               "name": "Ivan Evans",
@@ -432,9 +432,9 @@
                 "speed": 38,
                 "stamina": 50
               },
-              "fingerprint": "555593ab",
+              "fingerprint": "d463df14",
               "id": "p_-882756227_L5",
-              "sig": "555593ab"
+              "sig": "d463df14"
             },
             {
               "name": "Yogi Irwin",
@@ -447,9 +447,9 @@
                 "speed": 38,
                 "stamina": 50
               },
-              "fingerprint": "cf3927d9",
+              "fingerprint": "207e8846",
               "id": "p_-882756227_L6",
-              "sig": "cf3927d9"
+              "sig": "207e8846"
             },
             {
               "name": "Quinn Quinn",
@@ -462,9 +462,9 @@
                 "speed": 38,
                 "stamina": 50
               },
-              "fingerprint": "9173439d",
+              "fingerprint": "1fc011ea",
               "id": "p_-882756227_L7",
-              "sig": "9173439d"
+              "sig": "1fc011ea"
             },
             {
               "name": "Ray Hill",
@@ -477,9 +477,9 @@
                 "speed": 30,
                 "stamina": 50
               },
-              "fingerprint": "754a3c20",
+              "fingerprint": "10e5ebbb",
               "id": "p_-882756227_L8",
-              "sig": "754a3c20"
+              "sig": "10e5ebbb"
             }
           ],
           "bench": [
@@ -494,9 +494,9 @@
                 "speed": 24,
                 "stamina": 50
               },
-              "fingerprint": "3e21947b",
+              "fingerprint": "ba9d9be4",
               "id": "p_-882756227_B0",
-              "sig": "3e21947b"
+              "sig": "ba9d9be4"
             },
             {
               "name": "Marcus Adams",
@@ -509,9 +509,9 @@
                 "speed": 25,
                 "stamina": 50
               },
-              "fingerprint": "64b816d6",
+              "fingerprint": "d4edc1dd",
               "id": "p_-882756227_B1",
-              "sig": "64b816d6"
+              "sig": "d4edc1dd"
             },
             {
               "name": "Sam Irwin",
@@ -524,9 +524,9 @@
                 "speed": 37,
                 "stamina": 50
               },
-              "fingerprint": "1dea89ab",
+              "fingerprint": "e62f5514",
               "id": "p_-882756227_B2",
-              "sig": "1dea89ab"
+              "sig": "e62f5514"
             },
             {
               "name": "Upton Scott",
@@ -539,9 +539,9 @@
                 "speed": 47,
                 "stamina": 50
               },
-              "fingerprint": "6d5c0b20",
+              "fingerprint": "f055fabb",
               "id": "p_-882756227_B3",
-              "sig": "6d5c0b20"
+              "sig": "f055fabb"
             }
           ],
           "pitchers": [
@@ -686,9 +686,9 @@
                 "speed": 30,
                 "stamina": 50
               },
-              "fingerprint": "0649a370",
+              "fingerprint": "f45deb4b",
               "id": "p_-882756229_L0",
-              "sig": "0649a370"
+              "sig": "f45deb4b"
             },
             {
               "name": "Leo Xiong",
@@ -701,9 +701,9 @@
                 "speed": 37,
                 "stamina": 50
               },
-              "fingerprint": "a77ffd34",
+              "fingerprint": "aa61afdf",
               "id": "p_-882756229_L1",
-              "sig": "a77ffd34"
+              "sig": "aa61afdf"
             },
             {
               "name": "Sam Scott",
@@ -716,9 +716,9 @@
                 "speed": 31,
                 "stamina": 50
               },
-              "fingerprint": "87201fac",
+              "fingerprint": "e2cf7ce7",
               "id": "p_-882756229_L2",
-              "sig": "87201fac"
+              "sig": "e2cf7ce7"
             },
             {
               "name": "Xavier Scott",
@@ -731,9 +731,9 @@
                 "speed": 42,
                 "stamina": 50
               },
-              "fingerprint": "b637e859",
+              "fingerprint": "d91428c6",
               "id": "p_-882756229_L3",
-              "sig": "b637e859"
+              "sig": "d91428c6"
             },
             {
               "name": "Carlos Nash",
@@ -746,9 +746,9 @@
                 "speed": 20,
                 "stamina": 50
               },
-              "fingerprint": "6fa2d278",
+              "fingerprint": "37c88343",
               "id": "p_-882756229_L4",
-              "sig": "6fa2d278"
+              "sig": "37c88343"
             },
             {
               "name": "Nathan Scott",
@@ -761,9 +761,9 @@
                 "speed": 47,
                 "stamina": 50
               },
-              "fingerprint": "1bfded13",
+              "fingerprint": "febb738c",
               "id": "p_-882756229_L5",
-              "sig": "1bfded13"
+              "sig": "febb738c"
             },
             {
               "name": "Jake Vega",
@@ -776,9 +776,9 @@
                 "speed": 28,
                 "stamina": 50
               },
-              "fingerprint": "e83cc813",
+              "fingerprint": "dfbd8e8c",
               "id": "p_-882756229_L6",
-              "sig": "e83cc813"
+              "sig": "dfbd8e8c"
             },
             {
               "name": "Wade Scott",
@@ -791,9 +791,9 @@
                 "speed": 24,
                 "stamina": 50
               },
-              "fingerprint": "9d4c0e98",
+              "fingerprint": "ebb9b9e3",
               "id": "p_-882756229_L7",
-              "sig": "9d4c0e98"
+              "sig": "ebb9b9e3"
             },
             {
               "name": "Wade Vega",
@@ -806,9 +806,9 @@
                 "speed": 42,
                 "stamina": 50
               },
-              "fingerprint": "5b83a9c5",
+              "fingerprint": "5a851282",
               "id": "p_-882756229_L8",
-              "sig": "5b83a9c5"
+              "sig": "5a851282"
             }
           ],
           "bench": [
@@ -823,9 +823,9 @@
                 "speed": 49,
                 "stamina": 50
               },
-              "fingerprint": "93b3a2da",
+              "fingerprint": "e6209da1",
               "id": "p_-882756229_B0",
-              "sig": "93b3a2da"
+              "sig": "e6209da1"
             },
             {
               "name": "Victor Quinn",
@@ -838,9 +838,9 @@
                 "speed": 48,
                 "stamina": 50
               },
-              "fingerprint": "b4fa7245",
+              "fingerprint": "a400bb02",
               "id": "p_-882756229_B1",
-              "sig": "b4fa7245"
+              "sig": "a400bb02"
             },
             {
               "name": "Oscar Walsh",
@@ -853,9 +853,9 @@
                 "speed": 41,
                 "stamina": 50
               },
-              "fingerprint": "6bd155a1",
+              "fingerprint": "ed9357de",
               "id": "p_-882756229_B2",
-              "sig": "6bd155a1"
+              "sig": "ed9357de"
             },
             {
               "name": "Marcus Kent",
@@ -868,9 +868,9 @@
                 "speed": 26,
                 "stamina": 50
               },
-              "fingerprint": "89c30546",
+              "fingerprint": "85ba788d",
               "id": "p_-882756229_B3",
-              "sig": "89c30546"
+              "sig": "85ba788d"
             }
           ],
           "pitchers": [
@@ -1015,9 +1015,9 @@
                 "speed": 50,
                 "stamina": 50
               },
-              "fingerprint": "8b665824",
+              "fingerprint": "f415f54f",
               "id": "p_-882756230_L0",
-              "sig": "8b665824"
+              "sig": "f415f54f"
             },
             {
               "name": "Ben Urban",
@@ -1030,9 +1030,9 @@
                 "speed": 37,
                 "stamina": 50
               },
-              "fingerprint": "42c04964",
+              "fingerprint": "4389ab8f",
               "id": "p_-882756230_L1",
-              "sig": "42c04964"
+              "sig": "4389ab8f"
             },
             {
               "name": "Ivan Owen",
@@ -1045,9 +1045,9 @@
                 "speed": 42,
                 "stamina": 50
               },
-              "fingerprint": "7b13d198",
+              "fingerprint": "f4babce3",
               "id": "p_-882756230_L2",
-              "sig": "7b13d198"
+              "sig": "f4babce3"
             },
             {
               "name": "Carlos Baker",
@@ -1060,9 +1060,9 @@
                 "speed": 22,
                 "stamina": 50
               },
-              "fingerprint": "07e7ce55",
+              "fingerprint": "1c812f52",
               "id": "p_-882756230_L3",
-              "sig": "07e7ce55"
+              "sig": "1c812f52"
             },
             {
               "name": "Aaron Jones",
@@ -1075,9 +1075,9 @@
                 "speed": 21,
                 "stamina": 50
               },
-              "fingerprint": "f2602cfd",
+              "fingerprint": "a155254a",
               "id": "p_-882756230_L4",
-              "sig": "f2602cfd"
+              "sig": "a155254a"
             },
             {
               "name": "Danny Ford",
@@ -1090,9 +1090,9 @@
                 "speed": 28,
                 "stamina": 50
               },
-              "fingerprint": "32fcea89",
+              "fingerprint": "7539d736",
               "id": "p_-882756230_L5",
-              "sig": "32fcea89"
+              "sig": "7539d736"
             },
             {
               "name": "Quinn Evans",
@@ -1105,9 +1105,9 @@
                 "speed": 36,
                 "stamina": 50
               },
-              "fingerprint": "b268f682",
+              "fingerprint": "93cb5a59",
               "id": "p_-882756230_L6",
-              "sig": "b268f682"
+              "sig": "93cb5a59"
             },
             {
               "name": "Victor Turner",
@@ -1120,9 +1120,9 @@
                 "speed": 35,
                 "stamina": 50
               },
-              "fingerprint": "72c13709",
+              "fingerprint": "a4da03b6",
               "id": "p_-882756230_L7",
-              "sig": "72c13709"
+              "sig": "a4da03b6"
             },
             {
               "name": "Oscar Evans",
@@ -1135,9 +1135,9 @@
                 "speed": 41,
                 "stamina": 50
               },
-              "fingerprint": "e4960758",
+              "fingerprint": "d6894ea3",
               "id": "p_-882756230_L8",
-              "sig": "e4960758"
+              "sig": "d6894ea3"
             }
           ],
           "bench": [
@@ -1152,9 +1152,9 @@
                 "speed": 23,
                 "stamina": 50
               },
-              "fingerprint": "e9788c12",
+              "fingerprint": "0fce7669",
               "id": "p_-882756230_B0",
-              "sig": "e9788c12"
+              "sig": "0fce7669"
             },
             {
               "name": "Yogi Grant",
@@ -1167,9 +1167,9 @@
                 "speed": 47,
                 "stamina": 50
               },
-              "fingerprint": "db17e04a",
+              "fingerprint": "7c373c51",
               "id": "p_-882756230_B1",
-              "sig": "db17e04a"
+              "sig": "7c373c51"
             },
             {
               "name": "Victor Adams",
@@ -1182,9 +1182,9 @@
                 "speed": 47,
                 "stamina": 50
               },
-              "fingerprint": "aabca961",
+              "fingerprint": "6912679e",
               "id": "p_-882756230_B2",
-              "sig": "aabca961"
+              "sig": "6912679e"
             },
             {
               "name": "Quinn Irwin",
@@ -1197,9 +1197,9 @@
                 "speed": 30,
                 "stamina": 50
               },
-              "fingerprint": "dfe4ded2",
+              "fingerprint": "c32b3d29",
               "id": "p_-882756230_B3",
-              "sig": "dfe4ded2"
+              "sig": "c32b3d29"
             }
           ],
           "pitchers": [
@@ -1344,9 +1344,9 @@
                 "speed": 40,
                 "stamina": 50
               },
-              "fingerprint": "5fd47b1f",
+              "fingerprint": "02867248",
               "id": "p_-882756231_L0",
-              "sig": "5fd47b1f"
+              "sig": "02867248"
             },
             {
               "name": "Carlos Grant",
@@ -1359,9 +1359,9 @@
                 "speed": 43,
                 "stamina": 50
               },
-              "fingerprint": "3a477174",
+              "fingerprint": "4750171f",
               "id": "p_-882756231_L1",
-              "sig": "3a477174"
+              "sig": "4750171f"
             },
             {
               "name": "Marcus Evans",
@@ -1374,9 +1374,9 @@
                 "speed": 32,
                 "stamina": 50
               },
-              "fingerprint": "ded23692",
+              "fingerprint": "3fd080e9",
               "id": "p_-882756231_L2",
-              "sig": "ded23692"
+              "sig": "3fd080e9"
             },
             {
               "name": "Frank Davis",
@@ -1389,9 +1389,9 @@
                 "speed": 34,
                 "stamina": 50
               },
-              "fingerprint": "037f5799",
+              "fingerprint": "e9b97106",
               "id": "p_-882756231_L3",
-              "sig": "037f5799"
+              "sig": "e9b97106"
             },
             {
               "name": "Carlos Park",
@@ -1404,9 +1404,9 @@
                 "speed": 22,
                 "stamina": 50
               },
-              "fingerprint": "c62bfbe3",
+              "fingerprint": "32678b5c",
               "id": "p_-882756231_L4",
-              "sig": "c62bfbe3"
+              "sig": "32678b5c"
             },
             {
               "name": "Upton Reed",
@@ -1419,9 +1419,9 @@
                 "speed": 29,
                 "stamina": 50
               },
-              "fingerprint": "28883665",
+              "fingerprint": "5b3fd4a2",
               "id": "p_-882756231_L5",
-              "sig": "28883665"
+              "sig": "5b3fd4a2"
             },
             {
               "name": "Leo Kent",
@@ -1434,9 +1434,9 @@
                 "speed": 35,
                 "stamina": 50
               },
-              "fingerprint": "ba0114e6",
+              "fingerprint": "b83112ad",
               "id": "p_-882756231_L6",
-              "sig": "ba0114e6"
+              "sig": "b83112ad"
             },
             {
               "name": "Zane Irwin",
@@ -1449,9 +1449,9 @@
                 "speed": 26,
                 "stamina": 50
               },
-              "fingerprint": "2bed9681",
+              "fingerprint": "d9716abe",
               "id": "p_-882756231_L7",
-              "sig": "2bed9681"
+              "sig": "d9716abe"
             },
             {
               "name": "Quinn Lane",
@@ -1464,9 +1464,9 @@
                 "speed": 47,
                 "stamina": 50
               },
-              "fingerprint": "7bf29bef",
+              "fingerprint": "a2f9b598",
               "id": "p_-882756231_L8",
-              "sig": "7bf29bef"
+              "sig": "a2f9b598"
             }
           ],
           "bench": [
@@ -1481,9 +1481,9 @@
                 "speed": 34,
                 "stamina": 50
               },
-              "fingerprint": "7d262bd0",
+              "fingerprint": "527bbc2b",
               "id": "p_-882756231_B0",
-              "sig": "7d262bd0"
+              "sig": "527bbc2b"
             },
             {
               "name": "Aaron Vega",
@@ -1496,9 +1496,9 @@
                 "speed": 32,
                 "stamina": 50
               },
-              "fingerprint": "6125d70e",
+              "fingerprint": "51cd7485",
               "id": "p_-882756231_B1",
-              "sig": "6125d70e"
+              "sig": "51cd7485"
             },
             {
               "name": "Gary Jones",
@@ -1511,9 +1511,9 @@
                 "speed": 50,
                 "stamina": 50
               },
-              "fingerprint": "7a74da0e",
+              "fingerprint": "fa05b785",
               "id": "p_-882756231_B2",
-              "sig": "7a74da0e"
+              "sig": "fa05b785"
             },
             {
               "name": "Henry Davis",
@@ -1526,9 +1526,9 @@
                 "speed": 47,
                 "stamina": 50
               },
-              "fingerprint": "e2bde4d9",
+              "fingerprint": "a4aa0546",
               "id": "p_-882756231_B3",
-              "sig": "e2bde4d9"
+              "sig": "a4aa0546"
             }
           ],
           "pitchers": [
@@ -1651,5 +1651,5 @@
       }
     ]
   },
-  "sig": "94c20623"
+  "sig": "16a1b7ef"
 }

@@ -31,8 +31,8 @@
               },
               "position": "LF",
               "handedness": "R",
-              "sig": "cf359ac7",
-              "fingerprint": "cf359ac7"
+              "sig": "2a1b6260",
+              "fingerprint": "2a1b6260"
             },
             {
               "id": "e2e_batter_contact",
@@ -46,8 +46,8 @@
               },
               "position": "CF",
               "handedness": "L",
-              "sig": "40c894fb",
-              "fingerprint": "40c894fb"
+              "sig": "384b7c64",
+              "fingerprint": "384b7c64"
             }
           ],
           "bench": [],
@@ -80,5 +80,5 @@
       }
     ]
   },
-  "sig": "2329f66f"
+  "sig": "b8cd7f8f"
 }

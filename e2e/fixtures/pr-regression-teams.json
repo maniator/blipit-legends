@@ -28,9 +28,9 @@
                 "speed": 26,
                 "stamina": 50
               },
-              "fingerprint": "73792d4e",
+              "fingerprint": "9f9238c5",
               "id": "p_-1354600163_L0",
-              "sig": "73792d4e"
+              "sig": "9f9238c5"
             },
             {
               "name": "Upton Ford",
@@ -43,9 +43,9 @@
                 "speed": 28,
                 "stamina": 50
               },
-              "fingerprint": "ab25a687",
+              "fingerprint": "96736c20",
               "id": "p_-1354600163_L1",
-              "sig": "ab25a687"
+              "sig": "96736c20"
             },
             {
               "name": "Gary Turner",
@@ -58,9 +58,9 @@
                 "speed": 37,
                 "stamina": 50
               },
-              "fingerprint": "31d1e11d",
+              "fingerprint": "b7544f6a",
               "id": "p_-1354600163_L2",
-              "sig": "31d1e11d"
+              "sig": "b7544f6a"
             },
             {
               "name": "Frank Lane",
@@ -73,9 +73,9 @@
                 "speed": 33,
                 "stamina": 50
               },
-              "fingerprint": "64d2387c",
+              "fingerprint": "7dca22b7",
               "id": "p_-1354600163_L3",
-              "sig": "64d2387c"
+              "sig": "7dca22b7"
             },
             {
               "name": "Sam Scott",
@@ -88,9 +88,9 @@
                 "speed": 42,
                 "stamina": 50
               },
-              "fingerprint": "1173ecea",
+              "fingerprint": "cac1e5f1",
               "id": "p_-1354600163_L4",
-              "sig": "1173ecea"
+              "sig": "cac1e5f1"
             },
             {
               "name": "Ivan Vega",
@@ -103,9 +103,9 @@
                 "speed": 42,
                 "stamina": 50
               },
-              "fingerprint": "ad01386e",
+              "fingerprint": "11f81365",
               "id": "p_-1354600163_L5",
-              "sig": "ad01386e"
+              "sig": "11f81365"
             },
             {
               "name": "Yogi Owen",
@@ -118,9 +118,9 @@
                 "speed": 20,
                 "stamina": 50
               },
-              "fingerprint": "8ff890d4",
+              "fingerprint": "103cac7f",
               "id": "p_-1354600163_L6",
-              "sig": "8ff890d4"
+              "sig": "103cac7f"
             },
             {
               "name": "Ray Quinn",
@@ -133,9 +133,9 @@
                 "speed": 41,
                 "stamina": 50
               },
-              "fingerprint": "f47de675",
+              "fingerprint": "b19ff772",
               "id": "p_-1354600163_L7",
-              "sig": "f47de675"
+              "sig": "b19ff772"
             },
             {
               "name": "Zane Moore",
@@ -148,9 +148,9 @@
                 "speed": 47,
                 "stamina": 50
               },
-              "fingerprint": "5508eb56",
+              "fingerprint": "2d68765d",
               "id": "p_-1354600163_L8",
-              "sig": "5508eb56"
+              "sig": "2d68765d"
             }
           ],
           "bench": [
@@ -165,9 +165,9 @@
                 "speed": 49,
                 "stamina": 50
               },
-              "fingerprint": "20b0824f",
+              "fingerprint": "be727178",
               "id": "p_-1354600163_B0",
-              "sig": "20b0824f"
+              "sig": "be727178"
             },
             {
               "name": "Jake Davis",
@@ -180,9 +180,9 @@
                 "speed": 37,
                 "stamina": 50
               },
-              "fingerprint": "ad7e4aca",
+              "fingerprint": "189606d1",
               "id": "p_-1354600163_B1",
-              "sig": "ad7e4aca"
+              "sig": "189606d1"
             },
             {
               "name": "Quinn Vega",
@@ -195,9 +195,9 @@
                 "speed": 42,
                 "stamina": 50
               },
-              "fingerprint": "8c4a36e4",
+              "fingerprint": "cfd5390f",
               "id": "p_-1354600163_B2",
-              "sig": "8c4a36e4"
+              "sig": "cfd5390f"
             },
             {
               "name": "Henry Xiong",
@@ -210,9 +210,9 @@
                 "speed": 43,
                 "stamina": 50
               },
-              "fingerprint": "1098ac08",
+              "fingerprint": "ef3ad853",
               "id": "p_-1354600163_B3",
-              "sig": "1098ac08"
+              "sig": "ef3ad853"
             }
           ],
           "pitchers": [
@@ -357,9 +357,9 @@
                 "speed": 38,
                 "stamina": 50
               },
-              "fingerprint": "66af027e",
+              "fingerprint": "b3688335",
               "id": "p_-1354600173_L0",
-              "sig": "66af027e"
+              "sig": "b3688335"
             },
             {
               "name": "Eric Lane",
@@ -372,9 +372,9 @@
                 "speed": 24,
                 "stamina": 50
               },
-              "fingerprint": "8bec0931",
+              "fingerprint": "289049ee",
               "id": "p_-1354600173_L1",
-              "sig": "8bec0931"
+              "sig": "289049ee"
             },
             {
               "name": "Frank Quinn",
@@ -387,9 +387,9 @@
                 "speed": 37,
                 "stamina": 50
               },
-              "fingerprint": "9d56fdaf",
+              "fingerprint": "ba704e58",
               "id": "p_-1354600173_L2",
-              "sig": "9d56fdaf"
+              "sig": "ba704e58"
             },
             {
               "name": "Oscar Baker",
@@ -402,9 +402,9 @@
                 "speed": 32,
                 "stamina": 50
               },
-              "fingerprint": "99fa421f",
+              "fingerprint": "8a9c7948",
               "id": "p_-1354600173_L3",
-              "sig": "99fa421f"
+              "sig": "8a9c7948"
             },
             {
               "name": "Carlos Jones",
@@ -417,9 +417,9 @@
                 "speed": 20,
                 "stamina": 50
               },
-              "fingerprint": "859b00cb",
+              "fingerprint": "761750b4",
               "id": "p_-1354600173_L4",
-              "sig": "859b00cb"
+              "sig": "761750b4"
             },
             {
               "name": "Yogi Turner",
@@ -432,9 +432,9 @@
                 "speed": 42,
                 "stamina": 50
               },
-              "fingerprint": "7b4fe394",
+              "fingerprint": "e112973f",
               "id": "p_-1354600173_L5",
-              "sig": "7b4fe394"
+              "sig": "e112973f"
             },
             {
               "name": "Xavier Moore",
@@ -447,9 +447,9 @@
                 "speed": 20,
                 "stamina": 50
               },
-              "fingerprint": "d82abaa8",
+              "fingerprint": "568688f3",
               "id": "p_-1354600173_L6",
-              "sig": "d82abaa8"
+              "sig": "568688f3"
             },
             {
               "name": "Danny Nash",
@@ -462,9 +462,9 @@
                 "speed": 29,
                 "stamina": 50
               },
-              "fingerprint": "1a4029ae",
+              "fingerprint": "e02875a5",
               "id": "p_-1354600173_L7",
-              "sig": "1a4029ae"
+              "sig": "e02875a5"
             },
             {
               "name": "Jake Nash",
@@ -477,9 +477,9 @@
                 "speed": 35,
                 "stamina": 50
               },
-              "fingerprint": "3325193e",
+              "fingerprint": "b3333ef5",
               "id": "p_-1354600173_L8",
-              "sig": "3325193e"
+              "sig": "b3333ef5"
             }
           ],
           "bench": [
@@ -494,9 +494,9 @@
                 "speed": 32,
                 "stamina": 50
               },
-              "fingerprint": "9d9961af",
+              "fingerprint": "7191b258",
               "id": "p_-1354600173_B0",
-              "sig": "9d9961af"
+              "sig": "7191b258"
             },
             {
               "name": "Marcus Jones",
@@ -509,9 +509,9 @@
                 "speed": 25,
                 "stamina": 50
               },
-              "fingerprint": "a415fb1e",
+              "fingerprint": "faed9055",
               "id": "p_-1354600173_B1",
-              "sig": "a415fb1e"
+              "sig": "faed9055"
             },
             {
               "name": "Upton Young",
@@ -524,9 +524,9 @@
                 "speed": 25,
                 "stamina": 50
               },
-              "fingerprint": "a59e8dbe",
+              "fingerprint": "ac6e9375",
               "id": "p_-1354600173_B2",
-              "sig": "a59e8dbe"
+              "sig": "ac6e9375"
             },
             {
               "name": "Carlos Irwin",
@@ -539,9 +539,9 @@
                 "speed": 29,
                 "stamina": 50
               },
-              "fingerprint": "34616da9",
+              "fingerprint": "61007fd6",
               "id": "p_-1354600173_B3",
-              "sig": "34616da9"
+              "sig": "61007fd6"
             }
           ],
           "pitchers": [
@@ -664,5 +664,5 @@
       }
     ]
   },
-  "sig": "8d4ff9e7"
+  "sig": "cab4e649"
 }
