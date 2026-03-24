@@ -174,8 +174,8 @@ When building `GameSaveSetup` for a league game (headless or Watch/Manage), look
  * Compute the short-rest penalty to apply to a pitcher's staminaMod.
  * Applied additively at game-setup time — does NOT modify the stored PlayerRecord.
  *
- * The penalty degrades the pitcher's effective staminaMod, raising their
- * fatigue onset threshold and making them tire faster than a rested arm.
+ * The penalty degrades the pitcher's effective staminaMod, lowering their
+ * fatigue onset threshold so they reach fatigue earlier than a rested arm.
  */
 function computeShortRestPenalty(
   daysSinceLastAppearance: number,

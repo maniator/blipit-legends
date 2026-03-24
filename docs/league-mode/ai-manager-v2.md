@@ -10,7 +10,7 @@
 
 ## What v1 AI decides (already shipping)
 
-| Decision point | v1 behaviour |
+| Decision point | v1 behavior |
 |---|---|
 | **Starting pitcher** | Deterministic seed-hash rotation — picks from the SP/SP‑RP pool, no cross-game state |
 | **In-game pitching change** | `makeAiPitchingDecision` — fatigue-factor + handedness matchup |
@@ -46,7 +46,7 @@ Everything in the table above is scope-complete for v1. AI v2 extends the **pre-
 
 ### 2. Batting Order Construction
 
-**v1 gap:** The batting order is whatever order players happen to be stored in under `PlayerRecord.orderIndex`. This is not optimised for game situation, opponent, or player attributes.
+**v1 gap:** The batting order is whatever order players happen to be stored in under `PlayerRecord.orderIndex`. This is not optimized for game situation, opponent, or player attributes.
 
 **v2 plan:** Before building `GameSaveSetup` for each league game, run `buildAiBattingOrder(players, opponentSP)` to produce a sorted lineup. The result is passed as the `lineupOrder` slot for that team, overriding the raw roster order for the duration of this game only. The `PlayerRecord` store is never mutated.
 
@@ -74,7 +74,7 @@ The algorithm follows the conventional batting-order wisdom adapted to the attri
 
 **v1 gap:** Bench is whatever is in the `bench` section of the roster. The AI never promotes a player from bench to lineup or demotes a starter to bench based on the upcoming game.
 
-**v2 plan:** Run `buildAiBenchStrategy(players, opponentSP)` to produce an ordered bench list optimised for pinch-hitting availability late in the game. This does **not** move players between `lineup` and `bench` sections — it only changes the priority order in which `makeAiTacticalDecision` scans bench candidates.
+**v2 plan:** Run `buildAiBenchStrategy(players, opponentSP)` to produce an ordered bench list optimized for pinch-hitting availability late in the game. This does **not** move players between `lineup` and `bench` sections — it only changes the priority order in which `makeAiTacticalDecision` scans bench candidates.
 
 **Bench priority ordering:**
 
@@ -132,7 +132,7 @@ interface GameSaveSetup {
 }
 ```
 
-Empty arrays (`[]`) signal "use v1 fallback behaviour" — fully backward-compatible. Existing exhibition games and v1 league games that don't call the v2 helpers will behave identically.
+Empty arrays (`[]`) signal "use v1 fallback behavior" — fully backward-compatible. Existing exhibition games and v1 league games that don't call the v2 helpers will behave identically.
 
 ---
 

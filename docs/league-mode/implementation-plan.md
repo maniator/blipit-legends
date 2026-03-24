@@ -184,7 +184,7 @@ src/features/leagues/
 ### Checklist
 
 - [ ] Create the directory tree above (empty index files or minimal stubs)
-- [ ] Add `@feat/leagues/*` alias to `tsconfig.json` under `compilerOptions.paths`
+- [ ] Verify the existing `@feat/*` alias in `tsconfig.json` covers `@feat/leagues/...` imports (no separate alias needed)
 - [ ] Add the new routes to `src/router.tsx` (see [routing.md](routing.md))
 - [ ] Add **League** nav entry to `HomeScreen` (behind a feature flag or always visible — TBD)
 
