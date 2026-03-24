@@ -51,7 +51,7 @@ flowchart TD
 | Doc | Contents |
 |---|---|
 | **This file** | Decisions log, overview, phase summary |
-| [implementation-plan.md](implementation-plan.md) | Full 9-phase plan with per-phase checklists |
+| [implementation-plan.md](implementation-plan.md) | Full implementation plan with per-phase checklists |
 | [data-model.md](data-model.md) | New RxDB collections, schema definitions, ER diagram, epoch bump details |
 | [routing.md](routing.md) | New route table, before/after comparison, route tree diagram |
 | [gameplay-modes.md](gameplay-modes.md) | Box Score / Watch / Simulate Day flows and Night Summary modal |

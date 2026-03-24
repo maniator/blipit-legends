@@ -48,7 +48,7 @@ const seed = `${leagueSeasonId}:${scheduledGameId}`;
 
 **Uniqueness guarantee:** `scheduledGameId` is an RxDB primary key — no two `ScheduledGameRecord` docs can share one. This means every game in every season has a unique seed. No manual deduplication is needed.
 
-**Batched simulation:** When Simulate Day runs multiple games in the same call, each game independently derives its seed from its own `scheduledGameId`. There is no shared RNG state between parallel `headlessSim` calls — each is a pure function that seeds its own PRNG from scratch.
+**Batched simulation:** When Simulate Day runs multiple games in the same call, each game derives its seed from its own `scheduledGameId` and calls `reinitSeed` before executing. Because gameplay randomness flows through the module-global PRNG in `@shared/utils/rng`, `headlessSim` calls are **sequential and non-reentrant** — they must not run concurrently. Within a single Simulate Day batch, games execute one after another in a deterministic order.
 
 **Deterministic replay:** The same `leagueSeasonId:scheduledGameId` pair always produces the same game result. If the app crashes mid-batch, any unwritten games can be re-simulated and will produce identical results. The seed is stored on the resulting `CompletedGameRecord` for future verification.
 

@@ -2,7 +2,7 @@
 
 > See [README.md](README.md) for the decisions log and document index.
 
-> **Scope:** Phases 1–6 are the **initial near-term implementation target**. Phases 7–10 are **future extensions** — fully documented for when they are built, but not part of the first slice.
+> **Scope:** Phases 1–6 are the **initial near-term implementation target**. Phases 7–11 are **future extensions** — fully documented for when they are built, but not part of the first slice.
 
 ---
 

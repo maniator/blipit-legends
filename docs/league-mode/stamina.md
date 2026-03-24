@@ -17,7 +17,9 @@ The fatigue model (shipped in PR #206, merged to `master` before any league work
   - Default fresh threshold: 75 pitches ± `staminaMod × 1.5` (e.g. +20 stamina → 105-pitch threshold; −20 → 45 pitches)
 - **Resets:** to zero whenever a new pitcher enters (`pitcherPitchCount` and `pitcherBattersFaced` reset on substitution)
 
-### Batter fatigue (within-game)
+### Batter fatigue (within-game) *(future — not yet implemented)*
+
+> **Status:** Batter within-game fatigue is planned but not yet implemented. The fields and function described below do not exist in the current codebase and are documented here as the design target for a future phase.
 
 - **Signal:** completed plate appearances (`batterPlateAppearances`) — a `Record<playerId, number>` per team, incremented each time a batter completes a PA
 - **Model:** `computeBatterFatigueFactor(plateAppearances, staminaMod)` → contact penalty + power penalty (v1: modest and bounded; contact max −10, power max −6)

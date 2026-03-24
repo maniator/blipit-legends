@@ -371,7 +371,7 @@ const leagueSeasonsSchemaV1: RxJsonSchema<LeagueSeasonRecord> = {
     status:                { type: "string", maxLength: 32 },
     gamesPerTeam:          { type: "number", minimum: 4, maximum: 200, multipleOf: 1 },
     tradeDeadlineGameDay:  { type: "number", minimum: 1, maximum: 200, multipleOf: 1 },
-    currentGameDay:        { type: "number", minimum: 0, maximum: 200, multipleOf: 1 },
+    currentGameDay:        { type: "number", minimum: 1, maximum: 200, multipleOf: 1 },
     playoffFormat:         { type: "object", additionalProperties: true },
     playoffTeamCount:      { type: "number", minimum: 2, maximum: 16, multipleOf: 1 },
     championTeamId:        { type: ["string", "null"], maxLength: 128 },

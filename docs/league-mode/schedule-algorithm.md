@@ -315,7 +315,7 @@ const seed = `${leagueSeasonId}:${scheduledGameId}`;
 The `leagueSeasonId` prefix (nanoid-based, e.g. `ls_V1StGXR8_Z5j`) differs for every season. Even in the astronomically unlikely event that two different seasons produce a `scheduledGameId` collision, their seed strings would still differ.
 
 **Why this is safe for batched simulation:**  
-`headlessSim` is a pure function — it takes a seed, runs the reducer loop, and returns a result with no shared mutable state. Running multiple calls in the same event loop tick is safe because each call seeds its own PRNG independently from the formula above. There is no global RNG state shared between parallel simulations.
+`headlessSim` takes a seed and runs the reducer loop to produce a result. The seed formula (`${leagueSeasonId}:${scheduledGameId}`) ensures determinism. However, gameplay randomness flows through the module-global PRNG in `@shared/utils/rng` — multiple `headlessSim` calls share that global state, so they must be run **sequentially** (not in true parallel) to avoid cross-game interference. When Simulate Day runs multiple games in the same call, each game calls `reinitSeed` from its own seed before executing, so results are fully deterministic as long as games run one after another.
 
 **Playoff games:**  
 Playoff `ScheduledGameRecord` docs are generated with the same `generateScheduledGameId()` function, so playoff game seeds are guaranteed unique by the same mechanism.

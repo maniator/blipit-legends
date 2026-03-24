@@ -28,7 +28,7 @@
 | **Single unique matchup (2-team league)** | The circle method produces one matchup per round. Repeat passes until game-count target is met. Schedule is valid. |
 | **All teams in one division with division weighting enabled** | Division weighting is a no-op (every pair is a division rival). Fall back to flat weighting silently. |
 | **Schedule batch write fails mid-way (storage error)** | Roll back: delete any `ScheduledGameRecord` docs that were written, reset `leagueSeason.status` to `SCHEDULED`, and show a "Storage error — season not started" message. Never leave a half-written schedule. |
-| **generateId collision on scheduledGameId** | Astronomically unlikely given FNV-1a. If a primary key conflict is caught by RxDB, generate a new ID and retry once. If it fails twice, surface the error — this indicates a deeper storage problem. |
+| **generateId collision on scheduledGameId** | Astronomically unlikely with nanoid-based IDs. If a primary key conflict is caught by RxDB, generate a new ID and retry once. If it fails twice, surface the error — this indicates a deeper storage problem. |
 
 ---
 
@@ -64,7 +64,7 @@
 |---|---|
 | **Same game re-simulated after crash** | The formula `${leagueSeasonId}:${scheduledGameId}` is deterministic — same inputs always produce the same seed, so the same game result is reproduced. |
 | **Playoff game seed** | Playoff `ScheduledGameRecord` docs use the same `generateScheduledGameId()` function. The same seed formula applies — uniqueness and determinism are both guaranteed. |
-| **Two seasons accidentally produce matching `scheduledGameId` values** | The `leagueSeasonId` prefix in the seed formula distinguishes them. Even if two seasons contain a doc with the same `scheduledGameId` string (extremely unlikely given FNV-1a), their seeds will be different. |
+| **Two seasons accidentally produce matching `scheduledGameId` values** | The `leagueSeasonId` prefix in the seed formula distinguishes them. Even if two seasons contain a doc with the same `scheduledGameId` string (extremely unlikely with nanoid-based IDs), their seeds will be different. |
 | **Seed stored on `CompletedGameRecord`** | The seed passed to `headlessSim` must be written verbatim to `CompletedGameRecord.seed`. This enables independent re-verification of any result. |
 
 ---
@@ -113,7 +113,7 @@
 
 | Scenario | Correct behavior |
 |---|---|
-| **Roster at start of new season reflects post-trade state** | `TeamRecord.players` at the time of the new season creation is the roster used. There is no "season snapshot" of rosters — each season uses the live player data. If that's undesirable for future seasons, `LeagueSeasonRecord.teamIdsAtStart` records membership but not individual player data. |
+| **Roster at start of new season reflects post-trade state** | The roster at new-season creation time is the current roster derived from `PlayerRecord`s for that team (based on `teamId` plus `section`/`orderIndex`). There is no "season snapshot" of rosters — each season uses the live player data. If that's undesirable for future seasons, `LeagueSeasonRecord.teamIdsAtStart` records team membership but not individual player data. |
 | **Player deleted between seasons** | Historical `CompletedGameRecord` and stat records reference the deleted `playerId`. The career-stats page may show "Unknown Player" for that ID. Prevent deletion of players who have `CompletedGameRecord` entries with their `playerId` — or at minimum warn before deleting. |
 | **Team renamed between seasons** | Old season stats continue to reference `teamId`, which is stable. The UI should resolve team names from the current `TeamRecord` for display — past games will show the current name. If preserving historical names matters, store `homeTeamNameAtTime` / `awayTeamNameAtTime` on `CompletedGameRecord`. |
 | **`activeLeagueId` not cleared after season completes** | `leagueStore.completeLeagueSeason` must clear `activeLeagueId` on every `TeamRecord` in the season. If it's not cleared, teams are permanently locked out of new leagues. This must be part of the `COMPLETE` transition — not a separate cleanup step. |
