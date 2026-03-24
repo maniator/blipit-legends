@@ -67,17 +67,18 @@
               "pitching": {
                 "velocity": 65,
                 "control": 60,
-                "stamina": 70
+                "stamina": 70,
+                "movement": 50
               },
               "position": "SP",
               "handedness": "R",
-              "fingerprint": "40cf3c2c",
-              "sig": "40cf3c2c"
+              "fingerprint": "5b0891ba",
+              "sig": "5b0891ba"
             }
           ]
         }
       }
     ]
   },
-  "sig": "f698e2f8"
+  "sig": "4b843eee"
 }
