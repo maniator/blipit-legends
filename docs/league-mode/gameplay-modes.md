@@ -40,13 +40,19 @@ flowchart TD
 
 ### Seed Strategy
 
-Each `ScheduledGameRecord` does not need a pre-assigned seed — the seed is computed deterministically at sim time:
+Each game's simulation seed is derived deterministically from the game's identity:
 
 ```ts
 const seed = `${leagueSeasonId}:${scheduledGameId}`;
 ```
 
-This means the same game always produces the same result if re-simulated, which matters for replay verification. The seed is stored on the resulting `CompletedGameRecord`.
+**Uniqueness guarantee:** `scheduledGameId` is an RxDB primary key — no two `ScheduledGameRecord` docs can share one. This means every game in every season has a unique seed. No manual deduplication is needed.
+
+**Batched simulation:** When Simulate Day runs multiple games in the same call, each game independently derives its seed from its own `scheduledGameId`. There is no shared RNG state between parallel `headlessSim` calls — each is a pure function that seeds its own PRNG from scratch.
+
+**Deterministic replay:** The same `leagueSeasonId:scheduledGameId` pair always produces the same game result. If the app crashes mid-batch, any unwritten games can be re-simulated and will produce identical results. The seed is stored on the resulting `CompletedGameRecord` for future verification.
+
+See [schedule-algorithm.md — Game Seed Uniqueness](schedule-algorithm.md#game-seed-uniqueness) for the full reasoning.
 
 ### `headlessSim` API
 

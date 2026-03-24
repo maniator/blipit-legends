@@ -275,6 +275,23 @@ const leaguesSchemaV1: RxJsonSchema<LeagueRecord> = {
 
 **Purpose:** One document per season of a league. Tracks schedule length, trade deadline, playoff config, and current status.
 
+#### Season Status State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> SCHEDULED : season created
+    SCHEDULED --> IN_PROGRESS : first game committed
+    IN_PROGRESS --> TRADE_DEADLINE_PASSED : currentGameDay exceeds tradeDeadlineGameDay
+    TRADE_DEADLINE_PASSED --> PLAYOFFS : all regular games resolved
+    IN_PROGRESS --> PLAYOFFS : all regular games resolved before deadline
+    PLAYOFFS --> COMPLETE : finals series clinched
+    SCHEDULED --> CANCELLED : league disbanded before start
+    IN_PROGRESS --> CANCELLED : league disbanded mid-season
+    TRADE_DEADLINE_PASSED --> CANCELLED : league disbanded mid-season
+    COMPLETE --> [*]
+    CANCELLED --> [*]
+```
+
 #### TypeScript type
 
 ```ts

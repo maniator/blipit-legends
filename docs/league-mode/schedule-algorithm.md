@@ -50,6 +50,28 @@ Each "Simulate Day" button press advances one row in this table.
 
 The foundation is the classic **circle / polygon rotation** algorithm, which produces a perfectly balanced round-robin tournament schedule where every team plays every other team exactly once per "round."
 
+### Circle-Method Diagram (4 teams)
+
+Each round, team A stays fixed while B, C, D rotate one position counter-clockwise. The lines show which pairs play each other.
+
+```mermaid
+flowchart LR
+    subgraph R1["Round 1"]
+        A1["A (fixed)"] --- B1["B"]
+        C1["C"] --- D1["D"]
+    end
+    subgraph R2["Round 2"]
+        A2["A (fixed)"] --- C2["C"]
+        D2["D"] --- B2["B"]
+    end
+    subgraph R3["Round 3"]
+        A3["A (fixed)"] --- D3["D"]
+        B3["B"] --- C3["C"]
+    end
+```
+
+After three rounds every team has faced every other team exactly once — a complete single pass. To build a full season, passes are repeated (alternating home/away) until the game-count target is met.
+
 ### How it works
 
 Given `n` teams (assume `n` is even; see Bye Handling for odd `n`):
@@ -187,38 +209,20 @@ Series 2 (B vs D, 3 games):  gameDay 4, 5, 6   ← runs in parallel
 
 The maximum number of parallel series on any game day is `floor(n / 2)` (one series per pair of teams, since each team can only play one game per day). Game days are assigned so no team plays on two different series on the same day.
 
-### Visual: 4-team schedule (Quick — 10 games per team, 3-game series)
+### Complete 4-team schedule (12 games per team, 3-game series)
 
-Since Quick (10 games) and 3-game series don't divide evenly, 2 matchup pairs get 3 series and 4 matchup pairs get 2 series. Total = 3+3+2+2+2+2 = 14 series × 3 = doesn't work — let me use the real math:
+With 4 teams and `gamesPerTeam = 12` (2 series per matchup pair, home/away swapped between passes):
 
-4 teams, 3 opponents each, 10 target games each → ~3.3 series per matchup → round to mix of 3 and 4.
+| Game Days | Left matchup | Right matchup (parallel) |
+|---|---|---|
+| Days 1–3 | A vs B — series 1 | C vs D — series 1 |
+| Days 4–6 | A vs C — series 1 | B vs D — series 1 |
+| Days 7–9 | A vs D — series 1 | B vs C — series 1 |
+| Days 10–12 | B vs A — series 2 (H/A flipped) | D vs C — series 2 |
+| Days 13–15 | C vs A — series 2 | D vs B — series 2 |
+| Days 16–18 | D vs A — series 2 | C vs B — series 2 |
 
-```
-Matchup    Series  Games
-A vs B       4      12   ← 4 series of 3
-A vs C       3       9
-A vs D       3       9
-B vs C       3       9
-B vs D       3       9
-C vs D       4      12
-             Total per team A: 12+9+9 = 30?  No, that's wrong.
-```
-
-Actually for Quick (10 games per team, 4 teams), each team plays 3 opponents. 10/3 ≈ 3.3, so each matchup gets either 3 or 4 games (mix of 3-game series = 1 or 2 per matchup). But for simplicity of illustration:
-
-With `seriesLength = 3`, `gamesPerTeam = 12` (nearest multiple of 3 above 10):
-
-```
-Matchup      Series count   Days
-A vs B           2            Day 1–3, Day 13–15
-A vs C           2            Day 4–6, Day 16–18
-A vs D           2            Day 7–9, Day 19–21
-B vs C           2            Day 1–3, Day 13–15  (parallel with A vs B)
-B vs D           2            Day 4–6, Day 16–18  (parallel with A vs C)
-C vs D           2            Day 7–9, Day 19–21  (parallel with A vs D)
-```
-
-Total game days: 21. Each team plays 12 games. Each "Simulate Day" press advances one calendar day.
+Total: **18 game days**, 12 games per team, 2 parallel matchups per day. Each "Simulate Day" press advances one row.
 
 ---
 
@@ -270,6 +274,56 @@ The output of `generateSchedule` is converted directly into `ScheduledGameRecord
 
 ---
 
+## Season Creation Pipeline
+
+The full schedule is generated and persisted in one shot when the user starts a season. Nothing is lazy or deferred.
+
+```mermaid
+flowchart TD
+    A[User confirms league setup] --> B[leagueStore.createLeague]
+    B --> C[TeamRecord.activeLeagueId set for each team]
+    C --> D[User taps Start Season on LeagueDetailPage]
+    D --> E[leagueSeasonStore.createSeason]
+    E --> F[generateSchedule computes full round-robin]
+    F --> G[ScheduledGameRecord batch insert to RxDB]
+    G --> H[tradeDeadlineGameDay written to LeagueSeasonRecord]
+    H --> I[leagueSeason.status set to IN_PROGRESS]
+    I --> J[SchedulePage shows game day 1]
+```
+
+---
+
+## Game Seed Uniqueness
+
+Every simulated game — including games run in bulk via Simulate Day — must use a **unique, deterministic seed** so that:
+
+1. The same game always produces the same result when re-simulated (replay verification, crash recovery).
+2. No two games in a batch share a seed, preventing any cross-game RNG correlation.
+
+### Seed formula
+
+```ts
+const seed = `${leagueSeasonId}:${scheduledGameId}`;
+```
+
+**Why this is guaranteed unique within a season:**  
+`scheduledGameId` is an RxDB primary key (`sg_<fnv1a hash>`). RxDB enforces primary key uniqueness at the collection level — no two `ScheduledGameRecord` docs in the same collection can share an ID. Therefore no two games in the same season can produce the same seed string.
+
+**Why this is guaranteed unique across seasons:**  
+The `leagueSeasonId` prefix (`ls_<fnv1a hash>`) differs for every season. Even in the astronomically unlikely event that two different seasons produce a `scheduledGameId` collision, their seed strings would still differ.
+
+**Why this is safe for batched simulation:**  
+`headlessSim` is a pure function — it takes a seed, runs the reducer loop, and returns a result with no shared mutable state. Running multiple calls in the same event loop tick is safe because each call seeds its own PRNG independently from the formula above. There is no global RNG state shared between parallel simulations.
+
+**Playoff games:**  
+Playoff `ScheduledGameRecord` docs are generated with the same `generateScheduledGameId()` function, so playoff game seeds are guaranteed unique by the same mechanism.
+
+### Seed storage
+
+The computed seed is passed into `headlessSim` and stored verbatim on the resulting `CompletedGameRecord.seed`. This allows any game result to be re-verified by re-running `headlessSim` with the same seed and comparing outputs.
+
+---
+
 ## Trade Deadline Game Day
 
 The trade deadline game day is computed from the schedule at creation time:
@@ -292,3 +346,5 @@ const tradeDeadlineGameDay = Math.floor(totalGameDays / 2);
 | 4 teams, seriesLength=1 (one-off) | Every game has a unique matchup per round; no series IDs repeated within a round |
 | Seed stability | Same inputs + same seed → identical `ScheduledGameSlot[]` output (deterministic) |
 | Game day parallelism | No team appears twice on the same `gameDay` |
+| Batch seed uniqueness | Every `ScheduledGameSlot` in a Simulate Day batch has a distinct `${leagueSeasonId}:${scheduledGameId}` seed — no two seeds are equal |
+| Cross-season seed isolation | Same `scheduledGameId` in two different seasons produces different seeds due to distinct `leagueSeasonId` prefix |

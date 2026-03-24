@@ -9,6 +9,30 @@
 
 League Mode adds a persistent, multi-team baseball league on top of the existing Exhibition engine. Users create a named league, assign custom teams to it, generate a round-robin schedule, and then play (or simulate) those games across a full season, trade deadline, and playoffs — all stored locally in RxDB with no server required.
 
+### League Lifecycle
+
+```mermaid
+flowchart TD
+    A[Create League] --> B[Assign Teams and Divisions]
+    B --> C[Configure Season Preset and Playoff Format]
+    C --> D[Generate Full Schedule upfront]
+    D --> E[Regular Season]
+    E --> F{Trade deadline reached?}
+    F -->|no| E
+    F -->|yes| G[Trades locked]
+    G --> H[Continue Regular Season]
+    H --> I{All regular games resolved?}
+    I -->|no| H
+    I -->|yes| J[Playoffs auto-triggered]
+    J --> K[Play or Sim Playoff Series]
+    K --> L{Finals clinched?}
+    L -->|no| K
+    L -->|yes| M[Champion crowned]
+    M --> N{Start new season?}
+    N -->|yes| C
+    N -->|no| O[League archived - read only]
+```
+
 ---
 
 ## Locked-In Decisions
@@ -34,10 +58,11 @@ League Mode adds a persistent, multi-team baseball league on top of the existing
 | [data-model.md](data-model.md) | New RxDB collections, schema definitions, ER diagram, epoch bump details |
 | [routing.md](routing.md) | New route table, before/after comparison, route tree diagram |
 | [gameplay-modes.md](gameplay-modes.md) | Box Score / Watch / Simulate Day flows and Night Summary modal |
-| [schedule-algorithm.md](schedule-algorithm.md) | Round-robin algorithm, series vs. one-off design, bye handling, division weighting, worked examples |
+| [schedule-algorithm.md](schedule-algorithm.md) | Round-robin algorithm, series vs. one-off design, bye handling, division weighting, game seed uniqueness |
 | [trades.md](trades.md) | Trade deadline enforcement, execution flow, roster constraints |
 | [playoffs.md](playoffs.md) | Playoff format options, bracket generation, series management |
 | [stats-migration.md](stats-migration.md) | `/stats` → Stats Hub migration plan |
+| [edge-cases.md](edge-cases.md) | Edge cases and error handling across all areas of league play |
 
 ---
 
