@@ -32,8 +32,8 @@
               },
               "position": "CF",
               "handedness": "R",
-              "fingerprint": "997f38f3",
-              "sig": "997f38f3"
+              "fingerprint": "8e68906c",
+              "sig": "8e68906c"
             }
           ],
           "bench": [
@@ -49,8 +49,8 @@
               },
               "position": "DH",
               "handedness": "R",
-              "fingerprint": "30770aeb",
-              "sig": "30770aeb"
+              "fingerprint": "e27c4e54",
+              "sig": "e27c4e54"
             }
           ],
           "pitchers": [
@@ -79,5 +79,5 @@
       }
     ]
   },
-  "sig": "74f2d6e0"
+  "sig": "f698e2f8"
 }

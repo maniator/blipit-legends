@@ -29,7 +29,7 @@
               "position": "CF",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "31f5053b"
+              "sig": "bcb5c1a4"
             },
             {
               "id": "vis_b1",
@@ -45,7 +45,7 @@
               "position": "RF",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "2c1588a4"
+              "sig": "086005cf"
             },
             {
               "id": "vis_b2",
@@ -61,7 +61,7 @@
               "position": "SS",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "588acfea"
+              "sig": "6d0a08f1"
             },
             {
               "id": "vis_b3",
@@ -77,7 +77,7 @@
               "position": "1B",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "254d2376"
+              "sig": "83d66cfd"
             },
             {
               "id": "vis_b4",
@@ -93,7 +93,7 @@
               "position": "2B",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "06b26efa"
+              "sig": "45b95741"
             },
             {
               "id": "vis_b5",
@@ -109,7 +109,7 @@
               "position": "3B",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "c63ff973"
+              "sig": "b84030ec"
             },
             {
               "id": "vis_b6",
@@ -125,7 +125,7 @@
               "position": "LF",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "4b069f3e"
+              "sig": "890744f5"
             },
             {
               "id": "vis_b7",
@@ -141,7 +141,7 @@
               "position": "C",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "fcc8ff4e"
+              "sig": "35698ac5"
             },
             {
               "id": "vis_b8",
@@ -157,7 +157,7 @@
               "position": "DH",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "c78b69e4"
+              "sig": "6413ac0f"
             }
           ],
           "bench": [
@@ -175,7 +175,7 @@
               "position": "LF",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "9a343637"
+              "sig": "b2fa4f50"
             },
             {
               "id": "vis_ph2",
@@ -191,7 +191,7 @@
               "position": "DH",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "b2278fd0"
+              "sig": "009c202b"
             }
           ],
           "pitchers": [
@@ -247,7 +247,7 @@
               "position": "C",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "99010cba"
+              "sig": "69e7db01"
             },
             {
               "id": "loc_b1",
@@ -263,7 +263,7 @@
               "position": "1B",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "14dfd1b1"
+              "sig": "1848f26e"
             },
             {
               "id": "loc_b2",
@@ -279,7 +279,7 @@
               "position": "2B",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "012c7c04"
+              "sig": "849b722f"
             },
             {
               "id": "loc_b3",
@@ -295,7 +295,7 @@
               "position": "3B",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "b8817dbb"
+              "sig": "657b1a24"
             },
             {
               "id": "loc_b4",
@@ -311,7 +311,7 @@
               "position": "SS",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "37cbc12e"
+              "sig": "7e572d25"
             },
             {
               "id": "loc_b5",
@@ -327,7 +327,7 @@
               "position": "LF",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "5eb9d375"
+              "sig": "6b56a472"
             },
             {
               "id": "loc_b6",
@@ -343,7 +343,7 @@
               "position": "CF",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "9235ad48"
+              "sig": "65013293"
             },
             {
               "id": "loc_b7",
@@ -359,7 +359,7 @@
               "position": "RF",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "574b716f"
+              "sig": "9a0a2b18"
             },
             {
               "id": "loc_b8",
@@ -375,7 +375,7 @@
               "position": "DH",
               "handedness": "R",
               "isBenchEligible": true,
-              "sig": "c5e2e662"
+              "sig": "82b059b9"
             }
           ],
           "bench": [],
@@ -409,5 +409,5 @@
       }
     ]
   },
-  "sig": "3e45090e"
+  "sig": "4d46964b"
 }
