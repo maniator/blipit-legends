@@ -1,7 +1,7 @@
 # League Mode — Implementation Reference
 
 > **Status:** Pre-implementation planning docs. No code has been written yet.
-> All decisions below are locked in and supersede anything in earlier design chat.
+> **Near-term scope (Phases 1–6):** league foundation, schedule, game modes, standings, and season completion. **Future phases (7+):** stats hub migration, trades, playoffs, multi-season — documented here for reference but not part of the initial implementation target.
 
 ---
 
@@ -14,38 +14,33 @@ League Mode adds a persistent, multi-team baseball league on top of the existing
 ```mermaid
 flowchart TD
     A[Create League] --> B[Assign Teams and Divisions]
-    B --> C[Configure Season Preset and Playoff Format]
+    B --> C[Configure Season Preset]
     C --> D[Generate Full Schedule upfront]
     D --> E[Regular Season]
-    E --> F{Trade deadline reached?}
+    E --> F{All games resolved?}
     F -->|no| E
-    F -->|yes| G[Trades locked]
-    G --> H[Continue Regular Season]
-    H --> I{All regular games resolved?}
-    I -->|no| H
-    I -->|yes| J[Playoffs auto-triggered]
-    J --> K[Play or Sim Playoff Series]
-    K --> L{Finals clinched?}
-    L -->|no| K
-    L -->|yes| M[Champion crowned]
-    M --> N{Start new season?}
-    N -->|yes| C
-    N -->|no| O[League archived - read only]
+    F -->|yes| G[Season Complete - champion by best record]
+    G --> H[League archived - read only]
 ```
+
+> **Future phases (7+):** Trade deadline enforcement → Playoff bracket → Multi-season rollover. These are documented in the relevant reference files but are not part of the initial implementation target.
 
 ---
 
-## Locked-In Decisions
+## Key Decisions
 
-| Topic | Decision |
-|---|---|
-| Division assignment | Auto-assign evenly at league creation; user only picks the division count (2 or 4) |
-| Trade deadline | Included; default = 50% of season game count; user-adjustable at creation |
-| Playoff format | Configurable per league (Bo3 / Bo5 / Bo7, single bracket); defaults to **Bo5** if user makes no choice |
-| Team exclusivity | A team may only be in **one active league at a time** |
-| DB migration strategy | Epoch bump (`BETA_SCHEMA_EPOCH` `"v1.2"` → `"v1.3"`) — no per-collection migration strategies needed |
-| Schedule structure | Series-based (default 3 games per series); see [schedule-algorithm.md](schedule-algorithm.md) |
-| Exhibition stats | `/stats` becomes a **Stats Hub** (`/stats` → redirect → `/stats/exhibition`); league stats live at `/stats/league/:leagueId` |
+| Topic | Decision | Phase |
+|---|---|---|
+| DB migration strategy | Epoch bump (`BETA_SCHEMA_EPOCH` `"v1.2"` → `"v1.3"`) — hard reset; intentional for this release | 1 (near-term) |
+| Schedule structure | Series-based (default 3 games per series); round-robin; see [schedule-algorithm.md](schedule-algorithm.md) | 2 (near-term) |
+| Division assignment | Auto-assign evenly at league creation; user picks division count (0, 2, or 4); 0 = no divisions, single standings table | 3 (near-term) |
+| Team exclusivity | A team may only be in **one league at a time**; `activeLeagueId` persists for the life of league membership, cleared only when team leaves the league or the league is disbanded (not between seasons) | 1 (near-term) |
+| Season completion (v1) | Champion = team with best win percentage when all regular-season games resolve; no playoffs in initial slice | 6 (near-term) |
+| Trade deadline | Included; default = midpoint of total game days; user-adjustable at creation | 8 (**future**) |
+| Playoff format | Configurable per league (Bo3 / Bo5 / Bo7, single bracket); defaults to **Bo5** if user makes no choice | 9 (**future**) |
+| Exhibition stats hub | `/stats` becomes a **Stats Hub** (`/stats` → redirect → `/stats/exhibition`); league stats live at `/stats/league/:leagueId` | 7 (**future**) |
+
+> Items marked **future** are documented in this repo for reference, but are not part of the initial league-mode implementation target.
 
 ---
 
@@ -68,23 +63,24 @@ flowchart TD
 
 ## Phase Overview
 
-| Phase | Name | Key Output |
-|---|---|---|
-| 1 | RxDB Collections | New schemas: `leagues`, `leagueSeasons`, `scheduledGames`, `tradeRecords` |
-| 2 | Schedule Generator | Round-robin engine, series grouping, season presets |
-| 3 | Division Auto-Assignment | Even split by team count at creation |
-| 4 | Feature Directory | `src/features/leagues/` scaffold — pages, components, storage |
-| 5 | Game Modes | Box Score sim / Watch-and-Manage / Simulate Day |
-| 6 | Standings & Stats | Read-time standings, tiebreakers, Stats Hub routing |
-| 7 | Trades | Roster moves, deadline gate, immutable trade records |
-| 8 | Playoffs | Bracket generation, series scheduling, champion crowning |
-| 9 | Multi-Season | Season rollover, historical browsing, new season start |
+| Phase | Name | Status | Key Output |
+|---|---|---|---|
+| 1 | RxDB Collections | **Near-term** | New schemas: `leagues`, `leagueSeasons`, `scheduledGames` (+ `tradeRecords` stub for future use) |
+| 2 | Schedule Generator | **Near-term** | Round-robin engine, series grouping, season presets |
+| 3 | Division Auto-Assignment | **Near-term** | Even split by team count; 0/2/4 divisions |
+| 4 | Feature Directory | **Near-term** | `src/features/leagues/` scaffold — pages, components, storage |
+| 5 | Game Modes | **Near-term** | Box Score sim / Watch-and-Manage / Simulate Day |
+| 6 | Standings & Season Completion | **Near-term** | Live standings, tiebreakers, champion by best record |
+| 7 | Stats Hub Migration | *Future* | `/stats` → Stats Hub; exhibition + league tabs |
+| 8 | Trades | *Future* | Roster moves, deadline gate, immutable trade records |
+| 9 | Playoffs | *Future* | Bracket generation, series scheduling, champion crowning |
+| 10 | Multi-Season | *Future* | Season rollover, historical browsing, new season start |
 
 ---
 
 ## Key Constraints for Implementers
 
-- **Team exclusivity** — at league creation, validate that every selected team has `activeLeagueId === null` in its `TeamRecord`. Write `activeLeagueId` on the team doc when the league is created and clear it when the league season completes or the league is disbanded.
+- **Team exclusivity** — at league creation, validate that every selected team has `activeLeagueId === null` in its `TeamRecord`. Write `activeLeagueId` on the team doc when the league is created. Clear it only when the team is explicitly removed from the league or the league is disbanded entirely — **not** between seasons. A team that is part of an ongoing multi-season league remains locked to that league across seasons.
 - **RxDB schema changes** — the initial League Mode release uses an epoch bump (`BETA_SCHEMA_EPOCH` `"v1.2"` → `"v1.3"`), so all new collections start at `version: 0` with no migration strategies. Any **future** schema change to an existing league collection after launch must follow the full migration checklist in [`docs/rxdb-persistence.md`](../rxdb-persistence.md): bump `version`, add a migration strategy, write a unit test.
 - **Headless sim** — the existing `GamePage` → `GameContext` → `reducer` pipeline must not be modified. The headless sim wraps the same reducer in a tight synchronous loop without React rendering; it takes `GameSaveSetup` and returns a `CompletedGameResult`.
 - **Stats Hub** — the `/stats` route tree must redirect existing deep-links (`/stats/:teamId`, `/stats/:teamId/players/:playerId`) to their new `/stats/exhibition/...` equivalents so no bookmarked URLs break.
