@@ -59,6 +59,7 @@ flowchart TD
 | [trades.md](trades.md) | Trade deadline enforcement, execution flow, roster constraints |
 | [playoffs.md](playoffs.md) | Playoff format options, bracket generation, series management |
 | [stats-migration.md](stats-migration.md) | `/stats` → Stats Hub migration plan |
+| [stamina.md](stamina.md) | Fatigue model (within-game), v1 cross-game simplification, future pitcher rotation tracking |
 | [edge-cases.md](edge-cases.md) | Edge cases and error handling across all areas of league play |
 
 ---
