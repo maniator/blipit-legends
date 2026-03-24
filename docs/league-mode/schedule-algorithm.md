@@ -344,7 +344,7 @@ const tradeDeadlineGameDay = Math.floor(totalGameDays / 2);
 
 | Test | What to verify |
 |---|---|
-| 4 teams, Quick (12 games), seriesLength=3 | Every team plays exactly 18 games; no team plays itself; home/away balanced ±1 per matchup pair |
+| 4 teams, Quick (18 games), seriesLength=3 | Every team plays exactly 18 games; no team plays itself; home/away balanced ±1 per matchup pair |
 | 5 teams (odd), Quick | Bye team never paired against itself; total games per team is within ±3 of target |
 | 8 teams, 2 divisions, Standard (60), division weighted | In-division games ~1.4× inter-division per team |
 | 4 teams, seriesLength=1 (one-off) | Every game has a unique matchup per round; no series IDs repeated within a round |

@@ -324,8 +324,10 @@ export interface LeagueSeasonRecord {
   status: LeagueSeasonStatus;
   /** Total regular-season games per team. */
   gamesPerTeam: number;
-  /** The "game day" number (1-based) after which trades are not allowed. */
-  /** Future (Phase 8): game day after which trades are disallowed. */
+  /**
+   * The game day number (1-based) after which trades are not allowed.
+   * Future (Phase 8): game day after which trades are disallowed.
+   */
   tradeDeadlineGameDay: number;
   /**
    * The current active game day — the game day currently being played.
