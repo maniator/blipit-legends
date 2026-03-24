@@ -49,13 +49,13 @@ All constraints are validated in `tradeStore.executeTrade` before any writes. Va
 flowchart TD
     A[User builds trade in TradePanel] --> B[Tap Confirm Trade]
     B --> C[tradeStore.executeTrade called]
-    C --> D{Validate all\nconstraints}
-    D -->|any fail| E[Return TradeValidationError\nTradePanel shows specific message]
-    D -->|all pass| F[Atomic writes in order:]
+    C --> D{Validate constraints}
+    D -->|any fail| E[Return TradeValidationError to TradePanel]
+    D -->|all pass| F[Execute atomic writes]
     F --> G[1. Update PlayerRecord.teamId for each moved player]
     G --> H[2. Insert immutable TradeRecord doc]
-    H --> I[leagueStore.invalidateRosterCache if any]
-    I --> J[TradePanel resets, success toast shown]
+    H --> I[Invalidate roster cache]
+    I --> J[TradePanel resets and success toast shown]
     J --> K[Trade History list updates reactively]
 ```
 

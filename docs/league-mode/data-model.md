@@ -1,4 +1,4 @@
-# League Mode — Data Model & RxDB Migration Plan
+# League Mode — Data Model & DB Migration
 
 > See [README.md](README.md) for decisions log. See [`docs/rxdb-persistence.md`](../rxdb-persistence.md) for the global RxDB rules.
 
@@ -8,94 +8,64 @@
 
 League Mode touches the RxDB layer in two ways:
 
-| Change type | What changes | Migration needed? |
+| Change type | What changes | How handled |
 |---|---|---|
-| **Additive field on existing collection** | `teams` gets `activeLeagueId` | Yes — bump `teams` version, add identity migration strategy |
-| **Additive field on existing collection** | `completedGames` gets `leagueSeasonId`, `scheduledGameId`, `gameType` | Yes — bump `completedGames` version, add identity migration strategy |
-| **New collections (net-new)** | `leagues`, `leagueSeasons`, `scheduledGames`, `tradeRecords` | None — no old docs exist to migrate |
+| **Additive field on existing collection** | `teams` gets `activeLeagueId` | Epoch bump — field added at `version: 0`, no migration strategy needed |
+| **Additive field on existing collection** | `completedGames` gets `leagueSeasonId`, `scheduledGameId`, `gameType` | Epoch bump — fields added at `version: 0`, no migration strategy needed |
+| **New collections (net-new)** | `leagues`, `leagueSeasons`, `scheduledGames`, `tradeRecords` | Created fresh at `version: 0` — nothing to migrate |
 
 ---
 
-## Epoch Bump vs. RxDB Migrations — Pick One
+## Chosen Approach: Epoch Bump
 
-This is the central implementation decision for the persistence layer. Both approaches work. Neither is objectively "correct" — the right choice depends on where the app is in its lifecycle when League Mode ships.
+**Decision:** bump `BETA_SCHEMA_EPOCH` from `"v1.2"` to `"v1.3"`.
 
----
+When the app loads and detects a different epoch string in `localStorage`, it **wipes the entire `ballgame` IndexedDB** and recreates it from scratch with the new schemas. All saves, custom teams, and exhibition stats are permanently deleted on the user's next app load.
 
-### Option A — Bump `BETA_SCHEMA_EPOCH`
+### How it works
 
-**Current value:** `"v1.2"` (in `src/storage/db.ts`)  
-**New value:** e.g. `"v1.3"`
-
-When the app loads and detects a different epoch string in `localStorage`, it **wipes the entire `ballgame` IndexedDB** and recreates it from scratch with the new schemas. All saves, custom teams, exhibition stats, and any other user data are permanently deleted.
-
-#### How it works
-
-1. Change `BETA_SCHEMA_EPOCH` from `"v1.2"` to `"v1.3"` in `src/storage/db.ts`.
-2. Keep all existing collection schemas at their current `version: 0` — no migration strategies needed.
-3. Add the four new league collections as `version: 0` with no migration strategies.
+1. Change `BETA_SCHEMA_EPOCH = "v1.2"` → `"v1.3"` in `src/storage/db.ts` (one line).
+2. Keep all existing collection schemas at their current `version: 0` — **no migration strategies needed anywhere**.
+3. Add the four new league collections at `version: 0` with no migration strategies.
 4. Done — RxDB sees a fresh DB with no legacy documents.
 
-#### Tradeoffs
+### Why this is correct for now
 
-| | |
-|---|---|
-| ✅ **Zero migration code** | No per-collection strategies to write or test. Simpler implementation. |
-| ✅ **No schema-hash risk** | A fresh DB can never hit the DB6 (schema mismatch) error. |
-| ✅ **Fastest path** | A one-line change in `db.ts` handles all collections at once. |
-| ❌ **Destroys all user data** | Exhibition saves, custom teams, career stats — everything is gone. Users who invested time in their teams or game history lose it all on the next app load. |
-| ❌ **Last acceptable use** | The epoch mechanism exists as a **beta-only escape hatch**. Once the app has real users with real data, another epoch bump would be a serious UX failure. This is the last time it can reasonably be used. |
-| ❌ **Export/import doesn't help much** | Users have no warning before the wipe; they can't export first unless they happen to have done so already. |
+The app is in beta and the user base is small and aware that data may be reset. This is the accepted trade-off at this stage of development.
 
-**When to choose this:** League Mode ships while the app is still in closed/early beta with a small user base that is fully aware data may be wiped. The team decides user data loss is acceptable at this stage.
+> ⚠️ **This is the last time the epoch mechanism can reasonably be used.** After League Mode ships, all future schema changes — including any later updates to the league collections themselves — **must** use `version` bumps and proper `migrationStrategies`. The epoch escape hatch must never be used again once real users have real league data.
 
----
+### Future schema changes (post-launch)
 
-### Option B — RxDB Per-Collection Migration Strategies
+Once League Mode is live, any change to any collection's `properties`, `required`, or `indexes` must follow the full migration checklist from [`docs/rxdb-persistence.md`](../rxdb-persistence.md):
 
-Each existing collection that changes gets its `version` bumped by 1 and a corresponding migration strategy. New collections start at `version: 0` with no strategies. The epoch value **stays at `"v1.2"`** — no wipe occurs.
+1. Bump `version` in the collection's `RxJsonSchema`.
+2. Add a `migrationStrategies` entry — a pure function, never throws, uses `?? default` on every new field.
+3. Write a unit test that inserts a legacy doc, reopens the DB with the new schema, and asserts all fields migrate correctly.
 
-#### How it works
+Example for a future `leagueSeasons` v0 → v1 change:
 
-1. Leave `BETA_SCHEMA_EPOCH = "v1.2"` unchanged.
-2. Bump `teams` schema from `version: 0` → `version: 1`; add `migrationStrategies: { 1: (doc) => ({ ...doc, activeLeagueId: doc.activeLeagueId ?? null }) }`.
-3. Bump `completedGames` schema from `version: 0` → `version: 1`; add a strategy that backfills `leagueSeasonId: null`, `scheduledGameId: null`, `gameType: "EXHIBITION"`.
-4. Add the four new league collections at `version: 0` — RxDB creates them fresh with no migration needed.
-5. Write unit tests for each migration (see the test pattern at the bottom of this doc).
-
-#### Tradeoffs
-
-| | |
-|---|---|
-| ✅ **User data preserved** | Saves, custom teams, exhibition career stats all survive the update. |
-| ✅ **Production-safe pattern** | This is the correct long-term approach for any released app. Sets the right precedent. |
-| ✅ **Proven within this codebase** | The `customTeams` collection has already gone through v0→v1→v2→v3 migrations successfully. The pattern is well-understood. |
-| ❌ **More code to write** | Two migration strategies + two unit tests. Low complexity but non-zero effort. |
-| ❌ **Must not change `required` fields** | Adding `activeLeagueId` as optional (`activeLeagueId?: string \| null`) is safe. Adding it to `required` at the same time would change the schema hash and cause DB6 for anyone who somehow got stuck between versions. Keep new fields optional. |
-| ❌ **Migration must never throw** | Defensive coding required: always use `?? default` on every backfilled field, never assume old docs are complete. |
-
-**When to choose this:** Any time user data has real value — or when the team wants to establish the correct migration discipline before the app leaves beta. Strongly recommended if there is any doubt about the epoch-bump approach.
-
----
-
-### Recommendation
-
-> **If League Mode ships while the app is still clearly in early beta with no meaningful user data:** use the epoch bump (Option A) — it's fast, clean, and this is genuinely the last opportunity to use it without causing harm.
->
-> **If any users have invested time in custom teams or exhibition stats they would miss:** use per-collection migrations (Option B) — two strategies and two tests is a small price to pay for not destroying their work.
->
-> **After League Mode ships:** the epoch mechanism must not be used again. All future schema changes — including later League Mode schema updates — must use `version` bumps and migration strategies regardless of which option was chosen here.
-
-The schema code in this document is written for **Option B** (migrations) because it is the safer default and establishes the right long-term pattern. If Option A is chosen instead, remove all `migrationStrategies` blocks and change `version: 1` back to `version: 0` in the modified collections, then bump `BETA_SCHEMA_EPOCH`.
+```ts
+export const leagueSeasonsV1CollectionConfig = {
+  schema: { ...leagueSeasonsSchema, version: 1 },
+  migrationStrategies: {
+    1: (oldDoc: LeagueSeasonRecord) => ({
+      ...oldDoc,
+      newField: oldDoc.newField ?? "default",
+    }),
+  },
+};
+```
 
 ---
 
 ## Modified Existing Collections
 
-### 1. `teams` — bump to version 1
+### 1. `teams` — stays at version 0 (epoch-bumped)
 
 **New field:** `activeLeagueId: string | null`  
-**Purpose:** Enforces team exclusivity — a team may only be in one active league at a time.
+**Purpose:** Enforces team exclusivity — a team may only be in one active league at a time.  
+**Migration:** none required — epoch bump wipes the DB before these schemas are applied.
 
 #### Updated TypeScript type (`src/features/customTeams/storage/types.ts`)
 
@@ -116,7 +86,7 @@ export interface TeamRecord {
 
 ```ts
 const teamsSchemaV1: RxJsonSchema<TeamRecord> = {
-  version: 1,           // ← bumped from 0
+  version: 0,           // unchanged — epoch bump handles the reset
   primaryKey: "id",
   type: "object",
   properties: {
@@ -129,18 +99,13 @@ const teamsSchemaV1: RxJsonSchema<TeamRecord> = {
 
 export const teamsV1CollectionConfig = {
   schema: teamsSchemaV1,
-  migrationStrategies: {
-    1: (oldDoc: TeamRecord) => ({
-      ...oldDoc,
-      activeLeagueId: oldDoc.activeLeagueId ?? null,
-    }),
-  },
+  // No migrationStrategies — epoch bump produces a clean DB
 };
 ```
 
 ---
 
-### 2. `completedGames` — bump to version 1
+### 2. `completedGames` — stays at version 0 (epoch-bumped)
 
 **New fields:**
 - `leagueSeasonId: string | null` — FK to `LeagueSeasonRecord.id`; null for exhibition games
@@ -170,7 +135,6 @@ export interface CompletedGameRecord {
    * - "EXHIBITION" = one-off game outside any league
    * - "LEAGUE_REGULAR" = regular-season game in a league
    * - "LEAGUE_PLAYOFF" = playoff game in a league
-   * Absent on old records — treat as "EXHIBITION" in queries.
    */
   gameType?: "EXHIBITION" | "LEAGUE_REGULAR" | "LEAGUE_PLAYOFF";
 }
@@ -180,7 +144,7 @@ export interface CompletedGameRecord {
 
 ```ts
 const completedGamesSchemaV1: RxJsonSchema<CompletedGameRecord> = {
-  version: 1,           // ← bumped from 0
+  version: 0,           // unchanged — epoch bump handles the reset
   primaryKey: "id",
   type: "object",
   properties: {
@@ -202,20 +166,13 @@ const completedGamesSchemaV1: RxJsonSchema<CompletedGameRecord> = {
     "playedAt",
     ["homeTeamId", "playedAt"],
     ["awayTeamId", "playedAt"],
-    ["leagueSeasonId", "playedAt"],  // ← new index for standings queries
+    ["leagueSeasonId", "playedAt"],  // new index for standings queries
   ],
 };
 
 export const completedGamesV1CollectionConfig = {
   schema: completedGamesSchemaV1,
-  migrationStrategies: {
-    1: (oldDoc: CompletedGameRecord) => ({
-      ...oldDoc,
-      leagueSeasonId:  oldDoc.leagueSeasonId  ?? null,
-      scheduledGameId: oldDoc.scheduledGameId ?? null,
-      gameType:        oldDoc.gameType        ?? "EXHIBITION",
-    }),
-  },
+  // No migrationStrategies — epoch bump produces a clean DB
 };
 ```
 
@@ -556,10 +513,10 @@ const tradeRecordsSchemaV1: RxJsonSchema<TradeRecord> = {
 
 ## `db.ts` Changes Summary
 
-The `DbCollections` type and `addCollections` call are the same regardless of which epoch/migration path is chosen. The only line that differs is whether `BETA_SCHEMA_EPOCH` is bumped.
+Three things change in `src/storage/db.ts`:
 
 ```ts
-// 1. Add to DbCollections type (same for both Option A and Option B)
+// 1. Add to DbCollections type
 export type DbCollections = {
   saves:            RxCollection<SaveRecord>;
   events:           RxCollection<EventRecord>;
@@ -575,13 +532,10 @@ export type DbCollections = {
   tradeRecords:     RxCollection<TradeRecord>;
 };
 
-// 2a. OPTION A — epoch bump (destroys all user data, no migrations needed)
-const BETA_SCHEMA_EPOCH = "v1.3";  // was "v1.2" — wipes DB on next load
+// 2. Bump epoch — this wipes every user's local DB on next load
+const BETA_SCHEMA_EPOCH = "v1.3";  // was "v1.2"
 
-// 2b. OPTION B — migrations only (user data preserved, leave epoch unchanged)
-const BETA_SCHEMA_EPOCH = "v1.2";  // unchanged — migrations handle everything
-
-// 3. Add imports for new schema configs (same for both options)
+// 3. Add imports for new schema configs
 import {
   leaguesV1CollectionConfig,
   leagueSeasonsV1CollectionConfig,
@@ -589,9 +543,9 @@ import {
   tradeRecordsV1CollectionConfig,
 } from "@feat/leagues/storage/schemaV1";
 
-// 4. Add to addCollections() call inside initDb() (same for both options)
+// 4. Add to addCollections() call inside initDb() — existing collections unchanged
 await db.addCollections({
-  // ... existing collections (with updated version numbers if Option B) ...
+  // ... existing collections at their current version: 0, no changes ...
   leagues:        leaguesV1CollectionConfig,
   leagueSeasons:  leagueSeasonsV1CollectionConfig,
   scheduledGames: scheduledGamesV1CollectionConfig,
@@ -622,16 +576,16 @@ erDiagram
         string id PK
         string name
         string nameLowercase
-        string activeLeagueId FK "null if not in a league"
+        string activeLeagueId FK
     }
 
     LeagueRecord {
         string id PK
         string name
-        string[] teamIds FK
-        DivisionRecord[] divisions
         string status
-        PlayoffFormat defaultPlayoffFormat
+        number divisionCount
+        string defaultSeasonPreset
+        number defaultPlayoffSeriesLength
     }
 
     LeagueSeasonRecord {
@@ -642,7 +596,7 @@ erDiagram
         number gamesPerTeam
         number tradeDeadlineGameDay
         number currentGameDay
-        string championTeamId FK "null until complete"
+        string championTeamId FK
     }
 
     ScheduledGameRecord {
@@ -653,28 +607,30 @@ erDiagram
         string awayTeamId FK
         number gameDay
         string seriesId
+        number seriesGameNumber
+        string gameType
         string status
-        string completedGameId FK "null until played"
+        string completedGameId FK
         boolean flaggedForWatch
     }
 
     CompletedGameRecord {
         string id PK
-        string leagueSeasonId FK "null for exhibition"
-        string scheduledGameId FK "null for exhibition"
+        string leagueSeasonId FK
+        string scheduledGameId FK
         string gameType
         string homeTeamId FK
         string awayTeamId FK
         number homeScore
         number awayScore
+        number innings
     }
 
     TradeRecord {
         string id PK
         string leagueSeasonId FK
         string leagueId FK
-        string[] teamIds FK
-        TradePlayerMove[] playerMoves
+        number gameDayAtTrade
     }
 
     BatterGameStatRecord {
@@ -703,31 +659,4 @@ erDiagram
 
 ---
 
-## Migration Test Pattern
-
-For each modified existing collection, a migration test must be written. Follow the existing pattern in `src/storage/db.test.ts`:
-
-```ts
-describe("schema migration: teams v0 → v1", () => {
-  it("backfills activeLeagueId = null on old team documents", async () => {
-    // 1. Create DB with v0 teams schema
-    const db = await createTestDbAtVersion("teams", 0);
-
-    // 2. Insert a v0 team doc without activeLeagueId
-    await db.teams.insert({ id: "ct_abc", schemaVersion: 0, /* ... */ });
-
-    // 3. Close and reopen with v1 schema (which has the migration strategy)
-    await db.destroy();
-    const db2 = await createTestDb(getRxStorageMemory());
-
-    // 4. Assert the migrated doc has activeLeagueId: null
-    const team = await db2.teams.findOne("ct_abc").exec();
-    expect(team?.activeLeagueId).toBe(null);
-  });
-});
-```
-
-Apply the same pattern for `completedGames` v0 → v1, verifying:
-- `leagueSeasonId` defaults to `null`
-- `scheduledGameId` defaults to `null`
-- `gameType` defaults to `"EXHIBITION"`
+> **Note for future implementers:** The migration test pattern section has been intentionally removed — it only applies when using per-collection migration strategies (Option B). Since we are using an epoch bump, no migration tests are required for this release. If League Mode ever needs a schema update post-launch, refer to `docs/rxdb-persistence.md` for the migration test pattern to follow at that time.

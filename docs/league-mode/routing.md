@@ -67,39 +67,39 @@
 
 ```mermaid
 graph TD
-    Root["RootLayout (ErrorBoundary)"]
-    Shell["AppShell (layout + outlet context)"]
+    Root["RootLayout"]
+    Shell["AppShell"]
 
     Root --> Shell
 
-    Shell --> Home["/ → HomeScreen"]
-    Shell --> Exhibition["/exhibition/new → ExhibitionSetupPage"]
-    Shell --> Game["/game → GamePage"]
-    Shell --> Teams["/teams → ManageTeamsScreen"]
-    Shell --> TeamsNew["/teams/new → ManageTeamsScreen"]
-    Shell --> TeamsEdit["/teams/:teamId/edit → ManageTeamsScreen"]
-    Shell --> Saves["/saves → SavesPage"]
-    Shell --> Help["/help → HelpPage"]
-    Shell --> Contact["/contact → ContactPage"]
+    Shell --> Home["/"]
+    Shell --> Exhibition["/exhibition/new"]
+    Shell --> Game["/game"]
+    Shell --> Teams["/teams"]
+    Shell --> TeamsNew["/teams/new"]
+    Shell --> TeamsEdit["/teams/:teamId/edit"]
+    Shell --> Saves["/saves"]
+    Shell --> Help["/help"]
+    Shell --> Contact["/contact"]
 
-    Shell --> StatsRoot["/stats → redirect → /stats/exhibition"]
+    Shell --> StatsRoot["/stats -- redirects to exhibition"]
     StatsRoot --> StatsHub["Stats Hub Layout"]
-    StatsHub --> ExhibitionStats["/stats/exhibition → CareerStatsPage"]
-    StatsHub --> ExhibitionTeam["/stats/exhibition/:teamId → CareerStatsPage"]
+    StatsHub --> ExhibitionStats["/stats/exhibition -- CareerStatsPage"]
+    StatsHub --> ExhibitionTeam["/stats/exhibition/:teamId"]
     StatsHub --> ExhibitionPlayer["/stats/exhibition/:teamId/players/:playerId"]
     StatsHub --> ExhibitionPlayerNoTeam["/stats/exhibition/players/:playerId"]
-    StatsHub --> LeagueStats["/stats/league/:leagueId → LeagueStatsPage"]
+    StatsHub --> LeagueStats["/stats/league/:leagueId -- LeagueStatsPage"]
 
-    Shell --> Leagues["/leagues → LeagueHubPage"]
-    Shell --> LeaguesNew["/leagues/new → LeagueSetupPage"]
-    Shell --> LeagueDetail["/leagues/:leagueId → LeagueDetailPage"]
-    LeagueDetail --> Schedule["/leagues/:leagueId/seasons/:seasonId/schedule → SchedulePage"]
-    LeagueDetail --> Playoffs["/leagues/:leagueId/seasons/:seasonId/playoffs → PlayoffBracketPage"]
-    LeagueDetail --> Roster["/leagues/:leagueId/roster → LeagueRosterPage"]
+    Shell --> Leagues["/leagues -- LeagueHubPage"]
+    Shell --> LeaguesNew["/leagues/new -- LeagueSetupPage"]
+    Shell --> LeagueDetail["/leagues/:leagueId -- LeagueDetailPage"]
+    LeagueDetail --> Schedule["/leagues/:leagueId/seasons/:seasonId/schedule"]
+    LeagueDetail --> Playoffs["/leagues/:leagueId/seasons/:seasonId/playoffs"]
+    LeagueDetail --> Roster["/leagues/:leagueId/roster"]
 
-    Shell --> LegacyStats["/stats/:teamId → redirect → /stats/exhibition/:teamId"]
-    Shell --> LegacyPlayer["/stats/:teamId/players/:playerId → redirect"]
-    Shell --> LegacyCareer["/career-stats → redirect → /stats/exhibition"]
+    Shell --> LegacyStats["/stats/:teamId -- redirect"]
+    Shell --> LegacyPlayer["/stats/:teamId/players/:playerId -- redirect"]
+    Shell --> LegacyCareer["/career-stats -- redirect"]
 ```
 
 ---

@@ -123,12 +123,12 @@ When a series is clinched:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> PENDING: slots created at playoff trigger
-    PENDING --> IN_PROGRESS: first game of series played
-    IN_PROGRESS --> IN_PROGRESS: game played, no clinch
-    IN_PROGRESS --> COMPLETE: series clinched
-    PENDING --> CANCELLED: surplus slot after clinch
-    IN_PROGRESS --> CANCELLED: surplus slot after clinch
+    [*] --> PENDING : slots created at playoff trigger
+    PENDING --> IN_PROGRESS : first game of series played
+    IN_PROGRESS --> IN_PROGRESS : game played, no clinch yet
+    IN_PROGRESS --> COMPLETE : series clinched
+    PENDING --> CANCELLED : surplus slot after clinch
+    IN_PROGRESS --> CANCELLED : surplus slot after clinch
     COMPLETE --> [*]
 ```
 

@@ -10,7 +10,6 @@
 
 ### Checklist
 
-- [ ] **Decide: epoch bump (Option A) or per-collection migrations (Option B)** — see [data-model.md](data-model.md#epoch-bump-vs-rxdb-migrations--pick-one) for the full tradeoff analysis before writing any schema code
 - [ ] Create `src/features/leagues/storage/schemaV1.ts` with four new collection configs at `version: 0`:
   - `leagues` — league header, team membership, division config, season presets
   - `leagueSeasons` — per-season record (schedule length, trade deadline game#, playoff format, status)
@@ -18,13 +17,9 @@
   - `tradeRecords` — immutable trade log docs
 - [ ] Add all four collections to `DbCollections` in `src/storage/db.ts`
 - [ ] Wire collection configs into `initDb`'s `addCollections` call
-- [ ] **If Option A:** bump `BETA_SCHEMA_EPOCH` to `"v1.3"` — no migration strategies needed anywhere
-- [ ] **If Option B:** leave epoch unchanged; instead:
-  - Bump `teams` schema `version: 0` → `version: 1`; add `migrationStrategies: { 1: (doc) => ({ ...doc, activeLeagueId: doc.activeLeagueId ?? null }) }`
-  - Bump `completedGames` schema `version: 0` → `version: 1`; add strategy backfilling `leagueSeasonId: null`, `scheduledGameId: null`, `gameType: "EXHIBITION"`
-  - Write a unit test for each migration (see test pattern in [data-model.md](data-model.md#migration-test-pattern))
-- [ ] Add `activeLeagueId?: string | null` field to `TeamRecord` type and the `teams` RxDB schema `properties`
-- [ ] Add `leagueSeasonId`, `scheduledGameId`, `gameType` fields to `CompletedGameRecord` type and `completedGames` RxDB schema `properties` (and the new `["leagueSeasonId", "playedAt"]` index)
+- [ ] Bump `BETA_SCHEMA_EPOCH` from `"v1.2"` to `"v1.3"` in `src/storage/db.ts` — **this single line handles all schema changes**; no migration strategies needed anywhere
+- [ ] Add `activeLeagueId?: string | null` to `TeamRecord` type and `teams` RxDB schema `properties`
+- [ ] Add `leagueSeasonId`, `scheduledGameId`, `gameType` fields to `CompletedGameRecord` type and `completedGames` RxDB schema `properties` (and the new `["leagueSeasonId", "playedAt"]` compound index)
 - [ ] Write unit tests for `createLeague`, `addSeason`, `upsertScheduledGame`, `createTradeRecord` in a test DB
 
 ### Schema Summaries
@@ -36,6 +31,8 @@ See [data-model.md](data-model.md) for the full field-level schema definitions a
 ## Phase 2 — Schedule Generator
 
 **Goal:** Given a list of team IDs and a season length, produce a full round-robin schedule with series grouping.
+
+> See [schedule-algorithm.md](schedule-algorithm.md) for the full algorithm specification, series vs. one-off design decisions, worked examples, and the round-robin rotation pseudocode.
 
 ### Checklist
 

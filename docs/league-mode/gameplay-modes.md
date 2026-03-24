@@ -28,14 +28,14 @@ A synchronous, renderless run of the existing game `reducer` from `initialState`
 
 ```mermaid
 flowchart TD
-    A[User taps 'Box Score' on a ScheduleCard] --> B[GameModeModal confirms]
-    B --> C[headlessSim called with GameSaveSetup + deterministic seed]
-    C --> D{reducer loop:\nwhile !state.gameOver}
-    D -->|pitch| D
-    D -->|gameOver| E[CompletedGameResult produced]
-    E --> F[scheduleStore.completeScheduledGame\nwrites CompletedGameRecord\nupdates ScheduledGameRecord status=COMPLETED]
+    A[User taps Box Score on a ScheduleCard] --> B[GameModeModal confirms]
+    B --> C[headlessSim called with GameSaveSetup and seed]
+    C --> D{game over?}
+    D -->|next pitch| D
+    D -->|game over| E[CompletedGameResult produced]
+    E --> F[completeScheduledGame writes CompletedGameRecord]
     F --> G[SchedulePage re-renders with result]
-    G --> H[Optional: tap result card → BoxScoreDetailModal]
+    G --> H[Optional: tap result to open BoxScoreDetailModal]
 ```
 
 ### Seed Strategy
@@ -85,13 +85,13 @@ The user plays the game interactively through the existing `/game` route, exactl
 
 ```mermaid
 flowchart TD
-    A[User taps 'Watch / Manage'] --> B[GameModeModal confirms]
-    B --> C[navigate to /game with location.state:\n{ pendingGameSetup, leagueContext }]
-    C --> D[GamePage mounts — existing game loop runs normally]
-    D --> E{gameOver?}
+    A[User taps Watch / Manage] --> B[GameModeModal confirms]
+    B --> C[navigate to /game with leagueContext in location.state]
+    C --> D[GamePage mounts and game loop runs normally]
+    D --> E{game over?}
     E -->|no| D
     E -->|yes| F[GamePage detects leagueContext in location.state]
-    F --> G[scheduleStore.completeScheduledGame\ncalled with final score]
+    F --> G[completeScheduledGame called with final score]
     G --> H[navigate back to SchedulePage]
 ```
 
@@ -163,16 +163,15 @@ When a game has `flaggedForWatch: true`, Simulate Day treats it as follows:
 
 ```mermaid
 flowchart TD
-    A[User taps 'Simulate Day'] --> B{Any flagged games\nin current day?}
+    A[User taps Simulate Day] --> B{Any flagged games in current day?}
     B -->|yes| C[FlaggedGamesWarning dialog]
-    C -->|Sim anyway| D
+    C -->|Sim anyway| D[Run headlessSim for each game in batch]
     C -->|Stop here| E[Remove flagged games from batch]
     E --> D
     B -->|no| D
-    D[Loop: run headlessSim for each game in batch]
     D --> F[Collect CompletedGameResult array]
-    F --> G[scheduleStore.completeScheduledGames batch write]
-    G --> H[leagueStore.advanceGameDay if all current-day games complete]
+    F --> G[completeScheduledGames batch write]
+    G --> H[advanceGameDay if all current-day games complete]
     H --> I[NightSummaryModal opens with results]
 ```
 
