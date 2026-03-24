@@ -209,9 +209,9 @@ Series 2 (B vs D, 3 games):  gameDay 4, 5, 6   ← runs in parallel
 
 The maximum number of parallel series on any game day is `floor(n / 2)` (one series per pair of teams, since each team can only play one game per day). Game days are assigned so no team plays on two different series on the same day.
 
-### Complete 4-team schedule (12 games per team, 3-game series)
+### Complete 4-team schedule (18 games per team, 3-game series)
 
-With 4 teams and `gamesPerTeam = 12` (2 series per matchup pair, home/away swapped between passes):
+With 4 teams and `gamesPerTeam = 18` (2 series per matchup pair, home/away swapped between passes):
 
 | Game Days | Left matchup | Right matchup (parallel) |
 |---|---|---|
@@ -222,21 +222,21 @@ With 4 teams and `gamesPerTeam = 12` (2 series per matchup pair, home/away swapp
 | Days 13–15 | C vs A — series 2 | D vs B — series 2 |
 | Days 16–18 | D vs A — series 2 | C vs B — series 2 |
 
-Total: **18 game days**, 12 games per team, 2 parallel matchups per day. Each "Simulate Day" press advances one row.
+Total: **18 game days**, 18 games per team, 2 parallel matchups per day. Each "Simulate Day" press advances one row.
 
 ---
 
 ## Season Presets and Series Length
 
-| Preset | Games/team | Typical series | Total game days (4 teams) | Total game days (8 teams) |
-|---|---|---|---|---|
-| Quick | 10 | 3 | ~21 | ~15 |
-| Short | 30 | 3 | ~60 | ~45 |
-| Standard | 60 | 3 | ~120 | ~90 |
-| Full | 162 | 3 | ~324 | ~243 |
-| Custom | user | user | varies | varies |
+| Preset | Target games/team | Notes |
+|---|---|---|
+| Quick | ~18 | 2 full round-robin passes (home + away) at seriesLength=3; actual count depends on team count |
+| Short | 30 | |
+| Standard | 60 | |
+| Full | 162 | |
+| Custom | user-specified | min 4, max 200 |
 
-*Game days are approximate — exact count depends on series length and team count.*
+> **Note:** Game counts are targets. The algorithm rounds to the nearest complete series to avoid partial series. For small leagues (4 teams, seriesLength=3), Quick produces 18 games/team (2 passes). For larger leagues the count scales accordingly.
 
 ---
 
@@ -287,9 +287,11 @@ flowchart TD
     E --> F[generateSchedule computes full round-robin]
     F --> G[ScheduledGameRecord batch insert to RxDB]
     G --> H[tradeDeadlineGameDay written to LeagueSeasonRecord]
-    H --> I[leagueSeason.status set to IN_PROGRESS]
+    H --> I[leagueSeason.status set to SCHEDULED]
     I --> J[SchedulePage shows game day 1]
 ```
+
+> **Note:** `status` transitions to `IN_PROGRESS` when the first game is committed, not at season creation. See the Season Status state machine in [data-model.md](data-model.md).
 
 ---
 
@@ -324,7 +326,9 @@ The computed seed is passed into `headlessSim` and stored verbatim on the result
 
 ---
 
-## Trade Deadline Game Day
+## Trade Deadline Game Day *(Future Phase)*
+
+> **Note:** Trade deadline logic is a Phase 8 (future) feature. The formula below is kept here for reference but is not implemented in the initial slice. See [trades.md](trades.md).
 
 The trade deadline game day is computed from the schedule at creation time:
 
@@ -340,7 +344,7 @@ const tradeDeadlineGameDay = Math.floor(totalGameDays / 2);
 
 | Test | What to verify |
 |---|---|
-| 4 teams, Quick (12 games), seriesLength=3 | Every team plays exactly 12 games; no team plays itself; home/away balanced ±1 per matchup pair |
+| 4 teams, Quick (12 games), seriesLength=3 | Every team plays exactly 18 games; no team plays itself; home/away balanced ±1 per matchup pair |
 | 5 teams (odd), Quick | Bye team never paired against itself; total games per team is within ±3 of target |
 | 8 teams, 2 divisions, Standard (60), division weighted | In-division games ~1.4× inter-division per team |
 | 4 teams, seriesLength=1 (one-off) | Every game has a unique matchup per round; no series IDs repeated within a round |
