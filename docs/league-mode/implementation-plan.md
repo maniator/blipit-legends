@@ -207,6 +207,10 @@ See [gameplay-modes.md](gameplay-modes.md) for the full flow diagrams.
   - Runs the reducer synchronously in a `while (!state.gameOver)` loop with the seeded RNG
   - Returns: `{ homeScore, awayScore, innings, boxScore: BoxScoreData, notableEvents: string[] }`
   - Must be a pure function — no React, no RxDB side effects
+- [ ] Implement `selectAiStartingPitcherIdx(rosterPitchers, pitcherRoles, gameSeed)` in `headlessSim.ts` or a shared `starterSelection.ts`
+  - Selects the starting pitcher for each AI-managed team using a deterministic seed-hash rotation (see [stamina.md](stamina.md#v1-league-solution-deterministic-rotation-via-game-seed))
+  - Prefers pitchers with role `"SP"` or `"SP/RP"`; falls back to index 0 for legacy/stock teams with no roles set
+  - Result is used to set `activePitcherIdx` in `GameSaveSetup` before the sim begins
 - [ ] Wire headless sim into `scheduleStore.completeScheduledGame(gameId, result)`
   - Writes result to `scheduledGames` doc (status = COMPLETED)
   - Writes a `CompletedGameRecord` to the existing `completedGames` collection (for stats tracking)

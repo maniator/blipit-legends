@@ -57,73 +57,249 @@ In **headless simulation** (Box Score / Simulate Day), the AI manager uses withi
 
 ---
 
-## Future Phase: Pitcher Rotation Tracking
+## AI Starting Pitcher Selection
 
-A future extension (not part of the initial slice) could add cross-game pitcher workload tracking to discourage overuse and encourage rotation management.
+### The current gap
 
-### Proposed design (not yet scheduled)
+Today `activePitcherIdx` is always initialized to `[0, 0]` — the first pitcher in `rosterPitchers`. This means every game, for every AI-managed team, starts pitcher slot 0 regardless of who that is or how recently they pitched. There is no pre-game selection logic.
 
-A `pitcherRestRecord` would be stored on the `ScheduledGameRecord` (or derived from `CompletedGameRecord`) to track each pitcher's most recent start or relief appearance:
+The existing `isPitcherEligibleForChange` function intentionally blocks SP-only pitchers from **in-game** changes — the SP must be designated before the game begins. This means the AI starting pitcher choice matters: it determines which pitcher takes the mound for the entire game (until fatigued out), and picking the wrong player would misuse a reliever as a starter or waste a rested SP.
+
+### v1 League solution: deterministic rotation via game seed
+
+For the initial league slice, AI starter selection uses a **stateless deterministic rotation** based on the game's seed, requiring no cross-game workload tracking:
 
 ```ts
-/** Future: per-pitcher workload record written when a game completes. */
-interface PitcherWorkloadRecord {
-  playerId: string;
-  teamId: string;
-  leagueSeasonId: string;
-  /** Game day of the most recent appearance. */
-  lastAppearanceGameDay: number;
-  /** Pitches thrown in the most recent appearance. */
-  pitchesInLastAppearance: number;
-  /** Role of the pitcher in the most recent appearance. */
-  role: "SP" | "RP" | "SP/RP";
+/**
+ * Select the starting pitcher index for an AI-managed team.
+ *
+ * Uses the game seed to pick deterministically from the eligible SP pool
+ * (pitchers with role "SP" or "SP/RP"), falling back to index 0 if none.
+ * The same game always produces the same starter — headless re-simulation
+ * is fully deterministic.
+ */
+function selectAiStartingPitcherIdx(
+  rosterPitchers: string[],
+  pitcherRoles: Record<string, string>,
+  gameSeed: string,
+): number {
+  const eligibleSPs = rosterPitchers
+    .map((id, idx) => ({ id, idx }))
+    .filter(({ id }) => {
+      const role = pitcherRoles[id];
+      return !role || role === "SP" || role === "SP/RP";
+    });
+
+  if (eligibleSPs.length === 0) return 0; // fallback: no roles set (stock/legacy teams)
+
+  // Hash the seed to a stable index within the SP pool.
+  const hashVal = fnv1a(gameSeed);
+  return eligibleSPs[hashVal % eligibleSPs.length].idx;
 }
 ```
 
-At `headlessSim` / `GameSaveSetup` time, this record would be used to inject a `staminaMod` penalty for pitchers who appeared recently:
+**Why this works for v1:**
+- Deterministic: the same `scheduledGameId` seed always picks the same starter, so headless re-sims produce identical results
+- Varied: different games produce different starters, distributing appearances across the SP pool naturally
+- No state required: no `PitcherWorkloadRecord` or cross-game tracking needed in the initial slice
+- Graceful fallback: teams with no roles set (stock teams) always start pitcher 0, preserving existing behavior
+
+**Where it runs:** `selectAiStartingPitcherIdx` is called when building `GameSaveSetup` for a headless sim or when preparing an AI-managed side of a Watch/Manage game. The result sets `activePitcherIdx` for that team before `createFreshGameState` is called.
+
+### What the AI does NOT decide in v1
+
+- Pre-game lineup ordering (batting order is taken from the saved roster as-is)
+- Which relievers to warm up (no bullpen state)
+- Whether to use an "opener" strategy
+
+These remain constant per team across all league games in the initial slice.
+
+### Manager Mode (human player)
+
+When the human is managing a game via Watch/Manage, the `SchedulePage` will eventually show a **"Set Starter"** control before the game begins (future UX — not required for v1). In v1, the human's team also uses the deterministic seed selection, with the option to override via the existing pitcher substitution UI once the game starts.
+
+---
+
+## Future Phase: Pitcher Rotation Tracking
+
+> *(Phase 11 or later — not part of the initial league slice.)*
+
+Once league play is stable, cross-game pitcher workload tracking adds real rotation management incentives. This section describes the planned design in enough detail to implement it as a discrete future phase.
+
+### Goal
+
+Make pitcher overuse mechanically costly without hard-blocking it. An AI or human manager who starts the same SP on back-to-back days should see noticeably degraded performance. A manager who rotates a 4- or 5-pitcher staff properly should see consistently better results over a long season.
+
+### Data: `PitcherWorkloadRecord`
+
+A new per-season, per-pitcher record written whenever a pitcher appears in a completed game:
 
 ```ts
-/** Suggested: starting pitcher rest penalty applied at game setup time. */
-const daysSinceLastStart = currentGameDay - lastAppearanceGameDay;
-const shortRestPenalty = daysSinceLastStart <= 1 ? -15   // back-to-back: heavy penalty
-                       : daysSinceLastStart <= 2 ? -8    // one day rest: moderate penalty
-                       : daysSinceLastStart <= 3 ? -3    // two days rest: minor penalty
-                       : 0;                              // 3+ days rest: fully fresh
+/**
+ * Written to the `pitcherWorkload` RxDB collection at the end of every game
+ * in which a pitcher appears. One record per pitcher per game.
+ */
+export interface PitcherWorkloadRecord {
+  /** Primary key — e.g. "pw_<fnv1a>" */
+  id: string;
+  leagueSeasonId: string;
+  leagueId: string;
+  teamId: string;
+  playerId: string;
+  /** Game day this appearance occurred on. */
+  gameDay: number;
+  /** FK → CompletedGameRecord.id */
+  completedGameId: string;
+  /** Role in this appearance. */
+  role: "SP" | "RP" | "SP/RP";
+  /** Pitches thrown in this appearance. */
+  pitchesThrown: number;
+  /** Batters faced in this appearance. */
+  battersFaced: number;
+  /** Whether this was a starting appearance (first pitcher of the game). */
+  wasStarter: boolean;
+}
 ```
 
-This penalty would lower the pitcher's effective `staminaMod`, raising fatigue onset and degrading performance — mechanically discouraging overuse without hard-blocking it.
+This collection is new (added in the future phase that implements rotation tracking) and requires a schema version bump + migration strategy per the RxDB discipline in `docs/rxdb-persistence.md`.
 
-### Manager Mode surface
+### Rest penalty applied at game setup
 
-In Watch / Manage mode, a future "Rotation Planner" widget on `SchedulePage` could show:
-- Each pitcher's last appearance game day and pitch count
-- Days of rest before their next scheduled start
-- A color-coded freshness indicator (green = 4+ days rest, yellow = 2–3, red = 0–1)
+When building `GameSaveSetup` for a league game (headless or Watch/Manage), look up the pitcher's most recent `PitcherWorkloadRecord` for the season and derive a short-rest `staminaMod` offset:
 
-### AI awareness
+```ts
+/**
+ * Compute the short-rest penalty to apply to a pitcher's staminaMod.
+ * Applied additively at game-setup time — does NOT modify the stored PlayerRecord.
+ *
+ * The penalty degrades the pitcher's effective staminaMod, raising their
+ * fatigue onset threshold and making them tire faster than a rested arm.
+ */
+function computeShortRestPenalty(
+  daysSinceLastAppearance: number,
+  pitchesInLastAppearance: number,
+): number {
+  // No penalty if rested 4+ days (or no prior appearance this season).
+  if (daysSinceLastAppearance >= 4) return 0;
 
-The AI manager in headless sim would consult `PitcherWorkloadRecord` when selecting a starting pitcher for the day, preferring rested arms over pitchers who threw recently.
+  // Base penalty by days rest.
+  const daysPenalty =
+    daysSinceLastAppearance <= 0 ? -20  // same day (doubleheader or error): extreme
+    : daysSinceLastAppearance === 1 ? -15  // back-to-back starts: heavy
+    : daysSinceLastAppearance === 2 ? -8   // one day rest: moderate
+    : -3;                                  // two days rest: minor
+
+  // Additional penalty for high-workload previous outings (>100 pitches).
+  const workloadPenalty = pitchesInLastAppearance > 100 ? -5
+    : pitchesInLastAppearance > 80 ? -2
+    : 0;
+
+  return daysPenalty + workloadPenalty;
+}
+```
+
+The penalty is applied **only for the duration of the game setup** — it is not written back to `PlayerRecord.staminaMod`. This keeps the roster data clean and makes the penalty easily auditable.
+
+### AI starter selection with rest awareness
+
+Once `PitcherWorkloadRecord` exists, `selectAiStartingPitcherIdx` is replaced with a rest-aware version:
+
+```ts
+/**
+ * Future (cross-game tracking phase): Select AI starting pitcher using rest data.
+ * Prefers the most-rested SP. Falls back to deterministic seed selection if all
+ * SPs have equal rest (e.g. first game of the season).
+ */
+async function selectAiStartingPitcherIdxWithRest(
+  rosterPitchers: string[],
+  pitcherRoles: Record<string, string>,
+  teamId: string,
+  leagueSeasonId: string,
+  currentGameDay: number,
+  gameSeed: string,
+): Promise<number> {
+  const eligibleSPs = rosterPitchers
+    .map((id, idx) => ({ id, idx }))
+    .filter(({ id }) => {
+      const role = pitcherRoles[id];
+      return !role || role === "SP" || role === "SP/RP";
+    });
+
+  if (eligibleSPs.length === 0) return 0;
+
+  // Fetch most recent workload record per SP.
+  const workloads = await fetchRecentWorkloads(
+    eligibleSPs.map((sp) => sp.id), teamId, leagueSeasonId,
+  );
+
+  // Sort by days since last appearance descending (most rested first).
+  // Tie-break by seed hash for determinism.
+  const hashVal = fnv1a(gameSeed);
+  eligibleSPs.sort((a, b) => {
+    const aRest = workloads[a.id]
+      ? currentGameDay - workloads[a.id].gameDay
+      : 999; // never appeared = most rested
+    const bRest = workloads[b.id]
+      ? currentGameDay - workloads[b.id].gameDay
+      : 999;
+    if (bRest !== aRest) return bRest - aRest; // most rested first
+    return (hashVal % 2 === 0 ? 1 : -1); // deterministic tiebreak
+  });
+
+  return eligibleSPs[0].idx;
+}
+```
+
+### `SchedulePage` Rotation Planner widget
+
+In Watch/Manage mode, a **Rotation Planner** section on `SchedulePage` (added in this future phase) shows each pitcher's current rest status ahead of upcoming games:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Hawks — Rotation Planner                               │
+├──────────────────┬──────────┬───────────┬───────────────┤
+│  Pitcher         │ Last     │ Rest Days │ Status        │
+├──────────────────┼──────────┼───────────┼───────────────┤
+│  Rivera (SP)     │ Day 4    │ 3 days    │ 🟡 Short rest │
+│  Wu (SP)         │ Day 2    │ 5 days    │ 🟢 Rested     │
+│  Jones (SP/RP)   │ Day 3    │ 4 days    │ 🟢 Rested     │
+│  Patel (RP)      │ Day 5    │ 2 days    │ 🟠 Bullpen    │
+│  Smith (RP)      │ Day 4    │ 3 days    │ 🟠 Bullpen    │
+├──────────────────┴──────────┴───────────┴───────────────┤
+│  Next game: Day 7 vs Wolves                             │
+│  Suggested starter: Wu (5 days rest)     [Override ▾]  │
+└─────────────────────────────────────────────────────────┘
+```
+
+Color coding:
+- 🟢 **Rested** — 4+ days since last appearance
+- 🟡 **Short rest** — 2–3 days (penalty applied)
+- 🔴 **Back-to-back** — 0–1 days (heavy penalty applied)
+- 🟠 **Bullpen** — RP/SP-RP roles shown separately; rest status still visible
+
+The **[Override]** button opens a picker so the human manager can designate any eligible pitcher as the day's starter, overriding the AI suggestion.
+
+### `db.ts` changes for this phase
+
+Add to `DbCollections`:
+```ts
+pitcherWorkload: RxCollection<PitcherWorkloadRecord>;
+```
+
+This is a schema version bump on the `leagueSeasons` or a new net-new collection (preferred) — requires its own `migrationStrategies` entry. The epoch-bump mechanism must NOT be used for this post-launch change.
 
 ---
 
-## Batter Cross-Game Fatigue (Future / Optional)
+## Cross-Game Stamina: Full Plan Summary
 
-Tracking batter fatigue across a multi-game series is lower priority and has weaker real-world precedent as a discrete mechanical effect. The current within-game model (PA accumulation) already captures the "late-game tired hitter" scenario that matters most.
-
-If cross-game batter fatigue is ever added, the natural signal would be:
-- **Total PA in last N days** (e.g. sum of PA across a 3-game series)
-- Applied as a small negative `staminaMod` offset at game setup time — same mechanism as pitcher short rest
-- Only meaningful for everyday players in a packed schedule (e.g. series of 3 consecutive games with no days off)
-
-This is explicitly **not planned** for the initial league slice.
+| Phase | Feature | Mechanism |
+|---|---|---|
+| **v1 (initial slice)** | Within-game pitcher fatigue | `pitcherPitchCount` + `battersFaced` → `computeFatigueFactor` → degrades pitcher effectiveness |
+| **v1 (initial slice)** | Within-game batter fatigue | `batterPlateAppearances` → `computeBatterFatigueFactor` → contact/power penalties |
+| **v1 (initial slice)** | AI starter selection | Deterministic rotation via game seed hash — no cross-game state |
+| **Future** | Pitcher rest tracking | `PitcherWorkloadRecord` written per game; short-rest penalty injected at game setup |
+| **Future** | Rest-aware AI rotation | AI selects most-rested SP; fallback to seed-hash tiebreaker |
+| **Future** | Rotation Planner UI | `SchedulePage` widget showing rest days and color-coded freshness |
+| **Not planned** | Cross-game batter fatigue | Batter workload resets each game; no PA carry-over across games |
 
 ---
-
-## Implementation Notes for Initial Slice
-
-No new code is needed in the initial league implementation to support the v1 (within-game only) behavior:
-- `createFreshGameState()` already resets `batterPlateAppearances`, `pitcherPitchCount`, and `pitcherBattersFaced`
-- Each `headlessSim` call creates a fresh game state from `GameSaveSetup` — no fatigue state is passed in from a prior game
-- The league scheduler does not need to track pitcher workload for the initial slice
-
-The only thing to document clearly in the `SchedulePage` UI is the **within-game** nature of fatigue so users who watch games understand why the stats panel shows a fresh pitcher even for a back-to-back starter.
