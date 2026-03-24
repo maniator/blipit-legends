@@ -3,7 +3,7 @@ export interface TeamPlayerBatting {
   contact: number;
   power: number;
   speed: number;
-  /** Stamina (0–100). Reserved for future batter durability/fatigue mechanics. */
+  /** Stamina (0–100). Drives per-game batter fatigue: higher values reduce contact/power penalties as plate appearances accumulate. */
   stamina?: number;
 }
 
