@@ -68,17 +68,17 @@
                 "velocity": 65,
                 "control": 60,
                 "stamina": 70,
-                "movement": 50
+                "movement": 30
               },
               "position": "SP",
               "handedness": "R",
-              "fingerprint": "5b0891ba",
-              "sig": "5b0891ba"
+              "fingerprint": "b7ba94c8",
+              "sig": "b7ba94c8"
             }
           ]
         }
       }
     ]
   },
-  "sig": "4b843eee"
+  "sig": "da7309b4"
 }
