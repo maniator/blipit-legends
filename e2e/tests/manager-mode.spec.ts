@@ -63,7 +63,8 @@ test.describe("Manager Mode", () => {
     await expect(panel.getByText(/selected hitter platoon edge:\s*\+6%/i)).toBeVisible();
 
     const pinchHitterSelect = page.getByTestId("pinch-hitter-select");
-    await expect(pinchHitterSelect).toContainText("J. Lee (LF) [+6%]");
-    await expect(pinchHitterSelect).toContainText("K. Patel (DH) [-2%]");
+    // Option format: "Name (Pos) [C +N, P +N, PA N] [+N%]"
+    await expect(pinchHitterSelect).toContainText(/J\. Lee \(LF\).*\[.*\+6%\]/);
+    await expect(pinchHitterSelect).toContainText(/K\. Patel \(DH\).*\[.*-2%\]/);
   });
 });
