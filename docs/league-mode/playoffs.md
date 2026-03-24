@@ -31,32 +31,34 @@ League Mode uses a **single-elimination bracket** (the only format in v1; double
 
 ### Bracket Matchup (4-team example)
 
-```
-Round 1           Final
-#1 ──┐
-     ├── Winner ──┐
-#4 ──┘            ├── Champion
-#2 ──┐            │
-     ├── Winner ──┘
-#3 ──┘
+```mermaid
+graph LR
+    S1["#1 Seed"] --> W1["Round 1 Winner"]
+    S4["#4 Seed"] --> W1
+    S2["#2 Seed"] --> W2["Round 1 Winner"]
+    S3["#3 Seed"] --> W2
+    W1 --> C["🏆 Champion"]
+    W2 --> C
 ```
 
 ### Bracket Matchup (8-team example)
 
-```
-Round 1         Semis           Final
-#1 ──┐
-     ├──►       ┐
-#8 ──┘          ├──►            ┐
-#4 ──┐          │               ├──► Champion
-     ├──►       ┘               │
-#5 ──┘                          │
-#2 ──┐                          │
-     ├──►       ┐               │
-#7 ──┘          ├──►            ┘
-#3 ──┐          │
-     ├──►       ┘
-#6 ──┘
+```mermaid
+graph LR
+    S1["#1 Seed"] --> R1A["R1 Winner"]
+    S8["#8 Seed"] --> R1A
+    S4["#4 Seed"] --> R1B["R1 Winner"]
+    S5["#5 Seed"] --> R1B
+    S2["#2 Seed"] --> R1C["R1 Winner"]
+    S7["#7 Seed"] --> R1C
+    S3["#3 Seed"] --> R1D["R1 Winner"]
+    S6["#6 Seed"] --> R1D
+    R1A --> SFA["Semi Winner"]
+    R1B --> SFA
+    R1C --> SFB["Semi Winner"]
+    R1D --> SFB
+    SFA --> C["🏆 Champion"]
+    SFB --> C
 ```
 
 ---
@@ -142,18 +144,18 @@ Series state is derived at read-time from the `ScheduledGameRecord` docs for tha
 
 ## `PlayoffBracketPage` Layout
 
-```
-Season 1 Playoffs  ·  Best of 5
+The bracket page shows seeds, per-series win totals, and the champion. Below is an example with 4 teams mid-playoffs (Hawks leading the final series 2–0):
 
-ROUND 1                 SEMIFINALS              FINAL
-
-Hawks (1)   ┐           Hawks     ┐
-  W 3 – 1   ├── Hawks ──┤          ├── Hawks ──► CHAMPION 🏆
-Foxes (4)   ┘           (2-0)     │
-                                   │
-Comets (2)  ┐           Comets    │
-  W 3 – 2   ├── Comets ─┘ (0-2)   │
-Bolts  (3)  ┘
+```mermaid
+graph LR
+    H["Hawks (1)"] --> RH["Hawks W 3-1"]
+    F["Foxes (4)"] --> RH
+    C2["Comets (2)"] --> RC["Comets W 3-2"]
+    B["Bolts (3)"] --> RC
+    RH --> SF["Hawks 2-0 series"]
+    RC --> SF2["Comets 0-2 series"]
+    SF --> CHAMP["🏆 Hawks — CHAMPION"]
+    SF2 --> CHAMP
 ```
 
 Series scores display as `W X – Y` (wins per team), not game scores. Tapping a series opens a `SeriesDetailModal` showing the individual game results.
