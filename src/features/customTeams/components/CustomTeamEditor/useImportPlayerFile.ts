@@ -156,21 +156,26 @@ export function useImportPlayerFile({
                 : undefined,
           });
 
-          const editorPlayerFp = (p: EditorPlayer): string =>
-            buildPlayerSig({
+          const editorPlayerFp = (p: EditorPlayer): string => {
+            const isPitcher = p.velocity !== undefined;
+            return buildPlayerSig({
               name: p.name,
-              role: p.velocity !== undefined ? "pitcher" : "batter",
-              batting: { contact: p.contact, power: p.power, speed: p.speed, stamina: 50 },
-              pitching:
-                p.velocity !== undefined
-                  ? {
-                      velocity: p.velocity,
-                      control: p.control ?? 60,
-                      movement: p.movement ?? 60,
-                      stamina: 60,
-                    }
-                  : undefined,
+              role: isPitcher ? "pitcher" : "batter",
+              // Pitchers have no batting block in the DB fingerprint — exclude it here so
+              // editor-state duplicate checks stay consistent with stored fingerprints.
+              batting: isPitcher
+                ? undefined
+                : { contact: p.contact, power: p.power, speed: p.speed, stamina: 50 },
+              pitching: isPitcher
+                ? {
+                    velocity: p.velocity,
+                    control: p.control ?? 60,
+                    movement: p.movement ?? 60,
+                    stamina: 60,
+                  }
+                : undefined,
             });
+          };
 
           const existingTeamWithPlayer = allTeams.find((t: TeamWithRoster) =>
             [...t.roster.lineup, ...(t.roster.bench ?? []), ...t.roster.pitchers].some(
