@@ -386,3 +386,7 @@ See [ai-manager-v2.md](ai-manager-v2.md) for the full scope, module plan, and te
 - [ ] Add `lineupOrder` and `benchPriority` optional fields to `GameSaveSetup` (empty arrays = v1 fallback; fully backward-compatible)
 - [ ] Wire all three helpers into `headlessSim.ts` and Watch/Manage `GamePage` setup path
 - [ ] Unit tests: `aiBattingOrder.test.ts`, `aiBenchStrategy.test.ts`, `aiStarterSelection.test.ts`
+
+---
+
+> **Beyond Phase 11:** Phases 1–11 cover the core league foundation through the first AI-manager pass. For the broader roadmap of real-world baseball realism layers that come after (cross-game pitcher usage, injury systems, calendar mechanics, league history and flavor), see [README.md — Real-World Baseball League Gaps and Priorities](README.md#real-world-baseball-league-gaps-and-priorities).

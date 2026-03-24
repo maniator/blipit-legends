@@ -83,6 +83,42 @@ flowchart TD
 
 ---
 
+## Real-World Baseball League Gaps and Priorities
+
+The docs in this directory describe a strong **league foundation** — not a full real-world baseball league simulation. The gaps below are **intentionally staged realism layers**. They are not missing because the design is incomplete; they are deferred so the core league ships cleanly. Future contributors should use this section to understand what "more realistic league play" means beyond the current scope.
+
+### V1 — League Foundation *(Phases 1–6)*
+
+These are the required pieces for league mode to function and feel like a real league:
+
+- Persistent league entity with named teams and optional division structure
+- Round-robin regular-season schedule generation
+- Live standings and season completion (champion by best record)
+- Watch / Simulate Day game flows
+- Basic division support (0, 2, or 4 divisions)
+
+> **Intentionally out of scope for v1:** calendar realism (off-days, home stands, travel rhythm), injury or player-availability systems, full roster-rule enforcement (active roster limits, IL designations), and deep pre-game AI decisions. These are not missing — they are deferred.
+
+### V2 — Next Realism Layer *(Phases 7–11)*
+
+After the foundation is stable, these bring the most meaningful realism improvements:
+
+- **Cross-game pitcher usage** — starter rotation order, rest-day tracking, bullpen carryover / overuse effects (see [stamina.md](stamina.md))
+- **Smarter pre-game AI decisions** — lineup construction, bench priority, rest-aware starter selection (see [ai-manager-v2.md](ai-manager-v2.md))
+- **Richer postseason** — full playoff bracket, configurable series formats, champion crowning (see [playoffs.md](playoffs.md))
+- **Season-to-season continuity** — multi-season history, rollover flows, historical stats browsing
+
+### Beyond — Deeper League Simulation *(Later)*
+
+Valuable additions, but deferred until the core league is proven stable:
+
+- **Real calendar concepts** — off-days, home stands and road trips, travel rhythm, postponements / rainouts, doubleheaders
+- **Player availability** — injury system, day-to-day and IL-style designations
+- **Deeper roster rules** — active roster size limits, reserve / IL designations, call-up and transaction constraints
+- **League history and flavor** — awards, records, milestones, rivalry tracking, franchise history, news / recaps / season flavor
+
+---
+
 ## Key Constraints for Implementers
 
 - **Team exclusivity** — at league creation, validate that every selected team has `activeLeagueId === null` in its `TeamRecord`. Write `activeLeagueId` on the team doc when the league is created. Clear it only when the team is explicitly removed from the league or the league is disbanded entirely — **not** between seasons. A team that is part of an ongoing multi-season league remains locked to that league across seasons.
