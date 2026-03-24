@@ -1,5 +1,7 @@
 # League Mode — Stats Hub Migration
 
+> ⏭ **Future Phase (Phase 7)** — The Stats Hub migration is not part of the initial league-mode implementation. The existing `/stats` routes continue to work unchanged in the initial slice. This document describes the migration plan for when league stats are added. See [README.md](README.md) for the staged roadmap.
+
 > See [README.md](README.md) for decisions log and [routing.md](routing.md) for the full route tree.
 
 ---

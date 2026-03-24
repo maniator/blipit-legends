@@ -1,5 +1,7 @@
 # League Mode — Playoffs
 
+> ⏭ **Future Phase (Phase 9)** — Playoffs are not part of the initial league-mode implementation. In v1, the season completes when all regular-season games are resolved and champion is determined by best win percentage. This document is reference material for the playoff system when it is built. See [README.md](README.md) for the staged roadmap.
+
 > See [README.md](README.md) for decisions log and [data-model.md](data-model.md) for the `scheduledGames` schema (playoff slots).
 
 ---

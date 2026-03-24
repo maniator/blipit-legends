@@ -1,5 +1,7 @@
 # League Mode — Trade System
 
+> ⏭ **Future Phase (Phase 8)** — Trade functionality is not part of the initial league-mode implementation. This document is reference material for when trades are built. See [README.md](README.md) for the staged roadmap.
+
 > See [README.md](README.md) for decisions log and [data-model.md](data-model.md) for the `tradeRecords` schema.
 
 ---
@@ -14,7 +16,7 @@ Trades allow teams within the same league season to swap players before the trad
 
 The deadline is a **game day number** stored on `LeagueSeasonRecord.tradeDeadlineGameDay`.
 
-| Default | `Math.floor(gamesPerTeam / 2)` |
+| Default | `Math.floor(totalGameDays / 2)` |
 |---|---|
 | Adjustable? | Yes — user sets it at league creation, or accepts the default |
 | Minimum | Game day 2 |
