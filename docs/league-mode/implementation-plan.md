@@ -2,6 +2,8 @@
 
 > See [README.md](README.md) for the decisions log and document index.
 
+> **Scope:** Phases 1–6 are the **initial near-term implementation target**. Phases 7–10 are **future extensions** — fully documented for when they are built, but not part of the first slice.
+
 ---
 
 ## Phase 1 — RxDB Collections
@@ -14,7 +16,7 @@
   - `leagues` — league header, team membership, division config, season presets
   - `leagueSeasons` — per-season record (schedule length, trade deadline game#, playoff format, status)
   - `scheduledGames` — one doc per scheduled game slot (PENDING / COMPLETED / CANCELLED)
-  - `tradeRecords` — immutable trade log docs
+  - `tradeRecords` — immutable trade log docs *(schema stub only in initial slice; fully wired in Phase 8)*
 - [ ] Add all four collections to `DbCollections` in `src/storage/db.ts`
 - [ ] Wire collection configs into `initDb`'s `addCollections` call
 - [ ] Bump `BETA_SCHEMA_EPOCH` from `"v1.2"` to `"v1.3"` in `src/storage/db.ts` — **this single line handles all schema changes**; no migration strategies needed anywhere
@@ -25,6 +27,8 @@
 ### Schema Summaries
 
 See [data-model.md](data-model.md) for the full field-level schema definitions and the ER diagram.
+
+> **Note:** The `tradeRecords` schema is defined in Phase 1 for future compatibility with the epoch bump, but trade execution logic is deferred to Phase 8.
 
 ---
 
@@ -44,7 +48,7 @@ See [data-model.md](data-model.md) for the full field-level schema definitions a
 - [ ] If `divisionWeightedSchedule: true`, each division-rival matchup gets ~1.4× the games of inter-division matchups (mirrors MLB division weighting)
 - [ ] Compute `tradeDeadlineGameDay` = `Math.floor(totalGames / 2)`; write it to the `leagueSeason` doc at schedule creation
 - [ ] Write unit tests:
-  - 4-team league, Quick (10 games) — verify game count per team
+  - 4-team league, Quick (18 games/team, seriesLength=3) — verify each team plays 18 games, home/away balanced
   - 8-team / 2-division league, Standard (60) — verify division weighting
   - Edge: odd number of teams — verify byes are inserted correctly
 
@@ -96,8 +100,8 @@ src/features/leagues/
 │   ├── ScheduleCard/             # single scheduled game slot
 │   ├── SeriesGroup/              # grouped game cards for a series day
 │   ├── NightSummaryModal/        # bulk-sim results overlay
-│   ├── PlayoffBracket/           # bracket visualization
-│   ├── TradePanel/               # two-team trade UI
+│   ├── PlayoffBracket/               # bracket visualization ← Phase 9 (future)
+│   ├── TradePanel/                    # two-team trade UI ← Phase 8 (future)
 │   └── GameModeModal/            # "Box Score / Watch / Skip" picker
 ├── hooks/
 │   ├── useLeagueStore.ts         # reactive RxDB hook for league queries
@@ -109,19 +113,19 @@ src/features/leagues/
 │   ├── LeagueSetupPage/          # /leagues/new — create wizard
 │   ├── LeagueDetailPage/         # /leagues/:leagueId — season overview
 │   ├── SchedulePage/             # /leagues/:leagueId/seasons/:seasonId/schedule
-│   ├── PlayoffBracketPage/       # /leagues/:leagueId/seasons/:seasonId/playoffs
-│   └── LeagueRosterPage/         # /leagues/:leagueId/roster (trades)
+│   ├── PlayoffBracketPage/       # /leagues/:leagueId/seasons/:seasonId/playoffs  # ← Phase 9 (future)
+│   └── LeagueRosterPage/         # /leagues/:leagueId/roster (trades)  # ← Phase 8 (future)
 ├── storage/
 │   ├── schemaV1.ts               # RxDB schema configs (see Phase 1)
 │   ├── leagueStore.ts            # CRUD operations (createLeague, etc.)
 │   ├── scheduleStore.ts          # scheduledGames read/write helpers
-│   └── tradeStore.ts             # tradeRecords write helpers
+│   └── tradeStore.ts             # tradeRecords write helpers  # ← Phase 8 (future)
 └── utils/
     ├── scheduleGenerator.ts      # Phase 2
     ├── assignDivisions.ts        # Phase 3
     ├── standingsComputer.ts      # win% + tiebreakers
     ├── headlessSim.ts            # synchronous single-game sim wrapper
-    └── playoffBracket.ts         # bracket seeding + series state
+    └── playoffBracket.ts         # bracket seeding + series state  # ← Phase 9 (future)
 ```
 
 ### Checklist
@@ -130,6 +134,8 @@ src/features/leagues/
 - [ ] Add `@feat/leagues/*` alias to `tsconfig.json` under `compilerOptions.paths`
 - [ ] Add the new routes to `src/router.tsx` (see [routing.md](routing.md))
 - [ ] Add **League** nav entry to `HomeScreen` (behind a feature flag or always visible — TBD)
+
+> **Note:** Components and pages marked *(future)* should be created as minimal stub files (empty index.ts) during scaffolding so the directory structure is complete, but their implementation is deferred.
 
 ---
 
@@ -176,9 +182,9 @@ See [gameplay-modes.md](gameplay-modes.md) for the full flow diagrams.
 
 ---
 
-## Phase 6 — Standings & Stats
+## Phase 6 — Standings & Season Completion
 
-**Goal:** Live, accurate standings derived from completed games; stats hub with exhibition and league tabs.
+**Goal:** Live standings derived from completed games; season automatically completes when all regular-season games are resolved, with champion determined by best win percentage.
 
 ### Checklist
 
@@ -186,24 +192,49 @@ See [gameplay-modes.md](gameplay-modes.md) for the full flow diagrams.
 
 - [ ] Implement `computeStandings(games: CompletedGameRecord[], teams: TeamRecord[], divisions?: DivisionAssignment): StandingsRow[]` in `standingsComputer.ts`
   - Fields per row: `teamId`, `teamName`, `W`, `L`, `Pct`, `GB`, `divisionId?`, `H2H`, `RD` (run differential in H2H games), `overallRD`
-  - Tiebreaker order: H2H win%, → RD in H2H games → overall RD
+  - Tiebreaker order: H2H win% → RD in H2H games → overall RD
   - Group by division if `divisions` provided, else single overall table
 - [ ] Implement `useStandings(seasonId: string)` hook — queries `completedGames` for the given season, passes results to `computeStandings`, returns sorted `StandingsRow[]`
-- [ ] Build `StandingsTable` component — renders division headers when divisions present, highlights clinched / eliminated teams (badge) in the final weeks of the season
+- [ ] Build `StandingsTable` component — renders division headers when divisions present
 
-#### Stats Hub (`/stats` migration)
+#### Season Completion (v1 — champion by best record)
 
-See [stats-migration.md](stats-migration.md) for the full migration plan. Summary:
+- [ ] After each `completeScheduledGame` call, check whether all `REGULAR` games for the season are `COMPLETED` or `CANCELLED`
+- [ ] If so, compute final standings and set `leagueSeason.championTeamId` to the team with the best win percentage (tiebreaker: H2H → run differential)
+- [ ] Set `leagueSeason.status = "COMPLETE"`
+- [ ] `LeagueDetailPage` shows a **Champion Banner** once `status === "COMPLETE"`
+- [ ] Season becomes read-only when complete
 
-- [ ] Create `StatsHubPage` at `/stats` with two tabs: **Exhibition** and **League**
-- [ ] Redirect `/stats` (old behavior) → `/stats/exhibition`
-- [ ] Exhibition tab mounts existing `CareerStatsPage` as a nested route
-- [ ] League tab lists leagues; navigates to `/stats/league/:leagueId` for per-league stats
-- [ ] Preserve all existing deep-link redirects (`/career-stats` → `/stats/exhibition`)
+> **Note:** This is the v1 completion path — no playoffs. The playoff bracket is a Phase 9 extension. See [playoffs.md](playoffs.md) for the future design.
 
 ---
 
-## Phase 7 — Trades
+## ⏭ Future Phases
+
+> The phases below are **not** part of the initial implementation target. They are documented here to guide future development. Implementation should begin only after Phases 1–6 are shipped and stable.
+
+---
+
+## Phase 7 — Stats Hub Migration *(Future)*
+
+**Goal:** Promote `/stats` from exhibition-only to a hub with Exhibition and League tabs.
+
+> See [stats-migration.md](stats-migration.md) for the full plan.
+
+### Checklist
+
+- [ ] Create `StatsHubLayout` at `/stats` with two tabs: **Exhibition** and **League**
+- [ ] Redirect `/stats` → `/stats/exhibition`
+- [ ] Exhibition tab mounts existing `CareerStatsPage` as a nested route
+- [ ] League tab lists leagues; navigates to `/stats/league/:leagueId` for per-league stats
+- [ ] Preserve all existing deep-link redirects (`/career-stats` → `/stats/exhibition`)
+- [ ] Update all internal careerStats links from `/stats/:teamId` → `/stats/exhibition/:teamId`
+
+---
+
+## Phase 8 — Trades *(Future)*
+
+> *(Future phase — not part of the initial implementation target.)*
 
 **Goal:** Allow roster swaps between league teams, gate by trade deadline.
 
@@ -221,7 +252,9 @@ See [trades.md](trades.md) for full flow diagram and constraint table.
 
 ---
 
-## Phase 8 — Playoffs
+## Phase 9 — Playoffs *(Future)*
+
+> *(Future phase — not part of the initial implementation target.)*
 
 **Goal:** Automatically generate a single-elimination bracket when the regular season ends; run series to completion.
 
@@ -251,7 +284,9 @@ Number of teams that advance: configurable (2 / 4 / 8); default = `min(4, Math.f
 
 ---
 
-## Phase 9 — Multi-Season
+## Phase 10 — Multi-Season *(Future)*
+
+> *(Future phase — not part of the initial implementation target.)*
 
 **Goal:** After a champion is crowned, allow a new season to begin with the same teams; preserve history.
 
