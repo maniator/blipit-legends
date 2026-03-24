@@ -7,7 +7,9 @@
 
 ## What Is League Mode?
 
-League Mode adds a persistent, multi-team baseball league on top of the existing Exhibition engine. Users create a named league, assign custom teams to it, generate a round-robin schedule, and then play (or simulate) those games across a full season, trade deadline, and playoffs — all stored locally in RxDB with no server required.
+League Mode adds a persistent, multi-team baseball league on top of the existing Exhibition engine. Users create a named league, assign custom teams to it, generate a round-robin schedule, and then play (or simulate) those games across a full season — all stored locally in RxDB with no server required.
+
+A **Generate League** quick-start path lets users skip manual team creation entirely: pick a team count, an optional seed, and the app auto-generates fully-rostered named teams, assigns them to divisions, and creates the league in one tap. Generated teams are real persistent `TeamRecord` docs (reusable like any custom team).
 
 ### League Lifecycle
 

@@ -64,25 +64,76 @@ See [data-model.md](data-model.md) for the full field-level schema definitions a
 
 ---
 
-## Phase 3 — Division Auto-Assignment
+## Phase 3 — Division Auto-Assignment & Generate League
 
-**Goal:** When a league is created, evenly distribute the selected teams into the chosen number of divisions automatically.
+**Goal:** When a league is created, evenly distribute the selected teams into the chosen number of divisions automatically. Also provide a **Generate League** quick-start path that auto-creates N teams and wires them into a new league in one shot, so users don't need to manually create every team before their first league game.
 
-### Checklist
+### Checklist — Division Assignment
 
 - [ ] Create `src/features/leagues/utils/assignDivisions.ts`
-- [ ] Implement `assignDivisions(teamIds: string[], divisionCount: 2 | 4): DivisionAssignment`
+- [ ] Implement `assignDivisions(teamIds: string[], divisionCount: 0 | 2 | 4): DivisionAssignment`
+  - `divisionCount: 0` → no divisions; return a single group with all teams
   - Sort teams by name for deterministic assignment
   - Slice team array into `divisionCount` equal chunks; if `teamIds.length % divisionCount !== 0`, front-load the remainder one-per-division until balanced
   - Return: `{ divisionId: string; teamIds: string[] }[]`
 - [ ] Store the resulting `divisions` array on the `League` document
-- [ ] On `LeagueSetupPage`, allow the user to pick division count (2 or 4) and *optionally* drag-reorder teams within the auto-assigned divisions before confirming; if they don't, the default assignment is used as-is
+- [ ] On `LeagueSetupPage`, allow the user to pick division count (0, 2, or 4) and *optionally* drag-reorder teams within the auto-assigned divisions before confirming; if they don't, the default assignment is used as-is
 - [ ] Write unit tests:
   - 8 teams, 2 divisions → two groups of 4
   - 6 teams, 2 divisions → two groups of 3
   - 8 teams, 4 divisions → four groups of 2
   - 9 teams, 4 divisions → groups of [3, 2, 2, 2] (front-loaded)
   - 5 teams, 2 divisions → groups of [3, 2]
+  - 6 teams, 0 divisions → one group of 6
+
+### Checklist — Generate League (Quick Setup)
+
+- [ ] Create `src/features/leagues/utils/generateLeague.ts`
+- [ ] Implement `generateLeague(options: GenerateLeagueOptions): Promise<GenerateLeagueResult>`
+  - Calls `generateDefaultCustomTeamDraft(teamSeed)` for each of N teams, where `teamSeed = \`${rootSeed}_team_${i}\``
+  - Checks generated teams for city/nickname collisions; retries with an offset seed (`${rootSeed}_team_${i}_retry_${attempt}`) until all N teams have distinct names
+  - Saves each generated team as a full `TeamRecord` via `customTeamStore.createTeam(draft)` — teams are **persistent** and appear in `/teams` like any manually-created team
+  - Calls `assignDivisions` with the new team IDs and the chosen `divisionCount`
+  - Calls `leagueStore.createLeague(...)` with an auto-generated league name and all team IDs
+  - Returns `{ leagueId, teamIds, divisions }`
+- [ ] Add `GenerateLeagueModal` component to `LeagueSetupPage` — a simple overlay with:
+  - **Team count** picker: 4, 6, or 8 (must be even; UI disables odd values)
+  - **Divisions** picker: None, 2, or 4 (auto-validates against team count)
+  - **Seed** input (optional; pre-populated with `generateFreshSeed()`, editable for reproducibility)
+  - **League name** input (pre-populated with auto-generated name, editable)
+  - **"Generate & Play"** button — runs `generateLeague`, then navigates to `LeagueDetailPage`
+- [ ] Add a **"Quick Setup — Generate League"** entry point on `LeagueSetupPage` above the manual team-picker flow
+- [ ] Write unit tests:
+  - `generateLeague({ teamCount: 4, divisionCount: 2, seed: "test" })` → 4 distinct team names, 2 divisions of 2
+  - `generateLeague({ teamCount: 6, divisionCount: 0, seed: "test" })` → 6 teams, no divisions
+  - Collision retry: mock `generateDefaultCustomTeamDraft` to return duplicate city on first attempt; assert retry produces unique names
+
+### `generateLeague` TypeScript API
+
+```ts
+export interface GenerateLeagueOptions {
+  teamCount: 4 | 6 | 8;
+  divisionCount: 0 | 2 | 4;
+  /** Seed for deterministic team generation. Defaults to generateFreshSeed() if omitted. */
+  seed?: string | number;
+  /** League name override. Defaults to auto-generated "{City} League" from the first team's city. */
+  leagueName?: string;
+}
+
+export interface GenerateLeagueResult {
+  leagueId: string;
+  teamIds: string[];
+  divisions: DivisionAssignment;
+}
+
+export async function generateLeague(
+  options: GenerateLeagueOptions,
+): Promise<GenerateLeagueResult>;
+```
+
+> **Relationship to existing `generateDefaultCustomTeamDraft`:** `generateLeague` is a thin orchestrator — it calls the existing `generateDefaultCustomTeamDraft` function from `@feat/customTeams/generation/generateDefaultTeam` for each team and persists the results via `customTeamStore`. It does not duplicate the team generation logic.
+
+> **Generated teams are permanent:** Teams created by "Generate League" are stored as full `TeamRecord` docs. They appear in `/teams` and can be edited, exported, or reused in future leagues, exactly like manually-created teams. There is no "ephemeral" or "league-only" team concept.
 
 ---
 
@@ -100,6 +151,7 @@ src/features/leagues/
 │   ├── ScheduleCard/             # single scheduled game slot
 │   ├── SeriesGroup/              # grouped game cards for a series day
 │   ├── NightSummaryModal/        # bulk-sim results overlay
+│   ├── GenerateLeagueModal/      # Phase 3 quick-setup modal (team count + seed + name)
 │   ├── PlayoffBracket/               # bracket visualization ← Phase 9 (future)
 │   ├── TradePanel/                    # two-team trade UI ← Phase 8 (future)
 │   └── GameModeModal/            # "Box Score / Watch / Skip" picker
@@ -123,6 +175,7 @@ src/features/leagues/
 └── utils/
     ├── scheduleGenerator.ts      # Phase 2
     ├── assignDivisions.ts        # Phase 3
+    ├── generateLeague.ts         # Phase 3 — quick-start: auto-create N teams + league in one shot
     ├── standingsComputer.ts      # win% + tiebreakers
     ├── headlessSim.ts            # synchronous single-game sim wrapper
     └── playoffBracket.ts         # bracket seeding + series state  # ← Phase 9 (future)
