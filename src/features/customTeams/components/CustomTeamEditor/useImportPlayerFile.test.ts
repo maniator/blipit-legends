@@ -310,6 +310,55 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
     );
   });
 
+  it("shows soft fingerprint warning when imported pitcher fingerprint matches existing pitcher (no batting block)", async () => {
+    // The imported pitcher has no batting block — its fingerprint is computed from
+    // {name, role, pitching} only, matching how the DB stores pitcher fingerprints.
+    const importedPitcher: TeamPitcherPlayer = {
+      id: "p_pitch_import",
+      name: "Ace Pitcher",
+      role: "pitcher",
+      pitching: { velocity: 85, control: 70, movement: 65, stamina: 60 },
+    };
+    const pitcherJson = exportCustomPlayer(importedPitcher);
+    _fileContent = pitcherJson;
+
+    // Existing team has a pitcher with the exact same name + pitching stats
+    // (stored with no batting block, as sanitizePlayer enforces for pitchers).
+    const existingPitcher: TeamPitcherPlayer = {
+      id: "p_pitch_existing",
+      name: "Ace Pitcher",
+      role: "pitcher",
+      pitching: { velocity: 85, control: 70, movement: 65, stamina: 60 },
+    };
+    const teamWithDuplicate: TeamWithRoster = {
+      id: "ct_dup_pitcher",
+      schemaVersion: 1,
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+      name: "Rival Squad",
+      nameLowercase: "rival squad",
+      abbreviation: "RIV",
+      roster: { schemaVersion: 1, lineup: [], bench: [], pitchers: [existingPitcher] },
+      metadata: { archived: false },
+    };
+
+    const { result, setPendingPlayerImport } = renderImportHook({
+      allTeams: [teamWithDuplicate],
+    });
+    act(() => {
+      result.current("pitchers")(makeChangeEvent(pitcherJson));
+    });
+
+    await waitFor(() => {
+      expect(setPendingPlayerImport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          section: "pitchers",
+          warning: expect.stringContaining("Rival Squad"),
+        }),
+      );
+    });
+  });
+
   it("dispatches ADD_PLAYER directly when no fingerprint match found", async () => {
     // No duplicates anywhere → straight to ADD_PLAYER without showing duplicate warning.
     const playerWithoutGid: TeamPlayer = {
