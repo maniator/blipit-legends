@@ -210,13 +210,13 @@
                 "control": 60,
                 "velocity": 60,
                 "stamina": 60,
-                "movement": 50
+                "movement": 35
               },
               "position": "SP",
               "handedness": "R",
               "isPitcherEligible": true,
               "pitchingRole": "SP",
-              "sig": "19b195b3"
+              "sig": "83e26dce"
             }
           ]
         },
@@ -396,13 +396,13 @@
                 "control": 60,
                 "velocity": 60,
                 "stamina": 60,
-                "movement": 50
+                "movement": 35
               },
               "position": "SP",
               "handedness": "R",
               "isPitcherEligible": true,
               "pitchingRole": "SP",
-              "sig": "ae4247eb"
+              "sig": "89525c86"
             }
           ]
         },
@@ -411,5 +411,5 @@
       }
     ]
   },
-  "sig": "cd9377df"
+  "sig": "1ac8a645"
 }
