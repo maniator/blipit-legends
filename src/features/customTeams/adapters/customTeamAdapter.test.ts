@@ -208,9 +208,9 @@ describe("customTeamToHandednessMap", () => {
     expect(map["p4"]).toBe("R");
   });
 
-  it("omits players that do not have explicit handedness", () => {
+  it("defaults to 'R' for players that do not have explicit handedness", () => {
     const map = customTeamToHandednessMap(makeTeam());
-    expect(map["p2"]).toBeUndefined();
+    expect(map["p2"]).toBe("R");
   });
 });
 

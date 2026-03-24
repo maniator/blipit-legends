@@ -145,17 +145,11 @@ export function useImportPlayerFile({
 
           // Soft fingerprint duplicate check.
           // Build the sig from the same normalized stats used for the editorPlayer.
-          // The `?? { contact: 40, power: 40, speed: 40 }` guard is a safety net for
-          // malformed/legacy batter exports that somehow lack a batting block; cross-role
-          // imports (pitchers into lineup/bench) are already rejected above.
           const sectionRole: "batter" | "pitcher" = section === "pitchers" ? "pitcher" : "batter";
           const incomingFp = buildPlayerSig({
             name: importedPlayer.name,
             role: sectionRole,
-            batting:
-              sectionRole === "batter"
-                ? (importedPlayer.batting ?? { contact: 40, power: 40, speed: 40 })
-                : importedPlayer.batting,
+            batting: importedPlayer.batting,
             pitching:
               sectionRole === "pitcher" && importedPlayer.pitching
                 ? importedPlayer.pitching
