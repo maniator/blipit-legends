@@ -252,7 +252,7 @@ async function selectAiStartingPitcherIdxWithRest(
 
 ### `SchedulePage` Rotation Planner widget
 
-In Watch/Manage mode, a **Rotation Planner** section on `SchedulePage` (added in this future phase) shows each pitcher's current rest status ahead of upcoming games:
+In Watch/Manage mode, a **Rotation Planner** section on `SchedulePage` (added in this future phase) shows each pitcher's current rest status ahead of upcoming games. See [ai-manager-v2.md](ai-manager-v2.md) for the broader v2 AI scope (batting order construction, bench strategy) that ships alongside this widget:
 
 ```
 ┌─────────────────────────────────────────────────────────┐

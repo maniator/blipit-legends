@@ -60,6 +60,7 @@ flowchart TD
 | [playoffs.md](playoffs.md) | Playoff format options, bracket generation, series management |
 | [stats-migration.md](stats-migration.md) | `/stats` → Stats Hub migration plan |
 | [stamina.md](stamina.md) | Fatigue model (within-game), v1 cross-game simplification, future pitcher rotation tracking |
+| [ai-manager-v2.md](ai-manager-v2.md) | Future AI pre-game scope: rest-aware starter selection, batting order construction, bench strategy |
 | [edge-cases.md](edge-cases.md) | Edge cases and error handling across all areas of league play |
 
 ---

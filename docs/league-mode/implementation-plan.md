@@ -341,7 +341,34 @@ Number of teams that advance: configurable (2 / 4 / 8); default = `min(4, Math.f
 
 ---
 
-## Phase 10 — Multi-Season *(Future)*
+---
+
+## Phase 11 — AI Manager v2: Pre-Game Decisions *(Future)*
+
+> *(Future phase — not part of the initial implementation target.)*
+
+**Goal:** AI-managed teams make intelligent pre-game decisions: rest-aware starting pitcher selection, platoon-adjusted batting order, and bench priority ordering. Depends on `PitcherWorkloadRecord` from the cross-game stamina phase.
+
+See [ai-manager-v2.md](ai-manager-v2.md) for the full scope, module plan, and testing approach.
+
+### Checklist
+
+- [ ] `buildAiBattingOrder(players, opponentSPHandedness, gameSeed)` in `aiBattingOrder.ts`
+  - Pure function; no new data model required
+  - Sort: contact-first for top of order, power-first for 3–4, descending combined score for 5–9
+  - Platoon bump: LHB up 1–2 slots vs RH pitcher and vice versa
+  - Tie-break via `fnv1a(gameSeed)` for determinism
+- [ ] `buildAiBenchStrategy(players, opponentSP, gameSeed)` in `aiBenchStrategy.ts`
+  - Produces ordered bench priority list; does not move players between sections
+  - Stored in `GameSaveSetup.benchPriority`; consumed by existing `makeAiTacticalDecision`
+- [ ] `selectAiStartingPitcherIdxWithRest(...)` in `aiStarterSelection.ts`
+  - Replaces v1 seed-hash fallback once `PitcherWorkloadRecord` exists
+  - Queries workload records per pitcher; sorts by days-since-last-appearance desc
+  - Seed hash as deterministic tiebreaker
+- [ ] Add `lineupOrder` and `benchPriority` optional fields to `GameSaveSetup` (empty arrays = v1 fallback; fully backward-compatible)
+- [ ] Wire all three helpers into `headlessSim.ts` and Watch/Manage `GamePage` setup path
+- [ ] Unit tests: `aiBattingOrder.test.ts`, `aiBenchStrategy.test.ts`, `aiStarterSelection.test.ts`
+
 
 > *(Future phase — not part of the initial implementation target.)*
 
