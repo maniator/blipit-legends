@@ -311,7 +311,7 @@ export type LeagueSeasonStatus =
   | "CANCELLED";            // League disbanded mid-season
 
 export interface LeagueSeasonRecord {
-  /** Primary key — e.g. "ls_<fnv1a>" from generateLeagueSeasonId() */
+  /** Primary key — e.g. "ls_V1StGXR8_Z5j" from generateLeagueSeasonId() */
   id: string;
   schemaVersion: number;
   createdAt: string;
@@ -400,7 +400,7 @@ const leagueSeasonsSchemaV1: RxJsonSchema<LeagueSeasonRecord> = {
 export type ScheduledGameStatus = "PENDING" | "COMPLETED" | "CANCELLED";
 
 export interface ScheduledGameRecord {
-  /** Primary key — e.g. "sg_<fnv1a>" from generateScheduledGameId() */
+  /** Primary key — e.g. "sg_V1StGXR8_Z5j" from generateScheduledGameId() */
   id: string;
   schemaVersion: number;
   createdAt: string;
@@ -504,7 +504,7 @@ export interface TradePlayerMove {
 }
 
 export interface TradeRecord {
-  /** Primary key — e.g. "tr_<fnv1a>" from generateTradeId() */
+  /** Primary key — e.g. "tr_V1StGXR8_Z5j" from generateTradeId() */
   id: string;
   schemaVersion: number;
   createdAt: string;
@@ -601,13 +601,13 @@ await db.addCollections({
 
 ## `generateId.ts` Changes
 
-Add three new ID generators to `src/storage/generateId.ts` (alongside existing `generateTeamId`, `generateSaveId`, etc.):
+Add four new ID generators to `src/storage/generateId.ts` (alongside existing `generateTeamId`, `generateSaveId`, etc.), following the same nanoid-based pattern:
 
 ```ts
-export const generateLeagueId        = () => `lg_${generateId()}`;
-export const generateLeagueSeasonId  = () => `ls_${generateId()}`;
-export const generateScheduledGameId = () => `sg_${generateId()}`;
-export const generateTradeId         = () => `tr_${generateId()}`;
+export const generateLeagueId        = (): string => `lg_${nanoid(12)}`;
+export const generateLeagueSeasonId  = (): string => `ls_${nanoid(12)}`;
+export const generateScheduledGameId = (): string => `sg_${nanoid(12)}`;
+export const generateTradeId         = (): string => `tr_${nanoid(12)}`;
 ```
 
 ---

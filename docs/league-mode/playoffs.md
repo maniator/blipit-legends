@@ -108,9 +108,9 @@ function isSeriesClinched(
   winsNeeded: number,
   homeWins: number,
   awayWins: number,
-): { clinched: boolean; winnerId?: string } {
-  if (homeWins >= winsNeeded) return { clinched: true, winnerId: homeTeamId };
-  if (awayWins >= winsNeeded) return { clinched: true, winnerId: awayTeamId };
+): { clinched: boolean; winner?: "HOME" | "AWAY" } {
+  if (homeWins >= winsNeeded) return { clinched: true, winner: "HOME" };
+  if (awayWins >= winsNeeded) return { clinched: true, winner: "AWAY" };
   return { clinched: false };
 }
 ```

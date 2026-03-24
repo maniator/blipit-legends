@@ -79,7 +79,7 @@
 | **Multi-player trade where one player fails validation** | The entire trade is rejected atomically — none of the player moves execute. Return a single `TradeValidationError` with the specific failing constraint. |
 | **RxDB partial write during trade execution** | See [trades.md — Atomicity Note](trades.md#atomicity-note). Player updates are written first, `TradeRecord` last. If the `TradeRecord` insert fails, a recovery record is written on next load by `validateLeagueRosterIntegrity`. |
 | **Trade attempted during playoffs** | Blocked. Playoffs begin after all regular-season games are complete, which is always after `tradeDeadlineGameDay`. The deadline validation (`currentGameDay >= tradeDeadlineGameDay`) catches this automatically. |
-| **Team tries to trade with a team that has a live Watch game in progress** | Blocked with error: "Cannot trade while a live game is in progress." Detected by checking for any `scheduledGameId` on the current game day that is `flaggedForWatch`. |
+| **Team tries to trade with a team that has a live Watch game in progress** | Blocked with error: "Cannot trade while a live game is in progress." Detected via an in-memory `activeScheduledGameId` — not inferred from `flaggedForWatch`, which only means "watch later" and does not imply a game is actively running. |
 
 ---
 
@@ -117,7 +117,7 @@
 | **Player deleted between seasons** | Historical `CompletedGameRecord` and stat records reference the deleted `playerId`. The career-stats page may show "Unknown Player" for that ID. Prevent deletion of players who have `CompletedGameRecord` entries with their `playerId` — or at minimum warn before deleting. |
 | **Team renamed between seasons** | Old season stats continue to reference `teamId`, which is stable. The UI should resolve team names from the current `TeamRecord` for display — past games will show the current name. If preserving historical names matters, store `homeTeamNameAtTime` / `awayTeamNameAtTime` on `CompletedGameRecord`. |
 | **`activeLeagueId` not cleared after season completes** | `leagueStore.completeLeagueSeason` must clear `activeLeagueId` on every `TeamRecord` in the season. If it's not cleared, teams are permanently locked out of new leagues. This must be part of the `COMPLETE` transition — not a separate cleanup step. |
-| **New season started before the previous one is `COMPLETE`** | Block the "Start New Season" button until `leagueSeason.status === "COMPLETE"`. Validate server-side in `leagueSeasonStore.createSeason`. |
+| **New season started before the previous one is `COMPLETE`** | Block the "Start New Season" button until `leagueSeason.status === "COMPLETE"`. Validate in `leagueSeasonStore.createSeason` before any writes. |
 
 ---
 

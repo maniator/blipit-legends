@@ -20,11 +20,11 @@ The deadline is a **game day number** stored on `LeagueSeasonRecord.tradeDeadlin
 |---|---|
 | Adjustable? | Yes — user sets it at league creation, or accepts the default |
 | Minimum | Game day 2 |
-| Maximum | `gamesPerTeam - 1` (at least one game must remain after the deadline) |
+| Maximum | `totalGameDays - 1` (at least one game day must remain after the deadline) |
 
 Once `leagueSeason.currentGameDay >= tradeDeadlineGameDay`:
 - `LeagueRosterPage` shows a **"Trade Deadline Passed"** banner in place of the trade UI
-- `tradeStore.executeTrade` also validates this server-side and throws if violated
+- `tradeStore.executeTrade` also validates this in the store and returns a `TradeValidationError` if violated
 
 ---
 
@@ -37,7 +37,7 @@ All constraints are validated in `tradeStore.executeTrade` before any writes. Va
 | Deadline | `currentGameDay < tradeDeadlineGameDay` | "The trade deadline has passed for this season." |
 | Same league | Both `fromTeamId` and `toTeamId` are in `leagueSeason.teamIdsAtStart` | "One or both teams are not in this league." |
 | Different teams | `fromTeamId !== toTeamId` | "A team cannot trade with itself." |
-| No active game | Neither team has a PENDING `ScheduledGameRecord` for `currentGameDay` that is flagged for Watch (i.e. it's currently being played live) | "Cannot trade while a live game is in progress." |
+| No active game | Neither team has an in-progress Watch/Manage session for `currentGameDay` (tracked via an in-memory `activeScheduledGameId`; not inferred from `flaggedForWatch`) | "Cannot trade while a live game is in progress." |
 | Roster minimum — batters | Each team must have ≥ 9 batters (lineup + bench) after the trade | "Trade would leave [Team] with fewer than 9 batters." |
 | Roster minimum — pitchers | Each team must have ≥ 1 pitcher after the trade | "Trade would leave [Team] with no pitchers." |
 | Non-empty | `playerMoves.length >= 1` | "A trade must include at least one player." |

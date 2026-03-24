@@ -260,7 +260,7 @@ export interface ScheduledGameSlot {
   homeTeamId: string;
   awayTeamId: string;
   gameDay: number;              // 1-based
-  seriesId: string;             // e.g. "sg_teamA_teamB_1"
+  seriesId: string;             // e.g. "series_teamA_teamB_1"
   seriesGameNumber: number;     // 1, 2, or 3 within the series
   leagueSeasonId: string;
   leagueId: string;
@@ -309,10 +309,10 @@ const seed = `${leagueSeasonId}:${scheduledGameId}`;
 ```
 
 **Why this is guaranteed unique within a season:**  
-`scheduledGameId` is an RxDB primary key (`sg_<fnv1a hash>`). RxDB enforces primary key uniqueness at the collection level — no two `ScheduledGameRecord` docs in the same collection can share an ID. Therefore no two games in the same season can produce the same seed string.
+`scheduledGameId` is an RxDB primary key (nanoid-based, e.g. `sg_V1StGXR8_Z5j`). RxDB enforces primary key uniqueness at the collection level — no two `ScheduledGameRecord` docs in the same collection can share an ID. Therefore no two games in the same season can produce the same seed string.
 
 **Why this is guaranteed unique across seasons:**  
-The `leagueSeasonId` prefix (`ls_<fnv1a hash>`) differs for every season. Even in the astronomically unlikely event that two different seasons produce a `scheduledGameId` collision, their seed strings would still differ.
+The `leagueSeasonId` prefix (nanoid-based, e.g. `ls_V1StGXR8_Z5j`) differs for every season. Even in the astronomically unlikely event that two different seasons produce a `scheduledGameId` collision, their seed strings would still differ.
 
 **Why this is safe for batched simulation:**  
 `headlessSim` is a pure function — it takes a seed, runs the reducer loop, and returns a result with no shared mutable state. Running multiple calls in the same event loop tick is safe because each call seeds its own PRNG independently from the formula above. There is no global RNG state shared between parallel simulations.

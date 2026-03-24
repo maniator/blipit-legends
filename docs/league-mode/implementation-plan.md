@@ -303,7 +303,7 @@ See [trades.md](trades.md) for full flow diagram and constraint table.
 - [ ] Implement `tradeStore.executeTrade(trade: TradeInput): Promise<void>`
   - Validates: trade deadline not passed, no PENDING games for either team that day, roster minimums (≥9 batters, ≥1 pitcher each side post-trade)
   - Writes a `TradeRecord` (immutable) to `tradeRecords` collection
-  - Updates `TeamRecord.rosterPlayerIds` for both teams atomically
+  - Updates `PlayerRecord.teamId` and roster-ordering fields for all traded players atomically (TeamRecord is metadata-only; there is no `rosterPlayerIds` field)
 - [ ] Enforce deadline in `LeagueRosterPage`: disable `TradePanel` and show a "Trade Deadline Passed" banner when `currentGameDay >= tradeDeadlineGameDay`
 - [ ] Add `TradeHistory` view to `LeagueRosterPage`: read-only list of `TradeRecord` docs sorted by date
 
@@ -357,7 +357,7 @@ Number of teams that advance: configurable (2 / 4 / 8); default = `min(4, Math.f
   - Generates a fresh schedule via `generateSchedule`
 - [ ] `LeagueDetailPage` shows a season picker (dropdown) to browse historical seasons
 - [ ] Historical season data is read-only: schedule, standings, bracket, and box scores are all preserved in RxDB
-- [ ] `StatsHubPage` league tab: season picker filters stats to the selected season (or "All Time")
+- [ ] `LeagueStatsPage` league tab: season picker filters stats to the selected season (or "All Time")
 
 ---
 
