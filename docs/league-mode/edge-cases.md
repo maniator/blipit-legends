@@ -4,7 +4,7 @@
 
 ---
 
-## 1. League Setup
+## 1. League Setup *(applies to initial slice)*
 
 | Scenario | Correct behavior |
 |---|---|
@@ -20,7 +20,7 @@
 
 ---
 
-## 2. Schedule Generation
+## 2. Schedule Generation *(applies to initial slice)*
 
 | Scenario | Correct behavior |
 |---|---|
@@ -32,7 +32,7 @@
 
 ---
 
-## 3. Regular Season — Game Play
+## 3. Regular Season — Game Play *(applies to initial slice)*
 
 | Scenario | Correct behavior |
 |---|---|
@@ -45,7 +45,7 @@
 
 ---
 
-## 4. Batched Simulation (Simulate Day)
+## 4. Batched Simulation (Simulate Day) *(applies to initial slice)*
 
 | Scenario | Correct behavior |
 |---|---|
@@ -58,7 +58,7 @@
 
 ---
 
-## 5. Game Seeds
+## 5. Game Seeds *(applies to initial slice)*
 
 | Scenario | Correct behavior |
 |---|---|
@@ -69,7 +69,7 @@
 
 ---
 
-## 6. Trades
+## 6. Trades *(Phase 8 — future)*
 
 | Scenario | Correct behavior |
 |---|---|
@@ -83,7 +83,7 @@
 
 ---
 
-## 7. Standings & Tiebreaking
+## 7. Standings & Tiebreaking *(applies to initial slice)*
 
 | Scenario | Correct behavior |
 |---|---|
@@ -95,7 +95,7 @@
 
 ---
 
-## 8. Playoffs
+## 8. Playoffs *(Phase 9 — future)*
 
 | Scenario | Correct behavior |
 |---|---|
@@ -109,7 +109,7 @@
 
 ---
 
-## 9. Multi-Season & Season Rollover
+## 9. Multi-Season & Season Rollover *(Phase 10 — future)*
 
 | Scenario | Correct behavior |
 |---|---|
@@ -121,7 +121,7 @@
 
 ---
 
-## 10. Data Integrity & Storage
+## 10. Data Integrity & Storage *(applies to initial slice)*
 
 | Scenario | Correct behavior |
 |---|---|
