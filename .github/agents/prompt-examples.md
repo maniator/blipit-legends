@@ -151,7 +151,7 @@ Rollout window: Next sprint
 Risk flags already identified:
 - RxDB schema change required (SaveDoc.pitcherEra: number)
 - Migration needed (default 0 for existing docs)
-- FNV-1a export signature unaffected (field added to header, not event log)
+- FNV-1a export signature changes for newly exported bundles when the header shape changes, even though older exports should still verify/import
 Execution agent: @rxdb-save-integrity
 ```
 

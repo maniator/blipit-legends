@@ -78,7 +78,7 @@ This container guidance is **only for Playwright visual snapshot work**. The **C
 
 Request a `@senior-lead` review before merging if **any** of the following apply:
 
-- The layout change affects all 6 viewport/device Playwright projects simultaneously (desktop, Pixel, tablet, iPhone variants)
+- The layout change affects all 6 viewport/device Playwright projects simultaneously (`desktop`, `tablet`, `iphone-15-pro-max`, `iphone-15`, `pixel-7`, `pixel-5`)
 - The change breaks or requires disabling `responsive-smoke.spec.ts` on any project
 - A mobile CTA (e.g., Play Ball button) or accessibility-critical element is repositioned
 
