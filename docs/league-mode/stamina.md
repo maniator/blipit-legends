@@ -120,7 +120,7 @@ These remain constant per team across all league games in the initial slice.
 
 ### Manager Mode (human player)
 
-When the human is managing a game via Watch/Manage, the `SchedulePage` will eventually show a **"Set Starter"** control before the game begins (future UX — not required for v1). In v1, the human's team also uses the deterministic seed selection, with the option to override via the existing pitcher substitution UI once the game starts.
+When the human is managing a game via Watch/Manage, the `SchedulePage` will eventually show a **"Set Starter"** control before the game begins (future UX — not required for v1). In v1, the human's team also uses deterministic seed selection. Overriding that choice to a different SP before first pitch requires the future pre-game **"Set Starter"** control; once the game starts, the existing pitcher substitution UI can only bring in reliever-eligible pitchers, not SP-only pitchers.
 
 ---
 

@@ -28,14 +28,13 @@ A synchronous, renderless run of the existing game `reducer` from `initialState`
 
 ```mermaid
 flowchart TD
-    A[User taps Box Score on a ScheduleCard] --> B[GameModeModal confirms]
-    B --> C[headlessSim called with GameSaveSetup and seed]
-    C --> D{game over?}
-    D -->|next pitch| D
-    D -->|game over| E[CompletedGameResult produced]
-    E --> F[completeScheduledGame writes CompletedGameRecord]
-    F --> G[SchedulePage re-renders with result]
-    G --> H[Optional: tap result to open BoxScoreDetailModal]
+    A[User taps the ⚡ Sim action on a ScheduleCard] --> B[headlessSim called with GameSaveSetup and seed]
+    B --> C{game over?}
+    C -->|next pitch| C
+    C -->|game over| D[CompletedGameResult produced]
+    D --> E[completeScheduledGame writes CompletedGameRecord]
+    E --> F[SchedulePage re-renders with result]
+    F --> G[Optional: tap result to open BoxScoreDetailModal]
 ```
 
 ### Seed Strategy
@@ -132,7 +131,10 @@ if (locationState?.leagueContext) {
     innings: state.inning,
     completedGameId: state.gameInstanceId,
   });
-  navigate(`/leagues/${leagueId}/seasons/${leagueSeasonId}/schedule`, { replace: true });
+  navigate(
+    `/leagues/${encodeURIComponent(leagueId)}/seasons/${encodeURIComponent(leagueSeasonId)}/schedule`,
+    { replace: true },
+  );
 } else {
   // existing exhibition post-game behavior
 }
