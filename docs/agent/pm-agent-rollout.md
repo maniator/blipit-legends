@@ -21,7 +21,7 @@ The PM Agent is a **GitHub Copilot custom agent** for `maniator/blipit-legends`.
 3. For any `F` or `P*` result, update `.github/agents/pm-agent.md` (agent instructions), `docs/agent/baseball-rules-delta.md`, or `docs/agent/pm-agent-knowledge-map.md` as needed.
 4. Re-run failing questions after each update.
 
-**Entry criteria:** All deliverable docs merged to `main`.  
+**Entry criteria:** All deliverable docs merged to `master`.  
 **Exit criteria:** Suite pass rate ≥ 85% (≥ 15 of 17 questions pass) on two consecutive runs with no changes between runs.
 
 **Owner:** Core team.

@@ -284,7 +284,7 @@ We want to add a `/stats` route for in-game player stats. What is the complete p
 
 **Known-answer criteria:**
 
-- Identifies route registration in `src/app/routes.tsx` (or equivalent per `docs/architecture.md`).
+- Identifies route registration in `src/router.tsx` (per `docs/architecture.md`).
 - Flags that new routes may need a loader function if they fetch from RxDB.
 - Flags `docs/repo-layout.md` for the feature directory convention (`src/features/`).
 - Lists required validation: `yarn lint`, `yarn typecheck:e2e`, `yarn build`, `yarn test:e2e`.
