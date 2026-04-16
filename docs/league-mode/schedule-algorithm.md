@@ -157,7 +157,7 @@ function padToEven(teamIds: string[]): string[] {
 }
 ```
 
-Bye distribution is deterministic — the fixed team in the circle method always has the same position, so the same team doesn't always get the bye. Shuffling `teamIds` by `leagueId` seed before padding ensures bye distribution varies by league.
+Bye distribution is deterministic — the fixed team in the circle method always has the same position, so the same team doesn't always get the bye. Shuffle `teamIds` using `options.seed` (recommended: `leagueSeasonId`) before padding so bye distribution stays deterministic while still varying between seasons.
 
 ---
 
@@ -307,17 +307,23 @@ Every simulated game — including games run in bulk via Simulate Day — must u
 ### Seed formula
 
 ```ts
-const seed = `${leagueSeasonId}:${scheduledGameId}`;
+const seedInput = `${leagueSeasonId}:${scheduledGameId}`;
+const seed = fnv1a(seedInput); // 8-char hex string, safe for reinitSeed(parseInt(..., 36))
 ```
 
-**Why this is guaranteed unique within a season:**  
-`scheduledGameId` is an RxDB primary key (nanoid-based, e.g. `sg_V1StGXR8_Z5j`). RxDB enforces primary key uniqueness at the collection level — no two `ScheduledGameRecord` docs in the same collection can share an ID. Therefore no two games in the same season can produce the same seed string.
+`reinitSeed` parses seeds with `parseInt(seedStr, 36)`, so seed strings must be base-36-safe (`0-9`, `a-z`) and must not rely on separators like `:` or `_` (which truncate parsing). Hashing the full game identity with `fnv1a` preserves determinism while producing a valid seed string.
 
-**Why this is guaranteed unique across seasons:**  
-The `leagueSeasonId` prefix (nanoid-based, e.g. `ls_V1StGXR8_Z5j`) differs for every season. Even in the astronomically unlikely event that two different seasons produce a `scheduledGameId` collision, their seed strings would still differ.
+To keep all simulation entry points consistent, use one shared helper:
+
+```ts
+const seedStrFromScheduledGameIds = (leagueSeasonId: string, scheduledGameId: string): string =>
+  fnv1a(`${leagueSeasonId}:${scheduledGameId}`);
+```
+
+Then pass that exact `seed` string to `reinitSeed` and persist the same value on `CompletedGameRecord.seed`.
 
 **Why this is safe for batched simulation:**  
-`headlessSim` takes a seed and runs the reducer loop to produce a result. The seed formula (`${leagueSeasonId}:${scheduledGameId}`) ensures determinism. However, gameplay randomness flows through the module-global PRNG in `@shared/utils/rng` — multiple `headlessSim` calls share that global state, so they must be run **sequentially** (not in true parallel) to avoid cross-game interference. When Simulate Day runs multiple games in the same call, each game calls `reinitSeed` from its own seed before executing, so results are fully deterministic as long as games run one after another.
+`headlessSim` takes a seed and runs the reducer loop to produce a result. The hashed seed formula (`fnv1a(${leagueSeasonId}:${scheduledGameId})`) is deterministic and parse-safe for `reinitSeed`. However, gameplay randomness flows through the module-global PRNG in `@shared/utils/rng` — multiple `headlessSim` calls share that global state, so they must be run **sequentially** (not in true parallel) to avoid cross-game interference. When Simulate Day runs multiple games in the same call, each game calls `reinitSeed` with its own derived seed before executing, so results are fully deterministic as long as games run one after another.
 
 **Playoff games:**  
 Playoff `ScheduledGameRecord` docs are generated with the same `generateScheduledGameId()` function, so playoff game seeds are guaranteed unique by the same mechanism.
