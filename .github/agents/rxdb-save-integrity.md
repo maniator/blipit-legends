@@ -121,14 +121,14 @@ When changing this flow:
 - The E2E `save-load.spec.ts` and `import.spec.ts` are the integration tests — keep them passing.
 - The fixture file `e2e/fixtures/sample-save.json` is a signed export bundle; update it if the export format changes.
 
-## When to consult `@pm-agent`
+## Escalation to `@senior-lead`
 
-Route to `@pm-agent` before writing code in any of these situations:
+Request a `@senior-lead` review before merging if **any** of the following apply:
 
-- **Schema change is driven by a new feature** — if you need to add a field because a new gameplay feature requires it, ask `@pm-agent` for the full implementation scope first. The schema change may be only one step in a larger cross-module plan.
-- **Migration strategy is unclear** — if you are unsure what the default value for a new field should be (especially for fields that depend on gameplay state), ask `@pm-agent` to derive the safe default from `docs/agent/baseball-rules-delta.md` and the simulator source.
-- **Export/import format version is changing** — if the change breaks backward compatibility with saved exports, ask `@pm-agent` for a risk review and user-communication plan.
-- **Multiple stores are changing together** — if `saves`, `events`, and `teams` collections all need updates in the same PR, ask `@pm-agent` to sequence the changes and identify the atomic boundary.
+- Any schema `version` bump (any collection)
+- Any change to the save/export format (FNV-1a signature scheme, event `idx` structure, `stateSnapshot` shape)
+
+Use the `SENIOR LEAD REVIEW REQUEST` template from `.github/agents/prompt-examples.md` and provide: schema diff, migration strategy code, and the upgrade-path test result. See the "Domain agent escalation to Senior Lead" example in `prompt-examples.md` for the exact format.
 
 ## Pre-commit checklist
 
