@@ -21,6 +21,9 @@ This file is the quick-reference index. For deeper detail, see:
 | [docs/style-guide.md](../docs/style-guide.md)           | **UI Style Guide** — color palette, typography, breakpoints, all button variants, form elements, modals, cards, tables, game UI, and status patterns. **Consult before introducing any new color, font size, or component.** |
 | [agents/README.md](agents/README.md)                    | Agent routing guide — which specialized agent to use for each task type, common gotchas for multi-session PRs                                                                                                                |
 | [agents/prompt-examples.md](agents/prompt-examples.md)  | Copy-paste prompt templates for each agent type                                                                                                                                                                              |
+| [agents/pm-agent.md](agents/pm-agent.md)                | **PM Agent** — system prompt + behavior contract for the Project Manager Agent (planning, baseball rules, risk review)                                                                                                       |
+| [docs/agent/baseball-rules-delta.md](../docs/agent/baseball-rules-delta.md) | MLB Official Rules vs Ballgame simulator delta table — always consult before answering baseball-rule questions                                                               |
+| [docs/agent/pm-agent-knowledge-map.md](../docs/agent/pm-agent-knowledge-map.md) | Knowledge map — authoritative source index, ownership, and refresh cadence for all PM Agent sources                                                                     |
 
 ---
 
@@ -45,6 +48,28 @@ Copilot-specific policy that remains in this file:
 - **When you notice duplication**, fix it before adding more: extract first, then wire both consumers.
 - **Duplication in tests is acceptable** when it aids test readability, but shared test setup belongs in `@test/testHelpers`.
 - **Always make small, focused commits** — one logical change per commit. Never batch unrelated changes into a single commit. Small commits are easier to review, bisect, and revert.
+
+---
+
+## Agent Auto-Routing
+
+Before starting any task, check whether it belongs to a specialist agent. The table below is the authoritative routing guide. When in doubt, **start with `@pm-agent`** for planning, then hand off to the execution agent.
+
+| Trigger / task type | Route to |
+|---|---|
+| Feature planning, scoping, risk review, PR description for gameplay/rules/persistence | `@pm-agent` |
+| "How does [baseball rule] work?" or "How does the sim implement X rule?" | `@pm-agent` |
+| "What files change for X?" / "What could break if I do Y?" | `@pm-agent` |
+| Any request mentioning: inning, batter, runner, pitch, steal, bunt, walk, extra innings, tiebreak runner, IBB, manager mode, defensive shift, pinch hitter, PRNG replay, save compatibility | `@pm-agent` |
+| Behavior-preserving refactor, rename, extract, modularization | `@safe-refactor` |
+| UI / layout / typography / styled-components / responsive change | `@ui-visual-snapshot` |
+| Deterministic simulation bug, impossible game state, stat inconsistency, lineup mapping error | `@simulation-correctness` |
+| RxDB schema change, save/load, export/import, `SaveStore` API, `stateSnapshot` format | `@rxdb-save-integrity` |
+| GitHub Actions workflow change — CI, Playwright, sharding, artifact uploads | `@ci-workflow` |
+| E2E test authoring, fixture creation, visual snapshot regeneration | `@e2e-test-runner` |
+| Live QA against production site (blipit.net) | `@playwright-prod` |
+
+**Routing sequence for mixed tasks:** route to `@pm-agent` first for a plan + risk review, then route to the specialist execution agent named in the plan.
 
 ---
 

@@ -4,6 +4,75 @@ Copy-paste prompts for common tasks in `maniator/blipit-legends`. Prepend `@safe
 
 ---
 
+## PM Agent
+
+### Feature planning — new gameplay mechanic
+
+```
+@pm-agent
+
+We want to add a "stolen base of home" mechanic. The runner on 3rd can attempt to steal home.
+
+Produce a full implementation plan:
+- Which files change and in what order (respect the module cycle order).
+- PRNG call-order impact — does this add a random() call inside detectDecision?
+- Save/replay compatibility risk.
+- Official MLB rule vs current Ballgame behavior delta.
+- Validation checklist.
+- Which execution agent should carry out the implementation.
+```
+
+### Baseball rule adjudication
+
+```
+@pm-agent
+
+Official baseball rule question: in the bottom of the 9th, bases loaded, 1 out, batter hits a
+sacrifice fly. The runner on 3rd scores to put the home team ahead. Does the game end immediately
+(walk-off), or do the remaining outs still need to be recorded?
+
+Answer for both official MLB and Ballgame's implementation, with file citations.
+```
+
+### Risk review before opening a PR
+
+```
+@pm-agent
+
+I'm about to open a PR that changes the IBB pitch-count model from 1 pitch event to 4 pitch
+events (matching MLB rule 5.05(b)(2)). Give me a complete risk review:
+- PRNG replay impact
+- Fatigue model impact
+- Save compatibility
+- Files that change
+- Tests required
+- Which eval questions from the pm-agent-eval-suite.md would be affected
+```
+
+### Migration checklist — RxDB schema change
+
+```
+@pm-agent
+
+We want to add a `notes: string` optional field to `SaveDoc`. Produce the complete
+migration checklist before I hand off to @rxdb-save-integrity.
+```
+
+### PR description draft
+
+```
+@pm-agent
+
+Draft a PR description for a change that: (1) adds a `stolenBasesAttempted` counter to
+State in gameStateTypes.ts, (2) increments it in stealAttempt.ts on both success and
+caught-stealing paths, and (3) bumps the saves schema version with a migration that
+defaults the counter to 0.
+
+Follow the repo PR description format and include a risk summary.
+```
+
+---
+
 ## Safe refactor
 
 ### Behavior-preserving reducer refactor
