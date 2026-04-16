@@ -31,7 +31,7 @@ The PM Agent must consult this document for every baseball-rule question. Respon
 |---|---|---|---|---|
 | Strike count limit | 3 strikes = strikeout | `newStrikes === 3` in `playerStrike` records the K | ✅ Matches MLB | `playerActions.ts:33` |
 | Ball count limit | 4 balls = walk | `newBalls === 4` in `playerBall` triggers `hitBall(Hit.Walk, …)` | ✅ Matches MLB | `playerActions.ts:82-84` |
-| Foul ball with 2 strikes | Does not advance to third strike (except bunt) | `playerStrike` is only called with `foul=true` by the pitch-resolution pipeline when `strikes < 2`; the pipeline guards the foul-can't-K rule before calling into `playerActions` | ✅ Matches MLB | `playerActions.ts:52-58`; `pitchResolutionPipeline.ts` |
+| Foul ball with 2 strikes | Does not advance to third strike (except bunt) | In `handleSimAction`, the `foul` branch guards the rule: when `strikes < 2` it calls `playerStrike`; at 2 strikes it increments pitch count and leaves the count unchanged. `playerStrike` itself is not the protection point. | ✅ Matches MLB | `src/features/gameplay/context/handlers/sim.ts:46-60` |
 | Count as manager-mode hint | N/A (no manager mode in real baseball) | `count30` and `count02` are offered as `DecisionType` hints to guide the manager | ⚠️ Delta (sim-only feature) | `decisionTypes.ts:6-7` |
 
 ### Walk (base on balls)
@@ -39,7 +39,7 @@ The PM Agent must consult this document for every baseball-rule question. Respon
 | Rule area | Official MLB | Ballgame implementation | Status | Source |
 |---|---|---|---|---|
 | Walk advancement | Force advancement only — non-forced runners do not move | Walk handled via `advanceRunners(Hit.Walk, …)`: runners advance only if forced by the batter taking 1st | ✅ Matches MLB | `advanceRunners.ts:69-104` |
-| Intentional walk (IBB) — pitch sequence | 4 intentional pitches thrown; manager signals umpire (rule 5.05(b)(2)) | Single pitch event: `incrementPitchCount` fires once, then `hitBall(Hit.Walk, …)` — no 4-pitch sequence | ⚠️ Delta | `playerOut.ts:14`; `reducer.ts` IBB handler |
+| Intentional walk (IBB) — pitch sequence | 4 intentional pitches thrown; manager signals umpire (rule 5.05(b)(2)) | Single pitch event: `incrementPitchCount` fires once, then `hitBall(Hit.Walk, …)` — no 4-pitch sequence | ⚠️ Delta | `playerOut.ts:14`; `src/features/gameplay/context/handlers/sim.ts:94-103` (`case "intentional_walk"`) |
 | IBB availability | Manager may issue IBB at any time | Only offered in Manager Mode when: inning ≥ 7, 2 outs, score diff ≤ 2, 1st base empty, runner on 2nd or 3rd | ⚠️ Delta (constrained availability) | `reducer.ts:66-71` |
 
 ---
@@ -154,7 +154,7 @@ Real baseball resolves each batted ball with full fielder positioning, reaction 
 | Rule area | Official MLB | Ballgame implementation | Status | Source |
 |---|---|---|---|---|
 | Shift rule | Since 2023: two infielders required on each side of 2nd base; no extreme shifts | Ballgame predates the ban; shift raises ground-out probability by +10% (100/1000) | ⚠️ Delta (shift ban not modeled) | `hitBall.ts:437` |
-| Shift availability | N/A (constrained by 2023 rule) | Manager Mode only; `defensiveShift` flag persists for the half-inning | ⚠️ Delta | `gameOver.ts:17-32`; `reducer.ts` shift handler |
+| Shift availability | N/A (constrained by 2023 rule) | Manager Mode only; `defensiveShift` flag persists for the half-inning | ⚠️ Delta | `gameOver.ts:17-32`; `src/features/gameplay/context/handlers/decisions.ts:49-65` (`case "set_defensive_shift"`) |
 
 ### IBB + steal combined decision
 

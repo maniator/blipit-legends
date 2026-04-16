@@ -252,7 +252,7 @@ We want to make IBB use a proper 4-pitch sequence (matching MLB rule 5.05(b)(2))
 
 **Known-answer criteria:**
 - Identifies `playerOut.ts:incrementPitchCount` comment ("intentional_walk is modeled as a single pitch event") as the delta to remove.
-- Identifies the IBB handler in `reducer.ts` as needing to loop `playerBall` 4 times (or a dedicated `playerIntentionalBall` path).
+- Identifies `src/features/gameplay/context/handlers/sim.ts:94-103` (`case "intentional_walk"`) as the simulation handler that would need to apply four `playerBall`-equivalent pitch/count updates (or a dedicated `playerIntentionalBall` path), and cites `detectDecision` in `reducer.ts` only for the prompt/availability logic.
 - Flags PRNG call-order impact: 4 pitch-count increments instead of 1 will shift the RNG sequence for any seed where IBB fires — all existing save replays with IBB will diverge.
 - Flags `pitchSimulation.ts` fatigue factor: 4 pitches now counted vs 1 — small fatigue increase.
 - Requires: determinism regression test, save-replay smoke test.

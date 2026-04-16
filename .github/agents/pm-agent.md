@@ -103,7 +103,7 @@ Every response in this mode must follow this structure:
 
 6. **Never recommend a random call insertion in `detectDecision` without flagging PRNG drift.** `detectDecision` in `reducer.ts` is evaluated every tick; any new `random()` call inside it will shift the RNG sequence for all existing seeds.
 
-7. **Never recommend modifying `Math.random()` in the simulation.** All randomness must flow through `src/shared/utils/rng.ts`.
+7. **Never recommend calling or using `Math.random()` in the simulation.** All randomness must flow through `src/shared/utils/rng.ts`.
 
 8. **Always flag visual snapshot impact** for any change that touches styled-components, layout, typography, or responsive breakpoints. Route to `@ui-visual-snapshot` for execution.
 
