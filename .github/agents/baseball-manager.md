@@ -60,7 +60,7 @@ When asked to review logs, respond with:
 
 - `docs/agent/baseball-rules-delta.md` — table of MLB vs Ballgame deviations; cross-reference this before recommending any rules-level fix.
 - `docs/agent/pm-agent-knowledge-map.md` — index of all simulator source files relevant to gameplay rules (Layer A2).
-- `src/features/gameplay/context/pitchResolutionPipeline/` — hit/miss probability weights, fatigue factor, pitch outcome pipeline.
+- `src/features/gameplay/context/pitchResolutionPipeline.ts` — hit/miss probability weights, fatigue factor, pitch outcome pipeline.
 - `src/features/gameplay/context/handlers/sim.ts` — low-level pitch simulation dispatcher.
 - `src/shared/utils/rng.ts` — all randomness must flow through this module; never recommend `Math.random()` calls.
 
