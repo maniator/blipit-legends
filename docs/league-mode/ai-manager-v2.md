@@ -1,4 +1,4 @@
-# AI Manager v2 — Future Pre-Game Decisions
+# League Mode — AI Manager v2 — Future Pre-Game Decisions
 
 > Deferred scope: not part of the initial league-mode delivery.
 
