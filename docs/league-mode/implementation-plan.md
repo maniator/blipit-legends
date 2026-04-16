@@ -162,8 +162,8 @@ src/features/leagues/
 │   ├── LeagueHubPage/            # /leagues — list all leagues
 │   ├── LeagueSetupPage/          # /leagues/new — create wizard
 │   ├── LeagueDetailPage/         # /leagues/:leagueId — season overview
-│   ├── SchedulePage/             # /leagues/:leagueId/seasons/:seasonId/schedule
-│   ├── PlayoffBracketPage/       # /leagues/:leagueId/seasons/:seasonId/playoffs  # ← Phase 9 (future)
+│   ├── SchedulePage/             # /leagues/:leagueId/seasons/:leagueSeasonId/schedule
+│   ├── PlayoffBracketPage/       # /leagues/:leagueId/seasons/:leagueSeasonId/playoffs  # ← Phase 9 (future)
 │   └── LeagueRosterPage/         # /leagues/:leagueId/roster (trades)  # ← Phase 8 (future)
 ├── storage/
 │   ├── schemaV1.ts               # RxDB schema configs (see Phase 1)
@@ -217,7 +217,7 @@ See [gameplay-modes.md](gameplay-modes.md) for the full flow diagrams.
 #### Watch / Manage
 
 - [ ] Add `leagueContext?: LeagueGameContext` to `location.state` shape for `/game` navigation
-  - `LeagueGameContext` = `{ leagueId, seasonId, scheduledGameId }`
+  - `LeagueGameContext` = `{ leagueId, leagueSeasonId, scheduledGameId }`
 - [ ] In `GamePage`, after `gameOver`, detect `leagueContext` in `location.state`
   - If present: call `scheduleStore.completeScheduledGame` with the final score, then `navigate` back to the schedule page
   - If absent: existing exhibition behavior unchanged
@@ -249,7 +249,7 @@ See [gameplay-modes.md](gameplay-modes.md) for the full flow diagrams.
   - Fields per row: `teamId`, `teamName`, `W`, `L`, `Pct`, `GB`, `divisionId?`, `H2H`, `RD` (run differential in H2H games), `overallRD`
   - Tiebreaker order: H2H win% → RD in H2H games → overall RD
   - Group by division if `divisions` provided, else single overall table
-- [ ] Implement `useStandings(seasonId: string)` hook — queries `completedGames` for the given season, passes results to `computeStandings`, returns sorted `StandingsRow[]`
+- [ ] Implement `useStandings(leagueSeasonId: string)` hook — queries `completedGames` by `leagueSeasonId`, passes results to `computeStandings`, returns sorted `StandingsRow[]`
 - [ ] Build `StandingsTable` component — renders division headers when divisions present
 
 #### Season Completion (v1 — champion by best record)
@@ -322,7 +322,7 @@ See [playoffs.md](playoffs.md) for bracket diagrams and series-state machine.
   - `generateBracket(seeds: PlayoffSeed[], format: PlayoffFormat): PlayoffBracket` — produces all first-round matchup slots
   - `advanceBracket(bracket: PlayoffBracket, seriesResult: SeriesResult): PlayoffBracket` — immutable update after a series clinch
 - [ ] Auto-trigger playoff bracket creation when `leagueSeason.status` transitions to `PLAYOFFS`
-  - Trigger: `scheduledGames` where `seasonId === X` and `type === REGULAR` are all COMPLETED or CANCELLED
+  - Trigger: `scheduledGames` where `leagueSeasonId === X` and `gameType === REGULAR` are all COMPLETED or CANCELLED
 - [ ] Schedule all potential series game slots upfront (e.g. Bo5 = 5 slots); mark extras as CANCELLED when series is clinched
 - [ ] Build `PlayoffBracketPage` — visual bracket with series scores and series-win counts per team
 - [ ] Champion crowning: when the finals series is clinched, set `leagueSeason.status = COMPLETE` and `leagueSeason.championTeamId`

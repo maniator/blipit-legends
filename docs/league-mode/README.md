@@ -38,7 +38,7 @@ flowchart TD
 | Division assignment    | Auto-assign evenly at league creation; user picks division count (0, 2, or 4); 0 = no divisions, single standings table                                                                                | 3 (near-term)  |
 | Team exclusivity       | A team may only be in **one league at a time**; `activeLeagueId` persists for the life of league membership, cleared only when team leaves the league or the league is disbanded (not between seasons) | 1 (near-term)  |
 | Season completion (v1) | Champion = team with best win percentage when all regular-season games resolve; no playoffs in initial slice                                                                                           | 6 (near-term)  |
-| Trade deadline         | Included; default = midpoint of total game days; user-adjustable at creation                                                                                                                           | 8 (**future**) |
+| Trade deadline         | Stored in v1; default = midpoint of total game days; user-adjustable at creation; enforcement deferred to Phase 8                                                                                      | 8 (**future**) |
 | Playoff format         | Configurable per league (Bo3 / Bo5 / Bo7, single bracket); defaults to **Bo5** if user makes no choice                                                                                                 | 9 (**future**) |
 | Exhibition stats hub   | `/stats` becomes a **Stats Hub** (`/stats` → redirect → `/stats/exhibition`); league stats live at `/stats/league/:leagueId`                                                                           | 7 (**future**) |
 
