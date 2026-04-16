@@ -56,8 +56,8 @@
 /leagues                                           → LeagueHubPage
 /leagues/new                                       → LeagueSetupPage
 /leagues/:leagueId                                 → LeagueDetailPage
-/leagues/:leagueId/seasons/:seasonId/schedule      → SchedulePage
-/leagues/:leagueId/seasons/:seasonId/playoffs      → PlayoffBracketPage
+/leagues/:leagueId/seasons/:leagueSeasonId/schedule      → SchedulePage
+/leagues/:leagueId/seasons/:leagueSeasonId/playoffs      → PlayoffBracketPage
 /leagues/:leagueId/roster                          → LeagueRosterPage (trades)
 ```
 
@@ -93,8 +93,8 @@ graph TD
     Shell --> Leagues["/leagues -- LeagueHubPage"]
     Shell --> LeaguesNew["/leagues/new -- LeagueSetupPage"]
     Shell --> LeagueDetail["/leagues/:leagueId -- LeagueDetailPage"]
-    LeagueDetail --> Schedule["/leagues/:leagueId/seasons/:seasonId/schedule"]
-    LeagueDetail --> Playoffs["/leagues/:leagueId/seasons/:seasonId/playoffs"]
+    LeagueDetail --> Schedule["/leagues/:leagueId/seasons/:leagueSeasonId/schedule"]
+    LeagueDetail --> Playoffs["/leagues/:leagueId/seasons/:leagueSeasonId/playoffs"]
     LeagueDetail --> Roster["/leagues/:leagueId/roster"]
 
     Shell --> LegacyStats["/stats/:teamId -- redirect"]
@@ -165,11 +165,11 @@ Wrap all `/stats/*` children in a shared layout component (`StatsHubLayout`) tha
   },
 },
 {
-  path: "leagues/:leagueId/seasons/:seasonId/schedule",
+  path: "leagues/:leagueId/seasons/:leagueSeasonId/schedule",
   element: <React.Suspense fallback={null}><SchedulePage /></React.Suspense>,
 },
 {
-  path: "leagues/:leagueId/seasons/:seasonId/playoffs",
+  path: "leagues/:leagueId/seasons/:leagueSeasonId/playoffs",
   element: <React.Suspense fallback={null}><PlayoffBracketPage /></React.Suspense>,
 },
 {
@@ -186,7 +186,7 @@ Wrap all `/stats/*` children in a shared layout component (`StatsHubLayout`) tha
 // src/storage/types.ts
 export type LeagueGameContext = {
   leagueId: string;
-  seasonId: string;
+  leagueSeasonId: string;
   scheduledGameId: string;
 };
 

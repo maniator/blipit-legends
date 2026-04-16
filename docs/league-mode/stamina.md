@@ -301,7 +301,7 @@ This is a schema version bump on the `leagueSeasons` or a new net-new collection
 | Phase                  | Feature                     | Mechanism                                                                                      |
 | ---------------------- | --------------------------- | ---------------------------------------------------------------------------------------------- |
 | **v1 (initial slice)** | Within-game pitcher fatigue | `pitcherPitchCount` + `battersFaced` → `computeFatigueFactor` → degrades pitcher effectiveness |
-| **v1 (initial slice)** | Within-game batter fatigue  | `batterPlateAppearances` → `computeBatterFatigueFactor` → contact/power penalties              |
+| **Future**             | Within-game batter fatigue  | `batterPlateAppearances` → `computeBatterFatigueFactor` → contact/power penalties              |
 | **v1 (initial slice)** | AI starter selection        | Deterministic rotation via game seed hash — no cross-game state                                |
 | **Future**             | Pitcher rest tracking       | `PitcherWorkloadRecord` written per game; short-rest penalty injected at game setup            |
 | **Future**             | Rest-aware AI rotation      | AI selects most-rested SP; fallback to seed-hash tiebreaker                                    |

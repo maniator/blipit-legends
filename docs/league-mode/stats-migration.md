@@ -67,7 +67,7 @@ Thin layout wrapper that renders a two-tab nav above `<Outlet />`:
 - **League tab** → navigates to `/stats/league/:firstLeagueId` (or `/leagues` if no leagues exist yet)
 - Active tab is determined by `useMatch` on the current path prefix
 
-`StatsHubLayout` is lazy-loaded via `React.lazy()` like all other page-level components.
+`StatsHubLayout` is the route-level layout for the `/stats/*` subtree and renders the shared tab chrome above the active stats page.
 
 ### `LeagueStatsPage`
 

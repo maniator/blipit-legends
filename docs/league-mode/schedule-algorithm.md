@@ -328,9 +328,9 @@ The computed seed is passed into `headlessSim` and stored verbatim on the result
 
 ---
 
-## Trade Deadline Game Day _(Future Phase)_
+## Trade Deadline Game Day
 
-> **Note:** Trade deadline logic is a Phase 8 (future) feature. The formula below is kept here for reference but is not implemented in the initial slice. See [trades.md](trades.md).
+> **Note:** In v1, schedule creation **computes and stores** `tradeDeadlineGameDay` on the `LeagueSeasonRecord`. What remains a Phase 8 (future) feature is **trade deadline enforcement** — blocking or validating trades after that day. See [trades.md](trades.md).
 
 The trade deadline game day is computed from the schedule at creation time:
 

@@ -6,15 +6,15 @@
 
 ## The Three Game Modes
 
-Every scheduled game in a league has three possible engagement modes. The user picks a mode via the **GameModeModal** before play begins.
+The **GameModeModal** is shown when a user taps a `ScheduleCard` for a specific game to choose Watch or Skip. Quick-sim (the "⚡ Sim" action on each `ScheduleCard`) bypasses the modal entirely and runs headless sim immediately.
 
-| Mode               | User involvement                                           | Speed      |
-| ------------------ | ---------------------------------------------------------- | ---------- |
-| **Box Score**      | None — headless sim runs instantly                         | < 1 second |
-| **Watch / Manage** | Full interactive game at `/game`                           | Minutes    |
-| **Skip / Forfeit** | Neither team plays; game cancelled with no result recorded | Instant    |
+| Mode               | User involvement                                           | Speed      | Via modal?                |
+| ------------------ | ---------------------------------------------------------- | ---------- | ------------------------- |
+| **Box Score**      | None — headless sim runs instantly                         | < 1 second | Quick-sim only (no modal) |
+| **Watch / Manage** | Full interactive game at `/game`                           | Minutes    | Yes — via GameModeModal   |
+| **Skip / Forfeit** | Neither team plays; game cancelled with no result recorded | Instant    | Yes — via GameModeModal   |
 
-Games can also be advanced in bulk via **Simulate Day**, which runs Box Score mode across multiple games at once.
+Games can also be advanced in bulk via **Simulate Day**, which runs Box Score mode across multiple games at once (no modal).
 
 ---
 
@@ -107,7 +107,7 @@ flowchart TD
 // Existing type in src/storage/types.ts — add leagueContext
 export type LeagueGameContext = {
   leagueId: string;
-  seasonId: string;
+  leagueSeasonId: string;
   scheduledGameId: string;
 };
 
@@ -125,14 +125,14 @@ export type GameLocationState = {
 const locationState = useLocation().state as GameLocationState;
 
 if (locationState?.leagueContext) {
-  const { scheduledGameId } = locationState.leagueContext;
+  const { leagueId, leagueSeasonId, scheduledGameId } = locationState.leagueContext;
   await scheduleStore.completeScheduledGame(scheduledGameId, {
     homeScore: state.score[1],
     awayScore: state.score[0],
     innings: state.inning,
     completedGameId: state.gameInstanceId,
   });
-  navigate(`/leagues/${leagueId}/seasons/${seasonId}/schedule`, { replace: true });
+  navigate(`/leagues/${leagueId}/seasons/${leagueSeasonId}/schedule`, { replace: true });
 } else {
   // existing exhibition post-game behavior
 }
@@ -175,10 +175,9 @@ flowchart TD
     C -->|Stop here| E[Remove flagged games from batch]
     E --> D
     B -->|no| D
-    D --> F[Collect CompletedGameResult array]
-    F --> G[completeScheduledGames batch write]
-    G --> H[advanceGameDay if all current-day games complete]
-    H --> I[NightSummaryModal opens with results]
+    D --> F[Write each CompletedGameResult individually (sequential, best-effort)]
+    F --> G[advanceGameDay if all current-day games complete]
+    G --> H[NightSummaryModal opens with results]
 ```
 
 ### `useBulkSimulate` Hook
