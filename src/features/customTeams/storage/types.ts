@@ -21,8 +21,8 @@ interface TeamPlayerBase {
   /** Stable ID within the team. */
   id: string;
   name: string;
-  position?: string;
-  handedness?: "R" | "L" | "S";
+  position: string;
+  handedness: "R" | "L" | "S";
   isBenchEligible?: boolean;
   isPitcherEligible?: boolean;
   jerseyNumber?: number | null;
@@ -127,8 +127,8 @@ interface PlayerRecordBase {
   /** Zero-based position within the section — used for ordering when assembling the roster. */
   orderIndex: number;
   name: string;
-  position?: string;
-  handedness?: "R" | "L" | "S";
+  position: string;
+  handedness: "R" | "L" | "S";
   isBenchEligible?: boolean;
   isPitcherEligible?: boolean;
   jerseyNumber?: number | null;

@@ -166,6 +166,8 @@ describe("players collection", () => {
       orderIndex: 0,
       name: "Alice",
       role: "batter",
+      position: "C",
+      handedness: "R" as const,
       batting: { contact: 70, power: 60, speed: 50, stamina: 50 },
       createdAt: "2024-01-01T00:00:00.000Z",
 
@@ -189,6 +191,8 @@ describe("players collection", () => {
         orderIndex: 0,
         name: "Alice",
         role: "batter",
+        position: "C",
+        handedness: "R" as const,
         batting: { contact: 70, power: 60, speed: 50, stamina: 50 },
         createdAt: "2024-01-01T00:00:00.000Z",
 
@@ -203,6 +207,8 @@ describe("players collection", () => {
         orderIndex: 1,
         name: "Bob",
         role: "batter",
+        position: "C",
+        handedness: "R" as const,
         batting: { contact: 65, power: 55, speed: 45, stamina: 50 },
         createdAt: "2024-01-01T00:00:00.000Z",
 
@@ -217,6 +223,8 @@ describe("players collection", () => {
         orderIndex: 0,
         name: "Carol",
         role: "batter",
+        position: "C",
+        handedness: "R" as const,
         batting: { contact: 80, power: 70, speed: 60, stamina: 50 },
         createdAt: "2024-01-01T00:00:00.000Z",
 
@@ -240,6 +248,8 @@ describe("players collection", () => {
         orderIndex: 0,
         name: "Lineup Player",
         role: "batter",
+        position: "C",
+        handedness: "R" as const,
         batting: { contact: 70, power: 60, speed: 50, stamina: 50 },
         createdAt: "2024-01-01T00:00:00.000Z",
 
@@ -254,6 +264,8 @@ describe("players collection", () => {
         orderIndex: 0,
         name: "Bench Player",
         role: "batter",
+        position: "C",
+        handedness: "R" as const,
         batting: { contact: 65, power: 55, speed: 45, stamina: 50 },
         createdAt: "2024-01-01T00:00:00.000Z",
 
@@ -268,6 +280,8 @@ describe("players collection", () => {
         orderIndex: 0,
         name: "Pitcher",
         role: "pitcher",
+        position: "P",
+        handedness: "R" as const,
         pitching: { velocity: 70, control: 65, movement: 60, stamina: 60 },
         createdAt: "2024-01-01T00:00:00.000Z",
 
@@ -292,6 +306,8 @@ describe("players collection", () => {
         orderIndex: 0,
         name: "A Player",
         role: "batter",
+        position: "C",
+        handedness: "R" as const,
         batting: { contact: 70, power: 60, speed: 50, stamina: 50 },
         createdAt: "2024-01-01T00:00:00.000Z",
 
@@ -306,6 +322,8 @@ describe("players collection", () => {
         orderIndex: 0,
         name: "B Player",
         role: "batter",
+        position: "C",
+        handedness: "R" as const,
         batting: { contact: 65, power: 55, speed: 45, stamina: 50 },
         createdAt: "2024-01-01T00:00:00.000Z",
 

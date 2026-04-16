@@ -52,6 +52,8 @@ function makePlayerJson(overrides: Partial<TeamPlayer> = {}): string {
           id: "p_src",
           name: "Imported Pitcher",
           role: "pitcher",
+          position: "P",
+          handedness: "R" as const,
           pitching: { velocity: 70, control: 60, movement: 55, stamina: 60 },
           ...(overrides as Partial<TeamPitcherPlayer>),
         }
@@ -59,6 +61,8 @@ function makePlayerJson(overrides: Partial<TeamPlayer> = {}): string {
           id: "p_src",
           name: "Imported Batter",
           role: "batter",
+          position: "C",
+          handedness: "R" as const,
           batting: { contact: 70, power: 60, speed: 55, stamina: 50 },
           ...(overrides as Partial<TeamBatterPlayer>),
         };
@@ -219,6 +223,8 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
       id: "p_nogid",
       name: "No GID Player",
       role: "batter",
+      position: "C",
+      handedness: "R" as const,
       batting: { contact: 60, power: 50, speed: 40, stamina: 50 },
     };
     const playerJson = exportCustomPlayer(playerWithoutGid);
@@ -230,6 +236,8 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
         id: "p_dup",
         name: "No GID Player",
         role: "batter",
+        position: "C",
+        handedness: "R" as const,
         batting: { contact: 60, power: 50, speed: 40, stamina: 50 },
         // same stats, so buildPlayerSig will produce the same fingerprint
       },
@@ -257,6 +265,8 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
       id: "p_confirm",
       name: "Confirm Player",
       role: "batter",
+      position: "C",
+      handedness: "R" as const,
       batting: { contact: 65, power: 45, speed: 55, stamina: 50 },
     };
     const playerJson = exportCustomPlayer(playerWithoutGid);
@@ -267,6 +277,8 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
         id: "p_c2",
         name: "Confirm Player",
         role: "batter",
+        position: "C",
+        handedness: "R" as const,
         batting: { contact: 65, power: 45, speed: 55, stamina: 50 },
       },
     ]);
@@ -317,6 +329,8 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
       id: "p_pitch_import",
       name: "Ace Pitcher",
       role: "pitcher",
+      position: "P",
+      handedness: "R" as const,
       pitching: { velocity: 85, control: 70, movement: 65, stamina: 60 },
     };
     const pitcherJson = exportCustomPlayer(importedPitcher);
@@ -328,6 +342,8 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
       id: "p_pitch_existing",
       name: "Ace Pitcher",
       role: "pitcher",
+      position: "P",
+      handedness: "R" as const,
       pitching: { velocity: 85, control: 70, movement: 65, stamina: 60 },
     };
     const teamWithDuplicate: TeamWithRoster = {
@@ -365,6 +381,8 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
       id: "p_unique",
       name: "Unique Player",
       role: "batter",
+      position: "C",
+      handedness: "R" as const,
       batting: { contact: 55, power: 45, speed: 35, stamina: 50 },
     };
     const playerJson = exportCustomPlayer(playerWithoutGid);

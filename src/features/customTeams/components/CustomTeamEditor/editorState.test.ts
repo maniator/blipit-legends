@@ -48,6 +48,8 @@ describe("initEditorState", () => {
             id: "p1",
             name: "Jake Jones",
             role: "batter" as const,
+            position: "C",
+            handedness: "R" as const,
             batting: { contact: 70, power: 65, speed: 55, stamina: 50 },
           },
         ],
@@ -117,7 +119,7 @@ describe("initEditorState", () => {
       },
       metadata: { archived: false },
     };
-    const state = initEditorState(team);
+    const state = initEditorState(team as unknown as Parameters<typeof initEditorState>[0]);
     expect(state.lineup[0].position).toBe("");
     expect(state.lineup[0].handedness).toBe("R");
   });
@@ -643,6 +645,8 @@ describe("editorReducer — additional cases", () => {
             id: "d1",
             name: "Batter One",
             role: "batter" as const,
+            position: "C",
+            handedness: "R" as const,
             batting: { contact: 70, power: 65, speed: 60, stamina: 50 },
           },
         ],
@@ -651,6 +655,8 @@ describe("editorReducer — additional cases", () => {
             id: "d2",
             name: "Bench Guy",
             role: "batter" as const,
+            position: "C",
+            handedness: "R" as const,
             batting: { contact: 55, power: 50, speed: 55, stamina: 50 },
           },
         ],
@@ -659,6 +665,8 @@ describe("editorReducer — additional cases", () => {
             id: "d3",
             name: "Ace Pitcher",
             role: "pitcher" as const,
+            position: "P",
+            handedness: "R" as const,
             batting: { contact: 30, power: 25, speed: 30, stamina: 50 },
             pitching: { velocity: 90, control: 72, movement: 68, stamina: 60 },
           },
