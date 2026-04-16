@@ -74,6 +74,10 @@ This container guidance is **only for Playwright visual snapshot work**. The **C
 - After any intentional visual change, regenerate snapshots inside `mcr.microsoft.com/playwright:v1.58.2-noble` — use the `e2e-test-runner` agent (`docker run --update-snapshots`) or the `update-visual-snapshots` workflow. **Never run `yarn test:e2e:update-snapshots` on the host OS and commit the result** — local fonts and rendering differ from the container.
 - Do NOT regenerate snapshots for unrelated layout areas.
 
+## Consult `@pm-agent` first when scope is unclear
+
+Route to `@pm-agent` before implementation when a UI change needs cross-feature scoping (route architecture context, gameplay expectation ambiguity, or feature tradeoff/risk framing). Keep `@senior-lead` escalation for technical sign-off on high-risk changes.
+
 ## Escalation to `@senior-lead`
 
 Request a `@senior-lead` review before merging if **any** of the following apply:

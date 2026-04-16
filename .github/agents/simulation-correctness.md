@@ -61,6 +61,10 @@ When investigating a simulation bug, capture all reproducibility context before 
 - Keep tests in `src/context/*.test.ts` files co-located with the module under test.
 - Use `makeState` and `mockRandom` from `src/test/testHelpers.ts` to set up deterministic test scenarios.
 
+## Consult `@pm-agent` first for scope/risk framing
+
+Route to `@pm-agent` before implementation when the fix involves ambiguous rules intent, cross-feature behavior tradeoffs, or broader planning/risk review. Keep `@senior-lead` escalation for technical sign-off on high-risk simulation fixes.
+
 ## Escalation to `@senior-lead`
 
 Request a `@senior-lead` review before merging if **any** of the following apply:

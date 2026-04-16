@@ -387,6 +387,10 @@ sudo chown -hR "$(id -u):$(id -g)" dist/ node_modules/ .yarn/ e2e/tests/ 2>/dev/
 
 **Visual diff failures** — inspect the `-diff.png` and `-received.png` in `test-results/` alongside the committed `-expected.png` baseline. If the diff shows an intentional UI change, regenerate the baseline following the snapshot update flow above.
 
+## Consult `@pm-agent` first for behavior/test-plan ambiguity
+
+Route to `@pm-agent` before implementation when new tests/fixtures depend on unclear gameplay expectations, changing rules semantics, or cross-feature scoping decisions. Keep `@senior-lead` escalation for technical sign-off on high-risk changes.
+
 ## Escalation to `@senior-lead`
 
 Request a `@senior-lead` review before merging if **any** of the following apply:

@@ -101,6 +101,10 @@ If visual snapshot consistency in Copilot sessions is needed, install fonts via 
 | `.github/workflows/update-visual-snapshots.yml` | Regenerate visual snapshot baselines           |
 | `.github/workflows/copilot-setup-steps.yml`     | Copilot agent environment setup (no container) |
 
+## Consult `@pm-agent` first for feature-driven workflow scope
+
+Route to `@pm-agent` before implementation when a workflow change is tied to feature scope, release risk, or test-strategy tradeoffs. Keep `@senior-lead` escalation for technical sign-off on high-risk workflow changes.
+
 ## Escalation to `@senior-lead`
 
 Request a `@senior-lead` review before merging if **any** of the following apply:

@@ -46,6 +46,10 @@ If a refactor touches any RxDB collection schema (`src/storage/db.ts`):
 - For reducer tests, keep layered coverage: handler-level behavior tests + root orchestration coverage.
 - Do not delete or disable existing tests unless they are directly replaced with equivalent tests.
 
+## Consult `@pm-agent` first when scope/risk is unclear
+
+Route to `@pm-agent` before implementation when refactor scope is ambiguous, crosses subsystem boundaries, or needs explicit risk framing. Keep `@senior-lead` escalation for technical sign-off on high-risk refactors.
+
 ## Escalation to `@senior-lead`
 
 Request a `@senior-lead` review before merging if **any** of the following apply:
