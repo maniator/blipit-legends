@@ -6,6 +6,59 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 
 ## Agents
 
+### `pm-agent`
+
+**When to use:** Any time a task starts with planning, scoping, risk review, baseball-rule questions, or PR readiness — especially for gameplay engine, RxDB/saves, or rules-heavy work. This agent should be your **first stop** before invoking a specialist execution agent.
+
+**Auto-routing triggers (no explicit `@pm-agent` needed):**
+- Planning or scoping a feature that touches gameplay, saves, or routes.
+- Questions about how a baseball rule works or how the simulator implements it.
+- "What files change for X?", "What are the risks of Y?", "Is Z safe to do?"
+- PR description drafts for gameplay engine, rules, or persistence changes.
+- Any request mentioning: inning, pitch, batter, runner, steal, bunt, walk, strikeout, home run, extra innings, tiebreak runner, IBB, manager mode, defensive shift, pinch hitter, RxDB schema migration, save compatibility, PRNG replay, or visual snapshot impact.
+
+**Key guardrails:**
+- Always cites file + line range for simulator claims; always cites MLB rulebook section for official rules.
+- Explicitly labels every baseball answer as `[Official MLB]` vs `[Ballgame]`.
+- Never suggests code edits unless explicitly requested.
+- Flags module cycle order, PRNG drift, schema migration, and snapshot impact on every applicable plan.
+- Hands off to a specialist agent (see routing table in `pm-agent.md`) after producing a plan.
+- Routes high-value changes to `@senior-lead` for technical review before implementation begins.
+
+**Supporting docs:**
+- Spec + system prompt: `.github/agents/pm-agent.md`
+- Knowledge map: `docs/agent/pm-agent-knowledge-map.md`
+- Baseball rules delta: `docs/agent/baseball-rules-delta.md`
+- Eval suite: `docs/agent/pm-agent-eval-suite.md`
+- Rollout playbook: `docs/agent/pm-agent-rollout.md`
+
+---
+
+### `senior-lead`
+
+**When to use:** Any high-value change that requires cross-cutting technical review before implementation — including RxDB schema changes, PRNG-adjacent simulation changes, CI security changes, broad refactors, or any change flagged P0/P1 by `@pm-agent`.
+
+**The Senior Lead is the final engineering sign-off layer.** All other agents execute; the Senior Lead reviews and approves/blocks.
+
+**Mandatory review triggers (any one is sufficient):**
+- Any RxDB schema `properties`, `required`, or `indexes` change
+- Any change to simulation PRNG call order
+- Any change to save/export format (FNV-1a signature, event `idx` structure)
+- Any CI workflow permission change, container image bump, or new secret usage
+- Any refactor touching ≥ 5 files in `src/features/gameplay/context/`
+- Any change to `copilot-setup-steps.yml`
+- Any change flagged P0 or P1 by `@pm-agent`
+
+**Key guardrails:**
+- Issues a structured verdict: **APPROVE**, **REQUEST_CHANGES**, or **BLOCK**
+- Holds technical veto on BLOCK verdicts — `@pm-agent` cannot override a BLOCK
+- Evaluates all five review categories: product risk, technical risk, determinism/regression risk, data/security risk, rollback readiness
+- Does not replace domain agents — delegates implementation to the appropriate specialist after review
+
+**Spec:** `.github/agents/senior-lead.md`
+
+---
+
 ### `safe-refactor`
 
 **When to use:** Any code reorganization, extraction, rename, or modularization task where observable behavior must not change.
@@ -105,6 +158,22 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 **Critical — Node 24 inside the container:**
 
 > The Playwright container does not ship Node 24. Every `docker run` command must install it first: `npm install -g n && n 24 && hash -r` before `corepack enable && yarn install`.
+
+---
+
+## Senior Lead collaboration matrix
+
+Use this table to determine when `@senior-lead` review is required and what evidence to bring.
+
+| Agent | When `@senior-lead` review is required | Evidence to provide | Expected verdict |
+| --- | --- | --- | --- |
+| `@safe-refactor` | Refactor spans ≥ 5 gameplay context files OR touches reducer cycle order | Diff summary, test coverage before/after, seed replay confirmation | Risk class + APPROVE / REQUEST_CHANGES |
+| `@simulation-correctness` | Fix alters PRNG call order OR touches `advanceRunners`, `gameOver`, or `hitBall` | Seed + event index, before/after RNG call trace, regression test | Determinism sign-off + technical verdict |
+| `@rxdb-save-integrity` | Any schema version bump OR save/export format change | Schema diff, migration strategy code, upgrade-path test result | Data integrity sign-off + go/no-go |
+| `@ci-workflow` | Workflow permission change, container image bump, or new secret usage | Workflow diff, permission scope, artifact impact summary | Security sign-off + APPROVE / BLOCK |
+| `@ui-visual-snapshot` | Layout changes affecting all 6 Playwright projects simultaneously | Before/after screenshots, responsive-smoke test results | Risk assessment (hard-block only if mobile CTA or accessibility is broken) |
+| `@e2e-test-runner` | Fixture format changes OR removal/skip of the determinism project test | Fixture diff, test coverage impact, project list | APPROVE / REQUEST_CHANGES |
+| `@playwright-prod` | Production QA reveals a regression introduced by a recent merge | QA report, reproduction steps, affected route or component | Root cause assessment + fix recommendation |
 
 ---
 

@@ -4,6 +4,184 @@ Copy-paste prompts for common tasks in `maniator/blipit-legends`. Prepend `@safe
 
 ---
 
+## PM Agent
+
+### Feature planning — new gameplay mechanic
+
+```
+@pm-agent
+
+We want to add a "stolen base of home" mechanic. The runner on 3rd can attempt to steal home.
+
+Produce a full implementation plan:
+- Which files change and in what order (respect the module cycle order).
+- PRNG call-order impact — does this add a random() call inside detectDecision?
+- Save/replay compatibility risk.
+- Official MLB rule vs current Ballgame behavior delta.
+- Validation checklist.
+- Which execution agent should carry out the implementation.
+```
+
+### Baseball rule adjudication
+
+```
+@pm-agent
+
+Official baseball rule question: in the bottom of the 9th, bases loaded, 1 out, batter hits a
+sacrifice fly. The runner on 3rd scores to put the home team ahead. Does the game end immediately
+(walk-off), or do the remaining outs still need to be recorded?
+
+Answer for both official MLB and Ballgame's implementation, with file citations.
+```
+
+### Risk review before opening a PR
+
+```
+@pm-agent
+
+I'm about to open a PR that changes the IBB pitch-count model from 1 pitch event to 4 pitch
+events (matching MLB rule 5.05(b)(2)). Give me a complete risk review:
+- PRNG replay impact
+- Fatigue model impact
+- Save compatibility
+- Files that change
+- Tests required
+- Which eval questions from the pm-agent-eval-suite.md would be affected
+```
+
+### Migration checklist — RxDB schema change
+
+```
+@pm-agent
+
+We want to add a `notes: string` optional field to `SaveDoc`. Produce the complete
+migration checklist before I hand off to @rxdb-save-integrity.
+```
+
+### PR description draft
+
+```
+@pm-agent
+
+Draft a PR description for a change that: (1) adds a `stolenBasesAttempted` counter to
+State in gameStateTypes.ts, (2) increments it in stealAttempt.ts on both success and
+caught-stealing paths, and (3) bumps the saves schema version with a migration that
+defaults the counter to 0.
+
+Follow the repo PR description format and include a risk summary.
+```
+
+---
+
+## Senior Lead
+
+### Request a technical review for a high-value change
+
+```
+@senior-lead
+
+SENIOR LEAD REVIEW REQUEST
+Change objective: Add a `pitcherEra` field to SaveDoc so career stats can display ERA per saved game.
+Business priority: P2
+Acceptance criteria: ERA is persisted with each save; existing saves load without error; export/import unchanged.
+Rollout window: Next sprint
+Risk flags already identified:
+- RxDB schema change required (SaveDoc.pitcherEra: number)
+- Migration needed (default 0 for existing docs)
+- FNV-1a export signature unaffected (field added to header, not event log)
+Execution agent: @rxdb-save-integrity
+```
+
+### Domain agent escalation to Senior Lead
+
+```
+@senior-lead
+
+I am @rxdb-save-integrity. I have completed the following work and need your sign-off before merge:
+
+Change: Bumped savesSchema.version from 3 → 4, added pitcherEra: number field, added
+migrationStrategies v4 entry (oldDoc.pitcherEra ?? 0).
+
+Evidence:
+- Schema diff: src/storage/db.ts lines 88–102 (version bump + field addition)
+- Migration: src/storage/db.ts lines 140–148 (never throws, defaults 0)
+- Upgrade-path test: src/storage/db.test.ts "schema migration: v3 → v4" (passes)
+- save-load.spec.ts: all 12 assertions pass
+- import.spec.ts: all 8 assertions pass, FNV-1a signature verifies correctly
+
+Please issue your technical verdict.
+```
+
+### PM ↔ Senior Lead confirmation flow — full example
+
+```
+Step 1: @pm-agent sends review request
+
+@senior-lead
+
+SENIOR LEAD REVIEW REQUEST
+Change objective: Rewrite advanceRunners.ts to support extra-base hit runner advancement.
+Business priority: P1
+Acceptance criteria: Runners advance correctly on doubles and triples; existing seed replays unchanged; all E2E pass.
+Rollout window: This release
+Risk flags already identified:
+- PRNG call order may change if new random() calls are added
+- advanceRunners is a high-risk area (historical impossible-state bugs)
+- Regression tests needed for doubles/triples runner advancement
+Execution agent: @simulation-correctness
+
+---
+
+Step 2: @senior-lead responds
+
+SENIOR LEAD VERDICT
+Verdict: REQUEST_CHANGES
+Risk class: High
+Go/no-go recommendation: Go with conditions
+
+Technical summary:
+advanceRunners.ts is a pure function called on every scoring event; any new random() call here
+will shift the PRNG sequence for every existing seed. The change is feasible but requires a seed
+replay audit before and after. The module cycle order is safe (advanceRunners imports from nothing
+later in the chain).
+
+Blocking issues:
+- Must provide before/after seed replay trace showing identical call counts for non-affected paths.
+- Must add seed-anchored regression tests for at least 3 double/triple scenarios.
+
+Required follow-ups:
+- Update docs/agent/baseball-rules-delta.md with the new advancement model.
+
+Recommended execution agent: @simulation-correctness
+
+---
+
+Step 3: @pm-agent confirms
+
+PM DISPOSITION
+Disposition: SHIP — conditions met; @simulation-correctness to proceed with seed audit requirement.
+```
+
+### Direct review — security-impacting CI change
+
+```
+@senior-lead
+
+SENIOR LEAD REVIEW REQUEST
+Change objective: Bump the Playwright container image in playwright-e2e.yml from v1.58.2-noble to v1.60.0-noble.
+Business priority: P2
+Acceptance criteria: All E2E tests pass on the new image; visual snapshot baselines regenerated.
+Rollout window: Before next release
+Risk flags already identified:
+- Container image change affects all snapshot baselines
+- Must regenerate all visual snapshots after bump
+Execution agent: @ci-workflow + @e2e-test-runner
+
+Please provide a security and supply-chain sign-off for this image bump.
+```
+
+---
+
 ## Safe refactor
 
 ### Behavior-preserving reducer refactor
