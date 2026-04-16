@@ -24,6 +24,8 @@ export const buntAttempt = (
   // Rolls >= 80 map to the "foul bunt" range. With 0 or 1 strikes the existing
   // pop-out path (roll >= 80) fires unchanged below; this check is only reached
   // when state.strikes === 2, so non-2-strike paths are completely unaffected.
+  // Note: "Foul tip on the bunt" is the log phrasing from the Phase 1 spec;
+  // mechanically this represents any foul-territory bunt contact with two strikes.
   if (state.strikes === 2 && roll >= 80) {
     log("Foul tip on the bunt — strike three!");
     return playerOut(

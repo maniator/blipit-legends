@@ -190,7 +190,11 @@ describe("batting stats — seed 30nl0i regression", () => {
         // K rate should be plausible: strikeouts are not inflated beyond all at-bats
         expect(k).toBeLessThanOrEqual(ab);
         // Sanity: strikeout rate per PA should not exceed 85% for batters with >= 5 PA.
-        // (A batter with < 5 PA can legitimately K in all appearances in a single game.)
+        // (A batter with < 5 PA can legitimately K in all appearances in a single game;
+        // the rate only becomes meaningful with an adequate sample. The 85% cap still
+        // guards against the class of bugs where K rates were unrealistically inflated
+        // across the full lineup — real MLB leaders are around 35–40% for a season,
+        // but individual single-game rates can run high in short samples.)
         if (pa >= 5) {
           expect(k / pa).toBeLessThanOrEqual(0.85);
         }
