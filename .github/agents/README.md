@@ -36,6 +36,22 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 
 ---
 
+### `baseball-manager`
+
+**When to use:** Reviewing completed game-run logs to identify what should be tuned for more realistic baseball outcomes. Also use after any gameplay-probability change to validate the result feels like real baseball.
+
+**Key guardrails:**
+
+- Grounds recommendations in log evidence, not assumptions
+- Separates must-fix realism issues from nice-to-have tuning
+- Prefers targeted parameter/logic adjustments over broad rewrites
+- Requires explicit expected effects, tradeoffs, and validation steps
+- Routes any code-change recommendation to `@pm-agent` first for risk review and implementation planning
+
+**Works with `@pm-agent`:** These two agents form the planning ↔ validation loop for gameplay changes. `@pm-agent` plans and scopes; `@baseball-manager` validates realism before and after. See the collaboration section in each agent's spec file for the full handoff protocol.
+
+---
+
 ### `safe-refactor`
 
 **When to use:** Any code reorganization, extraction, rename, or modularization task where observable behavior must not change.

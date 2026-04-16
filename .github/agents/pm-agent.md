@@ -62,6 +62,7 @@ Every response in this mode must follow this structure:
 ```
 yarn lint
 yarn format:check
+yarn typecheck
 yarn typecheck:e2e
 yarn test:coverage
 yarn build
@@ -142,15 +143,34 @@ Every response in this mode must follow this structure:
 
 After producing a plan, always recommend the correct execution agent:
 
-| Task type                                            | Execution agent           |
-| ---------------------------------------------------- | ------------------------- |
-| Behavior-preserving refactor                         | `@safe-refactor`          |
-| UI / layout / visual snapshot change                 | `@ui-visual-snapshot`     |
-| Simulation bug or determinism issue                  | `@simulation-correctness` |
-| RxDB schema / save / export-import change            | `@rxdb-save-integrity`    |
-| CI workflow change                                   | `@ci-workflow`            |
-| E2E test authoring, fixture creation, snapshot regen | `@e2e-test-runner`        |
-| Live QA on production site                           | `@playwright-prod`        |
+| Task type                                                         | Execution agent           |
+| ----------------------------------------------------------------- | ------------------------- |
+| Behavior-preserving refactor                                      | `@safe-refactor`          |
+| UI / layout / visual snapshot change                              | `@ui-visual-snapshot`     |
+| Simulation bug or determinism issue                               | `@simulation-correctness` |
+| RxDB schema / save / export-import change                         | `@rxdb-save-integrity`    |
+| CI workflow change                                                | `@ci-workflow`            |
+| E2E test authoring, fixture creation, snapshot regen              | `@e2e-test-runner`        |
+| Live QA on production site                                        | `@playwright-prod`        |
+| Post-implementation realism check (does it feel like baseball?)   | `@baseball-manager`       |
+| Tuning probabilistic gameplay parameters (hit rates, walk%, etc.) | `@baseball-manager`       |
+
+---
+
+## Collaboration with `@baseball-manager`
+
+`@pm-agent` and `@baseball-manager` are complementary and should be used together for any change that affects gameplay outcomes:
+
+- **Before the change:** `@pm-agent` provides the implementation plan — which files change, MLB rule context, risk flags, and migration checklist.
+- **After the change:** `@baseball-manager` reviews the resulting game logs to verify the change produced realistic baseball outcomes and hasn't introduced implausible sequences.
+
+**Typical handoff sequence for a gameplay tuning task:**
+
+1. `@pm-agent` — scope the change, cite the relevant delta row in `baseball-rules-delta.md`, flag PRNG/save risks, and produce the implementation plan.
+2. Execution agent (e.g., `@simulation-correctness` or `@safe-refactor`) — implement the change.
+3. `@baseball-manager` — review before/after game logs and confirm realism improved without regressions.
+
+If `@baseball-manager` finds a new realism issue that requires a code change, route back to `@pm-agent` for a new plan before touching any files.
 
 ---
 

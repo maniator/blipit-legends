@@ -33,8 +33,8 @@ We want to add a `stolenBasesAttempted` counter to `State`. What modules need to
 **Known-answer criteria:**
 
 - Identifies `gameStateTypes.ts` (State shape) as the primary change.
-- Identifies `stealAttempt.ts` as the increment site.
-- Flags `playerOut.ts` (caught-stealing path) as also needing the increment.
+- Identifies `stealAttempt.ts` as the increment site (both success and caught-stealing paths are handled there before `playerOut` is called).
+- Does NOT require changes to `playerOut.ts` for the counter — steal-specific tracking belongs in `stealAttempt.ts`, not the generic out handler.
 - Flags RxDB schema versioning requirement: bump `version`, add `migrationStrategies` entry.
 - Flags `docs/rxdb-persistence.md` for the schema-change checklist.
 - Lists required tests: unit test for increment in both success and caught-stealing, upgrade-path test for old saves.
@@ -69,7 +69,7 @@ A change is being made to the `GameControls` component layout. What is the full 
 - Cites `docs/architecture.md` for `GameControls` as a lazy-loaded component.
 - Lists all 6+ Playwright viewport projects for snapshot regeneration.
 - Flags that regeneration must happen inside `mcr.microsoft.com/playwright:v1.58.2-noble`.
-- Lists validation commands: `yarn lint`, `yarn test`, `yarn build`, `yarn test:e2e`.
+- Lists validation commands: `yarn lint`, `yarn format:check`, `yarn typecheck`, `yarn test`, `yarn build`, `yarn test:e2e`.
 - Recommends `@ui-visual-snapshot` agent for execution.
 
 ---
@@ -206,7 +206,7 @@ Runner on 3rd, 1 out, deep fly ball to left field. Runner tags and scores. How i
 **Known-answer criteria:**
 
 - **Official MLB:** Sacrifice fly — PA counts, AB does NOT count (Rule 9.08(d)); batter earns 1 RBI.
-- **Ballgame:** `handleFlyOut` → `playerOut(…, true, { isSacFly: true, rbi: 1 })`. `isSacFly: true` is logged in `outLog`. The batting average impact depends on whether AB is excluded when computing BA — agent should flag this as verifiable in the stats computation code.
+- **Ballgame:** `handleFlyOut` → `playerOut(…, true, { isSacFly: true, rbi: 1 })`. `isSacFly: true` is logged in `outLog`. Sac flies are **excluded from AB** when computing BA: `computeBattingStatsFromLogs` skips at-bats for entries where `isSacFly` is true, so the batter's batting average is **not affected** by a sac fly.
 - Citation: `hitBall.ts:204-210`; `playerOut.ts:50-58`.
 
 ---
