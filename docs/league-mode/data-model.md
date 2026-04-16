@@ -678,7 +678,8 @@ erDiagram
         string status
         number divisionCount
         string defaultSeasonPreset
-        number defaultPlayoffSeriesLength
+        number defaultPlayoffTeamCount
+        string defaultPlayoffFormat
     }
 
     LeagueSeasonRecord {
