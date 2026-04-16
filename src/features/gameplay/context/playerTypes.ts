@@ -16,7 +16,7 @@ export type PlayerCustomization = {
   controlMod?: ModPreset;
   velocityMod?: ModPreset;
   movementMod?: ModPreset;
-  /** Shared stamina modifier (derived from batting/pitching stamina). */
+  /** Shared stamina modifier (from batting stamina for non-pitchers; pitching stamina when present). */
   staminaMod?: ModPreset;
 };
 

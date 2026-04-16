@@ -29,6 +29,9 @@ import type { PlayerCustomization, ResolvedPlayerMods } from "./playerTypes";
  *   Planned for a future update when batter-vs-pitcher matchup splits are added.
  * - `pitchingRole` ("SP" | "RP" | "SP/RP"): stored in TeamWithRoster, drives AI substitution logic only;
  *   does not yet affect pitch-by-pitch simulation.
+ * - `staminaMod` source is role-aware in custom-team mapping:
+ *   - players without a `pitching` block use `batting.stamina`
+ *   - players with a `pitching` block use `pitching.stamina`
  * - Batter stamina currently feeds only in-game fatigue effects and is intentionally
  *   excluded from lineup/roster stat-cap enforcement in v1 to avoid broad rebalance.
  *
