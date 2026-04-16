@@ -10,7 +10,9 @@
 ## Existing route compatibility
 
 - Keep exhibition and current game routes intact
-- League game launches must pass league context through location state
+- League game launches must use a reload-safe league context handoff
+  - Prefer URL-addressable identifiers for league/season/scheduled-game context
+  - If `location.state` is used as temporary navigation handoff, copy required league context into persistent state on first load before `/game` clears router state
 - Existing stats routes remain unchanged in near-term scope
 
 ## Future route additions (deferred)

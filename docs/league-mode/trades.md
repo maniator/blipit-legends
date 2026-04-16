@@ -19,5 +19,5 @@
 ## Data integrity rules
 
 - Trade history must be queryable by league season and time order
-- Execution result should be explicit success/failure shape (not ambiguous `void | error`)
+- Execution result should be explicit success/failure shape (not ambiguous `void | Error`)
 - Partial-write recovery behavior must be defined before implementation

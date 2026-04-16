@@ -21,7 +21,8 @@
 
 ## Migration posture
 
-Initial league-mode release may use an epoch reset if required.
+Initial league-mode release may use an epoch reset if required, but in this repo that means deleting the entire local `ballgame` IndexedDB, not just league-mode records.
+If used, this is a full local wipe for users, including saves, custom teams, stats, and other persisted local data, and should ship only with explicit intent and user-impact communication.
 Any post-launch schema evolution must use version bumps and migration strategies per [`docs/rxdb-persistence.md`](../rxdb-persistence.md).
 
 ## Indexing expectations

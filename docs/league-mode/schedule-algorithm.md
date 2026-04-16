@@ -31,8 +31,13 @@ Given identical inputs, output must be identical.
 ## Seed derivation for game simulation
 
 - Do not use raw `${leagueSeasonId}:${scheduledGameId}` directly with `reinitSeed`
-- Derive a deterministic base-36-safe seed string first
-- Use the same derivation in all simulation entry points
+- Canonical derivation algorithm:
+  1. Build the exact stable input string `${leagueSeasonId}:${scheduledGameId}`
+  2. Hash that input with `fnv1a`
+  3. Parse the hex hash as an unsigned integer (`parseInt(hash, 16) >>> 0`)
+  4. Convert that integer to lowercase base-36 (`value.toString(36)`)
+- The shared helper for this contract is `deriveScheduledGameSeed(leagueSeasonId, scheduledGameId)`
+- All simulation entry points must call this helper and must not reimplement hashing, separators, or encoding inline
 
 ## Validation targets
 

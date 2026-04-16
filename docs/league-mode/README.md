@@ -1,6 +1,6 @@
 # League Mode — Working Design (Rewrite)
 
-> Status: planning only. This is a rewritten and simplified replacement for PR #217's draft docs.
+> Status: planning only. This is a rewritten and simplified replacement for earlier draft docs.
 
 ## Scope split
 
