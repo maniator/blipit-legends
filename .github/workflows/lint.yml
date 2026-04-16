@@ -18,6 +18,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Pull requests need full history for the empty-commit check below;
+          # pushes only need a shallow checkout.
+          fetch-depth: ${{ github.event_name == 'pull_request' && 0 || 1 }}
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -45,3 +49,21 @@ jobs:
 
       - name: Typecheck E2E tests
         run: yarn typecheck:e2e
+
+      - name: Check for empty commits
+        if: github.event_name == 'pull_request'
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          FOUND=""
+          for sha in $(git log "${BASE_SHA}..HEAD" --no-merges --format="%H"); do
+            if [ -z "$(git diff-tree --no-commit-id -r "$sha" 2>/dev/null)" ]; then
+              msg=$(git log -1 --pretty=format:"%s" "$sha")
+              FOUND="${FOUND}  ${sha:0:12} $msg\n"
+            fi
+          done
+          if [ -n "$FOUND" ]; then
+            echo "❌ Empty commits found (no file changes):" >&2
+            printf "%b" "$FOUND" >&2
+            exit 1
+          fi
+          echo "✓ No empty commits."
