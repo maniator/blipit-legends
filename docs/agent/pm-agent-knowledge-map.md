@@ -44,7 +44,7 @@ These files are the ground truth for simulator behavior. The agent must cite lin
 | `src/features/gameplay/context/stealAttempt.ts` | Steal resolution — success or caught-stealing per `successPct` |
 | `src/features/gameplay/context/strategy.ts` | Strategy modifier table (`stratMod`) scaling all batting outcomes |
 | `src/features/gameplay/context/decisionTypes.ts` | Exhaustive union of all manager-mode decision types |
-| `src/features/gameplay/context/pitchSimulation.ts` | Batted-ball type resolution, fatigue factor (`computeFatigueFactor`) |
+| `src/features/gameplay/context/pitchSimulation/index.ts` | Batted-ball type resolution, fatigue factor (`computeFatigueFactor`) |
 | `src/features/help/components/HelpContent/index.tsx` | In-app rules text — the game's own user-facing rulebook |
 
 ### A3. Agent and rollout docs

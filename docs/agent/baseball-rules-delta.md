@@ -31,7 +31,7 @@ The PM Agent must consult this document for every baseball-rule question. Respon
 |---|---|---|---|---|
 | Strike count limit | 3 strikes = strikeout | `newStrikes === 3` in `playerStrike` records the K | ✅ Matches MLB | `playerActions.ts:33` |
 | Ball count limit | 4 balls = walk | `newBalls === 4` in `playerBall` triggers `hitBall(Hit.Walk, …)` | ✅ Matches MLB | `playerActions.ts:82-84` |
-| Foul ball with 2 strikes | Does not advance to third strike (except bunt) | `playerStrike` is only called with `foul=true` by the pitch-resolution pipeline when `strikes < 2`; the pipeline guards the foul-can't-K rule before calling into `playerActions` | ✅ Matches MLB | `playerActions.ts:52-58`; `pitchSimulation.ts` |
+| Foul ball with 2 strikes | Does not advance to third strike (except bunt) | `playerStrike` is only called with `foul=true` by the pitch-resolution pipeline when `strikes < 2`; the pipeline guards the foul-can't-K rule before calling into `playerActions` | ✅ Matches MLB | `playerActions.ts:52-58`; `pitchResolutionPipeline.ts` |
 | Count as manager-mode hint | N/A (no manager mode in real baseball) | `count30` and `count02` are offered as `DecisionType` hints to guide the manager | ⚠️ Delta (sim-only feature) | `decisionTypes.ts:6-7` |
 
 ### Walk (base on balls)
@@ -170,7 +170,7 @@ Real baseball resolves each batted ball with full fielder positioning, reaction 
 |---|---|---|---|---|
 | Pitch count tracking | Official statistic; no mandatory limit | `pitcherPitchCount[team]` incremented every pitch event including IBB (single event), excluding steal attempts | ✅ Matches MLB spirit | `playerOut.ts:16-29` |
 | Batters faced tracking | Official statistic | `pitcherBattersFaced[team]` incremented when batter's plate appearance is complete (`batterCompleted=true`) | ✅ Matches MLB spirit | `playerOut.ts:42-47` |
-| Fatigue effect | Real baseball: manager discretion for pull | Fatigue factor computed from pitch count and batters faced; reduces effective `controlMod` (more wild pitches) | ⚠️ Delta (no automatic pull) | `playerActions.ts:174-183`; `pitchSimulation.ts computeFatigueFactor` |
+| Fatigue effect | Real baseball: manager discretion for pull | Fatigue factor computed from pitch count and batters faced; reduces effective `controlMod` (more wild pitches) | ⚠️ Delta (no automatic pull) | `playerActions.ts:174-183`; `pitchResolutionPipeline.ts` |
 | Pitcher substitution | Manager pulls pitcher; reliever enters | Managed via `activePitcherIdx`; auto-switch logic and/or Manager Mode decision (not yet fully exposed as a manager decision type) | ⚠️ Delta (partial) | `gameStateTypes.ts activePitcherIdx` |
 
 ---

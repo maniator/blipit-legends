@@ -280,7 +280,7 @@ We want to add a `/stats` route for in-game player stats. What is the complete p
 
 | Trigger | Action |
 |---|---|
-| Agent prompt (`pm-agent.md`) updated | Re-run full eval suite; score all 11 questions |
+| Agent prompt (`pm-agent.md`) updated | Re-run full eval suite; score all 17 questions |
 | Gameplay engine file changed | Re-run Category 2 (BA-*) and any MX questions that touch the changed file |
 | `baseball-rules-delta.md` updated | Re-run all BA and MX questions that reference the changed rows |
 | New manager-mode decision type shipped | Add a new BA question for the new decision type |
