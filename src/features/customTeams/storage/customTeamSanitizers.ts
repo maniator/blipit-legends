@@ -32,6 +32,25 @@ function requireHandedness(value: unknown, fieldPath: string): "R" | "L" | "S" {
   return value;
 }
 
+function sanitizeOptionalBoolean(value: unknown, fieldPath: string): boolean | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "boolean") {
+    throw new Error(`${fieldPath} must be a boolean`);
+  }
+  return value;
+}
+
+function sanitizeOptionalJerseyNumber(
+  value: unknown,
+  fieldPath: string,
+): number | null | undefined {
+  if (value === undefined || value === null) return value;
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(`${fieldPath} must be a finite number or null`);
+  }
+  return value;
+}
+
 /**
  * Sanitizes an abbreviation: trims, uppercases, and enforces 2–3 characters.
  * Throws if the result is outside that range so stored docs are always valid.
@@ -157,9 +176,18 @@ export function sanitizePlayer(
     name,
     position,
     handedness,
-    isBenchEligible: player.isBenchEligible,
-    isPitcherEligible: player.isPitcherEligible,
-    jerseyNumber: player.jerseyNumber,
+    isBenchEligible: sanitizeOptionalBoolean(
+      player.isBenchEligible,
+      `roster ${section}[${index}].isBenchEligible`,
+    ),
+    isPitcherEligible: sanitizeOptionalBoolean(
+      player.isPitcherEligible,
+      `roster ${section}[${index}].isPitcherEligible`,
+    ),
+    jerseyNumber: sanitizeOptionalJerseyNumber(
+      player.jerseyNumber,
+      `roster ${section}[${index}].jerseyNumber`,
+    ),
     fingerprint: player.fingerprint,
     sig: player.sig,
   };

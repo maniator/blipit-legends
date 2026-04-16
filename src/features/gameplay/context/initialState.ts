@@ -76,7 +76,7 @@ export const createFreshGameState = (
 /**
  * Ensures every entry in a resolved-mods map has stamina fields present.
  * Saves written before fatigue fields were added to `ResolvedPlayerMods` may
- * lack one or both keys; without backfill the fatigue model could receive
+ * lack this field; without backfill the fatigue model could receive
  * `undefined` and produce invalid math.
  */
 const backfillTeamMods = (

@@ -292,6 +292,36 @@ describe("sanitizePlayer", () => {
       "roster pitchers[2].pitching.stamina must be a finite number",
     );
   });
+
+  it("throws when isBenchEligible is not a boolean", () => {
+    const player = {
+      ...makePlayer(),
+      isBenchEligible: "yes",
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(player, { index: 0, section: "bench" })).toThrow(
+      "roster bench[0].isBenchEligible must be a boolean",
+    );
+  });
+
+  it("throws when isPitcherEligible is not a boolean", () => {
+    const player = {
+      ...makePlayer(),
+      isPitcherEligible: 1,
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(player, { index: 0, section: "lineup" })).toThrow(
+      "roster lineup[0].isPitcherEligible must be a boolean",
+    );
+  });
+
+  it("throws when jerseyNumber is not finite number or null", () => {
+    const player = {
+      ...makePlayer(),
+      jerseyNumber: "12",
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(player, { index: 0, section: "lineup" })).toThrow(
+      "roster lineup[0].jerseyNumber must be a finite number or null",
+    );
+  });
 });
 
 describe("buildRoster", () => {
