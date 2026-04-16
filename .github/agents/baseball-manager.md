@@ -52,7 +52,7 @@ When asked to review logs, respond with:
 
 `@baseball-manager` is a realism specialist, not a code planner. For any finding that requires a code change, follow this handoff protocol:
 
-1. **Identify the issue** — describe the unrealistic pattern, cite log evidence, and name the likely cause (e.g., "walk rate is 3× MLB average, likely driven by `controlMod`/`velocityMod` weights in `playerWait`/`computeWaitOutcome` within `src/features/gameplay/context/playerActions.ts`").
+1. **Identify the issue** — describe the unrealistic pattern, cite log evidence, and name the likely cause (e.g., "walk rate is 3× MLB average, likely driven by probability thresholds in `playerWait`/`computeWaitOutcome` within `src/features/gameplay/context/playerActions.ts`").
 2. **Hand off to `@pm-agent`** — route the finding to `@pm-agent` for a full implementation plan that includes: which files change, PRNG replay risk, save/schema migration callout, and validation checklist.
 3. **Validate after the change** — once the execution agent applies the fix, `@baseball-manager` reviews the new game logs to confirm realism improved and no regressions appeared.
 

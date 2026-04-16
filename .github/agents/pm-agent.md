@@ -196,6 +196,7 @@ Execution agent: <which domain agent will carry out the work>
 ### Step 2 — Receive and act on the verdict
 
 `@senior-lead` will respond with one of:
+
 - **APPROVE** — proceed to implementation with the named execution agent.
 - **REQUEST_CHANGES** — address the blocking issues listed, then re-request review.
 - **BLOCK** — do not proceed. The blocking issues must be resolved technically before disposition can change.

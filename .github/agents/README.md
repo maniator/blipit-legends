@@ -44,6 +44,7 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 **The Senior Lead is the final engineering sign-off layer.** All other agents execute; the Senior Lead reviews and approves/blocks.
 
 **Mandatory review triggers (any one is sufficient):**
+
 - Any RxDB schema `properties`, `required`, or `indexes` change
 - Any change to simulation PRNG call order
 - Any change to save/export format (FNV-1a signature, event `idx` structure)
@@ -53,6 +54,7 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 - Any change flagged P0 or P1 by `@pm-agent`
 
 **Key guardrails:**
+
 - Issues a structured verdict: **APPROVE**, **REQUEST_CHANGES**, or **BLOCK**
 - Holds technical veto on BLOCK verdicts — `@pm-agent` cannot override a BLOCK
 - Evaluates all five review categories: product risk, technical risk, determinism/regression risk, data/security risk, rollback readiness
@@ -184,15 +186,15 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 
 Use this table to determine when `@senior-lead` review is required and what evidence to bring.
 
-| Agent | When `@senior-lead` review is required | Evidence to provide | Expected verdict |
-| --- | --- | --- | --- |
-| `@safe-refactor` | Refactor spans ≥ 5 gameplay context files OR touches reducer cycle order | Diff summary, test coverage before/after, seed replay confirmation | Risk class + APPROVE / REQUEST_CHANGES |
-| `@simulation-correctness` | Fix alters PRNG call order OR touches `advanceRunners`, `gameOver`, or `hitBall` | Seed + event index, before/after RNG call trace, regression test | Determinism sign-off + technical verdict |
-| `@rxdb-save-integrity` | Any schema version bump OR save/export format change | Schema diff, migration strategy code, upgrade-path test result | Data integrity sign-off + go/no-go |
-| `@ci-workflow` | Workflow permission change, container image bump, or new secret usage | Workflow diff, permission scope, artifact impact summary | Security sign-off + APPROVE / BLOCK |
-| `@ui-visual-snapshot` | Layout changes affecting all 6 viewport/device Playwright projects simultaneously | Before/after screenshots, responsive-smoke test results | Risk assessment (hard-block only if mobile CTA or accessibility is broken) |
-| `@e2e-test-runner` | Fixture format changes OR removal/skip of the determinism project test | Fixture diff, test coverage impact, project list | APPROVE / REQUEST_CHANGES |
-| `@playwright-prod` | Production QA reveals a regression introduced by a recent merge | QA report, reproduction steps, affected route or component | Root cause assessment + fix recommendation |
+| Agent                     | When `@senior-lead` review is required                                            | Evidence to provide                                                | Expected verdict                                                           |
+| ------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| `@safe-refactor`          | Refactor spans ≥ 5 gameplay context files OR touches reducer cycle order          | Diff summary, test coverage before/after, seed replay confirmation | Risk class + APPROVE / REQUEST_CHANGES                                     |
+| `@simulation-correctness` | Fix alters PRNG call order OR touches `advanceRunners`, `gameOver`, or `hitBall`  | Seed + event index, before/after RNG call trace, regression test   | Determinism sign-off + technical verdict                                   |
+| `@rxdb-save-integrity`    | Any schema version bump OR save/export format change                              | Schema diff, migration strategy code, upgrade-path test result     | Data integrity sign-off + go/no-go                                         |
+| `@ci-workflow`            | Workflow permission change, container image bump, or new secret usage             | Workflow diff, permission scope, artifact impact summary           | Security sign-off + APPROVE / BLOCK                                        |
+| `@ui-visual-snapshot`     | Layout changes affecting all 6 viewport/device Playwright projects simultaneously | Before/after screenshots, responsive-smoke test results            | Risk assessment (hard-block only if mobile CTA or accessibility is broken) |
+| `@e2e-test-runner`        | Fixture format changes OR removal/skip of the determinism project test            | Fixture diff, test coverage impact, project list                   | APPROVE / REQUEST_CHANGES                                                  |
+| `@playwright-prod`        | Production QA reveals a regression introduced by a recent merge                   | QA report, reproduction steps, affected route or component         | Root cause assessment + fix recommendation                                 |
 
 ---
 
