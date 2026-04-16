@@ -8,11 +8,11 @@
 
 ## Playoff Format Options
 
-| Format | Series Length | Default if no choice made? |
-|---|---|---|
-| Bo3 | Best of 3 (first to 2 wins) | |
-| Bo5 | Best of 5 (first to 3 wins) | ✅ |
-| Bo7 | Best of 7 (first to 4 wins) | |
+| Format | Series Length               | Default if no choice made? |
+| ------ | --------------------------- | -------------------------- |
+| Bo3    | Best of 3 (first to 2 wins) |                            |
+| Bo5    | Best of 5 (first to 3 wins) | ✅                         |
+| Bo7    | Best of 7 (first to 4 wins) |                            |
 
 The format is stored on `LeagueSeasonRecord.playoffFormat` and set at league creation. Users who skip the playoff config step get Bo5 single-elimination.
 
@@ -81,6 +81,7 @@ if (allRegularDone) {
 ```
 
 `transitionToPlayoffs`:
+
 1. Computes standings → seeds teams
 2. Calls `generatePlayoffBracket(seeds, format)` → produces all first-round `ScheduledGameRecord` docs
 3. Sets `leagueSeason.status = "PLAYOFFS"`
@@ -93,13 +94,13 @@ All potential game slots for a series are created upfront as PENDING `ScheduledG
 
 **Bo5 example (teams A vs B — A wins 3–1):**
 
-| Slot | Status | Winner |
-|---|---|---|
-| Game 1 | COMPLETED | A |
-| Game 2 | COMPLETED | B |
-| Game 3 | COMPLETED | A |
+| Slot   | Status    | Winner              |
+| ------ | --------- | ------------------- |
+| Game 1 | COMPLETED | A                   |
+| Game 2 | COMPLETED | B                   |
+| Game 3 | COMPLETED | A                   |
 | Game 4 | COMPLETED | A ← series clinched |
-| Game 5 | CANCELLED | — |
+| Game 5 | CANCELLED | —                   |
 
 The clinch check runs after each game is committed:
 
@@ -116,6 +117,7 @@ function isSeriesClinched(
 ```
 
 When a series is clinched:
+
 1. Mark remaining PENDING game slots for the series as CANCELLED.
 2. Write the series winner to `PlayoffBracket` state (stored in `leagueSeason` as `bracketState`).
 3. If the next round has openings filled, create the next-round game slots.
@@ -137,6 +139,7 @@ stateDiagram-v2
 ```
 
 Series state is derived at read-time from the `ScheduledGameRecord` docs for that `seriesId` — there is no separate "series status" document. A series is:
+
 - **PENDING** — all slots are PENDING
 - **IN_PROGRESS** — at least one slot is COMPLETED, series not yet clinched
 - **COMPLETE** — one team has reached the wins-needed threshold
@@ -178,7 +181,7 @@ interface PlayoffSeed {
 interface PlayoffMatchup {
   seriesId: string;
   round: number;
-  homeTeamId: string;  // higher seed = home team
+  homeTeamId: string; // higher seed = home team
   awayTeamId: string;
   format: PlayoffFormat;
   homeWins: number;
@@ -197,19 +200,13 @@ function seedTeams(
   standings: StandingsRow[],
   divisions: DivisionRecord[],
   advancingCount: number,
-): PlayoffSeed[]
+): PlayoffSeed[];
 
 // Build the full initial bracket (creates ScheduledGameRecord docs)
-function generatePlayoffBracket(
-  seeds: PlayoffSeed[],
-  format: PlayoffFormat,
-): PlayoffBracket
+function generatePlayoffBracket(seeds: PlayoffSeed[], format: PlayoffFormat): PlayoffBracket;
 
 // Immutable update after a series clinches
-function advanceBracket(
-  bracket: PlayoffBracket,
-  completedMatchup: PlayoffMatchup,
-): PlayoffBracket
+function advanceBracket(bracket: PlayoffBracket, completedMatchup: PlayoffMatchup): PlayoffBracket;
 ```
 
 ---

@@ -16,7 +16,7 @@
   - `leagues` — league header, team membership, division config, season presets
   - `leagueSeasons` — per-season record (schedule length, trade deadline game#, playoff format, status)
   - `scheduledGames` — one doc per scheduled game slot (PENDING / COMPLETED / CANCELLED)
-  - `tradeRecords` — immutable trade log docs *(schema stub only in initial slice; fully wired in Phase 8)*
+  - `tradeRecords` — immutable trade log docs _(schema stub only in initial slice; fully wired in Phase 8)_
 - [ ] Add all four collections to `DbCollections` in `src/storage/db.ts`
 - [ ] Wire collection configs into `initDb`'s `addCollections` call
 - [ ] Bump `BETA_SCHEMA_EPOCH` from `"v1.2"` to `"v1.3"` in `src/storage/db.ts` — **this single line handles all schema changes**; no migration strategies needed anywhere
@@ -54,13 +54,13 @@ See [data-model.md](data-model.md) for the full field-level schema definitions a
 
 ### Season Presets
 
-| Preset | Total Regular-Season Games per Team |
-|---|---|
-| Quick | ~18 |
-| Short | 30 |
-| Standard | 60 |
-| Full | 162 |
-| Custom | User-specified (min 4, max 200) |
+| Preset   | Total Regular-Season Games per Team |
+| -------- | ----------------------------------- |
+| Quick    | ~18                                 |
+| Short    | 30                                  |
+| Standard | 60                                  |
+| Full     | 162                                 |
+| Custom   | User-specified (min 4, max 200)     |
 
 ---
 
@@ -77,7 +77,7 @@ See [data-model.md](data-model.md) for the full field-level schema definitions a
   - Slice team array into `divisionCount` equal chunks; if `teamIds.length % divisionCount !== 0`, front-load the remainder one-per-division until balanced
   - Return: `{ divisionId: string; teamIds: string[] }[]`
 - [ ] Store the resulting `divisions` array on the `League` document
-- [ ] On `LeagueSetupPage`, allow the user to pick division count (0, 2, or 4) and *optionally* drag-reorder teams within the auto-assigned divisions before confirming; if they don't, the default assignment is used as-is
+- [ ] On `LeagueSetupPage`, allow the user to pick division count (0, 2, or 4) and _optionally_ drag-reorder teams within the auto-assigned divisions before confirming; if they don't, the default assignment is used as-is
 - [ ] Write unit tests:
   - 8 teams, 2 divisions → two groups of 4
   - 6 teams, 2 divisions → two groups of 3
@@ -126,9 +126,7 @@ export interface GenerateLeagueResult {
   divisions: DivisionAssignment;
 }
 
-export async function generateLeague(
-  options: GenerateLeagueOptions,
-): Promise<GenerateLeagueResult>;
+export async function generateLeague(options: GenerateLeagueOptions): Promise<GenerateLeagueResult>;
 ```
 
 > **Relationship to existing `generateDefaultCustomTeamDraft`:** `generateLeague` is a thin orchestrator — it calls the existing `generateDefaultCustomTeamDraft` function from `@feat/customTeams/generation/generateDefaultTeam` for each team and persists the results via `customTeamStore`. It does not duplicate the team generation logic.
@@ -188,7 +186,7 @@ src/features/leagues/
 - [ ] Add the new routes to `src/router.tsx` (see [routing.md](routing.md))
 - [ ] Add **League** nav entry to `HomeScreen` (behind a feature flag or always visible — TBD)
 
-> **Note:** Components and pages marked *(future)* should be created as minimal stub files (empty index.ts) during scaffolding so the directory structure is complete, but their implementation is deferred.
+> **Note:** Components and pages marked _(future)_ should be created as minimal stub files (empty index.ts) during scaffolding so the directory structure is complete, but their implementation is deferred.
 
 ---
 
@@ -272,7 +270,7 @@ See [gameplay-modes.md](gameplay-modes.md) for the full flow diagrams.
 
 ---
 
-## Phase 7 — Stats Hub Migration *(Future)*
+## Phase 7 — Stats Hub Migration _(Future)_
 
 **Goal:** Promote `/stats` from exhibition-only to a hub with Exhibition and League tabs.
 
@@ -289,9 +287,9 @@ See [gameplay-modes.md](gameplay-modes.md) for the full flow diagrams.
 
 ---
 
-## Phase 8 — Trades *(Future)*
+## Phase 8 — Trades _(Future)_
 
-> *(Future phase — not part of the initial implementation target.)*
+> _(Future phase — not part of the initial implementation target.)_
 
 **Goal:** Allow roster swaps between league teams, gate by trade deadline.
 
@@ -309,9 +307,9 @@ See [trades.md](trades.md) for full flow diagram and constraint table.
 
 ---
 
-## Phase 9 — Playoffs *(Future)*
+## Phase 9 — Playoffs _(Future)_
 
-> *(Future phase — not part of the initial implementation target.)*
+> _(Future phase — not part of the initial implementation target.)_
 
 **Goal:** Automatically generate a single-elimination bracket when the regular season ends; run series to completion.
 
@@ -331,19 +329,19 @@ See [playoffs.md](playoffs.md) for bracket diagrams and series-state machine.
 
 ### Playoff Format Options
 
-| Format | Series Length | Default? |
-|---|---|---|
-| Bo3 | Best of 3 | |
-| Bo5 | Best of 5 | ✅ (if user makes no choice) |
-| Bo7 | Best of 7 | |
+| Format | Series Length | Default?                     |
+| ------ | ------------- | ---------------------------- |
+| Bo3    | Best of 3     |                              |
+| Bo5    | Best of 5     | ✅ (if user makes no choice) |
+| Bo7    | Best of 7     |                              |
 
 Number of teams that advance: configurable (2 / 4 / 8); default = `min(4, Math.floor(teamCount / 2))`.
 
 ---
 
-## Phase 10 — Multi-Season *(Future)*
+## Phase 10 — Multi-Season _(Future)_
 
-> *(Future phase — not part of the initial implementation target.)*
+> _(Future phase — not part of the initial implementation target.)_
 
 **Goal:** After a champion is crowned, allow a new season to begin with the same teams; preserve history.
 
@@ -361,9 +359,9 @@ Number of teams that advance: configurable (2 / 4 / 8); default = `min(4, Math.f
 
 ---
 
-## Phase 11 — AI Manager v2: Pre-Game Decisions *(Future)*
+## Phase 11 — AI Manager v2: Pre-Game Decisions _(Future)_
 
-> *(Future phase — not part of the initial implementation target.)*
+> _(Future phase — not part of the initial implementation target.)_
 
 **Goal:** AI-managed teams make intelligent pre-game decisions: rest-aware starting pitcher selection, platoon-adjusted batting order, and bench priority ordering. Depends on `PitcherWorkloadRecord` from the cross-game stamina phase.
 

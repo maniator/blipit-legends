@@ -17,7 +17,7 @@ The fatigue model (shipped in PR #206, merged to `master` before any league work
   - Default fresh threshold: 75 pitches ± `staminaMod × 1.5` (e.g. +20 stamina → 105-pitch threshold; −20 → 45 pitches)
 - **Resets:** to zero whenever a new pitcher enters (`pitcherPitchCount` and `pitcherBattersFaced` reset on substitution)
 
-### Batter fatigue (within-game) *(future — not yet implemented)*
+### Batter fatigue (within-game) _(future — not yet implemented)_
 
 > **Status:** Batter within-game fatigue is planned but not yet implemented. The fields and function described below do not exist in the current codebase and are documented here as the design target for a future phase.
 
@@ -34,6 +34,7 @@ The fatigue model (shipped in PR #206, merged to `master` before any league work
 **For the initial league implementation, all fatigue is within-game only.** Each scheduled game starts with fresh pitchers and fresh batters regardless of what happened the day before.
 
 This means:
+
 - A team can start the same pitcher in game 1 and game 2 of a back-to-back series with no stat penalty
 - A batter who went 5-for-5 yesterday starts today's game as fresh as one who sat out
 - The AI manager in headless sim has no awareness of multi-game workload when choosing pitchers
@@ -46,12 +47,12 @@ This means:
 
 Without cross-game fatigue, a few real-world dynamics are absent in v1:
 
-| Real dynamic | v1 behavior |
-|---|---|
-| SP needs 4–5 days rest between starts | No penalty for pitching SP on consecutive days |
-| Bullpen arms tire over a long series | Relievers reset fully before each game |
-| Everyday lineup players feel grind of long series | Batters reset each game |
-| Manager rotation strategy (4-man vs. 5-man) | No mechanical incentive to rotate |
+| Real dynamic                                      | v1 behavior                                    |
+| ------------------------------------------------- | ---------------------------------------------- |
+| SP needs 4–5 days rest between starts             | No penalty for pitching SP on consecutive days |
+| Bullpen arms tire over a long series              | Relievers reset fully before each game         |
+| Everyday lineup players feel grind of long series | Batters reset each game                        |
+| Manager rotation strategy (4-man vs. 5-man)       | No mechanical incentive to rotate              |
 
 In **Watch / Manage mode**, the human manager sees within-game pitcher fatigue displayed on the `SubstitutionPanel`. The pinch-hitter decision UI currently focuses on platoon edge and candidate selection; PA-based batter fatigue (contact/power penalties) is a planned future enhancement and is not yet shown in the game UI. Cross-game context (e.g. "this pitcher started yesterday") is absent in v1 but can be surfaced in a future phase.
 
@@ -101,6 +102,7 @@ function selectAiStartingPitcherIdx(
 ```
 
 **Why this works for v1:**
+
 - Deterministic: the same `scheduledGameId` seed always picks the same starter, so headless re-sims produce identical results
 - Varied: different games produce different starters, distributing appearances across the SP pool naturally
 - No state required: no `PitcherWorkloadRecord` or cross-game tracking needed in the initial slice
@@ -124,7 +126,7 @@ When the human is managing a game via Watch/Manage, the `SchedulePage` will even
 
 ## Future Phase: Pitcher Rotation Tracking
 
-> *(Phase 11 or later — not part of the initial league slice.)*
+> _(Phase 11 or later — not part of the initial league slice.)_
 
 Once league play is stable, cross-game pitcher workload tracking adds real rotation management incentives. This section describes the planned design in enough detail to implement it as a discrete future phase.
 
@@ -186,15 +188,17 @@ function computeShortRestPenalty(
 
   // Base penalty by days rest.
   const daysPenalty =
-    daysSinceLastAppearance <= 0 ? -20  // same day (doubleheader or error): extreme
-    : daysSinceLastAppearance === 1 ? -15  // back-to-back starts: heavy
-    : daysSinceLastAppearance === 2 ? -8   // one day rest: moderate
-    : -3;                                  // two days rest: minor
+    daysSinceLastAppearance <= 0
+      ? -20 // same day (doubleheader or error): extreme
+      : daysSinceLastAppearance === 1
+        ? -15 // back-to-back starts: heavy
+        : daysSinceLastAppearance === 2
+          ? -8 // one day rest: moderate
+          : -3; // two days rest: minor
 
   // Additional penalty for high-workload previous outings (>100 pitches).
-  const workloadPenalty = pitchesInLastAppearance > 100 ? -5
-    : pitchesInLastAppearance > 80 ? -2
-    : 0;
+  const workloadPenalty =
+    pitchesInLastAppearance > 100 ? -5 : pitchesInLastAppearance > 80 ? -2 : 0;
 
   return daysPenalty + workloadPenalty;
 }
@@ -231,21 +235,19 @@ async function selectAiStartingPitcherIdxWithRest(
 
   // Fetch most recent workload record per SP.
   const workloads = await fetchRecentWorkloads(
-    eligibleSPs.map((sp) => sp.id), teamId, leagueSeasonId,
+    eligibleSPs.map((sp) => sp.id),
+    teamId,
+    leagueSeasonId,
   );
 
   // Sort by days since last appearance descending (most rested first).
   // Tie-break by seed hash for determinism.
   const hashVal = fnv1a(gameSeed);
   eligibleSPs.sort((a, b) => {
-    const aRest = workloads[a.id]
-      ? currentGameDay - workloads[a.id].gameDay
-      : 999; // never appeared = most rested
-    const bRest = workloads[b.id]
-      ? currentGameDay - workloads[b.id].gameDay
-      : 999;
+    const aRest = workloads[a.id] ? currentGameDay - workloads[a.id].gameDay : 999; // never appeared = most rested
+    const bRest = workloads[b.id] ? currentGameDay - workloads[b.id].gameDay : 999;
     if (bRest !== aRest) return bRest - aRest; // most rested first
-    return (hashVal % 2 === 0 ? 1 : -1); // deterministic tiebreak
+    return hashVal % 2 === 0 ? 1 : -1; // deterministic tiebreak
   });
 
   return eligibleSPs[0].idx;
@@ -274,6 +276,7 @@ In Watch/Manage mode, a **Rotation Planner** section on `SchedulePage` (added in
 ```
 
 Color coding:
+
 - 🟢 **Rested** — 4+ days since last appearance
 - 🟡 **Short rest** — 2–3 days (penalty applied)
 - 🔴 **Back-to-back** — 0–1 days (heavy penalty applied)
@@ -284,6 +287,7 @@ The **[Override]** button opens a picker so the human manager can designate any 
 ### `db.ts` changes for this phase
 
 Add to `DbCollections`:
+
 ```ts
 pitcherWorkload: RxCollection<PitcherWorkloadRecord>;
 ```
@@ -294,14 +298,14 @@ This is a schema version bump on the `leagueSeasons` or a new net-new collection
 
 ## Cross-Game Stamina: Full Plan Summary
 
-| Phase | Feature | Mechanism |
-|---|---|---|
+| Phase                  | Feature                     | Mechanism                                                                                      |
+| ---------------------- | --------------------------- | ---------------------------------------------------------------------------------------------- |
 | **v1 (initial slice)** | Within-game pitcher fatigue | `pitcherPitchCount` + `battersFaced` → `computeFatigueFactor` → degrades pitcher effectiveness |
-| **v1 (initial slice)** | Within-game batter fatigue | `batterPlateAppearances` → `computeBatterFatigueFactor` → contact/power penalties |
-| **v1 (initial slice)** | AI starter selection | Deterministic rotation via game seed hash — no cross-game state |
-| **Future** | Pitcher rest tracking | `PitcherWorkloadRecord` written per game; short-rest penalty injected at game setup |
-| **Future** | Rest-aware AI rotation | AI selects most-rested SP; fallback to seed-hash tiebreaker |
-| **Future** | Rotation Planner UI | `SchedulePage` widget showing rest days and color-coded freshness |
-| **Not planned** | Cross-game batter fatigue | Batter workload resets each game; no PA carry-over across games |
+| **v1 (initial slice)** | Within-game batter fatigue  | `batterPlateAppearances` → `computeBatterFatigueFactor` → contact/power penalties              |
+| **v1 (initial slice)** | AI starter selection        | Deterministic rotation via game seed hash — no cross-game state                                |
+| **Future**             | Pitcher rest tracking       | `PitcherWorkloadRecord` written per game; short-rest penalty injected at game setup            |
+| **Future**             | Rest-aware AI rotation      | AI selects most-rested SP; fallback to seed-hash tiebreaker                                    |
+| **Future**             | Rotation Planner UI         | `SchedulePage` widget showing rest days and color-coded freshness                              |
+| **Not planned**        | Cross-game batter fatigue   | Batter workload resets each game; no PA carry-over across games                                |
 
 ---

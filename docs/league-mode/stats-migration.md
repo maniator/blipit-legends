@@ -105,13 +105,13 @@ Stats are derived from `completedGames` and `batterGameStats` / `pitcherGameStat
 
 All places in the careerStats feature that currently navigate to or generate `/stats/:teamId` need to be updated to `/stats/exhibition/:teamId`. This is a mechanical find-and-replace across:
 
-| File | Change |
-|---|---|
-| `src/features/careerStats/pages/CareerStatsPage/index.tsx` | Update `navigate("/stats/${...}")` → `/stats/exhibition/${...}` |
-| `src/features/customTeams/pages/ManageTeamsScreen/index.tsx` | Update career-stats nav link |
-| `src/features/careerStats/hooks/useGameHistorySync.ts` | Update any generated stat URLs |
-| `src/features/careerStats/pages/PlayerCareerPage/usePlayerCareerData.ts` | Update back-navigation links |
-| `src/features/gameplay/components/AppShell/index.tsx` | Update `onCareerStats` callback target |
+| File                                                                     | Change                                                          |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| `src/features/careerStats/pages/CareerStatsPage/index.tsx`               | Update `navigate("/stats/${...}")` → `/stats/exhibition/${...}` |
+| `src/features/customTeams/pages/ManageTeamsScreen/index.tsx`             | Update career-stats nav link                                    |
+| `src/features/careerStats/hooks/useGameHistorySync.ts`                   | Update any generated stat URLs                                  |
+| `src/features/careerStats/pages/PlayerCareerPage/usePlayerCareerData.ts` | Update back-navigation links                                    |
+| `src/features/gameplay/components/AppShell/index.tsx`                    | Update `onCareerStats` callback target                          |
 
 After updating these, verify no remaining `/stats/:teamId` hard-coded strings exist in the source:
 

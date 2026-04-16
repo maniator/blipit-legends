@@ -10,15 +10,15 @@
 
 ## What v1 AI decides (already shipping)
 
-| Decision point | v1 behavior |
-|---|---|
-| **Starting pitcher** | Deterministic seed-hash rotation — picks from the SP/SP‑RP pool, no cross-game state |
-| **In-game pitching change** | `makeAiPitchingDecision` — fatigue-factor + handedness matchup |
-| **In-game pinch hitter** | `makeAiTacticalDecision` — bench candidate ranked by contact mod |
-| **Batting order** | Fixed roster order as stored in `PlayerRecord.orderIndex`; never re-sorted |
-| **Bench composition** | Fixed — bench is whatever is in the `bench` section of the roster |
-| **Tactical decisions** | `makeAiTacticalDecision` — steal, bunt, count modifiers, IBB |
-| **Strategy** | `makeAiStrategyDecision` — power / aggressive / contact / balanced per game situation |
+| Decision point              | v1 behavior                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------------- |
+| **Starting pitcher**        | Deterministic seed-hash rotation — picks from the SP/SP‑RP pool, no cross-game state  |
+| **In-game pitching change** | `makeAiPitchingDecision` — fatigue-factor + handedness matchup                        |
+| **In-game pinch hitter**    | `makeAiTacticalDecision` — bench candidate ranked by contact mod                      |
+| **Batting order**           | Fixed roster order as stored in `PlayerRecord.orderIndex`; never re-sorted            |
+| **Bench composition**       | Fixed — bench is whatever is in the `bench` section of the roster                     |
+| **Tactical decisions**      | `makeAiTacticalDecision` — steal, bunt, count modifiers, IBB                          |
+| **Strategy**                | `makeAiStrategyDecision` — power / aggressive / contact / balanced per game situation |
 
 Everything in the table above is scope-complete for v1. AI v2 extends the **pre-game** rows.
 
@@ -54,15 +54,15 @@ Everything in the table above is scope-complete for v1. AI v2 extends the **pre-
 
 The algorithm follows the conventional batting-order wisdom adapted to the attribute set available:
 
-| Slot | Profile | Attribute signal |
-|---|---|---|
-| 1 (leadoff) | High contact, moderate power, best on-base | Highest `contactMod`; penalize very low `powerMod` |
-| 2 | High contact, moderate power — sets the table | Second-highest contact score |
-| 3 (best hitter) | Best overall — contact + power balanced | Highest `(contactMod + powerMod) / 2` |
-| 4 (cleanup) | Highest power — drives in runs | Highest `powerMod` |
-| 5–6 | Good all-around hitters | Descending combined score |
-| 7–8 | Below-average hitters, more defensive value | Remaining lineup players |
-| 9 | Weakest bat (or pitcher slot in NL-style rules) | Lowest combined score |
+| Slot            | Profile                                         | Attribute signal                                   |
+| --------------- | ----------------------------------------------- | -------------------------------------------------- |
+| 1 (leadoff)     | High contact, moderate power, best on-base      | Highest `contactMod`; penalize very low `powerMod` |
+| 2               | High contact, moderate power — sets the table   | Second-highest contact score                       |
+| 3 (best hitter) | Best overall — contact + power balanced         | Highest `(contactMod + powerMod) / 2`              |
+| 4 (cleanup)     | Highest power — drives in runs                  | Highest `powerMod`                                 |
+| 5–6             | Good all-around hitters                         | Descending combined score                          |
+| 7–8             | Below-average hitters, more defensive value     | Remaining lineup players                           |
+| 9               | Weakest bat (or pitcher slot in NL-style rules) | Lowest combined score                              |
 
 **Platoon adjustment:** If the opponent's starting pitcher handedness is known (via `handednessByTeam`), bump left-handed hitters up 1–2 slots against a right-handed SP and vice versa (using the existing `buildHandednessMatchup` / `getHandednessOutcomeModifiers` helpers).
 
@@ -91,14 +91,14 @@ The ordered bench list is computed once at game setup and stored in `GameSaveSet
 
 The following remain out of scope even for v2, to preserve simplicity:
 
-| Decision | Rationale for exclusion |
-|---|---|
-| **Positional defense** | No fielding model exists; all defense is abstracted via pitcher attributes |
-| **Opener / bulk reliever strategy** | Requires bullpen depth awareness not yet tracked per-game |
-| **Designated hitter slot** | DH rules are not yet implemented; lineup is 9 batters only |
-| **Series-level bullpen conservation** | Would require cross-game RP workload tracking (same phase as SP rest, could be added alongside) |
-| **Player injuries / fatigue-based lineup changes** | No injury model in scope |
-| **Pinch runner** | No baserunning-speed stat; pinch running would have no mechanical effect |
+| Decision                                           | Rationale for exclusion                                                                         |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Positional defense**                             | No fielding model exists; all defense is abstracted via pitcher attributes                      |
+| **Opener / bulk reliever strategy**                | Requires bullpen depth awareness not yet tracked per-game                                       |
+| **Designated hitter slot**                         | DH rules are not yet implemented; lineup is 9 batters only                                      |
+| **Series-level bullpen conservation**              | Would require cross-game RP workload tracking (same phase as SP rest, could be added alongside) |
+| **Player injuries / fatigue-based lineup changes** | No injury model in scope                                                                        |
+| **Pinch runner**                                   | No baserunning-speed stat; pinch running would have no mechanical effect                        |
 
 ---
 

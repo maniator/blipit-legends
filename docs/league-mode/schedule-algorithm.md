@@ -6,7 +6,7 @@
 
 ## The Core Questions
 
-> *How are game days created? Randomly? Is there a schedule before the season starts? Are there 3–4 game series or one-off games? How is the season scheduled?*
+> _How are game days created? Randomly? Is there a schedule before the season starts? Are there 3–4 game series or one-off games? How is the season scheduled?_
 
 **Short answers:**
 
@@ -20,11 +20,11 @@
 
 League Mode uses **series-based scheduling** by default, not isolated single games.
 
-| Concept | Value |
-|---|---|
-| Default series length | 3 games |
-| Configurable range | 1 (one-off) to 7 (Bo7 regular season) |
-| Set at | League creation (`LeagueRecord.defaultSeriesLength`) |
+| Concept                 | Value                                                                 |
+| ----------------------- | --------------------------------------------------------------------- |
+| Default series length   | 3 games                                                               |
+| Configurable range      | 1 (one-off) to 7 (Bo7 regular season)                                 |
+| Set at                  | League creation (`LeagueRecord.defaultSeriesLength`)                  |
 | Games on one "game day" | One game from each active series — all matchups for that calendar day |
 
 A series of 3 means teams A and B play 3 games back-to-back before rotating to their next opponent. This mirrors how real baseball is played (a "series" is the fundamental unit, not individual games) and makes the Simulate Day feature coherent — one tap advances a full calendar day worth of games across all active series.
@@ -92,7 +92,7 @@ Given `n` teams (assume `n` is even; see Bye Handling for odd `n`):
 function generateRoundRobinPasses(teamIds: string[]): MatchupPair[][] {
   const n = teamIds.length;
   const fixed = teamIds[0];
-  const rotation = teamIds.slice(1);         // length n-1
+  const rotation = teamIds.slice(1); // length n-1
   const rounds: MatchupPair[][] = [];
 
   for (let r = 0; r < n - 1; r++) {
@@ -111,7 +111,7 @@ function generateRoundRobinPasses(teamIds: string[]): MatchupPair[][] {
     rounds.push(round);
   }
 
-  return rounds;  // one full pass: n-1 rounds, each with n/2 matchups
+  return rounds; // one full pass: n-1 rounds, each with n/2 matchups
 }
 ```
 
@@ -123,7 +123,11 @@ function generateSchedule(options: GenerateScheduleOptions): ScheduledGameSlot[]
 
   // 1. Compute how many times each matchup appears
   const matchupCounts = computeMatchupCounts({
-    teamIds, gamesPerTeam, seriesLength, divisionWeightedSchedule, divisions,
+    teamIds,
+    gamesPerTeam,
+    seriesLength,
+    divisionWeightedSchedule,
+    divisions,
   });
   //    matchupCounts is a Map<`${teamA}:${teamB}`, number>
   //    Each entry = how many series to schedule for that pair
@@ -149,9 +153,7 @@ When the league has an **odd** number of teams, one team sits out each round (ge
 
 ```ts
 function padToEven(teamIds: string[]): string[] {
-  return teamIds.length % 2 === 0
-    ? teamIds
-    : [...teamIds, BYE_TEAM_ID];
+  return teamIds.length % 2 === 0 ? teamIds : [...teamIds, BYE_TEAM_ID];
 }
 ```
 
@@ -166,7 +168,7 @@ Bye distribution is deterministic — the fixed team in the circle method always
 Target: `gamesPerTeam` games total per team.
 
 ```ts
-const totalMatchups = (n * (n - 1)) / 2;          // unique pairs
+const totalMatchups = (n * (n - 1)) / 2; // unique pairs
 const seriesPerMatchup = Math.round(gamesPerTeam / (n - 1) / seriesLength);
 // Then: actual games per team = seriesPerMatchup * seriesLength * (n-1)
 // Adjust seriesPerMatchup ± 1 until actual games per team ≈ gamesPerTeam
@@ -188,8 +190,8 @@ inDivisionSeriesCount  = Math.round(interDivisionSeriesCount * 1.4)
 
 The exact counts are solved to satisfy `gamesPerTeam` as closely as possible given the team/division counts.
 
-| League config | In-division ratio |
-|---|---|
+| League config    | In-division ratio                                          |
+| ---------------- | ---------------------------------------------------------- |
 | 2 divisions of 4 | each team plays 4 division rivals, 4 inter-division rivals |
 | 4 divisions of 2 | each team plays 2 division rivals, 6 inter-division rivals |
 
@@ -213,14 +215,14 @@ The maximum number of parallel series on any game day is `floor(n / 2)` (one ser
 
 With 4 teams and `gamesPerTeam = 18` (2 series per matchup pair, home/away swapped between passes):
 
-| Game Days | Left matchup | Right matchup (parallel) |
-|---|---|---|
-| Days 1–3 | A vs B — series 1 | C vs D — series 1 |
-| Days 4–6 | A vs C — series 1 | B vs D — series 1 |
-| Days 7–9 | A vs D — series 1 | B vs C — series 1 |
-| Days 10–12 | B vs A — series 2 (H/A flipped) | D vs C — series 2 |
-| Days 13–15 | C vs A — series 2 | D vs B — series 2 |
-| Days 16–18 | D vs A — series 2 | C vs B — series 2 |
+| Game Days  | Left matchup                    | Right matchup (parallel) |
+| ---------- | ------------------------------- | ------------------------ |
+| Days 1–3   | A vs B — series 1               | C vs D — series 1        |
+| Days 4–6   | A vs C — series 1               | B vs D — series 1        |
+| Days 7–9   | A vs D — series 1               | B vs C — series 1        |
+| Days 10–12 | B vs A — series 2 (H/A flipped) | D vs C — series 2        |
+| Days 13–15 | C vs A — series 2               | D vs B — series 2        |
+| Days 16–18 | D vs A — series 2               | C vs B — series 2        |
 
 Total: **18 game days**, 18 games per team, 2 parallel matchups per day. Each "Simulate Day" press advances one row.
 
@@ -228,13 +230,13 @@ Total: **18 game days**, 18 games per team, 2 parallel matchups per day. Each "S
 
 ## Season Presets and Series Length
 
-| Preset | Target games/team | Notes |
-|---|---|---|
-| Quick | ~18 | 2 full round-robin passes (home + away) at seriesLength=3; actual count depends on team count |
-| Short | 30 | |
-| Standard | 60 | |
-| Full | 162 | |
-| Custom | user-specified | min 4, max 200 |
+| Preset   | Target games/team | Notes                                                                                         |
+| -------- | ----------------- | --------------------------------------------------------------------------------------------- |
+| Quick    | ~18               | 2 full round-robin passes (home + away) at seriesLength=3; actual count depends on team count |
+| Short    | 30                |                                                                                               |
+| Standard | 60                |                                                                                               |
+| Full     | 162               |                                                                                               |
+| Custom   | user-specified    | min 4, max 200                                                                                |
 
 > **Note:** Game counts are targets. The algorithm rounds to the nearest complete series to avoid partial series. For small leagues (4 teams, seriesLength=3), Quick produces 18 games/team (2 passes). For larger leagues the count scales accordingly.
 
@@ -248,9 +250,9 @@ export interface GenerateScheduleOptions {
   leagueSeasonId: string;
   leagueId: string;
   gamesPerTeam: number;
-  seriesLength: number;          // default 3; min 1, max 7
+  seriesLength: number; // default 3; min 1, max 7
   divisionWeightedSchedule: boolean;
-  divisions: DivisionRecord[];   // empty array = no divisions
+  divisions: DivisionRecord[]; // empty array = no divisions
   /** Seed for deterministic tie-breaking when distributing "extra" series.
    *  Use leagueSeasonId so each season produces a slightly different schedule. */
   seed: string;
@@ -259,9 +261,9 @@ export interface GenerateScheduleOptions {
 export interface ScheduledGameSlot {
   homeTeamId: string;
   awayTeamId: string;
-  gameDay: number;              // 1-based
-  seriesId: string;             // e.g. "series_teamA_teamB_1"
-  seriesGameNumber: number;     // 1, 2, or 3 within the series
+  gameDay: number; // 1-based
+  seriesId: string; // e.g. "series_teamA_teamB_1"
+  seriesGameNumber: number; // 1, 2, or 3 within the series
   leagueSeasonId: string;
   leagueId: string;
   gameType: "REGULAR";
@@ -326,7 +328,7 @@ The computed seed is passed into `headlessSim` and stored verbatim on the result
 
 ---
 
-## Trade Deadline Game Day *(Future Phase)*
+## Trade Deadline Game Day _(Future Phase)_
 
 > **Note:** Trade deadline logic is a Phase 8 (future) feature. The formula below is kept here for reference but is not implemented in the initial slice. See [trades.md](trades.md).
 
@@ -342,13 +344,13 @@ const tradeDeadlineGameDay = Math.floor(totalGameDays / 2);
 
 ## Unit Test Cases
 
-| Test | What to verify |
-|---|---|
-| 4 teams, Quick (18 games), seriesLength=3 | Every team plays exactly 18 games; no team plays itself; home/away balanced ±1 per matchup pair |
-| 5 teams (odd), Quick | Bye team never paired against itself; total games per team is within ±3 of target |
-| 8 teams, 2 divisions, Standard (60), division weighted | In-division games ~1.4× inter-division per team |
-| 4 teams, seriesLength=1 (one-off) | Every game has a unique matchup per round; no series IDs repeated within a round |
-| Seed stability | Same inputs + same seed → identical `ScheduledGameSlot[]` output (deterministic) |
-| Game day parallelism | No team appears twice on the same `gameDay` |
-| Batch seed uniqueness (season creation layer) | Every persisted `ScheduledGameRecord` in a Simulate Day batch is assigned a distinct RNG seed — no two seeds are equal |
-| Cross-season seed isolation (season creation layer) | The same logical scheduled game in two different seasons receives different RNG seeds because the season identifier is included in the seed derivation |
+| Test                                                   | What to verify                                                                                                                                         |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 4 teams, Quick (18 games), seriesLength=3              | Every team plays exactly 18 games; no team plays itself; home/away balanced ±1 per matchup pair                                                        |
+| 5 teams (odd), Quick                                   | Bye team never paired against itself; total games per team is within ±3 of target                                                                      |
+| 8 teams, 2 divisions, Standard (60), division weighted | In-division games ~1.4× inter-division per team                                                                                                        |
+| 4 teams, seriesLength=1 (one-off)                      | Every game has a unique matchup per round; no series IDs repeated within a round                                                                       |
+| Seed stability                                         | Same inputs + same seed → identical `ScheduledGameSlot[]` output (deterministic)                                                                       |
+| Game day parallelism                                   | No team appears twice on the same `gameDay`                                                                                                            |
+| Batch seed uniqueness (season creation layer)          | Every persisted `ScheduledGameRecord` in a Simulate Day batch is assigned a distinct RNG seed — no two seeds are equal                                 |
+| Cross-season seed isolation (season creation layer)    | The same logical scheduled game in two different seasons receives different RNG seeds because the season identifier is included in the seed derivation |

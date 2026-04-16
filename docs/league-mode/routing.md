@@ -193,7 +193,7 @@ export type LeagueGameContext = {
 export type GameLocationState = {
   pendingGameSetup: ExhibitionGameSetup | null;
   pendingLoadSave: SaveRecord | null;
-  leagueContext?: LeagueGameContext;   // ← new; undefined = exhibition game
+  leagueContext?: LeagueGameContext; // ← new; undefined = exhibition game
 } | null;
 ```
 
@@ -220,7 +220,7 @@ Add a League Mode navigation callback to the outlet context:
 ```ts
 export type AppShellOutletContext = {
   // ... existing fields unchanged ...
-  onLeagues: () => void;   // ← new; navigates to /leagues
+  onLeagues: () => void; // ← new; navigates to /leagues
 };
 ```
 

@@ -16,13 +16,14 @@ Trades allow teams within the same league season to swap players before the trad
 
 The deadline is a **game day number** stored on `LeagueSeasonRecord.tradeDeadlineGameDay`.
 
-| Default | `Math.floor(totalGameDays / 2)` |
-|---|---|
-| Adjustable? | Yes — user sets it at league creation, or accepts the default |
-| Minimum | Game day 1 (trades are never open when set to 1 — the deadline is passed before any game is played) |
-| Maximum | `totalGameDays - 1` (at least one game day must remain after the deadline) |
+| Default     | `Math.floor(totalGameDays / 2)`                                                                     |
+| ----------- | --------------------------------------------------------------------------------------------------- |
+| Adjustable? | Yes — user sets it at league creation, or accepts the default                                       |
+| Minimum     | Game day 1 (trades are never open when set to 1 — the deadline is passed before any game is played) |
+| Maximum     | `totalGameDays - 1` (at least one game day must remain after the deadline)                          |
 
 Once `leagueSeason.currentGameDay >= tradeDeadlineGameDay`:
+
 - `LeagueRosterPage` shows a **"Trade Deadline Passed"** banner in place of the trade UI
 - `tradeStore.executeTrade` also validates this in the store and returns a `TradeValidationError` if violated
 
@@ -32,16 +33,16 @@ Once `leagueSeason.currentGameDay >= tradeDeadlineGameDay`:
 
 All constraints are validated in `tradeStore.executeTrade` before any writes. Validation failures must return a typed `TradeValidationError` rather than a generic exception, so the UI can display a specific message.
 
-| Constraint | Rule | Error message |
-|---|---|---|
-| Deadline | `currentGameDay < tradeDeadlineGameDay` | "The trade deadline has passed for this season." |
-| Same league | Both `fromTeamId` and `toTeamId` are in `leagueSeason.teamIdsAtStart` | "One or both teams are not in this league." |
-| Different teams | `fromTeamId !== toTeamId` | "A team cannot trade with itself." |
-| No active game | Neither team has an in-progress Watch/Manage session for `currentGameDay` (tracked via an in-memory `activeScheduledGameId`; not inferred from `flaggedForWatch`) | "Cannot trade while a live game is in progress." |
-| Roster minimum — batters | Each team must have ≥ 9 batters (lineup + bench) after the trade | "Trade would leave [Team] with fewer than 9 batters." |
-| Roster minimum — pitchers | Each team must have ≥ 1 pitcher after the trade | "Trade would leave [Team] with no pitchers." |
-| Non-empty | `playerMoves.length >= 1` | "A trade must include at least one player." |
-| Player ownership | Every player being moved actually belongs to the `fromTeamId` at time of trade | "Player [name] is not on [Team]'s roster." |
+| Constraint                | Rule                                                                                                                                                              | Error message                                         |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Deadline                  | `currentGameDay < tradeDeadlineGameDay`                                                                                                                           | "The trade deadline has passed for this season."      |
+| Same league               | Both `fromTeamId` and `toTeamId` are in `leagueSeason.teamIdsAtStart`                                                                                             | "One or both teams are not in this league."           |
+| Different teams           | `fromTeamId !== toTeamId`                                                                                                                                         | "A team cannot trade with itself."                    |
+| No active game            | Neither team has an in-progress Watch/Manage session for `currentGameDay` (tracked via an in-memory `activeScheduledGameId`; not inferred from `flaggedForWatch`) | "Cannot trade while a live game is in progress."      |
+| Roster minimum — batters  | Each team must have ≥ 9 batters (lineup + bench) after the trade                                                                                                  | "Trade would leave [Team] with fewer than 9 batters." |
+| Roster minimum — pitchers | Each team must have ≥ 1 pitcher after the trade                                                                                                                   | "Trade would leave [Team] with no pitchers."          |
+| Non-empty                 | `playerMoves.length >= 1`                                                                                                                                         | "A trade must include at least one player."           |
+| Player ownership          | Every player being moved actually belongs to the `fromTeamId` at time of trade                                                                                    | "Player [name] is not on [Team]'s roster."            |
 
 ---
 
@@ -93,6 +94,7 @@ The trade UI lives at `/leagues/:leagueId/roster`.
 ```
 
 **Interaction model:**
+
 1. User selects Team B from a dropdown (excludes Team A and any team with a live game in progress)
 2. Both teams' full rosters are shown in columns
 3. User clicks players to toggle them into the "Gives" pile — players move to a summary row at the bottom

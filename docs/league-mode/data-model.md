@@ -8,11 +8,11 @@
 
 League Mode touches the RxDB layer in two ways:
 
-| Change type | What changes | How handled |
-|---|---|---|
-| **Additive field on existing collection** | `teams` gets `activeLeagueId` | Epoch bump — field added at `version: 0`, no migration strategy needed |
+| Change type                               | What changes                                                          | How handled                                                             |
+| ----------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **Additive field on existing collection** | `teams` gets `activeLeagueId`                                         | Epoch bump — field added at `version: 0`, no migration strategy needed  |
 | **Additive field on existing collection** | `completedGames` gets `leagueSeasonId`, `scheduledGameId`, `gameType` | Epoch bump — fields added at `version: 0`, no migration strategy needed |
-| **New collections (net-new)** | `leagues`, `leagueSeasons`, `scheduledGames`, `tradeRecords` | Created fresh at `version: 0` — nothing to migrate |
+| **New collections (net-new)**             | `leagues`, `leagueSeasons`, `scheduledGames`, `tradeRecords`          | Created fresh at `version: 0` — nothing to migrate                      |
 
 ---
 
@@ -88,7 +88,7 @@ export interface TeamRecord {
 
 ```ts
 const teamsSchemaV1: RxJsonSchema<TeamRecord> = {
-  version: 0,           // unchanged — epoch bump handles the reset
+  version: 0, // unchanged — epoch bump handles the reset
   primaryKey: "id",
   type: "object",
   properties: {
@@ -110,6 +110,7 @@ export const teamsV1CollectionConfig = {
 ### 2. `completedGames` — stays at version 0 (epoch-bumped)
 
 **New fields:**
+
 - `leagueSeasonId: string | null` — FK to `LeagueSeasonRecord.id`; null for exhibition games
 - `scheduledGameId: string | null` — FK to `ScheduledGameRecord.id`; null for exhibition games
 - `gameType: "EXHIBITION" | "LEAGUE_REGULAR" | "LEAGUE_PLAYOFF"` — discriminator for stats filtering
@@ -146,12 +147,12 @@ export interface CompletedGameRecord {
 
 ```ts
 const completedGamesSchemaV1: RxJsonSchema<CompletedGameRecord> = {
-  version: 0,           // unchanged — epoch bump handles the reset
+  version: 0, // unchanged — epoch bump handles the reset
   primaryKey: "id",
   type: "object",
   properties: {
     // ... all existing properties unchanged ...
-    leagueSeasonId:  { type: ["string", "null"], maxLength: 128 },
+    leagueSeasonId: { type: ["string", "null"], maxLength: 128 },
     scheduledGameId: { type: ["string", "null"], maxLength: 128 },
     gameType: {
       type: "string",
@@ -160,15 +161,22 @@ const completedGamesSchemaV1: RxJsonSchema<CompletedGameRecord> = {
     },
   },
   required: [
-    "id", "playedAt", "seed", "rngState",
-    "homeTeamId", "awayTeamId", "homeScore", "awayScore",
-    "innings", "schemaVersion",
+    "id",
+    "playedAt",
+    "seed",
+    "rngState",
+    "homeTeamId",
+    "awayTeamId",
+    "homeScore",
+    "awayScore",
+    "innings",
+    "schemaVersion",
   ],
   indexes: [
     "playedAt",
     ["homeTeamId", "playedAt"],
     ["awayTeamId", "playedAt"],
-    ["leagueSeasonId", "playedAt"],  // new index for standings queries
+    ["leagueSeasonId", "playedAt"], // new index for standings queries
   ],
 };
 
@@ -190,7 +198,7 @@ export const completedGamesV1CollectionConfig = {
 
 ```ts
 export type DivisionRecord = {
-  id: string;        // e.g. "div_east", "div_west"
+  id: string; // e.g. "div_east", "div_west"
   name: string;
   teamIds: string[]; // ordered list of FK → TeamRecord.id
 };
@@ -244,28 +252,39 @@ const leaguesSchemaV1: RxJsonSchema<LeagueRecord> = {
   primaryKey: "id",
   type: "object",
   properties: {
-    id:                         { type: "string", maxLength: 128 },
-    schemaVersion:              { type: "number", minimum: 0, maximum: 999, multipleOf: 1 },
-    createdAt:                  { type: "string", maxLength: 32 },
-    updatedAt:                  { type: "string", maxLength: 32 },
-    name:                       { type: "string", maxLength: 256 },
-    nameLowercase:              { type: "string", maxLength: 256 },
-    teamIds:                    { type: "array", items: { type: "string" } },
-    divisions:                  { type: "array", items: { type: "object", additionalProperties: true } },
-    divisionCount:              { type: "number", enum: [0, 2, 4], multipleOf: 1 },
-    defaultSeasonPreset:        { type: "string", maxLength: 32 },
-    defaultCustomGameCount:     { type: "number", minimum: 4, maximum: 200, multipleOf: 1 },
-    defaultSeriesLength:        { type: "number", minimum: 1, maximum: 7, multipleOf: 1 },
-    defaultPlayoffFormat:       { type: "object", additionalProperties: true },
-    defaultPlayoffTeamCount:    { type: "number", minimum: 2, maximum: 16, multipleOf: 1 },
-    divisionWeightedSchedule:   { type: "boolean" },
-    status:                     { type: "string", maxLength: 16 },
+    id: { type: "string", maxLength: 128 },
+    schemaVersion: { type: "number", minimum: 0, maximum: 999, multipleOf: 1 },
+    createdAt: { type: "string", maxLength: 32 },
+    updatedAt: { type: "string", maxLength: 32 },
+    name: { type: "string", maxLength: 256 },
+    nameLowercase: { type: "string", maxLength: 256 },
+    teamIds: { type: "array", items: { type: "string" } },
+    divisions: { type: "array", items: { type: "object", additionalProperties: true } },
+    divisionCount: { type: "number", enum: [0, 2, 4], multipleOf: 1 },
+    defaultSeasonPreset: { type: "string", maxLength: 32 },
+    defaultCustomGameCount: { type: "number", minimum: 4, maximum: 200, multipleOf: 1 },
+    defaultSeriesLength: { type: "number", minimum: 1, maximum: 7, multipleOf: 1 },
+    defaultPlayoffFormat: { type: "object", additionalProperties: true },
+    defaultPlayoffTeamCount: { type: "number", minimum: 2, maximum: 16, multipleOf: 1 },
+    divisionWeightedSchedule: { type: "boolean" },
+    status: { type: "string", maxLength: 16 },
   },
   required: [
-    "id", "schemaVersion", "createdAt", "updatedAt",
-    "name", "nameLowercase", "teamIds", "divisions", "divisionCount",
-    "defaultSeasonPreset", "defaultSeriesLength", "defaultPlayoffFormat",
-    "defaultPlayoffTeamCount", "divisionWeightedSchedule", "status",
+    "id",
+    "schemaVersion",
+    "createdAt",
+    "updatedAt",
+    "name",
+    "nameLowercase",
+    "teamIds",
+    "divisions",
+    "divisionCount",
+    "defaultSeasonPreset",
+    "defaultSeriesLength",
+    "defaultPlayoffFormat",
+    "defaultPlayoffTeamCount",
+    "divisionWeightedSchedule",
+    "status",
   ],
   indexes: ["updatedAt", "nameLowercase", "status"],
 };
@@ -303,12 +322,12 @@ stateDiagram-v2
  * "TRADE_DEADLINE_PASSED" and "PLAYOFFS" are reserved for future phases.
  */
 export type LeagueSeasonStatus =
-  | "SCHEDULED"             // Created but no games played yet
-  | "IN_PROGRESS"           // Regular season underway
+  | "SCHEDULED" // Created but no games played yet
+  | "IN_PROGRESS" // Regular season underway
   | "TRADE_DEADLINE_PASSED" // Future (Phase 8): past the deadline game-day threshold
-  | "PLAYOFFS"              // Future (Phase 9): all regular-season games complete; playoffs running
-  | "COMPLETE"              // Champion crowned, season over
-  | "CANCELLED";            // League disbanded mid-season
+  | "PLAYOFFS" // Future (Phase 9): all regular-season games complete; playoffs running
+  | "COMPLETE" // Champion crowned, season over
+  | "CANCELLED"; // League disbanded mid-season
 
 export interface LeagueSeasonRecord {
   /** Primary key — e.g. "ls_V1StGXR8_Z5j" from generateLeagueSeasonId() */
@@ -362,27 +381,38 @@ const leagueSeasonsSchemaV1: RxJsonSchema<LeagueSeasonRecord> = {
   primaryKey: "id",
   type: "object",
   properties: {
-    id:                    { type: "string", maxLength: 128 },
-    schemaVersion:         { type: "number", minimum: 0, maximum: 999, multipleOf: 1 },
-    createdAt:             { type: "string", maxLength: 32 },
-    updatedAt:             { type: "string", maxLength: 32 },
-    leagueId:              { type: "string", maxLength: 128 },
-    seasonNumber:          { type: "number", minimum: 1, maximum: 9999, multipleOf: 1 },
-    status:                { type: "string", maxLength: 32 },
-    gamesPerTeam:          { type: "number", minimum: 4, maximum: 200, multipleOf: 1 },
-    tradeDeadlineGameDay:  { type: "number", minimum: 1, maximum: 200, multipleOf: 1 },
-    currentGameDay:        { type: "number", minimum: 1, maximum: 200, multipleOf: 1 },
-    playoffFormat:         { type: "object", additionalProperties: true },
-    playoffTeamCount:      { type: "number", minimum: 2, maximum: 16, multipleOf: 1 },
-    championTeamId:        { type: ["string", "null"], maxLength: 128 },
-    teamIdsAtStart:        { type: "array", items: { type: "string" } },
-    divisionsAtStart:      { type: "array", items: { type: "object", additionalProperties: true } },
+    id: { type: "string", maxLength: 128 },
+    schemaVersion: { type: "number", minimum: 0, maximum: 999, multipleOf: 1 },
+    createdAt: { type: "string", maxLength: 32 },
+    updatedAt: { type: "string", maxLength: 32 },
+    leagueId: { type: "string", maxLength: 128 },
+    seasonNumber: { type: "number", minimum: 1, maximum: 9999, multipleOf: 1 },
+    status: { type: "string", maxLength: 32 },
+    gamesPerTeam: { type: "number", minimum: 4, maximum: 200, multipleOf: 1 },
+    tradeDeadlineGameDay: { type: "number", minimum: 1, maximum: 200, multipleOf: 1 },
+    currentGameDay: { type: "number", minimum: 1, maximum: 200, multipleOf: 1 },
+    playoffFormat: { type: "object", additionalProperties: true },
+    playoffTeamCount: { type: "number", minimum: 2, maximum: 16, multipleOf: 1 },
+    championTeamId: { type: ["string", "null"], maxLength: 128 },
+    teamIdsAtStart: { type: "array", items: { type: "string" } },
+    divisionsAtStart: { type: "array", items: { type: "object", additionalProperties: true } },
   },
   required: [
-    "id", "schemaVersion", "createdAt", "updatedAt",
-    "leagueId", "seasonNumber", "status", "gamesPerTeam",
-    "tradeDeadlineGameDay", "currentGameDay", "playoffFormat",
-    "playoffTeamCount", "championTeamId", "teamIdsAtStart", "divisionsAtStart",
+    "id",
+    "schemaVersion",
+    "createdAt",
+    "updatedAt",
+    "leagueId",
+    "seasonNumber",
+    "status",
+    "gamesPerTeam",
+    "tradeDeadlineGameDay",
+    "currentGameDay",
+    "playoffFormat",
+    "playoffTeamCount",
+    "championTeamId",
+    "teamIdsAtStart",
+    "divisionsAtStart",
   ],
   indexes: ["leagueId", ["leagueId", "seasonNumber"], "status"],
 };
@@ -452,29 +482,41 @@ const scheduledGamesSchemaV1: RxJsonSchema<ScheduledGameRecord> = {
   primaryKey: "id",
   type: "object",
   properties: {
-    id:               { type: "string", maxLength: 128 },
-    schemaVersion:    { type: "number", minimum: 0, maximum: 999, multipleOf: 1 },
-    createdAt:        { type: "string", maxLength: 32 },
-    updatedAt:        { type: "string", maxLength: 32 },
-    leagueSeasonId:   { type: "string", maxLength: 128 },
-    leagueId:         { type: "string", maxLength: 128 },
-    homeTeamId:       { type: "string", maxLength: 128 },
-    awayTeamId:       { type: "string", maxLength: 128 },
-    gameDay:          { type: "number", minimum: 1, maximum: 999, multipleOf: 1 },
-    seriesId:         { type: "string", maxLength: 256 },
+    id: { type: "string", maxLength: 128 },
+    schemaVersion: { type: "number", minimum: 0, maximum: 999, multipleOf: 1 },
+    createdAt: { type: "string", maxLength: 32 },
+    updatedAt: { type: "string", maxLength: 32 },
+    leagueSeasonId: { type: "string", maxLength: 128 },
+    leagueId: { type: "string", maxLength: 128 },
+    homeTeamId: { type: "string", maxLength: 128 },
+    awayTeamId: { type: "string", maxLength: 128 },
+    gameDay: { type: "number", minimum: 1, maximum: 999, multipleOf: 1 },
+    seriesId: { type: "string", maxLength: 256 },
     seriesGameNumber: { type: "number", minimum: 1, maximum: 7, multipleOf: 1 },
-    gameType:         { type: "string", maxLength: 16 },
-    playoffRound:     { type: "number", minimum: 1, maximum: 8, multipleOf: 1 },
-    status:           { type: "string", maxLength: 16 },
-    completedGameId:  { type: ["string", "null"], maxLength: 128 },
-    result:           { type: ["object", "null"], additionalProperties: true },
-    flaggedForWatch:  { type: "boolean" },
+    gameType: { type: "string", maxLength: 16 },
+    playoffRound: { type: "number", minimum: 1, maximum: 8, multipleOf: 1 },
+    status: { type: "string", maxLength: 16 },
+    completedGameId: { type: ["string", "null"], maxLength: 128 },
+    result: { type: ["object", "null"], additionalProperties: true },
+    flaggedForWatch: { type: "boolean" },
   },
   required: [
-    "id", "schemaVersion", "createdAt", "updatedAt",
-    "leagueSeasonId", "leagueId", "homeTeamId", "awayTeamId",
-    "gameDay", "seriesId", "seriesGameNumber", "gameType",
-    "status", "completedGameId", "result", "flaggedForWatch",
+    "id",
+    "schemaVersion",
+    "createdAt",
+    "updatedAt",
+    "leagueSeasonId",
+    "leagueId",
+    "homeTeamId",
+    "awayTeamId",
+    "gameDay",
+    "seriesId",
+    "seriesGameNumber",
+    "gameType",
+    "status",
+    "completedGameId",
+    "result",
+    "flaggedForWatch",
   ],
   indexes: [
     ["leagueSeasonId", "gameDay"],
@@ -489,7 +531,7 @@ const scheduledGamesSchemaV1: RxJsonSchema<ScheduledGameRecord> = {
 
 ### 6. `tradeRecords` — version 0 (net-new)
 
-> *(Schema defined in Phase 1 for future compatibility — trade execution is deferred to Phase 8. See [trades.md](trades.md).)*
+> _(Schema defined in Phase 1 for future compatibility — trade execution is deferred to Phase 8. See [trades.md](trades.md).)_
 
 **Purpose:** Immutable audit log of every executed trade. Never updated after creation.
 
@@ -535,19 +577,26 @@ const tradeRecordsSchemaV1: RxJsonSchema<TradeRecord> = {
   primaryKey: "id",
   type: "object",
   properties: {
-    id:              { type: "string", maxLength: 128 },
-    schemaVersion:   { type: "number", minimum: 0, maximum: 999, multipleOf: 1 },
-    createdAt:       { type: "string", maxLength: 32 },
-    leagueSeasonId:  { type: "string", maxLength: 128 },
-    leagueId:        { type: "string", maxLength: 128 },
-    teamIds:         { type: "array", items: { type: "string" }, minItems: 2, maxItems: 2 },
-    playerMoves:     { type: "array", items: { type: "object", additionalProperties: true } },
-    gameDayAtTrade:  { type: "number", minimum: 1, maximum: 9999, multipleOf: 1 },
-    source:          { type: "string", enum: ["user", "recovery"], maxLength: 16 },
+    id: { type: "string", maxLength: 128 },
+    schemaVersion: { type: "number", minimum: 0, maximum: 999, multipleOf: 1 },
+    createdAt: { type: "string", maxLength: 32 },
+    leagueSeasonId: { type: "string", maxLength: 128 },
+    leagueId: { type: "string", maxLength: 128 },
+    teamIds: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 2 },
+    playerMoves: { type: "array", items: { type: "object", additionalProperties: true } },
+    gameDayAtTrade: { type: "number", minimum: 1, maximum: 9999, multipleOf: 1 },
+    source: { type: "string", enum: ["user", "recovery"], maxLength: 16 },
   },
   required: [
-    "id", "schemaVersion", "createdAt",
-    "leagueSeasonId", "leagueId", "teamIds", "playerMoves", "gameDayAtTrade", "source",
+    "id",
+    "schemaVersion",
+    "createdAt",
+    "leagueSeasonId",
+    "leagueId",
+    "teamIds",
+    "playerMoves",
+    "gameDayAtTrade",
+    "source",
   ],
   indexes: ["leagueSeasonId", ["leagueId", "createdAt"]],
 };
@@ -562,22 +611,22 @@ Three things change in `src/storage/db.ts`:
 ```ts
 // 1. Add to DbCollections type
 export type DbCollections = {
-  saves:            RxCollection<SaveRecord>;
-  events:           RxCollection<EventRecord>;
-  teams:            RxCollection<TeamRecord>;
-  players:          RxCollection<PlayerRecord>;
-  completedGames:   RxCollection<CompletedGameRecord>;
-  batterGameStats:  RxCollection<BatterGameStatRecord>;
+  saves: RxCollection<SaveRecord>;
+  events: RxCollection<EventRecord>;
+  teams: RxCollection<TeamRecord>;
+  players: RxCollection<PlayerRecord>;
+  completedGames: RxCollection<CompletedGameRecord>;
+  batterGameStats: RxCollection<BatterGameStatRecord>;
   pitcherGameStats: RxCollection<PitcherGameStatRecord>;
   // ↓ New
-  leagues:          RxCollection<LeagueRecord>;
-  leagueSeasons:    RxCollection<LeagueSeasonRecord>;
-  scheduledGames:   RxCollection<ScheduledGameRecord>;
-  tradeRecords:     RxCollection<TradeRecord>;
+  leagues: RxCollection<LeagueRecord>;
+  leagueSeasons: RxCollection<LeagueSeasonRecord>;
+  scheduledGames: RxCollection<ScheduledGameRecord>;
+  tradeRecords: RxCollection<TradeRecord>;
 };
 
 // 2. Bump epoch — this wipes every user's local DB on next load
-const BETA_SCHEMA_EPOCH = "v1.3";  // was "v1.2"
+const BETA_SCHEMA_EPOCH = "v1.3"; // was "v1.2"
 
 // 3. Add imports for new schema configs
 import {
@@ -590,10 +639,10 @@ import {
 // 4. Add to addCollections() call inside initDb() — existing collections unchanged
 await db.addCollections({
   // ... existing collections at their current version: 0, no changes ...
-  leagues:        leaguesV1CollectionConfig,
-  leagueSeasons:  leagueSeasonsV1CollectionConfig,
+  leagues: leaguesV1CollectionConfig,
+  leagueSeasons: leagueSeasonsV1CollectionConfig,
   scheduledGames: scheduledGamesV1CollectionConfig,
-  tradeRecords:   tradeRecordsV1CollectionConfig,
+  tradeRecords: tradeRecordsV1CollectionConfig,
 });
 ```
 
@@ -604,10 +653,10 @@ await db.addCollections({
 Add four new ID generators to `src/storage/generateId.ts` (alongside existing `generateTeamId`, `generateSaveId`, etc.), following the same nanoid-based pattern:
 
 ```ts
-export const generateLeagueId        = (): string => `lg_${nanoid(12)}`;
-export const generateLeagueSeasonId  = (): string => `ls_${nanoid(12)}`;
+export const generateLeagueId = (): string => `lg_${nanoid(12)}`;
+export const generateLeagueSeasonId = (): string => `ls_${nanoid(12)}`;
 export const generateScheduledGameId = (): string => `sg_${nanoid(12)}`;
-export const generateTradeId         = (): string => `tr_${nanoid(12)}`;
+export const generateTradeId = (): string => `tr_${nanoid(12)}`;
 ```
 
 ---
