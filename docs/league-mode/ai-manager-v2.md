@@ -56,7 +56,7 @@ The algorithm follows the conventional batting-order wisdom adapted to the attri
 
 | Slot | Profile | Attribute signal |
 |---|---|---|
-| 1 (leadoff) | High contact, moderate power, best on-base | Highest `contactMod`; penalise very low `powerMod` |
+| 1 (leadoff) | High contact, moderate power, best on-base | Highest `contactMod`; penalize very low `powerMod` |
 | 2 | High contact, moderate power — sets the table | Second-highest contact score |
 | 3 (best hitter) | Best overall — contact + power balanced | Highest `(contactMod + powerMod) / 2` |
 | 4 (cleanup) | Highest power — drives in runs | Highest `powerMod` |
