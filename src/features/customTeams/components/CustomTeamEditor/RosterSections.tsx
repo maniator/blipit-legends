@@ -24,6 +24,7 @@ import type { PendingPlayerImport } from "./useImportPlayerFile";
 export const makeBlankBatter = (): EditorPlayer => ({
   id: makePlayerId(),
   name: "",
+  role: "batter",
   position: "",
   handedness: "R",
   contact: 60,
@@ -34,11 +35,9 @@ export const makeBlankBatter = (): EditorPlayer => ({
 export const makeBlankPitcher = (): EditorPlayer => ({
   id: makePlayerId(),
   name: "",
+  role: "pitcher",
   position: "",
   handedness: "R",
-  contact: 35,
-  power: 35,
-  speed: 35,
   velocity: 60,
   control: 60,
   movement: 60,

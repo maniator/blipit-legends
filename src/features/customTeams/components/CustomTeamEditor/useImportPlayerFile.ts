@@ -76,24 +76,31 @@ export function useImportPlayerFile({
           }
 
           // Remap the ID to avoid local roster collisions.
-          const editorPlayer: EditorPlayer = {
-            id: makePlayerId(),
-            name: importedPlayer.name,
-            position: importedPlayer.position ?? "",
-            handedness: importedPlayer.handedness ?? "R",
-            contact: importedPlayer.role === "batter" ? importedPlayer.batting.contact : 40,
-            power: importedPlayer.role === "batter" ? importedPlayer.batting.power : 40,
-            speed: importedPlayer.role === "batter" ? importedPlayer.batting.speed : 40,
-            // Only carry pitching stats when importing into the pitchers section.
-            ...(section === "pitchers" &&
-              importedPlayer.pitching && {
-                velocity: importedPlayer.pitching.velocity,
-                control: importedPlayer.pitching.control,
-                movement: importedPlayer.pitching.movement,
-              }),
-            ...(section === "pitchers" &&
-              importedPlayer.pitchingRole && { pitchingRole: importedPlayer.pitchingRole }),
-          };
+          const editorPlayer: EditorPlayer =
+            expectedRole === "pitcher"
+              ? {
+                  id: makePlayerId(),
+                  name: importedPlayer.name,
+                  role: "pitcher",
+                  position: importedPlayer.position ?? "",
+                  handedness: importedPlayer.handedness ?? "R",
+                  velocity: importedPlayer.pitching?.velocity ?? 60,
+                  control: importedPlayer.pitching?.control ?? 60,
+                  movement: importedPlayer.pitching?.movement ?? 60,
+                  stamina: importedPlayer.pitching?.stamina,
+                  ...(importedPlayer.pitchingRole && { pitchingRole: importedPlayer.pitchingRole }),
+                }
+              : {
+                  id: makePlayerId(),
+                  name: importedPlayer.name,
+                  role: "batter",
+                  position: importedPlayer.position ?? "",
+                  handedness: importedPlayer.handedness ?? "R",
+                  contact: importedPlayer.batting?.contact ?? 40,
+                  power: importedPlayer.batting?.power ?? 40,
+                  speed: importedPlayer.batting?.speed ?? 40,
+                  stamina: importedPlayer.batting?.stamina,
+                };
 
           /**
            * Core import action — called immediately (globalPlayerId present) or
@@ -157,23 +164,27 @@ export function useImportPlayerFile({
           });
 
           const editorPlayerFp = (p: EditorPlayer): string => {
-            const isPitcher = p.velocity !== undefined;
+            if (p.role === "pitcher") {
+              return buildPlayerSig({
+                name: p.name,
+                role: "pitcher",
+                pitching: {
+                  velocity: p.velocity ?? 60,
+                  control: p.control ?? 60,
+                  movement: p.movement ?? 60,
+                  stamina: p.stamina ?? 60,
+                },
+              });
+            }
             return buildPlayerSig({
               name: p.name,
-              role: isPitcher ? "pitcher" : "batter",
-              // Pitchers have no batting block in the DB fingerprint — exclude it here so
-              // editor-state duplicate checks stay consistent with stored fingerprints.
-              batting: isPitcher
-                ? undefined
-                : { contact: p.contact, power: p.power, speed: p.speed, stamina: 50 },
-              pitching: isPitcher
-                ? {
-                    velocity: p.velocity ?? 60,
-                    control: p.control ?? 60,
-                    movement: p.movement ?? 60,
-                    stamina: 60,
-                  }
-                : undefined,
+              role: "batter",
+              batting: {
+                contact: p.contact,
+                power: p.power,
+                speed: p.speed,
+                stamina: p.stamina ?? 50,
+              },
             });
           };
 

@@ -9,24 +9,20 @@ import { HITTER_STAT_CAP, PITCHER_STAT_CAP } from "./statBudget";
 const makeHitter = (contact = 30, power = 30, speed = 30) => ({
   id: "p1",
   name: "Test Hitter",
+  role: "batter" as const,
   position: "LF",
   handedness: "R" as const,
   contact,
   power,
   speed,
-  velocity: 0,
-  control: 0,
-  movement: 0,
 });
 
 const makePitcher = (velocity = 40, control = 40, movement = 40) => ({
   id: "p2",
   name: "Test Pitcher",
+  role: "pitcher" as const,
   position: "SP",
   handedness: "R" as const,
-  contact: 0,
-  power: 0,
-  speed: 0,
   velocity,
   control,
   movement,

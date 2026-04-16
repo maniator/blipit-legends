@@ -24,6 +24,7 @@ vi.mock("@dnd-kit/sortable", async (importOriginal) => {
 const makePlayer = (id: string): EditorPlayer => ({
   id,
   name: `Player ${id}`,
+  role: "batter",
   position: "CF",
   handedness: "R",
   contact: 60,

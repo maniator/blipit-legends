@@ -33,15 +33,26 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
   isExistingPlayer = false,
   onChange,
 }) => {
-  const vel = player.velocity ?? 0;
-  const ctrl = player.control ?? 0;
-  const mov = player.movement ?? 0;
+  const asPitcher = player.role === "pitcher" ? player : null;
+  const asBatter = player.role === "batter" ? player : null;
+
+  const vel = asPitcher?.velocity ?? 0;
+  const ctrl = asPitcher?.control ?? 0;
+  const mov = asPitcher?.movement ?? 0;
   const pitcherTotal = pitcherStatTotal(vel, ctrl, mov);
   const pitcherRem = pitcherRemaining(vel, ctrl, mov);
   const pitcherOverCap = pitcherRem < 0;
 
-  const hitterTotal = hitterStatTotal(player.contact, player.power, player.speed);
-  const hitterRem = hitterRemaining(player.contact, player.power, player.speed);
+  const hitterTotal = hitterStatTotal(
+    asBatter?.contact ?? 0,
+    asBatter?.power ?? 0,
+    asBatter?.speed ?? 0,
+  );
+  const hitterRem = hitterRemaining(
+    asBatter?.contact ?? 0,
+    asBatter?.power ?? 0,
+    asBatter?.speed ?? 0,
+  );
   const hitterOverCap = hitterRem < 0;
 
   const overCap = isPitcher ? pitcherOverCap : hitterOverCap;
@@ -50,8 +61,8 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
   const cap = isPitcher ? PITCHER_STAT_CAP : HITTER_STAT_CAP;
   const shouldShowOverCapWarning = !isExistingPlayer && overCap;
 
-  const stat = (label: string, key: keyof EditorPlayer, htmlFor: string) => {
-    const val = (player[key] as number | undefined) ?? 0;
+  const stat = (label: string, key: string, htmlFor: string) => {
+    const val = (player as unknown as Record<string, number | undefined>)[key] ?? 0;
     return (
       <StatRow key={`stat-${key}`} $locked={isExistingPlayer}>
         <StatLabel htmlFor={htmlFor}>{label}</StatLabel>
@@ -65,7 +76,8 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             // Guard in addition to `disabled` — jsdom fires change events on disabled
             // elements via fireEvent, so the explicit check keeps tests meaningful.
-            if (!isExistingPlayer) onChange({ [key]: Number(e.target.value) });
+            if (!isExistingPlayer)
+              onChange({ [key]: Number(e.target.value) } as Partial<EditorPlayer>);
           }}
         />
         <StatValue>{val}</StatValue>

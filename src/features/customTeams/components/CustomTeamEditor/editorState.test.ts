@@ -12,6 +12,7 @@ const makePlayer = (name = "Tom Adams", position = "C") => ({
   id: makePlayerId(),
   name,
   position,
+  role: "batter" as const,
   handedness: "R" as const,
   contact: 45,
   power: 45,
@@ -402,6 +403,7 @@ describe("validateEditorState", () => {
   it("pitcher within pitcher cap passes validation", () => {
     const pitcher = {
       ...makePlayer("Good Pitcher"),
+      role: "pitcher" as const,
       velocity: 50,
       control: 55,
       movement: 50,
@@ -429,6 +431,7 @@ describe("validateEditorState", () => {
   it("pitcher over pitcher cap is rejected with clear message", () => {
     const overCapPitcher = {
       ...makePlayer("Fire Pitcher"),
+      role: "pitcher" as const,
       velocity: 70,
       control: 70,
       movement: 70,
@@ -553,12 +556,9 @@ describe("editorStateToCreateInput", () => {
   });
 
   it("maps pitcher with pitching stats to CreateCustomTeamInput", () => {
-    const pitcher: ReturnType<typeof makePlayer> & {
-      velocity: number;
-      control: number;
-      movement: number;
-    } = {
+    const pitcher = {
       ...makePlayer("Ace Pitcher"),
+      role: "pitcher" as const,
       velocity: 88,
       control: 70,
       movement: 65,
@@ -579,7 +579,11 @@ describe("editorStateToCreateInput", () => {
   });
 
   it("throws when pitcher is missing pitching stats", () => {
-    const benchPitcher = makePlayer("No-stats Pitcher");
+    // Cast to simulate a pitcher slot populated with an object missing pitching stats at runtime.
+    const benchPitcher = {
+      ...makePlayer("No-stats Pitcher"),
+      role: "pitcher",
+    } as unknown as import("./editorState").EditorPitcherPlayer;
     const state = {
       ...initEditorState(),
       name: "Eagles",

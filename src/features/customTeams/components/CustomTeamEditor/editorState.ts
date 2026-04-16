@@ -1,4 +1,7 @@
-import type { CustomTeamDraft, GeneratedPlayer } from "@feat/customTeams/generation/generateDefaultTeam";
+import type {
+  CustomTeamDraft,
+  GeneratedPlayer,
+} from "@feat/customTeams/generation/generateDefaultTeam";
 
 import type {
   CreateCustomTeamInput,
@@ -143,12 +146,20 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case "MOVE_UP":
       return {
         ...state,
-        [action.section]: moveItem(state[action.section] as EditorPlayer[], action.index, action.index - 1),
+        [action.section]: moveItem(
+          state[action.section] as EditorPlayer[],
+          action.index,
+          action.index - 1,
+        ),
       };
     case "MOVE_DOWN":
       return {
         ...state,
-        [action.section]: moveItem(state[action.section] as EditorPlayer[], action.index, action.index + 1),
+        [action.section]: moveItem(
+          state[action.section] as EditorPlayer[],
+          action.index,
+          action.index + 1,
+        ),
       };
     case "APPLY_DRAFT":
       return {
@@ -332,16 +343,17 @@ export function editorStateToCreateInput(state: EditorState): CreateCustomTeamIn
 }
 
 const editorToTeamPlayer =
-  (role: "batter" | "pitcher") =>
+  (_role: "batter" | "pitcher") =>
   (p: EditorPlayer): TeamPlayer => {
     const trimmedPosition = p.position.trim();
-    const pitcherRoleFromPosition =
-      trimmedPosition === "SP" || trimmedPosition === "RP" || trimmedPosition === "SP/RP"
-        ? trimmedPosition
-        : undefined;
-    const normalizedPitchingRole = p.pitchingRole ?? pitcherRoleFromPosition ?? "SP/RP";
 
-    if (role === "pitcher") {
+    if (p.role === "pitcher") {
+      const pitcherRoleFromPosition =
+        trimmedPosition === "SP" || trimmedPosition === "RP" || trimmedPosition === "SP/RP"
+          ? trimmedPosition
+          : undefined;
+      const normalizedPitchingRole = p.pitchingRole ?? pitcherRoleFromPosition ?? "SP/RP";
+
       if (p.velocity === undefined || p.control === undefined || p.movement === undefined) {
         throw new Error("Pitcher is missing pitching stats.");
       }
@@ -356,7 +368,7 @@ const editorToTeamPlayer =
           velocity: p.velocity,
           control: p.control,
           movement: p.movement,
-          stamina: 60,
+          stamina: p.stamina ?? 60,
         },
         pitchingRole: normalizedPitchingRole,
       };
@@ -368,7 +380,7 @@ const editorToTeamPlayer =
       role: "batter",
       position: trimmedPosition || "DH",
       handedness: p.handedness,
-      batting: { contact: p.contact, power: p.power, speed: p.speed, stamina: 50 },
+      batting: { contact: p.contact, power: p.power, speed: p.speed, stamina: p.stamina ?? 50 },
     };
   };
 
