@@ -46,14 +46,18 @@ If a refactor touches any RxDB collection schema (`src/storage/db.ts`):
 - For reducer tests, keep layered coverage: handler-level behavior tests + root orchestration coverage.
 - Do not delete or disable existing tests unless they are directly replaced with equivalent tests.
 
-## When to consult `@pm-agent`
+## Consult `@pm-agent` first when scope/risk is unclear
 
-Route to `@pm-agent` before starting a refactor in any of these situations:
+Route to `@pm-agent` before implementation when refactor scope is ambiguous, crosses subsystem boundaries, or needs explicit risk framing. Keep `@senior-lead` escalation for technical sign-off on high-risk refactors.
 
-- **Scope is ambiguous** — if you are unsure which files the refactor touches, ask `@pm-agent` for a dependency map (Layer A2 of `docs/agent/pm-agent-knowledge-map.md`) before beginning.
-- **Refactor touches gameplay engine files** — any change inside `src/features/gameplay/context/` carries a risk of subtle rule or PRNG behavior change. Ask `@pm-agent` to confirm the refactor is truly behavior-preserving.
-- **Module cycle-free order is at risk** — the order `strategy → advanceRunners → gameOver → playerOut → hitBall → buntAttempt → playerActions → reducer` is a hard constraint. If the refactor moves imports across that boundary, get `@pm-agent` sign-off first.
-- **Schema or RxDB files are in scope** — any refactor that passes through `src/storage/` may trigger a schema-hash mismatch. Ask `@pm-agent` whether a version bump and migration strategy are required.
+## Escalation to `@senior-lead`
+
+Request a `@senior-lead` review before merging if **any** of the following apply:
+
+- The refactor touches ≥ 5 files in `src/features/gameplay/context/`
+- The refactor alters the module cycle order (`strategy → advanceRunners → gameOver → playerOut → hitBall → buntAttempt → playerActions → reducer`)
+
+Use the `SENIOR LEAD REVIEW REQUEST` template from `.github/agents/prompt-examples.md` and provide: diff summary, test coverage before/after, and seed replay confirmation.
 
 ## Pre-commit checklist
 

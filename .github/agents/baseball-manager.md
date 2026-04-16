@@ -52,7 +52,7 @@ When asked to review logs, respond with:
 
 `@baseball-manager` is a realism specialist, not a code planner. For any finding that requires a code change, follow this handoff protocol:
 
-1. **Identify the issue** — describe the unrealistic pattern, cite log evidence, and name the likely cause (e.g., "walk rate is 3× MLB average, likely driven by `playerWait`/`computeWaitOutcome` thresholds in `playerActions.ts`").
+1. **Identify the issue** — describe the unrealistic pattern, cite log evidence, and name the likely cause (e.g., "walk rate is 3× MLB average, likely driven by probability thresholds in `playerWait`/`computeWaitOutcome` within `src/features/gameplay/context/playerActions.ts`").
 2. **Hand off to `@pm-agent`** — route the finding to `@pm-agent` for a full implementation plan that includes: which files change, PRNG replay risk, save/schema migration callout, and validation checklist.
 3. **Validate after the change** — once the execution agent applies the fix, `@baseball-manager` reviews the new game logs to confirm realism improved and no regressions appeared.
 
@@ -69,3 +69,14 @@ When asked to review logs, respond with:
 - Calls `Math.random()` directly — all randomness must go through `src/shared/utils/rng.ts`.
 - Modifies `detectDecision` in `reducer.ts` without flagging PRNG drift risk.
 - Changes a RxDB collection schema without flagging the `version` bump and `migrationStrategies` requirement.
+
+---
+
+## `@senior-lead` involvement
+
+`@baseball-manager` does not escalate directly to `@senior-lead`. The escalation path is:
+
+1. `@baseball-manager` identifies a realism issue requiring a code change and hands off to `@pm-agent`.
+2. `@pm-agent` assesses priority and risk flags — if the change is P0/P1 or touches a high-risk area (PRNG call order, RxDB schema, `advanceRunners`/`gameOver`/`hitBall`), `@pm-agent` routes to `@senior-lead` for a technical review before any execution agent begins work.
+3. After `@senior-lead` approves, the execution agent implements the fix.
+4. `@baseball-manager` validates the result against new game logs.

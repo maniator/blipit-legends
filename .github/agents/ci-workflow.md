@@ -101,13 +101,20 @@ If visual snapshot consistency in Copilot sessions is needed, install fonts via 
 | `.github/workflows/update-visual-snapshots.yml` | Regenerate visual snapshot baselines           |
 | `.github/workflows/copilot-setup-steps.yml`     | Copilot agent environment setup (no container) |
 
-## When to consult `@pm-agent`
+## Consult `@pm-agent` first for feature-driven workflow scope
 
-Route to `@pm-agent` before making workflow changes in any of these situations:
+Route to `@pm-agent` before implementation when a workflow change is tied to feature scope, release risk, or test-strategy tradeoffs. Keep `@senior-lead` escalation for technical sign-off on high-risk workflow changes.
 
-- **CI change is driven by a new feature's test requirements** — if you need a new workflow step because a new game feature requires a new type of test (e.g., determinism checks, save-migration tests), ask `@pm-agent` for the full test strategy before adding workflow steps.
-- **Unsure which validation commands belong in CI** — the canonical set is `yarn lint`, `yarn format:check`, `yarn typecheck`, `yarn typecheck:e2e`, `yarn test:coverage`, `yarn build`, `yarn test:e2e`. Consult `@pm-agent` (PM-06 eval question) if you are adding or removing from this list.
-- **Sharding or matrix expansion is proposed** — ask `@pm-agent` whether new test categories (e.g., save-integrity, regression-seed) warrant their own workflow step or can share an existing one.
+## Escalation to `@senior-lead`
+
+Request a `@senior-lead` review before merging if **any** of the following apply:
+
+- Any workflow permission scope change (`permissions:` block added or modified)
+- Any container image version bump (e.g., `mcr.microsoft.com/playwright:vX.Y.Z-noble`)
+- Any new secret reference (`${{ secrets.* }}`) added to a workflow
+- Any change to `.github/workflows/copilot-setup-steps.yml`
+
+Use the `SENIOR LEAD REVIEW REQUEST` template from `.github/agents/prompt-examples.md` and provide: workflow diff, permission scope summary, and artifact impact description. See the "Direct review — security-impacting CI change" example in `prompt-examples.md`.
 
 ## Pre-commit checklist
 

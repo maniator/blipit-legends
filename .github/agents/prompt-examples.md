@@ -183,6 +183,115 @@ strikeout rate hasn't regressed, and flag any new impossible sequences.
 
 ---
 
+## Senior Lead
+
+### Request a technical review for a high-value change
+
+```
+@senior-lead
+
+SENIOR LEAD REVIEW REQUEST
+Change objective: Add a `pitcherEra` field to SaveDoc so career stats can display ERA per saved game.
+Business priority: P2
+Acceptance criteria: ERA is persisted with each save; existing saves load without error; export/import unchanged.
+Rollout window: Next sprint
+Risk flags already identified:
+- RxDB schema change required (SaveDoc.pitcherEra: number)
+- Migration needed (default 0 for existing docs)
+- FNV-1a export signature changes for newly exported bundles when the header shape changes, even though older exports should still verify/import
+Execution agent(s): @rxdb-save-integrity
+```
+
+### Domain agent escalation to Senior Lead
+
+```
+@senior-lead
+
+I am @rxdb-save-integrity. I have completed the following work and need your sign-off before merge:
+
+Change: Bumped savesSchema.version from 3 → 4, added pitcherEra: number field, added
+migrationStrategies v4 entry (oldDoc.pitcherEra ?? 0).
+
+Evidence:
+- Schema diff: src/storage/db.ts lines 88–102 (version bump + field addition)
+- Migration: src/storage/db.ts lines 140–148 (never throws, defaults 0)
+- Upgrade-path test: src/storage/db.test.ts "schema migration: v3 → v4" (passes)
+- save-load.spec.ts: all 12 assertions pass
+- import.spec.ts: all 8 assertions pass, FNV-1a signature verifies correctly
+
+Please issue your technical verdict.
+```
+
+### PM ↔ Senior Lead confirmation flow — full example
+
+```
+Step 1: @pm-agent sends review request
+
+@senior-lead
+
+SENIOR LEAD REVIEW REQUEST
+Change objective: Rewrite advanceRunners.ts to support extra-base hit runner advancement.
+Business priority: P1
+Acceptance criteria: Runners advance correctly on doubles and triples; existing seed replays unchanged; all E2E pass.
+Rollout window: This release
+Risk flags already identified:
+- PRNG call order may change if new random() calls are added
+- advanceRunners is a high-risk area (historical impossible-state bugs)
+- Regression tests needed for doubles/triples runner advancement
+Execution agent(s): @simulation-correctness
+
+---
+
+Step 2: @senior-lead responds
+
+SENIOR LEAD VERDICT
+Verdict: REQUEST_CHANGES
+Risk class: High
+Go/no-go recommendation: Go with conditions
+
+Technical summary:
+advanceRunners.ts is a pure function called on every scoring event; any new random() call here
+will shift the PRNG sequence for every existing seed. The change is feasible but requires a seed
+replay audit before and after. The module cycle order is safe (advanceRunners imports from nothing
+later in the chain).
+
+Blocking issues:
+- Must provide before/after seed replay trace showing identical call counts for non-affected paths.
+- Must add seed-anchored regression tests for at least 3 double/triple scenarios.
+
+Required follow-ups:
+- Update docs/agent/baseball-rules-delta.md with the new advancement model.
+
+Recommended execution agent: @simulation-correctness
+
+---
+
+Step 3: @pm-agent confirms
+
+PM DISPOSITION
+Disposition: SHIP — conditions met; @simulation-correctness to proceed with seed audit requirement.
+```
+
+### Direct review — security-impacting CI change
+
+```
+@senior-lead
+
+SENIOR LEAD REVIEW REQUEST
+Change objective: Bump the Playwright container image in playwright-e2e.yml from v1.58.2-noble to v1.60.0-noble.
+Business priority: P2
+Acceptance criteria: All E2E tests pass on the new image; visual snapshot baselines regenerated.
+Rollout window: Before next release
+Risk flags already identified:
+- Container image change affects all snapshot baselines
+- Must regenerate all visual snapshots after bump
+Execution agent(s): @ci-workflow + @e2e-test-runner
+
+Please provide a security and supply-chain sign-off for this image bump.
+```
+
+---
+
 ## Safe refactor
 
 ### Behavior-preserving reducer refactor

@@ -25,6 +25,7 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 - Never suggests code edits unless explicitly requested.
 - Flags module cycle order, PRNG drift, schema migration, and snapshot impact on every applicable plan.
 - Hands off to a specialist agent (see routing table in `pm-agent.md`) after producing a plan.
+- Routes high-value changes to `@senior-lead` for technical review before implementation begins.
 
 **Supporting docs:**
 
@@ -33,6 +34,33 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 - Baseball rules delta: `docs/agent/baseball-rules-delta.md`
 - Eval suite: `docs/agent/pm-agent-eval-suite.md`
 - Rollout playbook: `docs/agent/pm-agent-rollout.md`
+
+---
+
+### `senior-lead`
+
+**When to use:** Any high-value change that requires cross-cutting technical review before implementation — including RxDB schema changes, PRNG-adjacent simulation changes, CI security changes, broad refactors, or any change flagged P0/P1 by `@pm-agent`.
+
+**The Senior Lead is the final engineering sign-off layer.** All other agents execute; the Senior Lead reviews and approves/blocks.
+
+**Mandatory review triggers (any one is sufficient):**
+
+- Any RxDB schema `properties`, `required`, or `indexes` change
+- Any change to simulation PRNG call order
+- Any change to save/export format (FNV-1a signature, event `idx` structure)
+- Any CI workflow permission change, container image bump, or new secret usage
+- Any refactor touching ≥ 5 files in `src/features/gameplay/context/`
+- Any change to `copilot-setup-steps.yml`
+- Any change flagged P0 or P1 by `@pm-agent`
+
+**Key guardrails:**
+
+- Issues a structured verdict: **APPROVE**, **REQUEST_CHANGES**, or **BLOCK**
+- Holds technical veto on BLOCK verdicts — `@pm-agent` cannot override a BLOCK
+- Evaluates all five review categories: product risk, technical risk, determinism/regression risk, data/security risk, rollback readiness
+- Does not replace domain agents — delegates implementation to the appropriate specialist after review
+
+**Spec:** `.github/agents/senior-lead.md`
 
 ---
 
@@ -164,6 +192,22 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 **Critical — Node 24 inside the container:**
 
 > The Playwright container does not ship Node 24. Every `docker run` command must install it first: `npm install -g n && n 24 && hash -r` before `corepack enable && yarn install`.
+
+---
+
+## Senior Lead collaboration matrix
+
+Use this table to determine when `@senior-lead` review is required and what evidence to bring.
+
+| Agent                     | When `@senior-lead` review is required                                            | Evidence to provide                                                | Expected verdict                                                           |
+| ------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| `@safe-refactor`          | Refactor spans ≥ 5 gameplay context files OR touches reducer cycle order          | Diff summary, test coverage before/after, seed replay confirmation | Risk class + APPROVE / REQUEST_CHANGES                                     |
+| `@simulation-correctness` | Fix alters PRNG call order OR touches `advanceRunners`, `gameOver`, or `hitBall`  | Seed + event index, before/after RNG call trace, regression test   | Determinism sign-off + technical verdict                                   |
+| `@rxdb-save-integrity`    | Any schema version bump OR save/export format change                              | Schema diff, migration strategy code, upgrade-path test result     | Data integrity sign-off + go/no-go                                         |
+| `@ci-workflow`            | Workflow permission change, container image bump, or new secret usage             | Workflow diff, permission scope, artifact impact summary           | Security sign-off + APPROVE / BLOCK                                        |
+| `@ui-visual-snapshot`     | Layout changes affecting all 6 viewport/device Playwright projects simultaneously | Before/after screenshots, responsive-smoke test results            | Risk assessment (hard-block only if mobile CTA or accessibility is broken) |
+| `@e2e-test-runner`        | Fixture format changes OR removal/skip of the determinism project test            | Fixture diff, test coverage impact, project list                   | APPROVE / REQUEST_CHANGES                                                  |
+| `@playwright-prod`        | Production QA reveals a regression introduced by a recent merge                   | QA report, reproduction steps, affected route or component         | Root cause assessment + fix recommendation                                 |
 
 ---
 
