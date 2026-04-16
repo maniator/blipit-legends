@@ -253,17 +253,7 @@ describe("sanitizePlayer", () => {
     expect(result.role).toBe("pitcher");
   });
 
-  it("falls back to batting.eye when batting.stamina is undefined (legacy export)", () => {
-    const player = {
-      ...makePlayer(),
-      batting: { contact: 50, power: 50, speed: 50, eye: 65 },
-    } as unknown as TeamPlayer;
-    const result = sanitizePlayer(player, { index: 0, section: "lineup" });
-    if (result.role !== "batter") throw new Error("Expected batter player in test");
-    expect(result.batting.stamina).toBe(65);
-  });
-
-  it("throws when batting.stamina and legacy batting.eye are both missing", () => {
+  it("throws when batting.stamina is undefined", () => {
     const player = {
       ...makePlayer(),
       batting: { contact: 50, power: 50, speed: 50 },
@@ -293,24 +283,14 @@ describe("sanitizePlayer", () => {
     );
   });
 
-  it("falls back to pitching.command when pitching.movement is undefined (legacy export)", () => {
-    const player = {
-      ...makePlayer({ role: "pitcher" }),
-      pitching: { velocity: 60, control: 50, command: 47, stamina: 60 },
-    } as unknown as TeamPlayer;
-    const result = sanitizePlayer(player, { index: 0, section: "pitchers" });
-    if (result.role !== "pitcher") throw new Error("Expected pitcher player in test");
-    expect(result.pitching.movement).toBe(47);
-  });
-
-  it("falls back to pitching.control when pitching.movement and pitching.command are undefined", () => {
+  it("throws when pitching.movement is undefined", () => {
     const player = {
       ...makePlayer({ role: "pitcher" }),
       pitching: { velocity: 60, control: 50, stamina: 60 },
     } as unknown as TeamPlayer;
-    const result = sanitizePlayer(player, { index: 0, section: "pitchers" });
-    if (result.role !== "pitcher") throw new Error("Expected pitcher player in test");
-    expect(result.pitching.movement).toBe(50);
+    expect(() => sanitizePlayer(player, { index: 0, section: "pitchers" })).toThrow(
+      "roster pitchers[0].pitching.movement must be a finite number",
+    );
   });
 
   it("throws when pitching.stamina is null (malformed pitcher import)", () => {
