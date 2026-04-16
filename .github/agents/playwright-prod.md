@@ -76,3 +76,11 @@ All standard Playwright MCP tools work normally once you are on `http://localhos
 - **Redirect rewrites** — `Location` headers are rewritten to stay on `http://localhost:3456/...`.
 - **Third-party assets** — fonts, analytics, CDNs loaded from other external domains will be blocked by the browser sandbox. Core app layout and functionality are intact.
 - **Port conflict** — if port 3456 is taken, run `BLIPIT_PROXY_PORT=3457 node .github/scripts/blipit-proxy.js &` and navigate to `http://localhost:3457`.
+
+## Escalation to `@senior-lead`
+
+If production QA reveals a regression that was introduced by a recent merge, escalate to `@senior-lead` for root cause assessment before any fix work begins:
+
+- Document the regression: affected route or component, reproduction steps, and a screenshot
+- Route findings through `@pm-agent` first (for risk scoping) — `@pm-agent` will issue the `SENIOR LEAD REVIEW REQUEST` when the root cause touches a high-risk area (PRNG, schema, CI)
+- `@senior-lead` will issue a verdict and recommend the correct execution agent for the fix
