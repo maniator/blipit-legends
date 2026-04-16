@@ -66,5 +66,7 @@ test.describe("Manager Mode", () => {
     // Option format: "Name (Pos) [C +N, P +N, PA N] [+N%]"
     await expect(pinchHitterSelect).toContainText(/J\. Lee \(LF\).*\[.*\+6%\]/);
     await expect(pinchHitterSelect).toContainText(/K\. Patel \(DH\).*\[.*-2%\]/);
+    await expect(pinchHitterSelect).toContainText(/J\. Lee \(LF\).*\[.*PA 0/i);
+    await expect(pinchHitterSelect).toContainText(/K\. Patel \(DH\).*\[.*PA 0/i);
   });
 });
