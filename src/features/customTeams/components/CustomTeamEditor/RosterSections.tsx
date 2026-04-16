@@ -98,7 +98,7 @@ type SectionSharedProps = {
   pendingPlayerImport: PendingPlayerImport | null;
   dispatch: React.Dispatch<EditorAction>;
   setPendingPlayerImport: React.Dispatch<React.SetStateAction<PendingPlayerImport | null>>;
-  handleExportPlayer: (p: EditorPlayer, role: "batter" | "pitcher") => void;
+  handleExportPlayer: (p: EditorPlayer) => void;
 };
 
 // ── LineupFormSection ──────────────────────────────────────────────────────────
@@ -145,7 +145,7 @@ export const LineupFormSection: React.FunctionComponent<LineupFormSectionProps> 
               dispatch({ type: "UPDATE_PLAYER", section: "lineup", index: i, player: patch })
             }
             onRemove={() => dispatch({ type: "REMOVE_PLAYER", section: "lineup", index: i })}
-            onExport={() => handleExportPlayer(p, "batter")}
+            onExport={() => handleExportPlayer(p)}
           />
         ))}
       </SortableContext>
@@ -218,7 +218,7 @@ export const BenchFormSection: React.FunctionComponent<BenchFormSectionProps> = 
               dispatch({ type: "UPDATE_PLAYER", section: "bench", index: i, player: patch })
             }
             onRemove={() => dispatch({ type: "REMOVE_PLAYER", section: "bench", index: i })}
-            onExport={() => handleExportPlayer(p, "batter")}
+            onExport={() => handleExportPlayer(p)}
           />
         ))}
       </SortableContext>
@@ -299,7 +299,7 @@ export const PitchersSection: React.FunctionComponent<PitchersSectionProps> = ({
               dispatch({ type: "UPDATE_PLAYER", section: "pitchers", index: i, player: patch })
             }
             onRemove={() => dispatch({ type: "REMOVE_PLAYER", section: "pitchers", index: i })}
-            onExport={() => handleExportPlayer(p, "pitcher")}
+            onExport={() => handleExportPlayer(p)}
           />
         ))}
       </SortableContext>

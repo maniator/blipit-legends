@@ -21,7 +21,6 @@ import {
 
 type Props = {
   player: EditorPlayer;
-  isPitcher: boolean;
   /** When true, stat sliders are disabled — stats are immutable after player creation. */
   isExistingPlayer?: boolean;
   onChange: (patch: Partial<EditorPlayer>) => void;
@@ -29,10 +28,10 @@ type Props = {
 
 const PlayerStatFields: React.FunctionComponent<Props> = ({
   player,
-  isPitcher,
   isExistingPlayer = false,
   onChange,
 }) => {
+  const isPitcher = player.role === "pitcher";
   const asPitcher = player.role === "pitcher" ? player : null;
   const asBatter = player.role === "batter" ? player : null;
 

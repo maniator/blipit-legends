@@ -335,59 +335,57 @@ export function editorStateToCreateInput(state: EditorState): CreateCustomTeamIn
     city: state.city.trim() || undefined,
     nickname: state.nickname.trim() || undefined,
     roster: {
-      lineup: state.lineup.map(editorToTeamPlayer("batter")),
-      bench: state.bench.map(editorToTeamPlayer("batter")),
-      pitchers: state.pitchers.map(editorToTeamPlayer("pitcher")),
+      lineup: state.lineup.map(editorToTeamPlayer),
+      bench: state.bench.map(editorToTeamPlayer),
+      pitchers: state.pitchers.map(editorToTeamPlayer),
     },
   };
 }
 
-const editorToTeamPlayer =
-  (_role: "batter" | "pitcher") =>
-  (p: EditorPlayer): TeamPlayer => {
-    const trimmedPosition = p.position.trim();
+const editorToTeamPlayer = (p: EditorPlayer): TeamPlayer => {
+  const trimmedPosition = p.position.trim();
 
-    if (p.role === "pitcher") {
-      const pitcherRoleFromPosition =
-        trimmedPosition === "SP" || trimmedPosition === "RP" || trimmedPosition === "SP/RP"
-          ? trimmedPosition
-          : undefined;
-      const normalizedPitchingRole = p.pitchingRole ?? pitcherRoleFromPosition ?? "SP/RP";
+  if (p.role === "pitcher") {
+    const pitcherRoleFromPosition =
+      trimmedPosition === "SP" || trimmedPosition === "RP" || trimmedPosition === "SP/RP"
+        ? trimmedPosition
+        : undefined;
+    const normalizedPitchingRole = p.pitchingRole ?? pitcherRoleFromPosition ?? "SP/RP";
 
-      if (p.velocity === undefined || p.control === undefined || p.movement === undefined) {
-        throw new Error("Pitcher is missing pitching stats.");
-      }
-
-      return {
-        id: p.id,
-        name: p.name.trim(),
-        role: "pitcher",
-        position: normalizedPitchingRole,
-        handedness: p.handedness,
-        pitching: {
-          velocity: p.velocity,
-          control: p.control,
-          movement: p.movement,
-          stamina: p.stamina ?? 60,
-        },
-        pitchingRole: normalizedPitchingRole,
-      };
+    if (p.velocity === undefined || p.control === undefined || p.movement === undefined) {
+      throw new Error("Pitcher is missing pitching stats.");
     }
 
     return {
       id: p.id,
       name: p.name.trim(),
-      role: "batter",
-      position: trimmedPosition || "DH",
+      role: "pitcher",
+      position: normalizedPitchingRole,
       handedness: p.handedness,
-      batting: { contact: p.contact, power: p.power, speed: p.speed, stamina: p.stamina ?? 50 },
+      pitching: {
+        velocity: p.velocity,
+        control: p.control,
+        movement: p.movement,
+        stamina: p.stamina ?? 60,
+      },
+      pitchingRole: normalizedPitchingRole,
     };
+  }
+
+  return {
+    id: p.id,
+    name: p.name.trim(),
+    role: "batter",
+    position: trimmedPosition || "DH",
+    handedness: p.handedness,
+    batting: { contact: p.contact, power: p.power, speed: p.speed, stamina: p.stamina ?? 50 },
   };
+};
 
 /**
- * Converts a single `EditorPlayer` to a `TeamPlayer` with the given role.
+ * Converts a single `EditorPlayer` to a `TeamPlayer`.
  * Exported for use in the player-export flow (where we need the role to
  * correctly populate the pitching fields and compute the player sig).
+ * The player's role is determined by `p.role`.
  */
-export const editorPlayerToTeamPlayer = (p: EditorPlayer, role: "batter" | "pitcher"): TeamPlayer =>
-  editorToTeamPlayer(role)(p);
+export const editorPlayerToTeamPlayer = (p: EditorPlayer): TeamPlayer => editorToTeamPlayer(p);
