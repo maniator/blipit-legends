@@ -61,6 +61,15 @@ When investigating a simulation bug, capture all reproducibility context before 
 - Keep tests in `src/context/*.test.ts` files co-located with the module under test.
 - Use `makeState` and `mockRandom` from `src/test/testHelpers.ts` to set up deterministic test scenarios.
 
+## When to consult `@pm-agent`
+
+Route to `@pm-agent` before writing code in any of these situations:
+
+- **Root cause spans multiple modules** — if the bug implicates `advanceRunners`, `gameOver`, `reducer`, and a handler file simultaneously, ask `@pm-agent` for a scoped implementation plan before touching any of them.
+- **Fix requires a rule interpretation** — if the correct behavior is ambiguous (e.g., "should a bunt foul with two strikes result in an out?"), consult `@pm-agent` against `docs/agent/baseball-rules-delta.md` before deciding.
+- **Fix adds or removes a PRNG call** — any conditional `random()` insertion or deletion changes the call sequence for all subsequent events. Ask `@pm-agent` to flag PRNG-replay risk and identify which existing tests will break.
+- **Bug may require a new game behavior** — if fixing the bug means the simulation will now behave differently (e.g., correcting a stolen-base rule), treat this as a feature change and get a full plan from `@pm-agent` first.
+
 ## Pre-commit checklist
 
 - [ ] Bug is reproduced with a specific seed and event index before any code change

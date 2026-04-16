@@ -46,6 +46,15 @@ If a refactor touches any RxDB collection schema (`src/storage/db.ts`):
 - For reducer tests, keep layered coverage: handler-level behavior tests + root orchestration coverage.
 - Do not delete or disable existing tests unless they are directly replaced with equivalent tests.
 
+## When to consult `@pm-agent`
+
+Route to `@pm-agent` before starting a refactor in any of these situations:
+
+- **Scope is ambiguous** — if you are unsure which files the refactor touches, ask `@pm-agent` for a dependency map (Layer A2 of `docs/agent/pm-agent-knowledge-map.md`) before beginning.
+- **Refactor touches gameplay engine files** — any change inside `src/features/gameplay/context/` carries a risk of subtle rule or PRNG behavior change. Ask `@pm-agent` to confirm the refactor is truly behavior-preserving.
+- **Module cycle-free order is at risk** — the order `strategy → advanceRunners → gameOver → playerOut → hitBall → buntAttempt → playerActions → reducer` is a hard constraint. If the refactor moves imports across that boundary, get `@pm-agent` sign-off first.
+- **Schema or RxDB files are in scope** — any refactor that passes through `src/storage/` may trigger a schema-hash mismatch. Ask `@pm-agent` whether a version bump and migration strategy are required.
+
 ## Pre-commit checklist
 
 Before considering any refactor complete, verify:

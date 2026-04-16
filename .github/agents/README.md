@@ -6,9 +6,39 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 
 ## Agents
 
+### `pm-agent`
+
+**When to use:** Any time a task starts with planning, scoping, risk review, baseball-rule questions, or PR readiness — especially for gameplay engine, RxDB/saves, or rules-heavy work. This agent should be your **first stop** before invoking a specialist execution agent.
+
+**Auto-routing triggers (no explicit `@pm-agent` needed):**
+
+- Planning or scoping a feature that touches gameplay, saves, or routes.
+- Questions about how a baseball rule works or how the simulator implements it.
+- "What files change for X?", "What are the risks of Y?", "Is Z safe to do?"
+- PR description drafts for gameplay engine, rules, or persistence changes.
+- Any request mentioning: inning, pitch, batter, runner, steal, bunt, walk, strikeout, home run, extra innings, tiebreak runner, IBB, manager mode, defensive shift, pinch hitter, RxDB schema migration, save compatibility, PRNG replay, or visual snapshot impact.
+
+**Key guardrails:**
+
+- Always cites file + line range for simulator claims; always cites MLB rulebook section for official rules.
+- Explicitly labels every baseball answer as `[Official MLB]` vs `[Ballgame]`.
+- Never suggests code edits unless explicitly requested.
+- Flags module cycle order, PRNG drift, schema migration, and snapshot impact on every applicable plan.
+- Hands off to a specialist agent (see routing table in `pm-agent.md`) after producing a plan.
+
+**Supporting docs:**
+
+- Spec + system prompt: `.github/agents/pm-agent.md`
+- Knowledge map: `docs/agent/pm-agent-knowledge-map.md`
+- Baseball rules delta: `docs/agent/baseball-rules-delta.md`
+- Eval suite: `docs/agent/pm-agent-eval-suite.md`
+- Rollout playbook: `docs/agent/pm-agent-rollout.md`
+
+---
+
 ### `baseball-manager`
 
-**When to use:** Reviewing completed game-run logs to identify what should be tuned for more realistic baseball outcomes.
+**When to use:** Reviewing completed game-run logs to identify what should be tuned for more realistic baseball outcomes. Also use after any gameplay-probability change to validate the result feels like real baseball.
 
 **Key guardrails:**
 
@@ -16,6 +46,9 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 - Separates must-fix realism issues from nice-to-have tuning
 - Prefers targeted parameter/logic adjustments over broad rewrites
 - Requires explicit expected effects, tradeoffs, and validation steps
+- Routes any code-change recommendation to `@pm-agent` first for risk review and implementation planning
+
+**Works with `@pm-agent`:** These two agents form the planning ↔ validation loop for gameplay changes. `@pm-agent` plans and scopes; `@baseball-manager` validates realism before and after. See the collaboration section in each agent's spec file for the full handoff protocol.
 
 ---
 
