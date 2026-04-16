@@ -69,7 +69,7 @@ A change is being made to the `GameControls` component layout. What is the full 
 - Cites `docs/architecture.md` for `GameControls` as a lazy-loaded component.
 - Lists all 6+ Playwright viewport projects for snapshot regeneration.
 - Flags that regeneration must happen inside `mcr.microsoft.com/playwright:v1.58.2-noble`.
-- Lists validation commands: `yarn lint`, `yarn format:check`, `yarn typecheck`, `yarn test`, `yarn build`, `yarn test:e2e`.
+- Lists validation commands: `yarn lint`, `yarn format:check`, `yarn typecheck`, `yarn typecheck:e2e`, `yarn test:coverage`, `yarn build`, `yarn test:e2e`.
 - Recommends `@ui-visual-snapshot` agent for execution.
 
 ---
@@ -117,6 +117,7 @@ What is the full set of validation commands to run before opening a PR that touc
 
 - `yarn lint` (and `yarn lint:fix` for import order)
 - `yarn format:check`
+- `yarn typecheck`
 - `yarn typecheck:e2e`
 - `yarn test:coverage`
 - `yarn build`
