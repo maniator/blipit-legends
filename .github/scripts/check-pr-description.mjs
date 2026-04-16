@@ -9,8 +9,10 @@
  *   1. Empty or trivially short body.
  *   2. Checkbox ratio: >50% of non-empty content lines are task checkboxes
  *      (- [ ] / - [x] / * [ ] / * [x]).
- *   3. No prose: fewer than 2 lines of plain narrative text (non-list,
- *      non-heading, non-code-fence, length > 20 chars).
+ *   3. No prose: no plain narrative text (non-list, non-heading,
+ *      non-code-fence) with length > 40 chars or containing sentence-ending
+ *      punctuation. Counts whole paragraphs, not individual lines, so a single
+ *      long paragraph passes.
  *
  * Usage:
  *   PR_BODY="..." node .github/scripts/check-pr-description.mjs
@@ -56,7 +58,7 @@ for (const line of nonEmptyLines) {
     // Headings are structural — neutral; don't count toward prose or checkbox.
   } else if (/^[-*+]\s/.test(t) || /^\d+\.\s/.test(t)) {
     // Plain list items — neutral for the prose check.
-  } else if (t.length > 20) {
+  } else if (t.length > 40 || /[.!?]/.test(t)) {
     proseCount++;
   }
 }
@@ -73,9 +75,9 @@ if (checkboxRatio > 0.5) {
   );
 }
 
-if (proseCount < 2) {
+if (proseCount < 1) {
   issues.push(
-    "No prose summary found. The description needs at least a sentence or two " +
+    "No prose summary found. The description needs at least one sentence " +
       "explaining what changed and why so reviewers have context.",
   );
 }

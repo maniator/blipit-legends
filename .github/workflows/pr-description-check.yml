@@ -37,8 +37,9 @@ jobs:
           fi
 
       # Post or update a warning comment when the description needs improvement.
+      # Skipped for fork PRs where GITHUB_TOKEN lacks write permissions.
       - name: Post or update warning comment
-        if: steps.check.outputs.result == 'fail'
+        if: steps.check.outputs.result == 'fail' && github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@v7
         with:
           script: |
@@ -79,11 +80,15 @@ jobs:
               'Use the `@pr-metadata` agent to draft a proper description, or write one manually following the example above.',
             ].join('\n');
 
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                per_page: 100,
+              }
+            );
 
             const existing = comments.find((c) => c.body.includes(marker));
 
@@ -104,18 +109,23 @@ jobs:
             }
 
       # Dismiss the warning comment once the description has been improved.
+      # Skipped for fork PRs where GITHUB_TOKEN lacks write permissions.
       - name: Dismiss warning comment
-        if: steps.check.outputs.result == 'pass'
+        if: steps.check.outputs.result == 'pass' && github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@v7
         with:
           script: |
             const marker = '<!-- pr-description-check -->';
 
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                per_page: 100,
+              }
+            );
 
             const existing = comments.find((c) => c.body.includes(marker));
 
