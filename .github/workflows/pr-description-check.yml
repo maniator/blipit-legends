@@ -10,11 +10,15 @@ on:
     types: [opened, edited, reopened, synchronize]
 
 jobs:
+  # Job 1: check out the PR's code and run the heuristic script.
+  # Only needs read access — even if a PR modifies the script it cannot
+  # abuse the token to write comments or open issues.
   check:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
+    outputs:
+      result: ${{ steps.check.outputs.result }}
 
     steps:
       - name: Checkout
@@ -36,10 +40,20 @@ jobs:
             echo "result=fail" >> "$GITHUB_OUTPUT"
           fi
 
+  # Job 2: post, update, or dismiss the warning comment based on the
+  # result from job 1.  This job never checks out the repository, so a
+  # PR cannot inject malicious code that runs with write permissions.
+  comment:
+    runs-on: ubuntu-latest
+    needs: check
+    permissions:
+      pull-requests: write
+
+    steps:
       # Post or update a warning comment when the description needs improvement.
       # Skipped for fork PRs where GITHUB_TOKEN lacks write permissions.
       - name: Post or update warning comment
-        if: steps.check.outputs.result == 'fail' && github.event.pull_request.head.repo.full_name == github.repository
+        if: needs.check.outputs.result == 'fail' && github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@v7
         with:
           script: |
@@ -111,7 +125,7 @@ jobs:
       # Fail the job so the check can be used as a required status check.
       # The warning comment above already explains what to fix.
       - name: Fail if description is invalid
-        if: steps.check.outputs.result == 'fail'
+        if: needs.check.outputs.result == 'fail'
         run: |
           echo "❌ PR description failed the quality check."
           echo "Update it to reviewer-readable prose that clearly explains the PR."
@@ -121,7 +135,7 @@ jobs:
       # Dismiss the warning comment once the description has been improved.
       # Skipped for fork PRs where GITHUB_TOKEN lacks write permissions.
       - name: Dismiss warning comment
-        if: steps.check.outputs.result == 'pass' && github.event.pull_request.head.repo.full_name == github.repository
+        if: needs.check.outputs.result == 'pass' && github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@v7
         with:
           script: |
