@@ -9,17 +9,16 @@
  *   1. Empty or trivially short body.
  *   2. Checkbox ratio: >50% of non-empty content lines are task checkboxes
  *      (- [ ] / - [x] / * [ ] / * [x]).
- *   3. No prose: no plain narrative text (non-list, non-heading,
- *      non-code-fence) with length > 40 chars or containing sentence-ending
- *      punctuation. Counts whole paragraphs, not individual lines, so a single
- *      long paragraph passes.
+ *   3. No prose: no plain narrative text on an individual non-list,
+ *      non-heading, non-code-fence line with length > 40 chars or
+ *      containing sentence-ending punctuation.
  *
  * Usage:
  *   PR_BODY="..." node .github/scripts/check-pr-description.mjs
  *
  * Exit codes:
  *   0 — description is reviewer-friendly
- *   1 — description needs improvement (warning; does not block merge)
+ *   1 — description needs improvement and fails the check
  */
 
 const body = process.env.PR_BODY ?? "";

@@ -114,7 +114,7 @@ jobs:
         if: steps.check.outputs.result == 'fail'
         run: |
           echo "❌ PR description failed the quality check."
-          echo "Update it to reviewer-readable prose (Summary / Changes / Testing)."
+          echo "Update it to reviewer-readable prose that clearly explains the PR."
           echo "Use the @pr-metadata agent or write it manually — no checklist items allowed."
           exit 1
 

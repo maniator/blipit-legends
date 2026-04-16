@@ -95,7 +95,7 @@ Reviewer callouts: trade-offs made, known limitations, follow-up work deferred, 
 
 ## Output format
 
-Return exactly two blocks:
+Return exactly three blocks:
 
 **TITLE:**
 `<the PR title, one line>`
@@ -106,4 +106,5 @@ Return exactly two blocks:
 <the full PR description in Markdown — Summary, Changes, Testing, optional Notes>
 ```
 
-Include a one-sentence rationale: either "Kept static — [reason]" or "Updated — [what changed]".
+**RATIONALE:**
+`<one sentence: either "Kept static — [reason]" or "Updated — [what changed]">`
