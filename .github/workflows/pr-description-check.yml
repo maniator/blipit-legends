@@ -104,7 +104,9 @@ jobs:
               }
             );
 
-            const existing = comments.find((c) => c.body.includes(marker));
+            const existing = comments.find(
+              (c) => c.body.includes(marker) && c.user?.login === 'github-actions[bot]'
+            );
 
             if (existing) {
               await github.rest.issues.updateComment({
@@ -151,7 +153,9 @@ jobs:
               }
             );
 
-            const existing = comments.find((c) => c.body.includes(marker));
+            const existing = comments.find(
+              (c) => c.body.includes(marker) && c.user?.login === 'github-actions[bot]'
+            );
 
             if (existing) {
               await github.rest.issues.deleteComment({

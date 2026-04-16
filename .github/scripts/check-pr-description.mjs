@@ -55,7 +55,7 @@ for (const line of nonEmptyLines) {
   // Only lines outside code fences count toward the checkbox ratio denominator.
   eligibleLineCount++;
 
-  if (/^[-*]\s+\[[ x]\]/.test(t)) {
+  if (/^[-*]\s+\[[ xX]\]/.test(t)) {
     checkboxCount++;
   } else if (/^#{1,6}\s/.test(t)) {
     // Headings are structural — neutral; don't count toward prose or checkbox.
