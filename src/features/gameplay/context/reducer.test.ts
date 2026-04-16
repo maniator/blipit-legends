@@ -1005,6 +1005,54 @@ describe("pinch_hitter decision", () => {
     }
   });
 
+  it("detectDecision pinch_hitter includes fatigue-adjusted candidate fields", () => {
+    const state = makeState({
+      baseLayout: [0, 0, 1],
+      outs: 0,
+      inning: 8,
+      atBat: 0,
+      batterIndex: [3, 0],
+      rosterBench: [["b1"], []],
+      lineupOrder: [
+        ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9"],
+        ["ph1", "ph2", "ph3", "ph4", "ph5", "ph6", "ph7", "ph8", "ph9"],
+      ],
+      batterPlateAppearances: [{ b1: 6, p4: 7 }, {}],
+      resolvedMods: [
+        {
+          b1: {
+            contactMod: 8,
+            powerMod: 5,
+            speedMod: 0,
+            velocityMod: 0,
+            controlMod: 0,
+            movementMod: 0,
+            staminaMod: -10,
+          },
+          p4: {
+            contactMod: 0,
+            powerMod: 0,
+            speedMod: 0,
+            velocityMod: 0,
+            controlMod: 0,
+            movementMod: 0,
+            staminaMod: -10,
+          },
+        },
+        {},
+      ],
+    });
+    const d = detectDecision(state, "balanced", true);
+    expect(d?.kind).toBe("pinch_hitter");
+    if (d?.kind === "pinch_hitter") {
+      expect(d.currentBatterPlateAppearances).toBe(7);
+      expect((d.currentBatterFatigueContactPenalty ?? 0) > 0).toBe(true);
+      expect(d.candidates[0].plateAppearances).toBe(6);
+      expect((d.candidates[0].fatigueContactPenalty ?? 0) > 0).toBe(true);
+      expect((d.candidates[0].effectiveContactMod ?? 0) < d.candidates[0].contactMod).toBe(true);
+    }
+  });
+
   it("set_pinch_hitter_strategy stores strategy and clears pending decision", () => {
     const { state, logs } = dispatchAction(
       makeState({

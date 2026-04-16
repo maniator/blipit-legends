@@ -16,6 +16,7 @@ export type PlayerCustomization = {
   controlMod?: ModPreset;
   velocityMod?: ModPreset;
   movementMod?: ModPreset;
+  /** Shared stamina modifier (derived from batting/pitching stamina). */
   staminaMod?: ModPreset;
 };
 
@@ -29,7 +30,7 @@ export type ResolvedPlayerMods = {
   velocityMod: number;
   controlMod: number;
   movementMod: number;
-  /** Higher staminaMod = pitcher stays effective for more batters before fatigue sets in. */
+  /** Higher staminaMod delays fatigue onset for batters and pitchers. */
   staminaMod: number;
 };
 
@@ -45,6 +46,14 @@ export type PinchHitterCandidate = {
   powerMod: number;
   /** Batter-edge percent for this candidate vs active pitcher (positive = hitter edge). */
   matchupDeltaPct?: number;
+  /** Completed plate appearances this game for the candidate. */
+  plateAppearances?: number;
+  /** Batter fatigue penalties used in decision scoring/display. */
+  fatigueContactPenalty?: number;
+  fatiguePowerPenalty?: number;
+  /** Fatigue-adjusted offensive mods used for manager decisions. */
+  effectiveContactMod?: number;
+  effectivePowerMod?: number;
 };
 
 /**

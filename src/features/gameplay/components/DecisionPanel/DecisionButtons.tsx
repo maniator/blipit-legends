@@ -114,6 +114,9 @@ const DecisionButtons: React.FunctionComponent<Props> = ({
           lineupIdx={pendingDecision.lineupIdx}
           pitcherHandedness={pendingDecision.pitcherHandedness}
           currentBatterMatchupDeltaPct={pendingDecision.currentBatterMatchupDeltaPct}
+          currentBatterPlateAppearances={pendingDecision.currentBatterPlateAppearances}
+          currentBatterFatigueContactPenalty={pendingDecision.currentBatterFatigueContactPenalty}
+          currentBatterFatiguePowerPenalty={pendingDecision.currentBatterFatiguePowerPenalty}
           onSkip={onSkip}
           onDispatch={onDispatch}
         />
