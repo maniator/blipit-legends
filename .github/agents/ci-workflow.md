@@ -101,6 +101,17 @@ If visual snapshot consistency in Copilot sessions is needed, install fonts via 
 | `.github/workflows/update-visual-snapshots.yml` | Regenerate visual snapshot baselines           |
 | `.github/workflows/copilot-setup-steps.yml`     | Copilot agent environment setup (no container) |
 
+## Escalation to `@senior-lead`
+
+Request a `@senior-lead` review before merging if **any** of the following apply:
+
+- Any workflow permission scope change (`permissions:` block added or modified)
+- Any container image version bump (e.g., `mcr.microsoft.com/playwright:vX.Y.Z-noble`)
+- Any new secret reference (`${{ secrets.* }}`) added to a workflow
+- Any change to `copilot-setup-steps.yml` beyond dependency installs
+
+Use the `SENIOR LEAD REVIEW REQUEST` template from `.github/agents/prompt-examples.md` and provide: workflow diff, permission scope summary, and artifact impact description. See the "Direct review — security-impacting CI change" example in `prompt-examples.md`.
+
 ## Pre-commit checklist
 
 - [ ] Workflow diff is minimal and reviewed line-by-line

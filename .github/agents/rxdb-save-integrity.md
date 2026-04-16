@@ -121,6 +121,15 @@ When changing this flow:
 - The E2E `save-load.spec.ts` and `import.spec.ts` are the integration tests — keep them passing.
 - The fixture file `e2e/fixtures/sample-save.json` is a signed export bundle; update it if the export format changes.
 
+## Escalation to `@senior-lead`
+
+Request a `@senior-lead` review before merging if **any** of the following apply:
+
+- Any schema `version` bump (any collection)
+- Any change to the save/export format (FNV-1a signature scheme, event `idx` structure, `stateSnapshot` shape)
+
+Use the `SENIOR LEAD REVIEW REQUEST` template from `.github/agents/prompt-examples.md` and provide: schema diff, migration strategy code, and the upgrade-path test result. See the "Domain agent escalation to Senior Lead" example in `prompt-examples.md` for the exact format.
+
 ## Pre-commit checklist
 
 - [ ] **Schema change?** → version bumped, migration strategy added, upgrade-path test added (see `## Schema versioning guardrails` above)

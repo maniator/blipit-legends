@@ -387,6 +387,16 @@ sudo chown -hR "$(id -u):$(id -g)" dist/ node_modules/ .yarn/ e2e/tests/ 2>/dev/
 
 **Visual diff failures** — inspect the `-diff.png` and `-received.png` in `test-results/` alongside the committed `-expected.png` baseline. If the diff shows an intentional UI change, regenerate the baseline following the snapshot update flow above.
 
+## Escalation to `@senior-lead`
+
+Request a `@senior-lead` review before merging if **any** of the following apply:
+
+- The fixture format changes (e.g., new required fields, changed `sig` computation, altered `header` shape)
+- A test in the `determinism` project is removed or skipped
+- The `loadFixture` helper API is modified in a breaking way
+
+Use the `SENIOR LEAD REVIEW REQUEST` template from `.github/agents/prompt-examples.md` and provide: fixture diff, test coverage impact, and the full list of affected Playwright projects.
+
 ## Pre-commit checklist
 
 - [ ] Tests run and pass inside `mcr.microsoft.com/playwright:v1.58.2-noble` via `docker run`

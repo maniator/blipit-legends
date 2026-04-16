@@ -74,6 +74,16 @@ This container guidance is **only for Playwright visual snapshot work**. The **C
 - After any intentional visual change, regenerate snapshots inside `mcr.microsoft.com/playwright:v1.58.2-noble` — use the `e2e-test-runner` agent (`docker run --update-snapshots`) or the `update-visual-snapshots` workflow. **Never run `yarn test:e2e:update-snapshots` on the host OS and commit the result** — local fonts and rendering differ from the container.
 - Do NOT regenerate snapshots for unrelated layout areas.
 
+## Escalation to `@senior-lead`
+
+Request a `@senior-lead` review before merging if **any** of the following apply:
+
+- The layout change affects all 6 Playwright projects simultaneously (desktop, Pixel, tablet, iPhone variants)
+- The change breaks or requires disabling `responsive-smoke.spec.ts` on any project
+- A mobile CTA (e.g., Play Ball button) or accessibility-critical element is repositioned
+
+Use the `SENIOR LEAD REVIEW REQUEST` template from `.github/agents/prompt-examples.md` and provide: before/after screenshots and `responsive-smoke.spec.ts` results across all projects.
+
 ## Pre-commit checklist
 
 - [ ] `yarn lint` — zero errors

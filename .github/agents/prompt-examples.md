@@ -73,6 +73,69 @@ Follow the repo PR description format and include a risk summary.
 
 ---
 
+## Baseball manager (realism tuning)
+
+### Review simulation logs and propose realism tuning
+
+```
+@baseball-manager
+
+Review this completed game log and identify what should change to make outcomes feel
+more like real baseball.
+
+Requirements:
+- Prioritize findings into must-fix vs nice-to-have.
+- Cite concrete evidence from the log for each finding.
+- For each recommendation, include likely cause, targeted change, expected effect,
+  risk/tradeoff, and a validation plan.
+- Flag any impossible baseball sequence first.
+```
+
+### Validate realism after a gameplay change
+
+```
+@baseball-manager
+
+A gameplay change was just merged: [describe change, e.g., "IBB now counts as 4 pitch
+events instead of 1"].
+
+Here are before/after game logs: [paste logs]
+
+Review whether the change improved realism, identify any new unrealistic patterns
+introduced, and flag anything that needs a follow-up `@pm-agent` plan.
+```
+
+---
+
+## PM Agent + Baseball Manager (combined planning ↔ validation)
+
+### Full gameplay tuning cycle
+
+```
+Step 1 — plan with @pm-agent:
+
+@pm-agent
+
+[Describe the issue, e.g., "walk rate is 3× MLB average in logs."]
+
+Produce a full implementation plan:
+- Which file(s) and parameter(s) to adjust (cite file + line range).
+- PRNG replay impact of the change.
+- Save compatibility.
+- Validation checklist.
+
+Step 2 — validate with @baseball-manager after the fix is applied:
+
+@baseball-manager
+
+After fixing [change description], here are the new game logs: [paste logs]
+
+Confirm walk rate improved toward realistic MLB range (~8–9% of PAs), check that
+strikeout rate hasn't regressed, and flag any new impossible sequences.
+```
+
+---
+
 ## Senior Lead
 
 ### Request a technical review for a high-value change

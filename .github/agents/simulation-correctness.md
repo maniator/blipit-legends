@@ -61,6 +61,15 @@ When investigating a simulation bug, capture all reproducibility context before 
 - Keep tests in `src/context/*.test.ts` files co-located with the module under test.
 - Use `makeState` and `mockRandom` from `src/test/testHelpers.ts` to set up deterministic test scenarios.
 
+## Escalation to `@senior-lead`
+
+Request a `@senior-lead` review before merging if **any** of the following apply:
+
+- The fix alters PRNG call order (any conditional `random()` insertion or removal)
+- The fix touches `advanceRunners`, `gameOver`, or `hitBall` — the highest-risk modules in the simulator
+
+Use the `SENIOR LEAD REVIEW REQUEST` template from `.github/agents/prompt-examples.md` and provide: seed + event index, before/after RNG call trace, and the regression test added.
+
 ## Pre-commit checklist
 
 - [ ] Bug is reproduced with a specific seed and event index before any code change

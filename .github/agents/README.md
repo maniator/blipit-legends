@@ -11,6 +11,7 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 **When to use:** Any time a task starts with planning, scoping, risk review, baseball-rule questions, or PR readiness — especially for gameplay engine, RxDB/saves, or rules-heavy work. This agent should be your **first stop** before invoking a specialist execution agent.
 
 **Auto-routing triggers (no explicit `@pm-agent` needed):**
+
 - Planning or scoping a feature that touches gameplay, saves, or routes.
 - Questions about how a baseball rule works or how the simulator implements it.
 - "What files change for X?", "What are the risks of Y?", "Is Z safe to do?"
@@ -18,6 +19,7 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 - Any request mentioning: inning, pitch, batter, runner, steal, bunt, walk, strikeout, home run, extra innings, tiebreak runner, IBB, manager mode, defensive shift, pinch hitter, RxDB schema migration, save compatibility, PRNG replay, or visual snapshot impact.
 
 **Key guardrails:**
+
 - Always cites file + line range for simulator claims; always cites MLB rulebook section for official rules.
 - Explicitly labels every baseball answer as `[Official MLB]` vs `[Ballgame]`.
 - Never suggests code edits unless explicitly requested.
@@ -26,6 +28,7 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 - Routes high-value changes to `@senior-lead` for technical review before implementation begins.
 
 **Supporting docs:**
+
 - Spec + system prompt: `.github/agents/pm-agent.md`
 - Knowledge map: `docs/agent/pm-agent-knowledge-map.md`
 - Baseball rules delta: `docs/agent/baseball-rules-delta.md`
@@ -56,6 +59,22 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 - Does not replace domain agents — delegates implementation to the appropriate specialist after review
 
 **Spec:** `.github/agents/senior-lead.md`
+
+---
+
+### `baseball-manager`
+
+**When to use:** Reviewing completed game-run logs to identify what should be tuned for more realistic baseball outcomes. Also use after any gameplay-probability change to validate the result feels like real baseball.
+
+**Key guardrails:**
+
+- Grounds recommendations in log evidence, not assumptions
+- Separates must-fix realism issues from nice-to-have tuning
+- Prefers targeted parameter/logic adjustments over broad rewrites
+- Requires explicit expected effects, tradeoffs, and validation steps
+- Routes any code-change recommendation to `@pm-agent` first for risk review and implementation planning
+
+**Works with `@pm-agent`:** These two agents form the planning ↔ validation loop for gameplay changes. `@pm-agent` plans and scopes; `@baseball-manager` validates realism before and after. See the collaboration section in each agent's spec file for the full handoff protocol.
 
 ---
 

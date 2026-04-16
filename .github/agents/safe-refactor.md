@@ -46,6 +46,15 @@ If a refactor touches any RxDB collection schema (`src/storage/db.ts`):
 - For reducer tests, keep layered coverage: handler-level behavior tests + root orchestration coverage.
 - Do not delete or disable existing tests unless they are directly replaced with equivalent tests.
 
+## Escalation to `@senior-lead`
+
+Request a `@senior-lead` review before merging if **any** of the following apply:
+
+- The refactor touches ≥ 5 files in `src/features/gameplay/context/`
+- The refactor alters the module cycle order (`strategy → advanceRunners → gameOver → playerOut → hitBall → buntAttempt → playerActions → reducer`)
+
+Use the `SENIOR LEAD REVIEW REQUEST` template from `.github/agents/prompt-examples.md` and provide: diff summary, test coverage before/after, and seed replay confirmation.
+
 ## Pre-commit checklist
 
 Before considering any refactor complete, verify:
