@@ -221,7 +221,14 @@ export function sanitizePlayer(
       requireFiniteNumber(pitching.control, `roster ${section}[${index}].pitching.control`),
     ),
     movement: clampStat(
-      requireFiniteNumber(pitching.movement, `roster ${section}[${index}].pitching.movement`),
+      requireFiniteNumber(
+        pitching.movement ??
+          (typeof pitching === "object" && pitching !== null
+            ? (pitching as { command?: unknown }).command
+            : undefined) ??
+          pitching.control,
+        `roster ${section}[${index}].pitching.movement`,
+      ),
     ),
     stamina: clampStat(
       requireFiniteNumber(pitching.stamina, `roster ${section}[${index}].pitching.stamina`),
