@@ -31,14 +31,17 @@ const makeTeam = (overrides: Partial<TeamWithRoster> = {}): TeamWithRoster => ({
         id: "p1",
         name: "Tom Adams",
         role: "batter",
+        position: "C",
         handedness: "L",
-        batting: { contact: 70, power: 65, speed: 60 },
+        batting: { contact: 70, power: 65, speed: 60, stamina: 50 },
       },
       {
         id: "p2",
         name: "Jake Baker",
         role: "batter",
-        batting: { contact: 55, power: 80, speed: 50 },
+        position: "C",
+        handedness: "R" as const,
+        batting: { contact: 55, power: 80, speed: 50, stamina: 50 },
       },
     ],
     bench: [
@@ -46,7 +49,9 @@ const makeTeam = (overrides: Partial<TeamWithRoster> = {}): TeamWithRoster => ({
         id: "p3",
         name: "Sam Cole",
         role: "batter",
-        batting: { contact: 50, power: 50, speed: 50 },
+        position: "C",
+        handedness: "R" as const,
+        batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
       },
     ],
     pitchers: [
@@ -54,9 +59,9 @@ const makeTeam = (overrides: Partial<TeamWithRoster> = {}): TeamWithRoster => ({
         id: "p4",
         name: "Ray Davis",
         role: "pitcher",
+        position: "P",
         handedness: "R",
-        batting: { contact: 30, power: 25, speed: 30 },
-        pitching: { velocity: 75, control: 65, movement: 70 },
+        pitching: { velocity: 75, control: 65, movement: 70, stamina: 60 },
       },
     ],
   },
@@ -157,7 +162,11 @@ describe("customTeamToPlayerOverrides", () => {
         ...makeTeam().roster,
         pitchers: [
           {
-            ...makeTeam().roster.pitchers[0],
+            id: "p4",
+            name: "Ray Davis",
+            role: "pitcher",
+            position: "P",
+            handedness: "R",
             pitching: { velocity: 75, control: 65, movement: 70, stamina: 80 },
           },
         ],
@@ -181,8 +190,9 @@ describe("customTeamToPlayerOverrides", () => {
             id: "p1",
             name: "Tom Adams",
             role: "batter",
+            handedness: "R" as const,
             position: "C",
-            batting: { contact: 70, power: 65, speed: 60 },
+            batting: { contact: 70, power: 65, speed: 60, stamina: 50 },
           },
         ],
         bench: [],
@@ -194,7 +204,18 @@ describe("customTeamToPlayerOverrides", () => {
   });
 
   it("omits position in override when player has no position set", () => {
-    const overrides = customTeamToPlayerOverrides(makeTeam());
+    const team = makeTeam({
+      roster: {
+        ...makeTeam().roster,
+        lineup: [
+          {
+            ...makeTeam().roster.lineup[0],
+            position: "",
+          },
+        ],
+      },
+    });
+    const overrides = customTeamToPlayerOverrides(team);
     expect(overrides["p1"].position).toBeUndefined();
   });
 });
@@ -206,9 +227,9 @@ describe("customTeamToHandednessMap", () => {
     expect(map["p4"]).toBe("R");
   });
 
-  it("omits players that do not have explicit handedness", () => {
+  it("defaults to 'R' for players that do not have explicit handedness", () => {
     const map = customTeamToHandednessMap(makeTeam());
-    expect(map["p2"]).toBeUndefined();
+    expect(map["p2"]).toBe("R");
   });
 });
 
@@ -302,7 +323,8 @@ const makeFullLineup = () =>
     id: `pl_${i}`,
     name: `Player ${i + 1}`,
     role: "batter" as const,
-    batting: { contact: 50, power: 50, speed: 50 },
+    handedness: "R" as const,
+    batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
     position: pos,
   }));
 
@@ -317,8 +339,9 @@ const makeValidTeam = (overrides: Partial<TeamWithRoster> = {}): TeamWithRoster 
         id: "sp1",
         name: "Ace Pitcher",
         role: "pitcher",
-        batting: { contact: 30, power: 25, speed: 30 },
-        pitching: { velocity: 75, control: 65, movement: 70 },
+        position: "P",
+        handedness: "R" as const,
+        pitching: { velocity: 75, control: 65, movement: 70, stamina: 60 },
       },
     ],
   },
@@ -373,14 +396,16 @@ describe("validateCustomTeamForGame", () => {
         id: "p_a",
         name: "Player A",
         role: "batter" as const,
-        batting: { contact: 50, power: 50, speed: 50 },
+        handedness: "R" as const,
+        batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
         position: "C",
       },
       {
         id: "p_b",
         name: "Player B",
         role: "batter" as const,
-        batting: { contact: 50, power: 50, speed: 50 },
+        handedness: "R" as const,
+        batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
         position: "1B",
       },
     ];
@@ -413,8 +438,9 @@ describe("validateCustomTeamForGame", () => {
             id: "sp_bad",
             name: "",
             role: "pitcher",
-            batting: { contact: 30, power: 25, speed: 30 },
-            pitching: { velocity: 70, control: 65, movement: 60 },
+            position: "P",
+            handedness: "R" as const,
+            pitching: { velocity: 70, control: 65, movement: 60, stamina: 60 },
           },
         ],
       },
@@ -433,15 +459,17 @@ describe("validateCustomTeamForGame", () => {
             id: "sp1",
             name: "Good Ace",
             role: "pitcher",
-            batting: { contact: 30, power: 25, speed: 30 },
-            pitching: { velocity: 70, control: 65, movement: 60 },
+            position: "P",
+            handedness: "R" as const,
+            pitching: { velocity: 70, control: 65, movement: 60, stamina: 60 },
           },
           {
             id: "sp2",
             name: "   ",
             role: "pitcher",
-            batting: { contact: 30, power: 25, speed: 30 },
-            pitching: { velocity: 65, control: 60, movement: 55 },
+            position: "P",
+            handedness: "R" as const,
+            pitching: { velocity: 65, control: 60, movement: 55, stamina: 60 },
           },
         ],
       },
@@ -460,15 +488,17 @@ describe("validateCustomTeamForGame", () => {
             id: "sp1",
             name: "Ace Starter",
             role: "pitcher",
-            batting: { contact: 30, power: 25, speed: 30 },
-            pitching: { velocity: 80, control: 70, movement: 65 },
+            position: "P",
+            handedness: "R" as const,
+            pitching: { velocity: 80, control: 70, movement: 65, stamina: 60 },
           },
           {
             id: "rp1",
             name: "Relief Guy",
             role: "pitcher",
-            batting: { contact: 25, power: 20, speed: 25 },
-            pitching: { velocity: 75, control: 65, movement: 60 },
+            position: "P",
+            handedness: "R" as const,
+            pitching: { velocity: 75, control: 65, movement: 60, stamina: 60 },
           },
         ],
       },

@@ -85,9 +85,10 @@ test.describe("Team Summary and Leaders", () => {
       await page.goto("/game");
       await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 10_000 });
       await importHistoryFixture(page, "team-summary-history.json");
-      if (browserName === "webkit") {
-        await page.waitForTimeout(2_000);
-      }
+      // On WebKit the IndexedDB transaction durability can lag significantly on
+      // slow CI runners; use a longer wait in the retry path so the imported rows
+      // are visible to the stats page's initial query.
+      await page.waitForTimeout(browserName === "webkit" ? 5_000 : 500);
       await page.goto("/stats");
       await expect(page.getByTestId("career-stats-page")).toBeVisible({ timeout: 15_000 });
       teamSelect = page.getByTestId("career-stats-team-select");

@@ -40,7 +40,14 @@ describe("players collection integration", () => {
   it("creates player docs in the players collection after createCustomTeam", async () => {
     const lineup = [makePlayer({ id: "p_l1", name: "Lineup One" })];
     const bench = [makePlayer({ id: "p_b1", name: "Bench One" })];
-    const pitchers = [makePlayer({ id: "p_p1", name: "Pitcher One", role: "pitcher" })];
+    const pitchers = [
+      makePlayer({
+        id: "p_p1",
+        name: "Pitcher One",
+        role: "pitcher",
+        pitching: { velocity: 55, control: 55, movement: 50, stamina: 60 },
+      }),
+    ];
     const id = await store.createCustomTeam(
       makeInput({ name: "Players Test Team", roster: { lineup, bench, pitchers } }),
     );
@@ -84,7 +91,14 @@ describe("players collection integration", () => {
             makePlayer({ id: "pa2", name: "Batter B" }),
           ],
           bench: [makePlayer({ id: "pa3", name: "Bench C" })],
-          pitchers: [makePlayer({ id: "pa4", name: "Pitcher D", role: "pitcher" })],
+          pitchers: [
+            makePlayer({
+              id: "pa4",
+              name: "Pitcher D",
+              role: "pitcher",
+              pitching: { velocity: 55, control: 55, movement: 50, stamina: 60 },
+            }),
+          ],
         },
       }),
     );
@@ -93,7 +107,7 @@ describe("players collection integration", () => {
     expect(team?.roster.lineup[0].name).toBe("Batter A");
     expect(team?.roster.lineup[1].name).toBe("Batter B");
     expect(team?.roster.bench).toHaveLength(1);
-    expect(team?.roster.bench[0].name).toBe("Bench C");
+    expect(team?.roster.bench?.[0]?.name).toBe("Bench C");
     expect(team?.roster.pitchers).toHaveLength(1);
     expect(team?.roster.pitchers[0].name).toBe("Pitcher D");
   });
@@ -167,7 +181,9 @@ describe("players collection integration", () => {
             id: "imp_p1",
             name: "Imported Batter",
             role: "batter" as const,
-            batting: { contact: 50, power: 50, speed: 50 },
+            batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+            position: "CF",
+            handedness: "R" as const,
           },
         ],
         bench: [
@@ -175,7 +191,9 @@ describe("players collection integration", () => {
             id: "imp_p2",
             name: "Imported Bench",
             role: "batter" as const,
-            batting: { contact: 60, power: 50, speed: 40 },
+            batting: { contact: 60, power: 50, speed: 40, stamina: 50 },
+            position: "LF",
+            handedness: "L" as const,
           },
         ],
         pitchers: [],
@@ -205,13 +223,20 @@ describe("players collection integration", () => {
             makePlayer({ id: "oi_b0", name: "Bench 0" }),
             makePlayer({ id: "oi_b1", name: "Bench 1" }),
           ],
-          pitchers: [makePlayer({ id: "oi_p0", name: "Pitcher 0", role: "pitcher" })],
+          pitchers: [
+            makePlayer({
+              id: "oi_p0",
+              name: "Pitcher 0",
+              role: "pitcher",
+              pitching: { velocity: 55, control: 55, movement: 50, stamina: 60 },
+            }),
+          ],
         },
       }),
     );
     const team = await store.getCustomTeam(id);
     expect(team?.roster.lineup.map((p) => p.name)).toEqual(["Lineup 0", "Lineup 1", "Lineup 2"]);
-    expect(team?.roster.bench.map((p) => p.name)).toEqual(["Bench 0", "Bench 1"]);
+    expect((team?.roster.bench ?? []).map((p) => p.name)).toEqual(["Bench 0", "Bench 1"]);
     expect(team?.roster.pitchers.map((p) => p.name)).toEqual(["Pitcher 0"]);
   });
 
@@ -220,7 +245,7 @@ describe("players collection integration", () => {
       id: "tp_check",
       name: "Field Checker",
       role: "pitcher",
-      pitching: { velocity: 60, control: 55, movement: 45 },
+      pitching: { velocity: 60, control: 55, movement: 45, stamina: 60 },
     });
     const id = await store.createCustomTeam(
       makeInput({

@@ -52,7 +52,9 @@ describe("importCustomTeams", () => {
             id: "p_ia",
             name: "Player",
             role: "batter" as const,
-            batting: { contact: 50, power: 50, speed: 50 },
+            batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+            position: "CF",
+            handedness: "R" as const,
           },
         ],
         bench: [],
@@ -82,7 +84,9 @@ describe("importCustomTeams", () => {
             id: "p_ib",
             name: "Player",
             role: "batter" as const,
-            batting: { contact: 50, power: 50, speed: 50 },
+            batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+            position: "CF",
+            handedness: "R" as const,
           },
         ],
         bench: [],
@@ -104,7 +108,9 @@ describe("importCustomTeams", () => {
     const playerFields = {
       name: "Identity Player",
       role: "batter" as const,
-      batting: { contact: 50, power: 50, speed: 50 },
+      batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+      position: "CF",
+      handedness: "R" as const,
     };
     // In v1, fingerprint is purely content-based (name+role+batting+pitching, no id entropy)
     const expectedFingerprint = buildPlayerSig(playerFields);
@@ -162,7 +168,9 @@ describe("importCustomTeams — stat cap enforcement", () => {
             id: "p_overcap_bat",
             name: "Over Cap Batter",
             role: "batter" as const,
-            batting: { contact: 60, power: 55, speed: 50 }, // 165 > 150
+            batting: { contact: 60, power: 55, speed: 50, stamina: 50 }, // 165 > 150
+            position: "CF",
+            handedness: "R" as const,
           },
         ],
         bench: [],
@@ -192,8 +200,9 @@ describe("importCustomTeams — stat cap enforcement", () => {
             id: "p_overcap_pitch",
             name: "Over Cap Pitcher",
             role: "pitcher" as const,
-            batting: { contact: 30, power: 20, speed: 25 },
-            pitching: { velocity: 70, control: 60, movement: 55 }, // 185 > 160
+            pitching: { velocity: 70, control: 60, movement: 55, stamina: 60 }, // 185 > 160
+            position: "P",
+            handedness: "R" as const,
           },
         ],
         bench: [],
@@ -221,7 +230,9 @@ describe("importCustomTeams — stat cap enforcement", () => {
             name: "Over Stat Player",
             role: "batter" as const,
             // contact=120 is above STAT_MAX=100; after clamping → 100+20+10=130 ≤ 150
-            batting: { contact: 120, power: 20, speed: 10 },
+            batting: { contact: 120, power: 20, speed: 10, stamina: 50 },
+            position: "CF",
+            handedness: "R" as const,
           },
         ],
         bench: [],
@@ -234,6 +245,7 @@ describe("importCustomTeams — stat cap enforcement", () => {
     const imported = await store.getCustomTeam("ct_overstat_clamp_test");
     expect(imported).not.toBeNull();
     const player = imported!.roster.lineup[0];
+    if (player.role !== "batter") throw new Error("Expected batter");
     // contact was clamped from 120 → 100
     expect(player.batting.contact).toBe(100);
     expect(player.batting.power).toBe(20);

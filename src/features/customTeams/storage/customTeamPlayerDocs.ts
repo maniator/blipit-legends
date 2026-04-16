@@ -55,26 +55,38 @@ function toPlayerRecord(
   orderIndex: number,
   now: string,
 ): PlayerRecord {
-  return {
+  const base = {
     id: player.id, // NOT composite — player.id IS the PK
     teamId,
     section,
     orderIndex,
     name: player.name,
-    role: player.role,
-    batting: player.batting,
-    pitching: player.pitching,
     position: player.position,
     handedness: player.handedness,
     isBenchEligible: player.isBenchEligible,
     isPitcherEligible: player.isPitcherEligible,
     jerseyNumber: player.jerseyNumber,
-    pitchingRole: player.pitchingRole,
     fingerprint: player.fingerprint,
     createdAt: now,
     updatedAt: now,
     schemaVersion: PLAYER_SCHEMA_VERSION,
   };
+
+  switch (player.role) {
+    case "batter":
+      return {
+        ...base,
+        role: "batter",
+        batting: player.batting,
+      } as PlayerRecord;
+    case "pitcher":
+      return {
+        ...base,
+        role: "pitcher",
+        pitching: player.pitching,
+        pitchingRole: player.pitchingRole,
+      } as PlayerRecord;
+  }
 }
 
 /**
@@ -90,7 +102,7 @@ export async function writePlayerRecords(
   const now = new Date().toISOString();
   const allRecords: PlayerRecord[] = [
     ...roster.lineup.map((p, i) => toPlayerRecord(p, teamId, "lineup", i, now)),
-    ...roster.bench.map((p, i) => toPlayerRecord(p, teamId, "bench", i, now)),
+    ...(roster.bench ?? []).map((p, i) => toPlayerRecord(p, teamId, "bench", i, now)),
     ...roster.pitchers.map((p, i) => toPlayerRecord(p, teamId, "pitchers", i, now)),
   ];
   if (allRecords.length > 0) {

@@ -118,8 +118,8 @@ function clampMod(offset: number): ModPreset {
  */
 export function customTeamToPlayerOverrides(team: TeamWithRoster): TeamCustomPlayerOverrides {
   const overrides: TeamCustomPlayerOverrides = {};
-  const allPlayers = [...team.roster.lineup, ...team.roster.bench, ...team.roster.pitchers];
-  for (const player of allPlayers) {
+  for (const player of [...team.roster.lineup, ...(team.roster.bench ?? [])]) {
+    if (player.role !== "batter") continue;
     overrides[player.id] = {
       nickname: player.name,
       ...(player.position ? { position: player.position } : {}),
@@ -127,27 +127,39 @@ export function customTeamToPlayerOverrides(team: TeamWithRoster): TeamCustomPla
       contactMod: clampMod(player.batting.contact - 60),
       powerMod: clampMod(player.batting.power - 60),
       speedMod: clampMod(player.batting.speed - 60),
-      ...(player.pitching && {
-        velocityMod: clampMod((player.pitching.velocity ?? 60) - 60),
-        controlMod: clampMod((player.pitching.control ?? 60) - 60),
-        movementMod: clampMod((player.pitching.movement ?? 60) - 60),
-        staminaMod: clampMod((player.pitching.stamina ?? 60) - 60),
-      }),
+      staminaMod: clampMod((player.batting.stamina ?? 60) - 60),
     };
   }
+
+  for (const player of team.roster.pitchers) {
+    if (player.role !== "pitcher") continue;
+    const pitching = player.pitching;
+    const existing = overrides[player.id] ?? {
+      nickname: player.name,
+      ...(player.position ? { position: player.position } : {}),
+      ...(player.handedness ? { handedness: player.handedness } : {}),
+    };
+    overrides[player.id] = {
+      ...existing,
+      velocityMod: clampMod((pitching.velocity ?? 60) - 60),
+      controlMod: clampMod((pitching.control ?? 60) - 60),
+      movementMod: clampMod((pitching.movement ?? 60) - 60),
+      staminaMod: clampMod((pitching.stamina ?? 60) - 60),
+    };
+  }
+
   return overrides;
 }
 
 /**
  * Returns a lookup of playerId -> handedness for every rostered player.
- * Players missing explicit handedness are omitted and resolved later via
- * deterministic fallback in gameplay.
+ * Players without an explicit handedness field default to "R".
  */
 export function customTeamToHandednessMap(team: TeamWithRoster): Record<string, Handedness> {
   const handednessByPlayer: Record<string, Handedness> = {};
-  const allPlayers = [...team.roster.lineup, ...team.roster.bench, ...team.roster.pitchers];
+  const allPlayers = [...team.roster.lineup, ...(team.roster.bench ?? []), ...team.roster.pitchers];
   for (const player of allPlayers) {
-    if (player.handedness) handednessByPlayer[player.id] = player.handedness;
+    handednessByPlayer[player.id] = player.handedness ?? "R";
   }
   return handednessByPlayer;
 }
@@ -157,7 +169,7 @@ export function customTeamToHandednessMap(team: TeamWithRoster): Record<string, 
  * Used to populate `rosterBench` when a custom team game is started.
  */
 export function customTeamToBenchRoster(team: TeamWithRoster): string[] {
-  return team.roster.bench.map((p) => p.id);
+  return (team.roster.bench ?? []).map((p) => p.id);
 }
 
 /**

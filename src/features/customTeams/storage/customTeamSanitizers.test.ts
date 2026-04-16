@@ -2,7 +2,12 @@ import { getRxStorageMemory } from "rxdb/plugins/storage-memory";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import type { BallgameDb } from "@storage/db";
-import type { CreateCustomTeamInput, TeamPlayer } from "@storage/types";
+import type {
+  CreateCustomTeamInput,
+  TeamBatterPlayer,
+  TeamPitcherPlayer,
+  TeamPlayer,
+} from "@storage/types";
 import { makePlayer as makeSharedPlayer } from "@test/helpers/customTeams";
 import { createTestDb } from "@test/helpers/db";
 
@@ -21,13 +26,31 @@ import {
 } from "./customTeamSanitizers";
 import { makeCustomTeamStore } from "./customTeamStore";
 
-const makePlayer = (overrides: Partial<TeamPlayer> = {}): TeamPlayer => ({
-  id: "p1",
-  name: "Test Player",
-  role: "batter",
-  batting: { contact: 50, power: 50, speed: 50 },
-  ...overrides,
-});
+function makePlayer(overrides?: Partial<TeamBatterPlayer> & { role?: "batter" }): TeamBatterPlayer;
+function makePlayer(overrides: Partial<TeamPitcherPlayer> & { role: "pitcher" }): TeamPitcherPlayer;
+function makePlayer(overrides: Partial<TeamPlayer> = {}): TeamPlayer {
+  if (overrides.role === "pitcher") {
+    return {
+      id: "p1",
+      name: "Test Player",
+      role: "pitcher",
+      pitching: { velocity: 50, control: 50, movement: 50, stamina: 50 },
+      position: "SP",
+      handedness: "R",
+      ...overrides,
+    };
+  }
+
+  return {
+    id: "p1",
+    name: "Test Player",
+    role: "batter",
+    batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+    position: "CF",
+    handedness: "R",
+    ...(overrides as Partial<TeamBatterPlayer>),
+  };
+}
 
 describe("constants", () => {
   it("STAT_MIN is 0", () => expect(STAT_MIN).toBe(0));
@@ -125,23 +148,41 @@ describe("sanitizePlayer", () => {
   });
 
   it("throws on invalid role", () => {
-    // @ts-expect-error testing invalid role
-    expect(() => sanitizePlayer(makePlayer({ role: "fielder" }), { index: 2 })).toThrow(
-      'roster player[2].role must be "batter", "pitcher", or "two-way"',
+    const invalidRolePlayer = {
+      id: "p1",
+      name: "Test Player",
+      role: "fielder",
+      batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+      position: "CF",
+      handedness: "R",
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(invalidRolePlayer, { index: 2 })).toThrow(
+      'roster player[2].role must be "batter" or "pitcher"',
     );
   });
 
   it("throws when batting is missing", () => {
-    // @ts-expect-error testing missing batting
-    expect(() => sanitizePlayer(makePlayer({ batting: null }), { index: 0 })).toThrow(
+    const missingBatting = {
+      id: "p1",
+      name: "Test Player",
+      role: "batter",
+      batting: null,
+      position: "CF",
+      handedness: "R",
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(missingBatting, { index: 0 })).toThrow(
       "roster player[0].batting is required",
     );
   });
 
   it("clamps batting stats", () => {
-    const result = sanitizePlayer(makePlayer({ batting: { contact: 150, power: -5, speed: 50 } }), {
-      index: 0,
-    });
+    const result = sanitizePlayer(
+      makePlayer({ batting: { contact: 150, power: -5, speed: 50, stamina: 50 } }),
+      {
+        index: 0,
+      },
+    );
+    if (result.role !== "batter") throw new Error("Expected batter player in test");
     expect(result.batting.contact).toBe(100);
     expect(result.batting.power).toBe(0);
     expect(result.batting.speed).toBe(50);
@@ -178,10 +219,11 @@ describe("sanitizePlayer", () => {
       }),
       { index: 0 },
     );
-    expect(result.pitching!.velocity).toBe(100);
-    expect(result.pitching!.control).toBe(0);
-    expect(result.pitching!.movement).toBe(55);
-    expect(result.pitching!.stamina).toBe(100);
+    if (result.role !== "pitcher") throw new Error("Expected pitcher player in test");
+    expect(result.pitching.velocity).toBe(100);
+    expect(result.pitching.control).toBe(0);
+    expect(result.pitching.movement).toBe(55);
+    expect(result.pitching.stamina).toBe(100);
   });
 
   it("clamps batting stamina when present", () => {
@@ -191,6 +233,7 @@ describe("sanitizePlayer", () => {
         index: 0,
       },
     );
+    if (result.role !== "batter") throw new Error("Expected batter player in test");
     expect(result.batting.stamina).toBe(0);
   });
 
@@ -199,12 +242,85 @@ describe("sanitizePlayer", () => {
     expect(result.pitching).toBeUndefined();
   });
 
-  it("accepts two-way role", () => {
+  it("accepts pitcher role", () => {
     const result = sanitizePlayer(
-      makePlayer({ role: "two-way", pitching: { velocity: 60, control: 50, movement: 50 } }),
+      makePlayer({
+        role: "pitcher",
+        pitching: { velocity: 60, control: 50, movement: 50, stamina: 60 },
+      }),
       { index: 0 },
     );
-    expect(result.role).toBe("two-way");
+    expect(result.role).toBe("pitcher");
+  });
+
+  it("throws when batting.stamina is undefined (legacy export missing stamina)", () => {
+    const player = {
+      ...makePlayer(),
+      batting: { contact: 50, power: 50, speed: 50 },
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(player, { index: 0, section: "lineup" })).toThrow(
+      "roster lineup[0].batting.stamina must be a finite number",
+    );
+  });
+
+  it("throws when batting.stamina is null (malformed import)", () => {
+    const player = {
+      ...makePlayer(),
+      batting: { contact: 50, power: 50, speed: 50, stamina: null },
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(player, { index: 1, section: "bench" })).toThrow(
+      "roster bench[1].batting.stamina must be a finite number",
+    );
+  });
+
+  it("throws when pitching.stamina is undefined (legacy pitcher export missing stamina)", () => {
+    const player = {
+      ...makePlayer({ role: "pitcher" }),
+      pitching: { velocity: 60, control: 50, movement: 50 },
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(player, { index: 0, section: "pitchers" })).toThrow(
+      "roster pitchers[0].pitching.stamina must be a finite number",
+    );
+  });
+
+  it("throws when pitching.stamina is null (malformed pitcher import)", () => {
+    const player = {
+      ...makePlayer({ role: "pitcher" }),
+      pitching: { velocity: 60, control: 50, movement: 50, stamina: null },
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(player, { index: 2, section: "pitchers" })).toThrow(
+      "roster pitchers[2].pitching.stamina must be a finite number",
+    );
+  });
+
+  it("throws when isBenchEligible is not a boolean", () => {
+    const player = {
+      ...makePlayer(),
+      isBenchEligible: "yes",
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(player, { index: 0, section: "bench" })).toThrow(
+      "roster bench[0].isBenchEligible must be a boolean",
+    );
+  });
+
+  it("throws when isPitcherEligible is not a boolean", () => {
+    const player = {
+      ...makePlayer(),
+      isPitcherEligible: 1,
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(player, { index: 0, section: "lineup" })).toThrow(
+      "roster lineup[0].isPitcherEligible must be a boolean",
+    );
+  });
+
+  it("throws when jerseyNumber is not finite number or null", () => {
+    const player = {
+      ...makePlayer(),
+      jerseyNumber: "12",
+    } as unknown as TeamPlayer;
+    expect(() => sanitizePlayer(player, { index: 0, section: "lineup" })).toThrow(
+      "roster lineup[0].jerseyNumber must be a finite number or null",
+    );
   });
 });
 
@@ -242,16 +358,21 @@ describe("buildRoster", () => {
   it("sanitizes bench players", () => {
     const result = buildRoster({
       lineup: [makePlayer()],
-      bench: [makePlayer({ batting: { contact: 150, power: 25, speed: 25 } })],
+      bench: [makePlayer({ batting: { contact: 150, power: 25, speed: 25, stamina: 50 } })],
     });
-    expect(result.bench[0].batting.contact).toBe(100);
+    const bench0 = (result.bench ?? [])[0];
+    if (!bench0 || bench0.role !== "batter") throw new Error("Expected batter bench player");
+    expect(bench0.batting.contact).toBe(100);
   });
 
   it("sanitizes pitchers", () => {
     const result = buildRoster({
       lineup: [makePlayer()],
       pitchers: [
-        makePlayer({ role: "pitcher", pitching: { velocity: 60, control: 50, movement: 50 } }),
+        makePlayer({
+          role: "pitcher",
+          pitching: { velocity: 60, control: 50, movement: 50, stamina: 60 },
+        }),
       ],
     });
     expect(result.pitchers.length).toBe(1);
@@ -266,17 +387,17 @@ describe("validatePlayerStatCaps — exported constants", () => {
 
 describe("validatePlayerStatCaps", () => {
   it("does not throw when batting total equals the cap exactly (150)", () => {
-    const player = makePlayer({ batting: { contact: 50, power: 50, speed: 50 } });
+    const player = makePlayer({ batting: { contact: 50, power: 50, speed: 50, stamina: 50 } });
     expect(() => validatePlayerStatCaps(player, { section: "player", index: 0 })).not.toThrow();
   });
 
   it("does not throw when batting total is under the cap", () => {
-    const player = makePlayer({ batting: { contact: 40, power: 50, speed: 50 } });
+    const player = makePlayer({ batting: { contact: 40, power: 50, speed: 50, stamina: 50 } });
     expect(() => validatePlayerStatCaps(player, { section: "player", index: 0 })).not.toThrow();
   });
 
   it("throws with a clear message when batting total > 150 (non-pitcher role)", () => {
-    const player = makePlayer({ batting: { contact: 60, power: 50, speed: 50 } }); // 160
+    const player = makePlayer({ batting: { contact: 60, power: 50, speed: 50, stamina: 50 } }); // 160
     expect(() => validatePlayerStatCaps(player, { section: "player", index: 0 })).toThrow(
       /stat cap/i,
     );
@@ -288,7 +409,7 @@ describe("validatePlayerStatCaps", () => {
   it("does not throw for a pitcher with batting total > 150 (pitchers are exempt)", () => {
     const player = makePlayer({
       role: "pitcher",
-      batting: { contact: 60, power: 50, speed: 50 }, // 160 > 150 but role=pitcher
+      pitching: { velocity: 60, control: 50, movement: 50, stamina: 60 },
     });
     expect(() => validatePlayerStatCaps(player, { section: "player", index: 0 })).not.toThrow();
   });
@@ -296,17 +417,15 @@ describe("validatePlayerStatCaps", () => {
   it("does not throw when pitching total equals the cap exactly (160)", () => {
     const player = makePlayer({
       role: "pitcher",
-      batting: { contact: 30, power: 20, speed: 25 },
-      pitching: { velocity: 60, control: 50, movement: 50 }, // 160
+      pitching: { velocity: 60, control: 50, movement: 50, stamina: 60 }, // 160
     });
     expect(() => validatePlayerStatCaps(player, { section: "player", index: 0 })).not.toThrow();
   });
 
-  it("throws with a clear message when pitching total > 160 (pitcher/two-way role)", () => {
+  it("throws with a clear message when pitching total > 160 (pitcher role)", () => {
     const player = makePlayer({
       role: "pitcher",
-      batting: { contact: 30, power: 20, speed: 25 },
-      pitching: { velocity: 70, control: 50, movement: 50 }, // 170 > 160
+      pitching: { velocity: 70, control: 50, movement: 50, stamina: 60 }, // 170 > 160
     });
     expect(() => validatePlayerStatCaps(player, { section: "player", index: 0 })).toThrow(
       /stat cap/i,
@@ -316,58 +435,25 @@ describe("validatePlayerStatCaps", () => {
     );
   });
 
-  it("does not throw for a batter with pitching total > 160 (batters are exempt)", () => {
-    const player = makePlayer({
-      role: "batter",
-      batting: { contact: 50, power: 50, speed: 50 },
-      pitching: { velocity: 70, control: 50, movement: 50 }, // 170 > 160 but role=batter
-    });
-    expect(() => validatePlayerStatCaps(player, { section: "player", index: 0 })).not.toThrow();
-  });
-
   it("does not throw when pitching is absent (no pitcher cap check)", () => {
-    const player = makePlayer({ role: "pitcher" }); // no pitching field
+    const player = makePlayer({
+      role: "pitcher",
+      pitching: { velocity: 60, control: 50, movement: 50, stamina: 60 },
+    });
     expect(() => validatePlayerStatCaps(player, { section: "player", index: 0 })).not.toThrow();
-  });
-
-  it("two-way player is subject to both batting and pitching caps", () => {
-    const valid = makePlayer({
-      role: "two-way",
-      batting: { contact: 50, power: 50, speed: 50 }, // 150
-      pitching: { velocity: 60, control: 50, movement: 50 }, // 160
-    });
-    expect(() => validatePlayerStatCaps(valid, { section: "player", index: 0 })).not.toThrow();
-
-    const batOverCap = makePlayer({
-      role: "two-way",
-      batting: { contact: 60, power: 50, speed: 50 }, // 160 > 150
-      pitching: { velocity: 60, control: 50, movement: 50 },
-    });
-    expect(() => validatePlayerStatCaps(batOverCap, { section: "player", index: 0 })).toThrow(
-      /stat cap/i,
-    );
-
-    const pitchOverCap = makePlayer({
-      role: "two-way",
-      batting: { contact: 50, power: 50, speed: 50 },
-      pitching: { velocity: 70, control: 50, movement: 50 }, // 170 > 160
-    });
-    expect(() => validatePlayerStatCaps(pitchOverCap, { section: "player", index: 0 })).toThrow(
-      /stat cap/i,
-    );
   });
 });
 
 describe("sanitizePlayer — stat cap enforcement (clamp + cap integration)", () => {
   it("throws when batting total exceeds cap even after clamping", () => {
     // {100, 0, 55} — all within [0,100], total=155 > 150
-    const player = makePlayer({ batting: { contact: 100, power: 0, speed: 55 } });
+    const player = makePlayer({ batting: { contact: 100, power: 0, speed: 55, stamina: 50 } });
     expect(() => sanitizePlayer(player, { index: 0 })).toThrow(/stat cap/i);
   });
 
   it("does not throw when clamping brings total exactly to the cap", () => {
     // {150, -5, 50} → clamps to {100, 0, 50} = 150 ✓
-    const player = makePlayer({ batting: { contact: 150, power: -5, speed: 50 } });
+    const player = makePlayer({ batting: { contact: 150, power: -5, speed: 50, stamina: 50 } });
     expect(() => sanitizePlayer(player, { index: 0 })).not.toThrow();
   });
 
@@ -375,8 +461,7 @@ describe("sanitizePlayer — stat cap enforcement (clamp + cap integration)", ()
     // {100, 0, 65} — all within [0,100], total=165 > 160
     const player = makePlayer({
       role: "pitcher",
-      batting: { contact: 30, power: 20, speed: 25 },
-      pitching: { velocity: 100, control: 0, movement: 65 },
+      pitching: { velocity: 100, control: 0, movement: 65, stamina: 60 },
     });
     expect(() => sanitizePlayer(player, { index: 0 })).toThrow(/stat cap/i);
   });
@@ -385,8 +470,7 @@ describe("sanitizePlayer — stat cap enforcement (clamp + cap integration)", ()
     // {200, -10, 60} → clamps to {100, 0, 60} = 160 ✓
     const player = makePlayer({
       role: "pitcher",
-      batting: { contact: 30, power: 20, speed: 25 },
-      pitching: { velocity: 200, control: -10, movement: 60 },
+      pitching: { velocity: 200, control: -10, movement: 60, stamina: 60 },
     });
     expect(() => sanitizePlayer(player, { index: 0 })).not.toThrow();
   });
@@ -430,7 +514,7 @@ describe("sanitizePlayer — fingerprint storage", () => {
               id: "p_fp2",
               name: "Fingerprint Pitcher",
               role: "pitcher",
-              pitching: { velocity: 55, control: 55, movement: 50 },
+              pitching: { velocity: 55, control: 55, movement: 50, stamina: 60 },
             }),
           ],
         },

@@ -146,12 +146,7 @@ const SortablePlayerRow: React.FunctionComponent<Props> = ({
           </SelectInput>
         </MetaGroup>
       </PlayerMeta>
-      <PlayerStatFields
-        player={player}
-        isPitcher={isPitcher}
-        isExistingPlayer={isExistingPlayer}
-        onChange={onChange}
-      />
+      <PlayerStatFields player={player} isExistingPlayer={isExistingPlayer} onChange={onChange} />
     </PlayerCard>
   );
 };

@@ -12,6 +12,7 @@ const makePlayer = (name = "Tom Adams", position = "C") => ({
   id: makePlayerId(),
   name,
   position,
+  role: "batter" as const,
   handedness: "R" as const,
   contact: 45,
   power: 45,
@@ -48,7 +49,9 @@ describe("initEditorState", () => {
             id: "p1",
             name: "Jake Jones",
             role: "batter" as const,
-            batting: { contact: 70, power: 65, speed: 55 },
+            position: "C",
+            handedness: "R" as const,
+            batting: { contact: 70, power: 65, speed: 55, stamina: 50 },
           },
         ],
         bench: [],
@@ -78,7 +81,7 @@ describe("initEditorState", () => {
             id: "p1",
             name: "Sam Scott",
             role: "batter" as const,
-            batting: { contact: 65, power: 60, speed: 70 },
+            batting: { contact: 65, power: 60, speed: 70, stamina: 50 },
             position: "SS",
             handedness: "L" as const,
           },
@@ -108,7 +111,7 @@ describe("initEditorState", () => {
             id: "p1",
             name: "Ray Reed",
             role: "batter" as const,
-            batting: { contact: 60, power: 60, speed: 60 },
+            batting: { contact: 60, power: 60, speed: 60, stamina: 50 },
             // no position or handedness
           },
         ],
@@ -117,7 +120,7 @@ describe("initEditorState", () => {
       },
       metadata: { archived: false },
     };
-    const state = initEditorState(team);
+    const state = initEditorState(team as unknown as Parameters<typeof initEditorState>[0]);
     expect(state.lineup[0].position).toBe("");
     expect(state.lineup[0].handedness).toBe("R");
   });
@@ -400,6 +403,7 @@ describe("validateEditorState", () => {
   it("pitcher within pitcher cap passes validation", () => {
     const pitcher = {
       ...makePlayer("Good Pitcher"),
+      role: "pitcher" as const,
       velocity: 50,
       control: 55,
       movement: 50,
@@ -427,6 +431,7 @@ describe("validateEditorState", () => {
   it("pitcher over pitcher cap is rejected with clear message", () => {
     const overCapPitcher = {
       ...makePlayer("Fire Pitcher"),
+      role: "pitcher" as const,
       velocity: 70,
       control: 70,
       movement: 70,
@@ -551,12 +556,9 @@ describe("editorStateToCreateInput", () => {
   });
 
   it("maps pitcher with pitching stats to CreateCustomTeamInput", () => {
-    const pitcher: ReturnType<typeof makePlayer> & {
-      velocity: number;
-      control: number;
-      movement: number;
-    } = {
+    const pitcher = {
       ...makePlayer("Ace Pitcher"),
+      role: "pitcher" as const,
       velocity: 88,
       control: 70,
       movement: 65,
@@ -576,8 +578,12 @@ describe("editorStateToCreateInput", () => {
     expect(p.pitching?.movement).toBe(65);
   });
 
-  it("omits pitching block for pitcher with no velocity set", () => {
-    const benchPitcher = makePlayer("No-stats Pitcher");
+  it("throws when pitcher is missing pitching stats", () => {
+    // Cast to simulate a pitcher slot populated with an object missing pitching stats at runtime.
+    const benchPitcher = {
+      ...makePlayer("No-stats Pitcher"),
+      role: "pitcher",
+    } as unknown as import("./editorState").EditorPitcherPlayer;
     const state = {
       ...initEditorState(),
       name: "Eagles",
@@ -585,8 +591,7 @@ describe("editorStateToCreateInput", () => {
       lineup: [makePlayer()],
       pitchers: [benchPitcher],
     };
-    const input = editorStateToCreateInput(state);
-    expect(input.roster.pitchers![0].pitching).toBeUndefined();
+    expect(() => editorStateToCreateInput(state)).toThrow("Pitcher is missing pitching stats.");
   });
 });
 
@@ -644,7 +649,9 @@ describe("editorReducer — additional cases", () => {
             id: "d1",
             name: "Batter One",
             role: "batter" as const,
-            batting: { contact: 70, power: 65, speed: 60 },
+            position: "C",
+            handedness: "R" as const,
+            batting: { contact: 70, power: 65, speed: 60, stamina: 50 },
           },
         ],
         bench: [
@@ -652,7 +659,9 @@ describe("editorReducer — additional cases", () => {
             id: "d2",
             name: "Bench Guy",
             role: "batter" as const,
-            batting: { contact: 55, power: 50, speed: 55 },
+            position: "C",
+            handedness: "R" as const,
+            batting: { contact: 55, power: 50, speed: 55, stamina: 50 },
           },
         ],
         pitchers: [
@@ -660,8 +669,10 @@ describe("editorReducer — additional cases", () => {
             id: "d3",
             name: "Ace Pitcher",
             role: "pitcher" as const,
-            batting: { contact: 30, power: 25, speed: 30 },
-            pitching: { velocity: 90, control: 72, movement: 68 },
+            position: "P",
+            handedness: "R" as const,
+            batting: { contact: 30, power: 25, speed: 30, stamina: 50 },
+            pitching: { velocity: 90, control: 72, movement: 68, stamina: 60 },
           },
         ],
       },

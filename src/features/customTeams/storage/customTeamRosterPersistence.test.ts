@@ -46,7 +46,7 @@ describe("populateRoster — hydration from players collection", () => {
     const team = await store.getCustomTeam(id);
     expect(team!.roster.lineup.map((p) => p.name)).toContain("Alice");
     expect(team!.roster.lineup.map((p) => p.name)).toContain("Bob");
-    expect(team!.roster.bench.map((p) => p.name)).toContain("Charlie");
+    expect((team!.roster.bench ?? []).map((p) => p.name)).toContain("Charlie");
   });
 
   it("returns empty roster when no player docs exist", async () => {

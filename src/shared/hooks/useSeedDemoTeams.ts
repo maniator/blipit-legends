@@ -16,21 +16,26 @@ import type { TeamPlayer } from "@storage/types";
 export const DEMO_SEED_DONE_KEY = "ballgame:demoSeedDone";
 
 /** Map a demo player definition to a TeamPlayer ready for store insertion. */
-function mapDemoPlayer(
-  p: DemoPlayerDef,
-): Pick<
-  TeamPlayer,
-  "id" | "name" | "role" | "batting" | "pitching" | "position" | "handedness" | "pitchingRole"
-> {
+function mapDemoPlayer(p: DemoPlayerDef): TeamPlayer {
+  if (p.role === "pitcher") {
+    return {
+      id: generatePlayerId(),
+      name: p.name,
+      role: "pitcher",
+      pitching: p.pitching ?? { velocity: 50, control: 50, movement: 50, stamina: 50 },
+      position: p.position,
+      handedness: p.handedness,
+      ...(p.pitchingRole !== undefined && { pitchingRole: p.pitchingRole }),
+    };
+  }
+
   return {
     id: generatePlayerId(),
     name: p.name,
-    role: p.role,
-    batting: p.batting,
+    role: "batter",
+    batting: p.batting ?? { contact: 50, power: 50, speed: 50, stamina: 50 },
     position: p.position,
     handedness: p.handedness,
-    ...(p.pitching !== undefined && { pitching: p.pitching }),
-    ...(p.pitchingRole !== undefined && { pitchingRole: p.pitchingRole }),
   };
 }
 

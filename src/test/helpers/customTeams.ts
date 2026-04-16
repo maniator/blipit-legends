@@ -1,5 +1,10 @@
 import { generatePlayerId, generateTeamId } from "@storage/generateId";
-import type { TeamPlayer, TeamWithRoster } from "@storage/types";
+import type {
+  TeamBatterPlayer,
+  TeamPitcherPlayer,
+  TeamPlayer,
+  TeamWithRoster,
+} from "@storage/types";
 
 /**
  * Creates a minimal `TeamPlayer` for unit tests with optional field overrides.
@@ -13,13 +18,35 @@ import type { TeamPlayer, TeamWithRoster } from "@storage/types";
  * Default stats (50 / 50 / 50) are within the valid range and satisfy the
  * HITTER_STAT_CAP (contact + power + speed ≤ 150).
  */
-export const makePlayer = (overrides: Partial<TeamPlayer> = {}): TeamPlayer => ({
-  id: generatePlayerId(),
-  name: "Alice",
-  role: "batter",
-  batting: { contact: 50, power: 50, speed: 50 },
-  ...overrides,
-});
+export function makePlayer(
+  overrides?: Partial<TeamBatterPlayer> & { role?: "batter" },
+): TeamBatterPlayer;
+export function makePlayer(
+  overrides: Partial<TeamPitcherPlayer> & { role: "pitcher" },
+): TeamPitcherPlayer;
+export function makePlayer(overrides: Partial<TeamPlayer> = {}): TeamPlayer {
+  if (overrides.role === "pitcher") {
+    return {
+      id: generatePlayerId(),
+      name: "Alice",
+      role: "pitcher",
+      pitching: { velocity: 50, control: 50, movement: 50, stamina: 50 },
+      position: "SP",
+      handedness: "R",
+      ...overrides,
+    };
+  }
+
+  return {
+    id: generatePlayerId(),
+    name: "Alice",
+    role: "batter",
+    batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+    position: "CF",
+    handedness: "R",
+    ...(overrides as Partial<TeamBatterPlayer>),
+  };
+}
 
 /**
  * Creates a minimal `TeamWithRoster` for unit tests with optional field overrides.

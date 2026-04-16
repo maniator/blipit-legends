@@ -72,7 +72,7 @@ describe("importPlayer", () => {
     expect(result.status).toBe("success");
 
     const updated = await store.getCustomTeam(targetId);
-    expect(updated?.roster.bench.some((p) => p.name === "Import Me")).toBe(true);
+    expect(updated?.roster.bench?.some((p) => p.name === "Import Me")).toBe(true);
   });
 
   it("adds a pitcher to the pitchers section", async () => {
@@ -92,8 +92,9 @@ describe("importPlayer", () => {
       id: "p_pitcher_src",
       name: "Import Pitcher",
       role: "pitcher",
-      batting: { contact: 30, power: 20, speed: 25 },
-      pitching: { velocity: 60, control: 55, movement: 45 },
+      pitching: { velocity: 60, control: 55, movement: 45, stamina: 60 },
+      position: "P",
+      handedness: "R",
     };
     const pitcherJson = exportCustomPlayer(pitcher);
 
@@ -120,14 +121,16 @@ describe("importPlayer", () => {
       id: "p_gid_preserved",
       name: "GID Preserved",
       role: "batter",
-      batting: { contact: 50, power: 50, speed: 50 },
+      batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+      position: "CF",
+      handedness: "R",
     };
     const json = exportCustomPlayer(player);
 
     await store.importPlayer(targetId, json, "bench");
 
     const updated = await store.getCustomTeam(targetId);
-    const imported = updated?.roster.bench.find((p) => p.name === "GID Preserved");
+    const imported = updated?.roster.bench?.find((p) => p.name === "GID Preserved");
     expect(imported).toBeDefined();
     expect(imported?.name).toBe("GID Preserved");
     expect(typeof imported?.fingerprint).toBe("string");
@@ -149,14 +152,16 @@ describe("importPlayer", () => {
       id: "p_seed_check",
       name: "Seed Preserved",
       role: "batter",
-      batting: { contact: 50, power: 50, speed: 50 },
+      batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+      position: "CF",
+      handedness: "R",
     };
     const json = exportCustomPlayer(player);
 
     await store.importPlayer(targetId, json, "bench");
 
     const updated = await store.getCustomTeam(targetId);
-    const imported = updated?.roster.bench.find((p) => p.name === "Seed Preserved");
+    const imported = updated?.roster.bench?.find((p) => p.name === "Seed Preserved");
     expect(imported).toBeDefined();
     expect(imported?.name).toBe("Seed Preserved");
     expect(typeof imported?.fingerprint).toBe("string");
@@ -223,7 +228,7 @@ describe("importPlayer", () => {
 
     // Roster must be unchanged
     const after = await store.getCustomTeam(teamId);
-    expect(after?.roster.bench).toHaveLength(0);
+    expect(after?.roster.bench ?? []).toHaveLength(0);
   });
 
   it("throws when target team does not exist", async () => {
@@ -231,7 +236,9 @@ describe("importPlayer", () => {
       id: "p_no_team",
       name: "No Team Player",
       role: "batter",
-      batting: { contact: 50, power: 50, speed: 50 },
+      batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+      position: "CF",
+      handedness: "R",
     };
     const json = exportCustomPlayer(player);
     await expect(store.importPlayer("ct_nonexistent", json, "lineup")).rejects.toThrow(
@@ -282,7 +289,7 @@ describe("importPlayer", () => {
 
     // Verify Fred is now on the target team
     const updated = await store.getCustomTeam(targetId);
-    expect(updated?.roster.bench.some((p) => p.name === "Free Agent Fred")).toBe(true);
+    expect(updated?.roster.bench?.some((p) => p.name === "Free Agent Fred")).toBe(true);
 
     // Verify Fred is no longer a free agent
     const freePlayersAfter = await store.listFreePlayers();
