@@ -113,7 +113,7 @@ Wrap all `/stats/*` children in a shared layout component (`StatsHubLayout`) tha
 ```tsx
 {
   path: "stats",
-  element: <StatsHubLayout />,          // new layout component
+  element: <React.Suspense fallback={null}><StatsHubLayout /></React.Suspense>,
   children: [
     { index: true, element: <Navigate to="exhibition" replace /> },
     {

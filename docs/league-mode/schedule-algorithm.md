@@ -10,7 +10,7 @@
 
 **Short answers:**
 
-- Yes — the **full schedule is generated upfront** before the first game is played, stored as `ScheduledGameRecord` docs. Nothing is random at schedule time; the algorithm is deterministic given the same team list and season length.
+- Yes — the **full schedule is generated upfront** before the first game is played, stored as `ScheduledGameRecord` docs. Nothing is random at schedule time; the algorithm is deterministic given the same `GenerateScheduleOptions` inputs (including team list, season length, and seed).
 - Games are grouped into **series** (default: 3 games per series) between pairs of teams. A "game day" is all games scheduled on the same `gameDay` integer. A series occupies consecutive game days.
 - The schedule is produced by a **round-robin rotation algorithm** (the "circle method"), extended to fill the target game count and grouped into series.
 
