@@ -4,6 +4,26 @@ Copy-paste prompts for common tasks in `maniator/blipit-legends`. Prepend `@safe
 
 ---
 
+## Baseball manager (realism tuning)
+
+### Review simulation logs and propose realism tuning
+
+```
+@baseball-manager
+
+Review this completed game log and identify what should change to make outcomes feel
+more like real baseball.
+
+Requirements:
+- Prioritize findings into must-fix vs nice-to-have.
+- Cite concrete evidence from the log for each finding.
+- For each recommendation, include likely cause, targeted change, expected effect,
+  risk/tradeoff, and a validation plan.
+- Flag any impossible baseball sequence first.
+```
+
+---
+
 ## Safe refactor
 
 ### Behavior-preserving reducer refactor

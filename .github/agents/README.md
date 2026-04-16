@@ -6,6 +6,19 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 
 ## Agents
 
+### `baseball-manager`
+
+**When to use:** Reviewing completed game-run logs to identify what should be tuned for more realistic baseball outcomes.
+
+**Key guardrails:**
+
+- Grounds recommendations in log evidence, not assumptions
+- Separates must-fix realism issues from nice-to-have tuning
+- Prefers targeted parameter/logic adjustments over broad rewrites
+- Requires explicit expected effects, tradeoffs, and validation steps
+
+---
+
 ### `safe-refactor`
 
 **When to use:** Any code reorganization, extraction, rename, or modularization task where observable behavior must not change.
