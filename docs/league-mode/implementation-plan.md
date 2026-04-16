@@ -150,8 +150,8 @@ src/features/leagues/
 │   ├── SeriesGroup/              # grouped game cards for a series day
 │   ├── NightSummaryModal/        # bulk-sim results overlay
 │   ├── GenerateLeagueModal/      # Phase 3 quick-setup modal (team count + seed + name)
-│   ├── PlayoffBracket/               # bracket visualization ← Phase 9 (future)
-│   ├── TradePanel/                    # two-team trade UI ← Phase 8 (future)
+│   ├── PlayoffBracket/           # bracket visualization ← Phase 9 (future)
+│   ├── TradePanel/               # two-team trade UI ← Phase 8 (future)
 │   └── GameModeModal/            # "Box Score / Watch / Skip" picker
 ├── hooks/
 │   ├── useLeagueStore.ts         # reactive RxDB hook for league queries
@@ -163,6 +163,8 @@ src/features/leagues/
 │   ├── LeagueSetupPage/          # /leagues/new — create wizard
 │   ├── LeagueDetailPage/         # /leagues/:leagueId — season overview
 │   ├── SchedulePage/             # /leagues/:leagueId/seasons/:leagueSeasonId/schedule
+│   ├── StatsHubLayout/           # /stats layout (Exhibition | League tabs)  # ← Phase 7 (future)
+│   ├── LeagueStatsPage/          # /stats/league/:leagueId  # ← Phase 7 (future)
 │   ├── PlayoffBracketPage/       # /leagues/:leagueId/seasons/:leagueSeasonId/playoffs  # ← Phase 9 (future)
 │   └── LeagueRosterPage/         # /leagues/:leagueId/roster (trades)  # ← Phase 8 (future)
 ├── storage/
@@ -298,7 +300,7 @@ See [trades.md](trades.md) for full flow diagram and constraint table.
 ### Checklist
 
 - [ ] Build `TradePanel` component: two-team picker → player list per team → drag-and-drop (or click-to-select) player exchange → confirm button
-- [ ] Implement `tradeStore.executeTrade(trade: TradeInput): Promise<void>`
+- [ ] Implement `tradeStore.executeTrade(trade: TradeInput): Promise<TradeExecuteResult>`
   - Validates: trade deadline not passed, no PENDING games for either team that day, roster minimums (≥9 batters, ≥1 pitcher each side post-trade)
   - Writes a `TradeRecord` (immutable) to `tradeRecords` collection
   - Updates `PlayerRecord.teamId` and roster-ordering fields for all traded players atomically (TeamRecord is metadata-only; there is no `rosterPlayerIds` field)

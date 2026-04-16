@@ -26,13 +26,13 @@ The deadline is a **game day number** stored on `LeagueSeasonRecord.tradeDeadlin
 Once `leagueSeason.currentGameDay >= tradeDeadlineGameDay`:
 
 - `LeagueRosterPage` shows a **"Trade Deadline Passed"** banner in place of the trade UI
-- `tradeStore.executeTrade` also validates this in the store and returns a `TradeValidationError` if violated
+- `tradeStore.executeTrade` also validates this in the store and returns a typed error result if violated
 
 ---
 
 ## Trade Constraints
 
-All constraints are validated in `tradeStore.executeTrade` before any writes. Validation failures must return a typed `TradeValidationError` rather than a generic exception, so the UI can display a specific message.
+All constraints are validated in `tradeStore.executeTrade` before any writes. Validation failures return a tagged result (`{ ok: false, error }`) rather than throwing a generic exception, so UI flows are explicit and cannot accidentally ignore validation outcomes.
 
 | Constraint                | Rule                                                                                                                                                              | Error message                                         |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
@@ -54,7 +54,7 @@ flowchart TD
     A[User builds trade in TradePanel] --> B[Tap Confirm Trade]
     B --> C[tradeStore.executeTrade called]
     C --> D{Validate constraints}
-    D -->|any fail| E[Return TradeValidationError to TradePanel]
+    D -->|any fail| E[Return { ok: false, error } to TradePanel]
     D -->|all pass| F[Execute atomic writes]
     F --> G[1. Update PlayerRecord.teamId for each moved player]
     G --> H[2. Insert immutable TradeRecord doc]
@@ -155,6 +155,8 @@ type TradeValidationError = {
   message: string;
 };
 
-tradeStore.executeTrade(input: TradeInput): Promise<void | TradeValidationError>
+type TradeExecuteResult = { ok: true } | { ok: false; error: TradeValidationError };
+
+tradeStore.executeTrade(input: TradeInput): Promise<TradeExecuteResult>
 tradeStore.getTradeHistory(leagueSeasonId: string): Promise<TradeRecord[]>
 ```
