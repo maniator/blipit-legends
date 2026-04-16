@@ -16,8 +16,9 @@ Trades allow teams within the same league season to swap players before the trad
 
 The deadline is a **game day number** stored on `LeagueSeasonRecord.tradeDeadlineGameDay`.
 
-| Default     | `Math.floor(totalGameDays / 2)`                                                                     |
+| Field       | Value                                                                                               |
 | ----------- | --------------------------------------------------------------------------------------------------- |
+| Default     | `Math.floor(totalGameDays / 2)`                                                                     |
 | Adjustable? | Yes — user sets it at league creation, or accepts the default                                       |
 | Minimum     | Game day 1 (trades are never open when set to 1 — the deadline is passed before any game is played) |
 | Maximum     | `totalGameDays - 1` (at least one game day must remain after the deadline)                          |
