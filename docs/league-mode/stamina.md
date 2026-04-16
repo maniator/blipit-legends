@@ -6,7 +6,7 @@
 
 ## What the Fatigue System Does Today
 
-The fatigue model (shipped in PR #206, merged to `main` before any league work begins) tracks workload **within a single game only**. There is no cross-game carry-over — every game starts fully fresh.
+The fatigue model (shipped in PR #206, merged to `master` before any league work begins) tracks workload **within a single game only**. There is no cross-game carry-over — every game starts fully fresh.
 
 ### Pitcher fatigue (within-game)
 

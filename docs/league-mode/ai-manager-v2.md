@@ -60,7 +60,7 @@ The algorithm follows the conventional batting-order wisdom adapted to the attri
 | 2 | High contact, moderate power — sets the table | Second-highest contact score |
 | 3 (best hitter) | Best overall — contact + power balanced | Highest `(contactMod + powerMod) / 2` |
 | 4 (cleanup) | Highest power — drives in runs | Highest `powerMod` |
-| 5–6 | Good all-round hitters | Descending combined score |
+| 5–6 | Good all-around hitters | Descending combined score |
 | 7–8 | Below-average hitters, more defensive value | Remaining lineup players |
 | 9 | Weakest bat (or pitcher slot in NL-style rules) | Lowest combined score |
 
@@ -93,7 +93,7 @@ The following remain out of scope even for v2, to preserve simplicity:
 
 | Decision | Rationale for exclusion |
 |---|---|
-| **Positional defence** | No fielding model exists; all defence is abstracted via pitcher attributes |
+| **Positional defense** | No fielding model exists; all defense is abstracted via pitcher attributes |
 | **Opener / bulk reliever strategy** | Requires bullpen depth awareness not yet tracked per-game |
 | **Designated hitter slot** | DH rules are not yet implemented; lineup is 9 batters only |
 | **Series-level bullpen conservation** | Would require cross-game RP workload tracking (same phase as SP rest, could be added alongside) |
