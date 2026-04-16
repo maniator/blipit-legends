@@ -41,7 +41,7 @@ Copilot-specific policy that remains in this file:
 - Keep generated code under 200 lines when practical; split large files.
 - Prefer extracting shared logic over duplication.
 - Use American English in user-facing copy and docs.
-- Use the `pr-metadata` agent to write or approve every `prTitle`/`prDescription` before passing them to `report_progress` or `create_pull_request`. Descriptions must be reviewer-readable prose covering the full branch scope — never a list of AI task checkboxes. See `.github/agents/pr-metadata.md` for the required format (Summary, Changes, Testing).
+- **REQUIRED — `pr-metadata` agent for every PR description**: Before calling `report_progress` or `create_pull_request`, invoke the `pr-metadata` agent (via the `task` tool) to write or approve the `prTitle`/`prDescription`. Descriptions must be reviewer-readable prose covering the full branch scope — **never** a list of AI task checkboxes (`- [x] …`). See `.github/agents/pr-metadata.md` for the required format (Summary, Changes, Testing). The CI `pr-description-check` workflow will **fail the build** if a checklist-style description is pushed.
 - **When you notice duplication**, fix it before adding more: extract first, then wire both consumers.
 - **Duplication in tests is acceptable** when it aids test readability, but shared test setup belongs in `@test/testHelpers`.
 - **Always make small, focused commits** — one logical change per commit. Never batch unrelated changes into a single commit. Small commits are easier to review, bisect, and revert.

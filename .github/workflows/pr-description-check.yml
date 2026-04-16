@@ -108,6 +108,16 @@ jobs:
               });
             }
 
+      # Fail the job so the check can be used as a required status check.
+      # The warning comment above already explains what to fix.
+      - name: Fail if description is invalid
+        if: steps.check.outputs.result == 'fail'
+        run: |
+          echo "❌ PR description failed the quality check."
+          echo "Update it to reviewer-readable prose (Summary / Changes / Testing)."
+          echo "Use the @pr-metadata agent or write it manually — no checklist items allowed."
+          exit 1
+
       # Dismiss the warning comment once the description has been improved.
       # Skipped for fork PRs where GITHUB_TOKEN lacks write permissions.
       - name: Dismiss warning comment
