@@ -51,6 +51,11 @@ function sanitizeOptionalJerseyNumber(
   return value;
 }
 
+function readObjectField(source: unknown, key: string): unknown {
+  if (typeof source !== "object" || source === null) return undefined;
+  return (source as Record<string, unknown>)[key];
+}
+
 /**
  * Sanitizes an abbreviation: trims, uppercases, and enforces 2–3 characters.
  * Throws if the result is outside that range so stored docs are always valid.
@@ -204,10 +209,7 @@ export function sanitizePlayer(
     ),
     stamina: clampStat(
       requireFiniteNumber(
-        batting.stamina ??
-          (typeof batting === "object" && batting !== null
-            ? (batting as { eye?: unknown }).eye
-            : undefined),
+        batting.stamina ?? readObjectField(batting, "eye"),
         `roster ${section}[${index}].batting.stamina`,
       ),
     ),
@@ -223,10 +225,8 @@ export function sanitizePlayer(
     movement: clampStat(
       requireFiniteNumber(
         pitching.movement ??
-          (typeof pitching === "object" && pitching !== null
-            ? (pitching as { command?: unknown }).command
-            : undefined) ??
-          pitching.control,
+          readObjectField(pitching, "command") ??
+          readObjectField(pitching, "control"),
         `roster ${section}[${index}].pitching.movement`,
       ),
     ),
