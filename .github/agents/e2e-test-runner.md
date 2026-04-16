@@ -387,14 +387,19 @@ sudo chown -hR "$(id -u):$(id -g)" dist/ node_modules/ .yarn/ e2e/tests/ 2>/dev/
 
 **Visual diff failures** — inspect the `-diff.png` and `-received.png` in `test-results/` alongside the committed `-expected.png` baseline. If the diff shows an intentional UI change, regenerate the baseline following the snapshot update flow above.
 
-## When to consult `@pm-agent`
+## Consult `@pm-agent` first for behavior/test-plan ambiguity
 
-Route to `@pm-agent` before authoring new tests in any of these situations:
+Route to `@pm-agent` before implementation when new tests/fixtures depend on unclear gameplay expectations, changing rules semantics, or cross-feature scoping decisions. Keep `@senior-lead` escalation for technical sign-off on high-risk changes.
 
-- **Adding tests for a new feature** — ask `@pm-agent` what the feature's expected behavior is (including any MLB rule deviations in `docs/agent/baseball-rules-delta.md`) so the tests assert the right things.
-- **Test failure suggests a gameplay rules change is needed** — if an E2E failure reveals the simulator is behaving incorrectly (not just a test issue), route to `@pm-agent` first for a code-change plan rather than adjusting the test to match the wrong behavior.
-- **New fixture needed for a new game state** — if the fixture requires a game state that doesn't exist yet (e.g., a new decision type), ask `@pm-agent` whether that state is reachable and what seed/conditions produce it.
-- **Determinism test is failing** — seed-replay divergence means a PRNG call was added or removed. Ask `@pm-agent` to identify the new call site and confirm whether it's intentional.
+## Escalation to `@senior-lead`
+
+Request a `@senior-lead` review before merging if **any** of the following apply:
+
+- The fixture format changes (e.g., new required fields, changed `sig` computation, altered `header` shape)
+- A test in the `determinism` project is removed or skipped
+- The `loadFixture` helper API is modified in a breaking way
+
+Use the `SENIOR LEAD REVIEW REQUEST` template from `.github/agents/prompt-examples.md` and provide: fixture diff, test coverage impact, and the full list of affected Playwright projects.
 
 ## Pre-commit checklist
 

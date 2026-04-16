@@ -61,14 +61,18 @@ When investigating a simulation bug, capture all reproducibility context before 
 - Keep tests in `src/context/*.test.ts` files co-located with the module under test.
 - Use `makeState` and `mockRandom` from `src/test/testHelpers.ts` to set up deterministic test scenarios.
 
-## When to consult `@pm-agent`
+## Consult `@pm-agent` first for scope/risk framing
 
-Route to `@pm-agent` before writing code in any of these situations:
+Route to `@pm-agent` before implementation when the fix involves ambiguous rules intent, cross-feature behavior tradeoffs, or broader planning/risk review. Keep `@senior-lead` escalation for technical sign-off on high-risk simulation fixes.
 
-- **Root cause spans multiple modules** — if the bug implicates `advanceRunners`, `gameOver`, `reducer`, and a handler file simultaneously, ask `@pm-agent` for a scoped implementation plan before touching any of them.
-- **Fix requires a rule interpretation** — if the correct behavior is ambiguous (e.g., "should a bunt foul with two strikes result in an out?"), consult `@pm-agent` against `docs/agent/baseball-rules-delta.md` before deciding.
-- **Fix adds or removes a PRNG call** — any conditional `random()` insertion or deletion changes the call sequence for all subsequent events. Ask `@pm-agent` to flag PRNG-replay risk and identify which existing tests will break.
-- **Bug may require a new game behavior** — if fixing the bug means the simulation will now behave differently (e.g., correcting a stolen-base rule), treat this as a feature change and get a full plan from `@pm-agent` first.
+## Escalation to `@senior-lead`
+
+Request a `@senior-lead` review before merging if **any** of the following apply:
+
+- The fix alters PRNG call order (any conditional `random()` insertion or removal)
+- The fix touches `advanceRunners`, `gameOver`, or `hitBall` — the highest-risk modules in the simulator
+
+Use the `SENIOR LEAD REVIEW REQUEST` template from `.github/agents/prompt-examples.md` and provide: seed + event index, before/after RNG call trace, and the regression test added.
 
 ## Pre-commit checklist
 
