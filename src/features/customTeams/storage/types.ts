@@ -4,16 +4,16 @@ export interface TeamPlayerBatting {
   power: number;
   speed: number;
   /** Stamina (0–100). Drives per-game batter fatigue: higher values reduce contact/power penalties as plate appearances accumulate. */
-  stamina?: number;
+  stamina: number;
 }
 
-/** Optional pitching statistics for a custom team player. */
+/** Pitching statistics for a custom team pitcher. */
 export interface TeamPlayerPitching {
-  velocity?: number;
-  control?: number;
-  movement?: number;
+  velocity: number;
+  control: number;
+  movement: number;
   /** Stamina (0–100). Higher values keep pitchers effective for longer before fatigue sets in. */
-  stamina?: number;
+  stamina: number;
 }
 
 /** A single player on a custom team roster. */

@@ -166,7 +166,7 @@ describe("players collection", () => {
       orderIndex: 0,
       name: "Alice",
       role: "batter",
-      batting: { contact: 70, power: 60, speed: 50 },
+      batting: { contact: 70, power: 60, speed: 50, stamina: 50 },
       createdAt: "2024-01-01T00:00:00.000Z",
 
       updatedAt: "2024-01-01T00:00:00.000Z",
@@ -189,7 +189,7 @@ describe("players collection", () => {
         orderIndex: 0,
         name: "Alice",
         role: "batter",
-        batting: { contact: 70, power: 60, speed: 50 },
+        batting: { contact: 70, power: 60, speed: 50, stamina: 50 },
         createdAt: "2024-01-01T00:00:00.000Z",
 
         updatedAt: "2024-01-01T00:00:00.000Z",
@@ -203,7 +203,7 @@ describe("players collection", () => {
         orderIndex: 1,
         name: "Bob",
         role: "batter",
-        batting: { contact: 65, power: 55, speed: 45 },
+        batting: { contact: 65, power: 55, speed: 45, stamina: 50 },
         createdAt: "2024-01-01T00:00:00.000Z",
 
         updatedAt: "2024-01-01T00:00:00.000Z",
@@ -217,7 +217,7 @@ describe("players collection", () => {
         orderIndex: 0,
         name: "Carol",
         role: "batter",
-        batting: { contact: 80, power: 70, speed: 60 },
+        batting: { contact: 80, power: 70, speed: 60, stamina: 50 },
         createdAt: "2024-01-01T00:00:00.000Z",
 
         updatedAt: "2024-01-01T00:00:00.000Z",
@@ -240,7 +240,7 @@ describe("players collection", () => {
         orderIndex: 0,
         name: "Lineup Player",
         role: "batter",
-        batting: { contact: 70, power: 60, speed: 50 },
+        batting: { contact: 70, power: 60, speed: 50, stamina: 50 },
         createdAt: "2024-01-01T00:00:00.000Z",
 
         updatedAt: "2024-01-01T00:00:00.000Z",
@@ -254,7 +254,7 @@ describe("players collection", () => {
         orderIndex: 0,
         name: "Bench Player",
         role: "batter",
-        batting: { contact: 65, power: 55, speed: 45 },
+        batting: { contact: 65, power: 55, speed: 45, stamina: 50 },
         createdAt: "2024-01-01T00:00:00.000Z",
 
         updatedAt: "2024-01-01T00:00:00.000Z",
@@ -292,7 +292,7 @@ describe("players collection", () => {
         orderIndex: 0,
         name: "A Player",
         role: "batter",
-        batting: { contact: 70, power: 60, speed: 50 },
+        batting: { contact: 70, power: 60, speed: 50, stamina: 50 },
         createdAt: "2024-01-01T00:00:00.000Z",
 
         updatedAt: "2024-01-01T00:00:00.000Z",
@@ -306,7 +306,7 @@ describe("players collection", () => {
         orderIndex: 0,
         name: "B Player",
         role: "batter",
-        batting: { contact: 65, power: 55, speed: 45 },
+        batting: { contact: 65, power: 55, speed: 45, stamina: 50 },
         createdAt: "2024-01-01T00:00:00.000Z",
 
         updatedAt: "2024-01-01T00:00:00.000Z",

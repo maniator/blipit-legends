@@ -219,7 +219,7 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
       id: "p_nogid",
       name: "No GID Player",
       role: "batter",
-      batting: { contact: 60, power: 50, speed: 40 },
+      batting: { contact: 60, power: 50, speed: 40, stamina: 50 },
     };
     const playerJson = exportCustomPlayer(playerWithoutGid);
     _fileContent = playerJson;
@@ -230,7 +230,7 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
         id: "p_dup",
         name: "No GID Player",
         role: "batter",
-        batting: { contact: 60, power: 50, speed: 40 },
+        batting: { contact: 60, power: 50, speed: 40, stamina: 50 },
         // same stats, so buildPlayerSig will produce the same fingerprint
       },
     ]);
@@ -257,7 +257,7 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
       id: "p_confirm",
       name: "Confirm Player",
       role: "batter",
-      batting: { contact: 65, power: 45, speed: 55 },
+      batting: { contact: 65, power: 45, speed: 55, stamina: 50 },
     };
     const playerJson = exportCustomPlayer(playerWithoutGid);
     _fileContent = playerJson;
@@ -267,7 +267,7 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
         id: "p_c2",
         name: "Confirm Player",
         role: "batter",
-        batting: { contact: 65, power: 45, speed: 55 },
+        batting: { contact: 65, power: 45, speed: 55, stamina: 50 },
       },
     ]);
 
@@ -365,7 +365,7 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
       id: "p_unique",
       name: "Unique Player",
       role: "batter",
-      batting: { contact: 55, power: 45, speed: 35 },
+      batting: { contact: 55, power: 45, speed: 35, stamina: 50 },
     };
     const playerJson = exportCustomPlayer(playerWithoutGid);
     _fileContent = playerJson;

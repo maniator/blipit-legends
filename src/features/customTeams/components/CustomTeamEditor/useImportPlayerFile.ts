@@ -168,7 +168,7 @@ export function useImportPlayerFile({
                 : { contact: p.contact, power: p.power, speed: p.speed, stamina: 50 },
               pitching: isPitcher
                 ? {
-                    velocity: p.velocity,
+                    velocity: p.velocity ?? 60,
                     control: p.control ?? 60,
                     movement: p.movement ?? 60,
                     stamina: 60,

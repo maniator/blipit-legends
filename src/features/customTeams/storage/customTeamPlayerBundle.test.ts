@@ -107,7 +107,7 @@ describe("parseExportedCustomPlayer", () => {
     const p = makePlayer({
       name: "Ace Pitcher",
       role: "pitcher",
-      pitching: { velocity: 92, control: 80, movement: 75 },
+      pitching: { velocity: 92, control: 80, movement: 75, stamina: 60 },
     });
     const result = parseExportedCustomPlayer(exportCustomPlayer(p));
     expect(result.pitching?.velocity).toBe(92);
@@ -163,7 +163,7 @@ describe("exportCustomPlayer / parseExportedCustomPlayer — full player field r
   it("round-trips all pitching fields (velocity, control, movement) for a pitcher", () => {
     const p = makePlayer({
       role: "pitcher",
-      pitching: { velocity: 91, control: 85, movement: 78 },
+      pitching: { velocity: 91, control: 85, movement: 78, stamina: 60 },
     });
     const result = parseExportedCustomPlayer(exportCustomPlayer(p));
     expect(result.pitching?.velocity).toBe(91);
@@ -174,21 +174,21 @@ describe("exportCustomPlayer / parseExportedCustomPlayer — full player field r
   it("round-trips pitchingRole through exportCustomPlayer → parseExportedCustomPlayer", () => {
     const p = makePlayer({
       role: "pitcher",
-      pitching: { velocity: 90, control: 80, movement: 70 },
+      pitching: { velocity: 90, control: 80, movement: 70, stamina: 60 },
       pitchingRole: "SP",
     });
     expect(parseExportedCustomPlayer(exportCustomPlayer(p)).pitchingRole).toBe("SP");
 
     const rp = makePlayer({
       role: "pitcher",
-      pitching: { velocity: 88, control: 75, movement: 65 },
+      pitching: { velocity: 88, control: 75, movement: 65, stamina: 60 },
       pitchingRole: "RP",
     });
     expect(parseExportedCustomPlayer(exportCustomPlayer(rp)).pitchingRole).toBe("RP");
 
     const swingman = makePlayer({
       role: "pitcher",
-      pitching: { velocity: 87, control: 80, movement: 72 },
+      pitching: { velocity: 87, control: 80, movement: 72, stamina: 60 },
       pitchingRole: "SP/RP",
     });
     expect(parseExportedCustomPlayer(exportCustomPlayer(swingman)).pitchingRole).toBe("SP/RP");
@@ -228,7 +228,7 @@ describe("exportCustomPlayer / parseExportedCustomPlayer — full player field r
   it("round-trips role=pitcher", () => {
     const p = makePlayer({
       role: "pitcher",
-      pitching: { velocity: 85, control: 80, movement: 70 },
+      pitching: { velocity: 85, control: 80, movement: 70, stamina: 60 },
     });
     const result = parseExportedCustomPlayer(exportCustomPlayer(p));
     expect(result.role).toBe("pitcher");
@@ -240,7 +240,7 @@ describe("exportCustomPlayer / parseExportedCustomPlayer — full player field r
       id: "player-full-rt",
       name: "Complete Player",
       role: "pitcher",
-      pitching: { velocity: 93, control: 87, movement: 82 },
+      pitching: { velocity: 93, control: 87, movement: 82, stamina: 60 },
       position: "SP",
       handedness: "R",
       isBenchEligible: false,
@@ -250,13 +250,13 @@ describe("exportCustomPlayer / parseExportedCustomPlayer — full player field r
       fingerprint: buildPlayerSig({
         name: "Complete Player",
         role: "pitcher",
-        pitching: { velocity: 93, control: 87, movement: 82 },
+        pitching: { velocity: 93, control: 87, movement: 82, stamina: 60 },
       }),
     };
     const result = parseExportedCustomPlayer(exportCustomPlayer(p));
     expect(result.name).toBe("Complete Player");
     expect(result.role).toBe("pitcher");
-    expect(result.pitching).toEqual({ velocity: 93, control: 87, movement: 82 });
+    expect(result.pitching).toEqual({ velocity: 93, control: 87, movement: 82, stamina: 60 });
     expect(result.position).toBe("SP");
     expect(result.handedness).toBe("R");
     expect(result.isBenchEligible).toBe(false);

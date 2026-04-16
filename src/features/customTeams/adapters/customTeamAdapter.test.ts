@@ -32,13 +32,13 @@ const makeTeam = (overrides: Partial<TeamWithRoster> = {}): TeamWithRoster => ({
         name: "Tom Adams",
         role: "batter",
         handedness: "L",
-        batting: { contact: 70, power: 65, speed: 60 },
+        batting: { contact: 70, power: 65, speed: 60, stamina: 50 },
       },
       {
         id: "p2",
         name: "Jake Baker",
         role: "batter",
-        batting: { contact: 55, power: 80, speed: 50 },
+        batting: { contact: 55, power: 80, speed: 50, stamina: 50 },
       },
     ],
     bench: [
@@ -46,7 +46,7 @@ const makeTeam = (overrides: Partial<TeamWithRoster> = {}): TeamWithRoster => ({
         id: "p3",
         name: "Sam Cole",
         role: "batter",
-        batting: { contact: 50, power: 50, speed: 50 },
+        batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
       },
     ],
     pitchers: [
@@ -184,7 +184,7 @@ describe("customTeamToPlayerOverrides", () => {
             name: "Tom Adams",
             role: "batter",
             position: "C",
-            batting: { contact: 70, power: 65, speed: 60 },
+            batting: { contact: 70, power: 65, speed: 60, stamina: 50 },
           },
         ],
         bench: [],
@@ -304,7 +304,7 @@ const makeFullLineup = () =>
     id: `pl_${i}`,
     name: `Player ${i + 1}`,
     role: "batter" as const,
-    batting: { contact: 50, power: 50, speed: 50 },
+    batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
     position: pos,
   }));
 
@@ -374,14 +374,14 @@ describe("validateCustomTeamForGame", () => {
         id: "p_a",
         name: "Player A",
         role: "batter" as const,
-        batting: { contact: 50, power: 50, speed: 50 },
+        batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
         position: "C",
       },
       {
         id: "p_b",
         name: "Player B",
         role: "batter" as const,
-        batting: { contact: 50, power: 50, speed: 50 },
+        batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
         position: "1B",
       },
     ];

@@ -270,7 +270,7 @@ describe("CustomTeamEditor — edit mode", () => {
     id,
     name,
     role: "batter" as const,
-    batting: { contact: 45, power: 45, speed: 45 },
+    batting: { contact: 45, power: 45, speed: 45, stamina: 50 },
     position,
     handedness: "R" as const,
   });
@@ -348,7 +348,7 @@ describe("CustomTeamEditor — edit mode identity immutability", () => {
     id,
     name,
     role: "batter" as const,
-    batting: { contact: 45, power: 45, speed: 45 },
+    batting: { contact: 45, power: 45, speed: 45, stamina: 50 },
     position,
     handedness: "R" as const,
   });
@@ -617,7 +617,7 @@ describe("CustomTeamEditor — importPlayer cross-team conflict (edit mode)", ()
           id: "p_existing",
           name: "Existing Player",
           role: "batter",
-          batting: { contact: 60, power: 55, speed: 50 },
+          batting: { contact: 60, power: 55, speed: 50, stamina: 50 },
         },
       ],
       bench: [],

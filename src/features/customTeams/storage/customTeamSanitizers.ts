@@ -64,24 +64,14 @@ export function clampPlayerStats(player: TeamPlayer): TeamPlayer {
     contact: clampStat(batting.contact),
     power: clampStat(batting.power),
     speed: clampStat(batting.speed),
-    ...(batting.stamina !== undefined && {
-      stamina: clampStat(batting.stamina),
-    }),
+    stamina: clampStat(batting.stamina),
   });
 
   const clampedPitching = (pitching: NonNullable<TeamPlayer["pitching"]>) => ({
-    ...(pitching.velocity !== undefined && {
-      velocity: clampStat(pitching.velocity),
-    }),
-    ...(pitching.control !== undefined && {
-      control: clampStat(pitching.control),
-    }),
-    ...(pitching.movement !== undefined && {
-      movement: clampStat(pitching.movement),
-    }),
-    ...(pitching.stamina !== undefined && {
-      stamina: clampStat(pitching.stamina),
-    }),
+    velocity: clampStat(pitching.velocity),
+    control: clampStat(pitching.control),
+    movement: clampStat(pitching.movement),
+    stamina: clampStat(pitching.stamina),
   });
 
   if (player.role === "pitcher") {
