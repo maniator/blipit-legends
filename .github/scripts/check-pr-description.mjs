@@ -7,8 +7,8 @@
  *
  * Heuristics applied:
  *   1. Empty or trivially short body.
- *   2. Checkbox ratio: >50% of non-empty content lines are task checkboxes
- *      (- [ ] / - [x] / * [ ] / * [x]).
+ *   2. Checkbox ratio: >50% of evaluated (non-code-block) lines are task
+ *      checkboxes (- [ ] / - [x] / * [ ] / * [x]).
  *   3. No prose: no plain narrative text on an individual non-list,
  *      non-heading, non-code-fence line with length > 40 chars or
  *      containing sentence-ending punctuation.
@@ -40,6 +40,7 @@ if (nonEmptyLines.length === 0) {
 let inCodeBlock = false;
 let checkboxCount = 0;
 let proseCount = 0;
+let eligibleLineCount = 0;
 
 for (const line of nonEmptyLines) {
   const t = line.trim();
@@ -50,6 +51,9 @@ for (const line of nonEmptyLines) {
     continue;
   }
   if (inCodeBlock) continue;
+
+  // Only lines outside code fences count toward the checkbox ratio denominator.
+  eligibleLineCount++;
 
   if (/^[-*]\s+\[[ x]\]/.test(t)) {
     checkboxCount++;
@@ -62,13 +66,12 @@ for (const line of nonEmptyLines) {
   }
 }
 
-const total = nonEmptyLines.length;
-const checkboxRatio = checkboxCount / total;
+const checkboxRatio = eligibleLineCount > 0 ? checkboxCount / eligibleLineCount : 0;
 const issues = [];
 
 if (checkboxRatio > 0.5) {
   issues.push(
-    `${checkboxCount} of ${total} non-empty lines are task checkboxes ` +
+    `${checkboxCount} of ${eligibleLineCount} evaluated lines are task checkboxes ` +
       `(${Math.round(checkboxRatio * 100)}%). This looks like an AI progress log, ` +
       "not a reviewer-readable description.",
   );
