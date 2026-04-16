@@ -1,0 +1,129 @@
+name: PR Description Check
+
+# Runs whenever a PR is opened or its description is updated.
+# If the description looks like an AI progress checklist rather than
+# a reviewer-readable summary, a warning comment is posted on the PR.
+# The comment is automatically dismissed when the description is improved.
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Check PR description quality
+        id: check
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if node .github/scripts/check-pr-description.mjs; then
+            echo "result=pass" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=fail" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Post or update a warning comment when the description needs improvement.
+      - name: Post or update warning comment
+        if: steps.check.outputs.result == 'fail'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- pr-description-check -->';
+
+            const body = [
+              marker,
+              '',
+              '## 📝 PR description needs improvement',
+              '',
+              'This PR\'s description looks like an AI-generated progress checklist (`- [x] …`) rather than something useful to a human reviewer. Please update it before the PR is marked ready for review.',
+              '',
+              '**A reviewer-ready description answers:**',
+              '- **What changed?** A plain-English summary of what this PR does and why.',
+              '- **Where to look?** A brief list of the key files/components changed.',
+              '- **How was it tested?** Which tests cover the change.',
+              '',
+              '**Example of a good description:**',
+              '````markdown',
+              '## Summary',
+              'Adds a two-step confirmation flow when importing a custom team whose player names',
+              'already exist in the database. Previously, imports silently overwrote matching',
+              'records. Now the user is prompted before any overwrite occurs.',
+              '',
+              '## Changes',
+              '- `useImportCustomTeams` hook — new `pendingDuplicateImport` confirmation state',
+              '- `CustomTeamEditor` — duplicate-player modal wired to the hook',
+              '- Unit tests covering the confirm and cancel paths',
+              '',
+              '## Testing',
+              'All existing import tests pass. New unit tests cover the confirm/cancel state machine.',
+              '````',
+              '',
+              '**What to avoid:**',
+              '- ~~`- [x] Implemented the feature`~~ — progress tracking, not reviewer context',
+              '- ~~`- [ ] Add tests`~~ — internal AI task, irrelevant to review',
+              '',
+              'Use the `@pr-metadata` agent to draft a proper description, or write one manually following the example above.',
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find((c) => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      # Dismiss the warning comment once the description has been improved.
+      - name: Dismiss warning comment
+        if: steps.check.outputs.result == 'pass'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- pr-description-check -->';
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find((c) => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.deleteComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+              });
+              console.log('Dismissed previous warning — description now looks reviewer-friendly.');
+            }
