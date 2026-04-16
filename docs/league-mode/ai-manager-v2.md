@@ -2,25 +2,25 @@
 
 > **Status: Future phase (not part of the initial league slice)**
 >
-> See [stamina.md](stamina.md) for the v1 AI starting-pitcher approach (seed-hash rotation, no state required) and the within-game pitching change logic that ships in v1.
+> See [stamina.md](stamina.md) for today's v1 starter behavior (`activePitcherIdx = [0, 0]`, no pre-game starter selection yet) and the within-game pitching change logic that ships in v1.
 >
 > This document describes what an AI v2 manager would decide **before the first pitch** of each league game: starting pitcher selection with rest awareness, batting order construction, and bench configuration.
 
 ---
 
-## What v1 AI decides (already shipping)
+## What v1 AI decides today
 
-| Decision point              | v1 behavior                                                                           |
-| --------------------------- | ------------------------------------------------------------------------------------- |
-| **Starting pitcher**        | Deterministic seed-hash rotation — picks from the SP/SP‑RP pool, no cross-game state  |
-| **In-game pitching change** | `makeAiPitchingDecision` — fatigue-factor + handedness matchup                        |
-| **In-game pinch hitter**    | `makeAiTacticalDecision` — bench candidate ranked by contact mod                      |
-| **Batting order**           | Fixed roster order as stored in `PlayerRecord.orderIndex`; never re-sorted            |
-| **Bench composition**       | Fixed — bench is whatever is in the `bench` section of the roster                     |
-| **Tactical decisions**      | `makeAiTacticalDecision` — steal, bunt, count modifiers, IBB                          |
-| **Strategy**                | `makeAiStrategyDecision` — power / aggressive / contact / balanced per game situation |
+| Decision point              | v1 behavior                                                                            |
+| --------------------------- | -------------------------------------------------------------------------------------- |
+| **Starting pitcher**        | Fixed slot 0 (`activePitcherIdx = [0,0]`) — no pre-game AI starter-selection logic yet |
+| **In-game pitching change** | `makeAiPitchingDecision` — fatigue-factor + handedness matchup                         |
+| **In-game pinch hitter**    | `makeAiTacticalDecision` — bench candidate ranked by contact mod                       |
+| **Batting order**           | Fixed roster order as stored in `PlayerRecord.orderIndex`; never re-sorted             |
+| **Bench composition**       | Fixed — bench is whatever is in the `bench` section of the roster                      |
+| **Tactical decisions**      | `makeAiTacticalDecision` — steal, bunt, count modifiers, IBB                           |
+| **Strategy**                | `makeAiStrategyDecision` — power / aggressive / contact / balanced per game situation  |
 
-Everything in the table above is scope-complete for v1. AI v2 extends the **pre-game** rows.
+Everything in the table above reflects current behavior. AI v2 extends the **pre-game** rows.
 
 ---
 
@@ -28,7 +28,7 @@ Everything in the table above is scope-complete for v1. AI v2 extends the **pre-
 
 ### 1. Starting Pitcher — Rest-Aware Selection
 
-**v1 gap:** Seed-hash rotation produces natural variety but has no memory — it may inadvertently start the same SP on back-to-back days.
+**v1 gap:** There is no pre-game starter-selection logic yet (`activePitcherIdx` defaults to slot 0), so teams can repeatedly open with the same pitcher.
 
 **v2 plan:** Replace `selectAiStartingPitcherIdx` with a rest-aware version that queries `PitcherWorkloadRecord` (introduced in the cross-game stamina phase — see [stamina.md](stamina.md#future-phase-pitcher-rotation-tracking)) and selects the most-rested eligible SP. Seed hash is retained as a deterministic tiebreaker when rest days are equal.
 
