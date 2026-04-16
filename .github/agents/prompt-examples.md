@@ -152,7 +152,7 @@ Risk flags already identified:
 - RxDB schema change required (SaveDoc.pitcherEra: number)
 - Migration needed (default 0 for existing docs)
 - FNV-1a export signature changes for newly exported bundles when the header shape changes, even though older exports should still verify/import
-Execution agent: @rxdb-save-integrity
+Execution agent(s): @rxdb-save-integrity
 ```
 
 ### Domain agent escalation to Senior Lead
@@ -191,7 +191,7 @@ Risk flags already identified:
 - PRNG call order may change if new random() calls are added
 - advanceRunners is a high-risk area (historical impossible-state bugs)
 - Regression tests needed for doubles/triples runner advancement
-Execution agent: @simulation-correctness
+Execution agent(s): @simulation-correctness
 
 ---
 
@@ -238,7 +238,7 @@ Rollout window: Before next release
 Risk flags already identified:
 - Container image change affects all snapshot baselines
 - Must regenerate all visual snapshots after bump
-Execution agent: @ci-workflow + @e2e-test-runner
+Execution agent(s): @ci-workflow + @e2e-test-runner
 
 Please provide a security and supply-chain sign-off for this image bump.
 ```

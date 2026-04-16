@@ -58,6 +58,12 @@ For changes that do **not** match a trigger, the relevant domain agent can proce
 
 All high-value changes go through a structured handshake between `@pm-agent` and `@senior-lead`. This ensures technical risk and business priority are always reconciled before work lands.
 
+**Timing and routing rules:**
+
+- **Pre-implementation (required):** for any triggered high-value change, `@pm-agent` requests Senior Lead review before an execution agent starts implementation.
+- **Pre-merge (conditional):** if scope drifts into a new trigger or `@senior-lead` returned `REQUEST_CHANGES`, `@pm-agent` requests a follow-up Senior Lead review before merge.
+- **No direct execution-agent escalation:** execution agents route escalation through `@pm-agent`; only `@pm-agent` submits the formal `SENIOR LEAD REVIEW REQUEST`.
+
 ### Step 1 — PM sends a review request to Senior Lead
 
 `@pm-agent` initiates review by providing:
@@ -69,7 +75,7 @@ Business priority: <P0 | P1 | P2 | P3>
 Acceptance criteria: <what "done" looks like>
 Rollout window: <target merge date or release milestone>
 Risk flags already identified: <list from pm-agent risk checklist>
-Execution agent: <which domain agent will carry out the work>
+Execution agent(s): <which domain agent(s) will carry out the work>
 ```
 
 ### Step 2 — Senior Lead returns a technical verdict
