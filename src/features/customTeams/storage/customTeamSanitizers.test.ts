@@ -253,7 +253,17 @@ describe("sanitizePlayer", () => {
     expect(result.role).toBe("pitcher");
   });
 
-  it("throws when batting.stamina is undefined (legacy export missing stamina)", () => {
+  it("falls back to batting.eye when batting.stamina is undefined (legacy export)", () => {
+    const player = {
+      ...makePlayer(),
+      batting: { contact: 50, power: 50, speed: 50, eye: 65 },
+    } as unknown as TeamPlayer;
+    const result = sanitizePlayer(player, { index: 0, section: "lineup" });
+    if (result.role !== "batter") throw new Error("Expected batter player in test");
+    expect(result.batting.stamina).toBe(65);
+  });
+
+  it("throws when batting.stamina and legacy batting.eye are both missing", () => {
     const player = {
       ...makePlayer(),
       batting: { contact: 50, power: 50, speed: 50 },

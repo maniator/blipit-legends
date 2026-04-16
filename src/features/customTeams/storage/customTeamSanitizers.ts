@@ -203,7 +203,13 @@ export function sanitizePlayer(
       requireFiniteNumber(batting.speed, `roster ${section}[${index}].batting.speed`),
     ),
     stamina: clampStat(
-      requireFiniteNumber(batting.stamina, `roster ${section}[${index}].batting.stamina`),
+      requireFiniteNumber(
+        batting.stamina ??
+          (typeof batting === "object" && batting !== null
+            ? (batting as { eye?: unknown }).eye
+            : undefined),
+        `roster ${section}[${index}].batting.stamina`,
+      ),
     ),
   });
 
