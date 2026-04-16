@@ -190,7 +190,7 @@ Use this table to determine when `@senior-lead` review is required and what evid
 | `@simulation-correctness` | Fix alters PRNG call order OR touches `advanceRunners`, `gameOver`, or `hitBall` | Seed + event index, before/after RNG call trace, regression test | Determinism sign-off + technical verdict |
 | `@rxdb-save-integrity` | Any schema version bump OR save/export format change | Schema diff, migration strategy code, upgrade-path test result | Data integrity sign-off + go/no-go |
 | `@ci-workflow` | Workflow permission change, container image bump, or new secret usage | Workflow diff, permission scope, artifact impact summary | Security sign-off + APPROVE / BLOCK |
-| `@ui-visual-snapshot` | Layout changes affecting all 6 Playwright projects simultaneously | Before/after screenshots, responsive-smoke test results | Risk assessment (hard-block only if mobile CTA or accessibility is broken) |
+| `@ui-visual-snapshot` | Layout changes affecting all 6 viewport/device Playwright projects simultaneously | Before/after screenshots, responsive-smoke test results | Risk assessment (hard-block only if mobile CTA or accessibility is broken) |
 | `@e2e-test-runner` | Fixture format changes OR removal/skip of the determinism project test | Fixture diff, test coverage impact, project list | APPROVE / REQUEST_CHANGES |
 | `@playwright-prod` | Production QA reveals a regression introduced by a recent merge | QA report, reproduction steps, affected route or component | Root cause assessment + fix recommendation |
 

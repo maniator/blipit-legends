@@ -42,7 +42,7 @@ You must be invoked (via `@senior-lead`) whenever a change matches **any** of th
 | Any change to save/export format (FNV-1a signature, event `idx` structure) | Save compatibility for all existing users |
 | Any change to CI workflow permissions, secrets, or container images | Security and supply-chain risk |
 | Any refactor touching ≥ 5 files in `src/features/gameplay/context/` | Reducer cycle order and invariant risk |
-| Any change to `copilot-setup-steps.yml` | Copilot agent environment stability |
+| Any change to `.github/workflows/copilot-setup-steps.yml` | Copilot agent environment stability |
 | Any authentication or DB initialization change | App startup and data loss risk |
 | Release-cut changes (version bumps, tags, changelog) | Correctness of the release artifact |
 | Any change that `@pm-agent` flags as P0 or P1 priority | Product-critical path |
