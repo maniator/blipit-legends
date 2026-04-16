@@ -4,6 +4,53 @@ Copy-paste prompts for common tasks in `maniator/blipit-legends`. Prepend `@safe
 
 ---
 
+## PR metadata
+
+### Draft a reviewer-readable PR description
+
+```
+@pr-metadata
+
+Branch: copilot/my-feature-branch
+Base:    master
+
+git log output:
+  abc1234 Add duplicate-player confirmation modal
+  def5678 Extract useImportCustomTeams hook state machine
+  ghi9012 Add unit tests for confirm/cancel paths
+
+Current PR title: "Update import flow"
+Current PR description:
+  - [x] Implemented the confirmation flow
+  - [x] Added unit tests
+  - [ ] Update docs
+
+Produce a reviewer-readable title and description following the Summary / Changes / Testing format.
+```
+
+### Check whether an existing description needs updating
+
+```
+@pr-metadata
+
+Branch: copilot/fix-save-load-bug
+Base:    master
+
+git log output:
+  aaa1111 Fix null save ID crash on game-over
+  bbb2222 Add regression test for null save ID
+
+Current PR title: "Fix save/load crash"
+Current PR description:
+  ## Summary
+  Fixes a crash that occurred when the game ended and the save ID was null.
+  ...
+
+Determine whether the description already covers all commits, or needs updating.
+```
+
+---
+
 ## Baseball manager (realism tuning)
 
 ### Review simulation logs and propose realism tuning

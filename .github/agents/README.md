@@ -104,6 +104,19 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 
 ---
 
+### `pr-metadata`
+
+**When to use:** Any time a PR title or description needs to be written or updated — before calling `report_progress` or `create_pull_request` with a `prTitle`/`prDescription`.
+
+**Key guardrails:**
+
+- Keeps description static when branch scope hasn't changed and existing prose already covers all commits
+- Produces reviewer-readable prose (Summary, Changes, Testing) — never AI progress checklists
+- Compares `git log BASE..HEAD` against the current description to detect missing scope
+- Returns a normalized title + description plus a one-sentence rationale
+
+---
+
 ### `e2e-test-runner`
 
 **When to use:** Running, debugging, authoring, or updating Playwright E2E tests — especially when visual snapshot baselines need to be regenerated.
@@ -133,4 +146,4 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 | `useSaveStore` in tests  | Requires `<RxDatabaseProvider>` in tree. Always mock with `vi.mock("@hooks/useSaveStore", ...)` in component tests.                                                                                                                                                                                                                    |
 | `dvh` vs `vh`            | Always use `dvh` for modal `max-height` — `100vh` on mobile can exceed visible viewport.                                                                                                                                                                                                                                               |
 | E2E test speed           | If a test waits >30 s for autoplay to reach a game state (decision panel, RBI on board, specific inning), use `loadFixture(page, "name.json")` with a pre-crafted fixture instead. See "Save Fixtures for E2E Testing" in `../docs/e2e-testing.md`.                                                                                    |
-| PR title and description | Each `report_progress` call overwrites the PR title and description. Always run `git log --oneline` first to understand the full scope of all commits across all sessions before writing `prTitle`/`prDescription`. The PR title and description must summarize the **entire** PR, not only the current session's incremental changes. |
+| PR title and description | Use the `pr-metadata` agent to write or revise `prTitle`/`prDescription`. It runs `git log BASE..HEAD`, compares against the current description, and keeps it static when scope is unchanged. **Descriptions must be reviewer-readable prose** (Summary + Changes + Testing sections) — never an AI progress checklist of `- [x]` bullets. A GitHub Actions workflow (`pr-description-check.yml`) automatically posts a warning comment when a description looks like a checklist, and dismisses it once the description is improved. |

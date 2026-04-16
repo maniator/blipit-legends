@@ -49,7 +49,7 @@ jobs:
               '',
               '## 📝 PR description needs improvement',
               '',
-              'This PR\'s description looks like an AI-generated progress checklist (`- [x] …`) rather than something useful to a human reviewer. Please update it before the PR is marked ready for review.',
+              "This PR's description looks like an AI-generated progress checklist (`- [x] …`) rather than something useful to a human reviewer. Please update it before the PR is marked ready for review.",
               '',
               '**A reviewer-ready description answers:**',
               '- **What changed?** A plain-English summary of what this PR does and why.',
