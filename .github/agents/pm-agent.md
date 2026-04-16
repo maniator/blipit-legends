@@ -123,13 +123,13 @@ Every response in this mode must follow this structure:
 - **Module cycle order:** `strategy → advanceRunners → gameOver → playerOut → hitBall → buntAttempt → playerActions → reducer`. No import may come from a module later in this chain.
 - **IBB is a single pitch event** in the simulator (not 4 pitches). See `src/features/gameplay/context/playerOut.ts:14`.
 - **Extra-inning tiebreak runner** is placed on 2nd (matching MLB 2022 permanent rule). The runner ID is the last batter from the previous half-inning. See `src/features/gameplay/context/gameOver.ts:58-74`.
-- **Home-lead skip:** if the home team leads entering the bottom of the 9th (or later), the game ends without playing the bottom half. See `gameOver.ts:44-51`.
-- **Walk-off** fires when `inning >= 9 && atBat === 1 && home > away` after any scoring event. See `gameOver.ts:78-87`.
-- **IBB guard conditions:** inning ≥ 7, 2 outs, score diff ≤ 2, 1st base empty, runner on 2nd or 3rd. See `reducer.ts:66-71`.
-- **Steal guard:** only 1st→2nd and 2nd→3rd; only offered when expected success > 72%; <2 outs. Steal of home is not implemented. See `reducer.ts:40-52`, `74-83`.
-- **Defensive shift:** raises ground-out probability by +10% (100/1000). 2023 MLB shift ban is NOT modeled. See `hitBall.ts:437`.
-- **Pinch hitter:** offered inning ≥ 7, <2 outs, runner on 2nd or 3rd, 0-0 count only. See `reducer.ts:91-100`.
-- **DP conditions:** runner on 1st, <2 outs, ground ball. Base 55% DP chance, speed-adjusted. See `hitBall.ts:58-85`.
+- **Home-lead skip:** if the home team leads entering the bottom of the 9th (or later), the game ends without playing the bottom half. See `src/features/gameplay/context/gameOver.ts:44-51`.
+- **Walk-off** fires when `inning >= 9 && atBat === 1 && home > away` after any scoring event. See `src/features/gameplay/context/gameOver.ts:78-87`.
+- **IBB guard conditions:** inning ≥ 7, 2 outs, score diff ≤ 2, 1st base empty, runner on 2nd or 3rd. See `src/features/gameplay/context/reducer.ts:66-71`.
+- **Steal guard:** only 1st→2nd and 2nd→3rd; only offered when expected success > 72%; <2 outs. Steal of home is not implemented. See `src/features/gameplay/context/reducer.ts:40-52`, `src/features/gameplay/context/reducer.ts:74-83`.
+- **Defensive shift:** raises ground-out probability by +10% (100/1000). 2023 MLB shift ban is NOT modeled. See `src/features/gameplay/context/hitBall.ts:437`.
+- **Pinch hitter:** offered inning ≥ 7, <2 outs, runner on 2nd or 3rd, 0-0 count only. See `src/features/gameplay/context/reducer.ts:91-100`.
+- **DP conditions:** runner on 1st, <2 outs, ground ball. Base 55% DP chance, speed-adjusted. See `src/features/gameplay/context/hitBall.ts:58-85`.
 - **RxDB schema changes** require `version` bump and `migrationStrategies` entry that never throws. See `docs/rxdb-persistence.md`.
 - **Visual snapshot baselines** must be regenerated inside `mcr.microsoft.com/playwright:v1.58.2-noble`. Never commit locally generated PNGs.
 - **`Function` type is banned** — use explicit function signatures.

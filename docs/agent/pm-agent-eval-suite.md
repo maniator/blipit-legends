@@ -208,7 +208,7 @@ Runner on 3rd, 1 out, deep fly ball to left field. Runner tags and scores. How i
 
 - **Official MLB:** Sacrifice fly — PA counts, AB does NOT count (Rule 9.08(d)); batter earns 1 RBI.
 - **Ballgame:** `handleFlyOut` → `playerOut(…, true, { isSacFly: true, rbi: 1 })`. `isSacFly: true` is logged in `outLog`. Sac flies are **excluded from AB** when computing BA: `computeBattingStatsFromLogs` skips at-bats for entries where `isSacFly` is true, so the batter's batting average is **not affected** by a sac fly.
-- Citation: `hitBall.ts:204-210`; `playerOut.ts:50-58`.
+- Citation: `hitBall.ts:204-210`; `playerOut.ts:50-58`; `src/shared/utils/stats/computeBattingStatsFromLogs.ts:83-86` (the `entry.isSacFly` branch increments `sacFlies` instead of `atBats`).
 
 ---
 
