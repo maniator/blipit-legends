@@ -163,8 +163,8 @@ src/features/leagues/
 │   ├── LeagueSetupPage/          # /leagues/new — create wizard
 │   ├── LeagueDetailPage/         # /leagues/:leagueId — season overview
 │   ├── SchedulePage/             # /leagues/:leagueId/seasons/:leagueSeasonId/schedule
-│   ├── StatsHubLayout/           # /stats layout (Exhibition | League tabs)  # ← Phase 7 (future)
-│   ├── LeagueStatsPage/          # /stats/league/:leagueId  # ← Phase 7 (future)
+│   ├── StatsHubLayout/           # /stats layout (Exhibition | League tabs)   # ← Phase 7 (future)
+│   ├── LeagueStatsPage/          # /stats/league/:leagueId                    # ← Phase 7 (future)
 │   ├── PlayoffBracketPage/       # /leagues/:leagueId/seasons/:leagueSeasonId/playoffs  # ← Phase 9 (future)
 │   └── LeagueRosterPage/         # /leagues/:leagueId/roster (trades)  # ← Phase 8 (future)
 ├── storage/
