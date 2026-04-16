@@ -51,6 +51,75 @@ Determine whether the description already covers all commits, or needs updating.
 
 ---
 
+## PM Agent
+
+### Feature planning — new gameplay mechanic
+
+```
+@pm-agent
+
+We want to add a "stolen base of home" mechanic. The runner on 3rd can attempt to steal home.
+
+Produce a full implementation plan:
+- Which files change and in what order (respect the module cycle order).
+- PRNG call-order impact — does this add a random() call inside detectDecision?
+- Save/replay compatibility risk.
+- Official MLB rule vs current Ballgame behavior delta.
+- Validation checklist.
+- Which execution agent should carry out the implementation.
+```
+
+### Baseball rule adjudication
+
+```
+@pm-agent
+
+Official baseball rule question: in the bottom of the 9th, bases loaded, 1 out, batter hits a
+sacrifice fly. The runner on 3rd scores to put the home team ahead. Does the game end immediately
+(walk-off), or do the remaining outs still need to be recorded?
+
+Answer for both official MLB and Ballgame's implementation, with file citations.
+```
+
+### Risk review before opening a PR
+
+```
+@pm-agent
+
+I'm about to open a PR that changes the IBB pitch-count model from 1 pitch event to 4 pitch
+events (matching MLB rule 5.05(b)(2)). Give me a complete risk review:
+- PRNG replay impact
+- Fatigue model impact
+- Save compatibility
+- Files that change
+- Tests required
+- Which eval questions from the pm-agent-eval-suite.md would be affected
+```
+
+### Migration checklist — RxDB schema change
+
+```
+@pm-agent
+
+We want to add a `notes: string` optional field to `SaveDoc`. Produce the complete
+migration checklist before I hand off to @rxdb-save-integrity.
+```
+
+### PR description draft
+
+```
+@pm-agent
+
+Draft a PR description for a change that: (1) adds a `stolenBasesAttempted` counter to
+State in gameStateTypes.ts, (2) increments it in stealAttempt.ts on both success and
+caught-stealing paths, and (3) bumps the saves schema version with a migration that
+defaults the counter to 0.
+
+Follow the repo PR description format and include a risk summary.
+```
+
+---
+
 ## Baseball manager (realism tuning)
 
 ### Review simulation logs and propose realism tuning
@@ -67,6 +136,49 @@ Requirements:
 - For each recommendation, include likely cause, targeted change, expected effect,
   risk/tradeoff, and a validation plan.
 - Flag any impossible baseball sequence first.
+```
+
+### Validate realism after a gameplay change
+
+```
+@baseball-manager
+
+A gameplay change was just merged: [describe change, e.g., "IBB now counts as 4 pitch
+events instead of 1"].
+
+Here are before/after game logs: [paste logs]
+
+Review whether the change improved realism, identify any new unrealistic patterns
+introduced, and flag anything that needs a follow-up `@pm-agent` plan.
+```
+
+---
+
+## PM Agent + Baseball Manager (combined planning ↔ validation)
+
+### Full gameplay tuning cycle
+
+```
+Step 1 — plan with @pm-agent:
+
+@pm-agent
+
+[Describe the issue, e.g., "walk rate is 3× MLB average in logs."]
+
+Produce a full implementation plan:
+- Which file(s) and parameter(s) to adjust (cite file + line range).
+- PRNG replay impact of the change.
+- Save compatibility.
+- Validation checklist.
+
+Step 2 — validate with @baseball-manager after the fix is applied:
+
+@baseball-manager
+
+After fixing [change description], here are the new game logs: [paste logs]
+
+Confirm walk rate improved toward realistic MLB range (~8–9% of PAs), check that
+strikeout rate hasn't regressed, and flag any new impossible sequences.
 ```
 
 ---

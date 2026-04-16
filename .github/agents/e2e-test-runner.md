@@ -387,6 +387,15 @@ sudo chown -hR "$(id -u):$(id -g)" dist/ node_modules/ .yarn/ e2e/tests/ 2>/dev/
 
 **Visual diff failures** — inspect the `-diff.png` and `-received.png` in `test-results/` alongside the committed `-expected.png` baseline. If the diff shows an intentional UI change, regenerate the baseline following the snapshot update flow above.
 
+## When to consult `@pm-agent`
+
+Route to `@pm-agent` before authoring new tests in any of these situations:
+
+- **Adding tests for a new feature** — ask `@pm-agent` what the feature's expected behavior is (including any MLB rule deviations in `docs/agent/baseball-rules-delta.md`) so the tests assert the right things.
+- **Test failure suggests a gameplay rules change is needed** — if an E2E failure reveals the simulator is behaving incorrectly (not just a test issue), route to `@pm-agent` first for a code-change plan rather than adjusting the test to match the wrong behavior.
+- **New fixture needed for a new game state** — if the fixture requires a game state that doesn't exist yet (e.g., a new decision type), ask `@pm-agent` whether that state is reachable and what seed/conditions produce it.
+- **Determinism test is failing** — seed-replay divergence means a PRNG call was added or removed. Ask `@pm-agent` to identify the new call site and confirm whether it's intentional.
+
 ## Pre-commit checklist
 
 - [ ] Tests run and pass inside `mcr.microsoft.com/playwright:v1.58.2-noble` via `docker run`

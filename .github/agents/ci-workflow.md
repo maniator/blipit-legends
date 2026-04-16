@@ -101,6 +101,14 @@ If visual snapshot consistency in Copilot sessions is needed, install fonts via 
 | `.github/workflows/update-visual-snapshots.yml` | Regenerate visual snapshot baselines           |
 | `.github/workflows/copilot-setup-steps.yml`     | Copilot agent environment setup (no container) |
 
+## When to consult `@pm-agent`
+
+Route to `@pm-agent` before making workflow changes in any of these situations:
+
+- **CI change is driven by a new feature's test requirements** — if you need a new workflow step because a new game feature requires a new type of test (e.g., determinism checks, save-migration tests), ask `@pm-agent` for the full test strategy before adding workflow steps.
+- **Unsure which validation commands belong in CI** — the canonical set is `yarn lint`, `yarn format:check`, `yarn typecheck`, `yarn typecheck:e2e`, `yarn test:coverage`, `yarn build`, `yarn test:e2e`. Consult `@pm-agent` (PM-06 eval question) if you are adding or removing from this list.
+- **Sharding or matrix expansion is proposed** — ask `@pm-agent` whether new test categories (e.g., save-integrity, regression-seed) warrant their own workflow step or can share an existing one.
+
 ## Pre-commit checklist
 
 - [ ] Workflow diff is minimal and reviewed line-by-line

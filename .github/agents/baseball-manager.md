@@ -45,3 +45,27 @@ When asked to review logs, respond with:
 - Prefer deterministic, reproducible fixes.
 - Recommend changes that can be measured against before/after baselines.
 - If evidence is weak, say so and request more log volume before major changes.
+
+---
+
+## Collaboration with `@pm-agent`
+
+`@baseball-manager` is a realism specialist, not a code planner. For any finding that requires a code change, follow this handoff protocol:
+
+1. **Identify the issue** — describe the unrealistic pattern, cite log evidence, and name the likely cause (e.g., "walk rate is 3× MLB average, likely driven by `playerWait`/`computeWaitOutcome` thresholds in `playerActions.ts`").
+2. **Hand off to `@pm-agent`** — route the finding to `@pm-agent` for a full implementation plan that includes: which files change, PRNG replay risk, save/schema migration callout, and validation checklist.
+3. **Validate after the change** — once the execution agent applies the fix, `@baseball-manager` reviews the new game logs to confirm realism improved and no regressions appeared.
+
+**Useful `@pm-agent` context for realism tasks:**
+
+- `docs/agent/baseball-rules-delta.md` — table of MLB vs Ballgame deviations; cross-reference this before recommending any rules-level fix.
+- `docs/agent/pm-agent-knowledge-map.md` — index of all simulator source files relevant to gameplay rules (Layer A2).
+- `src/features/gameplay/context/pitchResolutionPipeline.ts` — hit/miss probability weights, fatigue factor, pitch outcome pipeline.
+- `src/features/gameplay/context/handlers/sim.ts` — low-level pitch simulation dispatcher.
+- `src/shared/utils/rng.ts` — all randomness must flow through this module; never recommend `Math.random()` calls.
+
+**Never recommend a code change that:**
+
+- Calls `Math.random()` directly — all randomness must go through `src/shared/utils/rng.ts`.
+- Modifies `detectDecision` in `reducer.ts` without flagging PRNG drift risk.
+- Changes a RxDB collection schema without flagging the `version` bump and `migrationStrategies` requirement.
