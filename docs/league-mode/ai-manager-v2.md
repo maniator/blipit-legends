@@ -37,7 +37,7 @@ Everything in the table above is scope-complete for v1. AI v2 extends the **pre-
 1. Filter to pitchers with role `"SP"` or `"SP/RP"` (fall back to all pitchers for stock/legacy teams with no roles set)
 2. Fetch each candidate's `PitcherWorkloadRecord.gameDay` for the current season
 3. Sort candidates by days since last appearance, descending (most rested first)
-4. Tiebreak by `fnv1a(gameSeed) % candidateCount` for full determinism
+4. Tiebreak by `parseInt(fnv1a(gameSeed), 16) % candidateCount` for full determinism
 5. Select the first candidate
 
 **Short-rest signal propagation:** The selected pitcher's `computeShortRestPenalty` is applied at `GameSaveSetup` time as a temporary `staminaMod` offset, not written back to `PlayerRecord`. The in-game `makeAiPitchingDecision` already reacts to the resulting fatigue factor — no changes to the in-game hook are needed.

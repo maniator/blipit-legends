@@ -96,7 +96,7 @@ function selectAiStartingPitcherIdx(
   if (eligibleSPs.length === 0) return 0; // fallback: no roles set (stock/legacy teams)
 
   // Hash the seed to a stable index within the SP pool.
-  const hashVal = fnv1a(gameSeed);
+  const hashVal = parseInt(fnv1a(gameSeed), 16);
   return eligibleSPs[hashVal % eligibleSPs.length].idx;
 }
 ```
@@ -242,7 +242,7 @@ async function selectAiStartingPitcherIdxWithRest(
 
   // Sort by days since last appearance descending (most rested first).
   // Tie-break by seed hash for determinism.
-  const hashVal = fnv1a(gameSeed);
+  const hashVal = parseInt(fnv1a(gameSeed), 16);
   eligibleSPs.sort((a, b) => {
     const aRest = workloads[a.id] ? currentGameDay - workloads[a.id].gameDay : 999; // never appeared = most rested
     const bRest = workloads[b.id] ? currentGameDay - workloads[b.id].gameDay : 999;
