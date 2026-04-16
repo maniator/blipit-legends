@@ -10,9 +10,10 @@ on:
     types: [opened, edited, reopened, synchronize]
 
 jobs:
-  # Job 1: check out the PR's code and run the heuristic script.
-  # Only needs read access — even if a PR modifies the script it cannot
-  # abuse the token to write comments or open issues.
+  # Job 1: check out ONLY the heuristic script from the base branch, then run it.
+  # Using the base-branch script (not the PR's code) means a PR cannot
+  # modify the script to force a pass and bypass the required status check.
+  # Only needs read access.
   check:
     runs-on: ubuntu-latest
     permissions:
@@ -21,8 +22,14 @@ jobs:
       result: ${{ steps.check.outputs.result }}
 
     steps:
-      - name: Checkout
+      - name: Checkout base branch (script only)
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          sparse-checkout: |
+            .nvmrc
+            .github/scripts/check-pr-description.mjs
+          sparse-checkout-cone-mode: false
 
       - name: Use Node.js
         uses: actions/setup-node@v4

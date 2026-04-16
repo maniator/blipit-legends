@@ -46,7 +46,8 @@ for (const line of nonEmptyLines) {
   const t = line.trim();
 
   // Toggle code-fence tracking so we don't classify code as prose or checkboxes.
-  if (t.startsWith("```")) {
+  // Both ``` and ~~~ are valid GitHub Markdown code fence delimiters.
+  if (t.startsWith("```") || t.startsWith("~~~")) {
     inCodeBlock = !inCodeBlock;
     continue;
   }
