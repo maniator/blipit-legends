@@ -20,7 +20,7 @@ The PM Agent must consult this document for every baseball-rule question. Respon
 
 | Rule area | Official MLB | Ballgame implementation | Status | Source |
 |---|---|---|---|---|
-| Game length | 9 innings standard; extras until a winner | 9 innings standard; unlimited extras | ✅ Matches MLB | `gameOver.ts:6` |
+| Game length | 9 innings standard; extras until a winner | 9 innings standard; extra innings continue via `nextHalfInning`, and no maximum inning cap is indicated in that flow | ✅ Matches MLB | `gameOver.ts:17-32` |
 | Outs per half-inning | 3 outs | 3 outs (`newOuts === 3` triggers half-inning transition) | ✅ Matches MLB | `playerOut.ts:109` |
 | Batting order | 9 batters, sequential, wraps | 9-slot fixed lineup, `nextBatter` wraps at index 9 | ✅ Matches MLB | `playerOut.ts:32-35` |
 | Half-inning state reset | Bases cleared, count reset | `baseLayout`, `outs`, `strikes`, `balls`, `pendingDecision`, `hitType` all reset in `nextHalfInning` | ✅ Matches MLB | `gameOver.ts:17-32` |
@@ -170,8 +170,8 @@ Real baseball resolves each batted ball with full fielder positioning, reaction 
 |---|---|---|---|---|
 | Pitch count tracking | Official statistic; no mandatory limit | `pitcherPitchCount[team]` incremented every pitch event including IBB (single event), excluding steal attempts | ✅ Matches MLB spirit | `playerOut.ts:16-29` |
 | Batters faced tracking | Official statistic | `pitcherBattersFaced[team]` incremented when batter's plate appearance is complete (`batterCompleted=true`) | ✅ Matches MLB spirit | `playerOut.ts:42-47` |
-| Fatigue effect | Real baseball: manager discretion for pull | Fatigue factor computed from pitch count and batters faced; reduces effective `controlMod` (more wild pitches) | ⚠️ Delta (no automatic pull) | `playerActions.ts:174-183`; `pitchResolutionPipeline.ts` |
-| Pitcher substitution | Manager pulls pitcher; reliever enters | Managed via `activePitcherIdx`; auto-switch logic and/or Manager Mode decision (not yet fully exposed as a manager decision type) | ⚠️ Delta (partial) | `gameStateTypes.ts activePitcherIdx` |
+| Fatigue effect | Real baseball: manager discretion for pull | Fatigue factor computed from pitch count and batters faced; reduces effective `controlMod` (more wild pitches) | ⚠️ Delta (no automatic pull) | `playerActions.ts:174-183` |
+| Pitcher substitution | Manager pulls pitcher; reliever enters | Managed via `activePitcherIdx`; auto-switch logic and/or Manager Mode decision (not yet fully exposed as a manager decision type) | ⚠️ Delta (partial) | `src/features/gameplay/context/gameStateTypes.ts:57-58` |
 
 ---
 

@@ -77,11 +77,11 @@ Perform a targeted refresh whenever any of these happen:
 | Trigger | Files to re-verify | Action |
 |---|---|---|
 | Any `src/features/gameplay/context/*.ts` file changes | All Layer A2 entries for that file | Update delta rows; re-run BA + MX eval questions that touch the file |
-| New `DecisionType` added to `decisionTypes.ts` | `decisionTypes.ts`, `reducer.ts` | Add new delta row; add new BA eval question |
-| RxDB schema version bumped | `rxdb-persistence.md`, `db.ts` | Update knowledge-map A1 entry; verify PM-04 still passes |
-| New Playwright project added | `e2e-testing.md` | Update A1 entry; verify PM-03 still references all projects |
-| New route added to app | `architecture.md`, `repo-layout.md` | Update A1 entries; verify MX-03 still reflects correct route-add checklist |
-| MLB rule change | `baseball-rules-delta.md` B1 section | Update affected delta rows; re-run all BA questions in that rule area |
+| New `DecisionType` added to `src/features/gameplay/context/decisionTypes.ts` | `src/features/gameplay/context/decisionTypes.ts`, `src/features/gameplay/context/reducer.ts` | Add new delta row; add new BA eval question |
+| RxDB schema version bumped | `docs/rxdb-persistence.md`, `src/storage/db.ts` | Update knowledge-map A1 entry; verify PM-04 still passes |
+| New Playwright project added | `docs/e2e-testing.md` | Update A1 entry; verify PM-03 still references all projects |
+| New route added to app | `docs/architecture.md`, `docs/repo-layout.md` | Update A1 entries; verify MX-03 still reflects correct route-add checklist |
+| MLB rule change | `docs/agent/baseball-rules-delta.md` B1 section | Update affected delta rows; re-run all BA questions in that rule area |
 
 ### Prompt update process
 

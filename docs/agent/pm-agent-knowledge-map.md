@@ -35,6 +35,8 @@ These files are the ground truth for simulator behavior. The agent must cite lin
 |---|---|
 | `src/features/gameplay/context/gameStateTypes.ts` | Full `State` shape — all fields that drive simulation |
 | `src/features/gameplay/context/reducer.ts` | Action dispatch, decision detection (`detectDecision`), steal %, IBB/shift guard conditions |
+| `src/features/gameplay/context/handlers/sim.ts` | Simulation action handlers (`foul`, `intentional_walk`, `steal_attempt`, `bunt_attempt`, `wait`, etc.) |
+| `src/features/gameplay/context/handlers/decisions.ts` | Manager decision handlers (`set_defensive_shift`, `set_pinch_hitter`, etc.) |
 | `src/features/gameplay/context/advanceRunners.ts` | Deterministic runner advancement per hit type; walk force-only logic |
 | `src/features/gameplay/context/hitBall.ts` | Ball-in-play resolution: batted-ball types, grounder/fly/liner probabilities, DP logic, sac fly, runner stretch |
 | `src/features/gameplay/context/gameOver.ts` | Game-end logic: `checkGameOver`, `nextHalfInning` (home-lead skip, tiebreak runner), `checkWalkoff` |
@@ -45,6 +47,7 @@ These files are the ground truth for simulator behavior. The agent must cite lin
 | `src/features/gameplay/context/strategy.ts` | Strategy modifier table (`stratMod`) scaling all batting outcomes |
 | `src/features/gameplay/context/decisionTypes.ts` | Exhaustive union of all manager-mode decision types |
 | `src/features/gameplay/context/pitchSimulation/index.ts` | Batted-ball type resolution, fatigue factor (`computeFatigueFactor`) |
+| `src/shared/utils/rng.ts` | Module-global PRNG (`random`, `reinitSeed`, `restoreRng`) — ground truth for replay determinism |
 | `src/features/help/components/HelpContent/index.tsx` | In-app rules text — the game's own user-facing rulebook |
 
 ### A3. Agent and rollout docs
