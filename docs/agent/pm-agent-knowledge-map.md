@@ -8,7 +8,7 @@ Source index, ownership, and refresh cadence for the Ballgame PM Agent.
 
 This document is the single index of every authoritative source the PM Agent must consult before answering a question. It is divided into three layers: (A) repo-native docs and source files, (B) baseball rules corpus, and (C) decision history / ADR notes.
 
-The agent **must cite a source from this map** for every simulator claim. Any answer that asserts simulator behavior without a Layer A citation is non-compliant.
+The agent **must cite a source from this map** for every simulator claim. Any answer that asserts simulator behavior without a Layer A2 citation is non-compliant.
 
 ---
 
