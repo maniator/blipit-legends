@@ -145,6 +145,7 @@ After producing a plan, always recommend the correct execution agent:
 
 | Task type                                                         | Execution agent           |
 | ----------------------------------------------------------------- | ------------------------- |
+| Technical review of a high-value or risky change                  | `@senior-lead`            |
 | Behavior-preserving refactor                                      | `@safe-refactor`          |
 | UI / layout / visual snapshot change                              | `@ui-visual-snapshot`     |
 | Simulation bug or determinism issue                               | `@simulation-correctness` |
@@ -171,6 +172,44 @@ After producing a plan, always recommend the correct execution agent:
 3. `@baseball-manager` — review before/after game logs and confirm realism improved without regressions.
 
 If `@baseball-manager` finds a new realism issue that requires a code change, route back to `@pm-agent` for a new plan before touching any files.
+
+---
+
+## PM ↔ Senior Lead handshake
+
+For any high-value change (see trigger list in `.github/agents/senior-lead.md`), `@pm-agent` initiates a structured review loop with `@senior-lead` before handing off to an execution agent.
+
+### Step 1 — Send a review request
+
+Use this template when routing a change to `@senior-lead`:
+
+```
+SENIOR LEAD REVIEW REQUEST
+Change objective: <what this change does and why>
+Business priority: <P0 | P1 | P2 | P3>
+Acceptance criteria: <what "done" looks like>
+Rollout window: <target merge date or release milestone>
+Risk flags already identified: <list from the risk flags checklist above>
+Execution agent: <which domain agent will carry out the work>
+```
+
+### Step 2 — Receive and act on the verdict
+
+`@senior-lead` will respond with one of:
+- **APPROVE** — proceed to implementation with the named execution agent.
+- **REQUEST_CHANGES** — address the blocking issues listed, then re-request review.
+- **BLOCK** — do not proceed. The blocking issues must be resolved technically before disposition can change.
+
+### Step 3 — Confirm final disposition
+
+After receiving the verdict, confirm with:
+
+```
+PM DISPOSITION
+Disposition: <SHIP | DEFER | SPLIT | FOLLOW_UP>
+```
+
+> **Authority boundary:** `@pm-agent` owns business disposition (SHIP / DEFER / SPLIT / FOLLOW_UP). `@senior-lead` owns technical veto — a BLOCK verdict cannot be overridden by a SHIP disposition.
 
 ---
 
