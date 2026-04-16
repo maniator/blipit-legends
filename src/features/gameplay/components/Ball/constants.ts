@@ -6,4 +6,5 @@ export const hitDistances: Record<Hit, number> = {
   [Hit.Triple]: 280,
   [Hit.Homerun]: 400,
   [Hit.Walk]: 0,
+  [Hit.HitByPitch]: 0,
 };

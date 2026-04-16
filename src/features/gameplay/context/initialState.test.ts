@@ -309,9 +309,13 @@ describe("backfillRestoredState", () => {
     expect(result.playLog[1].event).toBe(Hit.Double);
     expect(result.playLog[2].event).toBe(Hit.Homerun);
     // Line-score hits count (non-walk entries) must match playLog
-    const hitsTeam0 = result.playLog.filter((e) => e.team === 0 && e.event !== Hit.Walk).length;
+    const hitsTeam0 = result.playLog.filter(
+      (e) => e.team === 0 && e.event !== Hit.Walk && e.event !== Hit.HitByPitch,
+    ).length;
     expect(hitsTeam0).toBe(2);
-    const hitsTeam1 = result.playLog.filter((e) => e.team === 1 && e.event !== Hit.Walk).length;
+    const hitsTeam1 = result.playLog.filter(
+      (e) => e.team === 1 && e.event !== Hit.Walk && e.event !== Hit.HitByPitch,
+    ).length;
     expect(hitsTeam1).toBe(1);
   });
 

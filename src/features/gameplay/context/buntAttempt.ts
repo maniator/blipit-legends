@@ -20,6 +20,24 @@ export const buntAttempt = (
   const roll = getRandomInt(100);
   const singleChance = strategy === "contact" ? 20 : 8;
 
+  // MLB parity Phase 1: a foul bunt with 2 strikes is an automatic strikeout.
+  // Rolls >= 80 map to the "foul bunt" range. With 0 or 1 strikes the existing
+  // pop-out path (roll >= 80) fires unchanged below; this check is only reached
+  // when state.strikes === 2, so non-2-strike paths are completely unaffected.
+  if (state.strikes === 2 && roll >= 80) {
+    log("Foul tip on the bunt — strike three!");
+    return playerOut(
+      {
+        ...stateWithPitch,
+        pendingDecision: null,
+        hitType: undefined,
+        pitchKey: (stateWithPitch.pitchKey ?? 0) + 1,
+      },
+      log,
+      true,
+    );
+  }
+
   if (roll < singleChance) {
     log("Bunt single!");
     return hitBall(Hit.Single, { ...stateWithPitch, pendingDecision: null }, log, strategy);

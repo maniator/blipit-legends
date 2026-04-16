@@ -2,6 +2,7 @@
  * Tests for src/context/playerActions.ts — focused on computeWaitOutcome threshold clamping.
  */
 
+import { Hit } from "@shared/constants/hitTypes";
 import * as rngModule from "@shared/utils/rng";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -106,5 +107,54 @@ describe("playerWait — computeWaitOutcome threshold clamping", () => {
 
     expect(baseline.balls).toBe(1);
     expect(strikeBoosted.strikes).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// MLB parity Phase 1 — HBP (Hit By Pitch) on ball four
+// ---------------------------------------------------------------------------
+
+describe("playerWait — HBP on ball four (MLB parity Phase 1)", () => {
+  it("ball four with hbpRoll < 11 produces HBP (batter goes to first, logged as HBP)", () => {
+    // First RNG call (getRandomInt(1000) in playerWait): random=0.9 → 900 ≥ 500 → ball outcome.
+    // Second RNG call (getRandomInt(100) hbpRoll in playerBall): random=0.05 → 5 < 11 → HBP.
+    vi.spyOn(rngModule, "random")
+      .mockReturnValueOnce(0.9) // playerWait roll → ball outcome
+      .mockReturnValueOnce(0.05); // hbpRoll in playerBall (5 < 11 → HBP)
+    const { logs, log } = makeLogs();
+    const next = playerWait(makeState({ balls: 3, atBat: 0 }), log);
+    expect(next.baseLayout[0]).toBe(1); // batter reaches first
+    expect(next.playLog.length).toBeGreaterThan(0);
+    expect(next.playLog[next.playLog.length - 1].event).toBe(Hit.HitByPitch);
+    expect(logs.some((l) => l.toLowerCase().includes("hit by pitch"))).toBe(true);
+  });
+
+  it("ball four with hbpRoll >= 11 produces a normal walk (not HBP)", () => {
+    // First RNG call (getRandomInt(1000)): random=0.9 → 900 ≥ 500 → ball outcome.
+    // Second RNG call (getRandomInt(100) hbpRoll): random=0.5 → 50 ≥ 11 → normal walk.
+    vi.spyOn(rngModule, "random")
+      .mockReturnValueOnce(0.9) // playerWait roll → ball outcome
+      .mockReturnValueOnce(0.5); // hbpRoll (50 ≥ 11 → normal walk)
+    const { logs, log } = makeLogs();
+    const next = playerWait(makeState({ balls: 3, atBat: 0 }), log);
+    expect(next.baseLayout[0]).toBe(1);
+    expect(next.playLog[next.playLog.length - 1].event).toBe(Hit.Walk);
+    expect(logs.some((l) => l.toLowerCase().includes("ball four"))).toBe(true);
+  });
+
+  it("ball one (not ball four) does NOT trigger an extra HBP roll — count simply increments", () => {
+    // Only one RNG call should be consumed (the playerWait roll → ball).
+    // No hbpRoll is taken for balls 1–3.
+    // random=0.6 → getRandomInt(1000)=600 ≥ 500 → ball outcome (not strike).
+    const mockRandom = vi
+      .spyOn(rngModule, "random")
+      .mockReturnValueOnce(0.6) // playerWait roll → ball
+      .mockReturnValue(0.05); // any further calls (should not be hbpRoll for ball 1)
+    const { log } = makeLogs();
+    const next = playerWait(makeState({ balls: 0, atBat: 0 }), log);
+    expect(next.balls).toBe(1); // just one ball added
+    expect(next.baseLayout[0]).toBe(0); // batter not on base
+    // Only the playerWait RNG call (index 0) should have been consumed for ball 1.
+    expect(mockRandom).toHaveBeenCalledTimes(1);
   });
 });

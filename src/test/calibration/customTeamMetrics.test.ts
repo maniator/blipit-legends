@@ -272,7 +272,7 @@ function runGame(awayTeam: FixtureTeam, homeTeam: FixtureTeam, seedStr: string):
   let bb = 0;
   let h = 0;
   for (const entry of state.playLog) {
-    if (entry.event === Hit.Walk) bb++;
+    if (entry.event === Hit.Walk || entry.event === Hit.HitByPitch) bb++;
     else if ([Hit.Single, Hit.Double, Hit.Triple, Hit.Homerun].includes(entry.event as Hit)) h++;
   }
   const k = state.strikeoutLog.length;

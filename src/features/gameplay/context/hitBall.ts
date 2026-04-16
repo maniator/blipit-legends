@@ -22,6 +22,7 @@ const HIT_CALLOUTS: Record<Hit, string> = {
   [Hit.Triple]: "Deep drive to the warning track — he's in with a triple!",
   [Hit.Homerun]: "That ball is GONE — home run!",
   [Hit.Walk]: "",
+  [Hit.HitByPitch]: "",
 };
 
 /**
@@ -319,7 +320,7 @@ const processConfirmedHit = (
 
   // Place batter on their destination base.
   const batterBase =
-    type === Hit.Single || type === Hit.Walk
+    type === Hit.Single || type === Hit.Walk || type === Hit.HitByPitch
       ? 0
       : type === Hit.Double
         ? 1
@@ -350,7 +351,7 @@ const processConfirmedHit = (
   };
 
   // Update pitcher log: increment hits/walks/homers/runs/battersFaced for pitching team.
-  const isWalk = type === Hit.Walk;
+  const isWalk = type === Hit.Walk || type === Hit.HitByPitch;
   const isHomer = type === Hit.Homerun;
   const pitcherLogAfterHit = updateActivePitcherLog(
     base.pitcherGameLog ?? [[], []],
@@ -577,7 +578,12 @@ export const hitBall = (
       fatigueFactor,
   );
 
-  if (randomNumber >= popOutThreshold && type !== Hit.Homerun && type !== Hit.Walk) {
+  if (
+    randomNumber >= popOutThreshold &&
+    type !== Hit.Homerun &&
+    type !== Hit.Walk &&
+    type !== Hit.HitByPitch
+  ) {
     const powerBonus = Math.round(15 * (1 + batterMods.powerMod / 100));
     if (strategy === "power" && getRandomInt(100) < powerBonus) {
       type = Hit.Homerun;

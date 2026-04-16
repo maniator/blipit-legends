@@ -89,7 +89,7 @@ const computeStats = (team: 0 | 1, state: State): Record<number, BatterStats> =>
 
   for (const e of state.playLog) {
     if (e.team !== team) continue;
-    if (e.event === Hit.Walk) {
+    if (e.event === Hit.Walk || e.event === Hit.HitByPitch) {
       stats[e.batterNum].bb++;
     } else {
       stats[e.batterNum].h++;

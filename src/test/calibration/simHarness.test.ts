@@ -189,7 +189,7 @@ function runGame(seed: number): SimStats {
   let hits = 0;
   let homeRuns = 0;
   for (const entry of state.playLog) {
-    if (entry.event === Hit.Walk) walks++;
+    if (entry.event === Hit.Walk || entry.event === Hit.HitByPitch) walks++;
     else if (
       entry.event === Hit.Single ||
       entry.event === Hit.Double ||

@@ -146,3 +146,39 @@ describe("buntAttempt — bunt pop-out", () => {
     expect(next.outs).toBe(1);
   });
 });
+
+describe("buntAttempt — 2-strike foul bunt strikeout", () => {
+  it("foul bunt (roll >= 80) with 2 strikes logs strike three and records an out", () => {
+    vi.spyOn(rngModule, "random").mockReturnValueOnce(0.85); // roll=85 >= 80 → foul bunt
+    const { logs, log } = makeLogs();
+    const next = buntAttempt(makeState({ strikes: 2 }), log);
+    expect(next.outs).toBe(1);
+    expect(logs.some((l) => l.includes("strike three"))).toBe(true);
+  });
+
+  it("foul bunt (roll >= 80) with 1 strike falls through to pop-out, not strikeout", () => {
+    vi.spyOn(rngModule, "random").mockReturnValueOnce(0.85); // roll=85 >= 80 → still pop-out
+    const { logs, log } = makeLogs();
+    const next = buntAttempt(makeState({ strikes: 1 }), log);
+    expect(next.outs).toBe(1);
+    expect(logs.some((l) => l.includes("popped up"))).toBe(true);
+    expect(logs.some((l) => l.includes("strike three"))).toBe(false);
+  });
+
+  it("foul bunt (roll >= 80) with 0 strikes falls through to pop-out, not strikeout", () => {
+    vi.spyOn(rngModule, "random").mockReturnValueOnce(0.85); // roll=85 >= 80 → still pop-out
+    const { logs, log } = makeLogs();
+    const next = buntAttempt(makeState({ strikes: 0 }), log);
+    expect(next.outs).toBe(1);
+    expect(logs.some((l) => l.includes("popped up"))).toBe(true);
+    expect(logs.some((l) => l.includes("strike three"))).toBe(false);
+  });
+
+  it("roll < 80 with 2 strikes does NOT produce a foul bunt strikeout", () => {
+    vi.spyOn(rngModule, "random").mockReturnValueOnce(0.5); // roll=50 < 80 → sac bunt
+    const { logs, log } = makeLogs();
+    const next = buntAttempt(makeState({ strikes: 2 }), log);
+    expect(logs.some((l) => l.includes("strike three"))).toBe(false);
+    expect(logs.some((l) => l.includes("Sacrifice bunt"))).toBe(true);
+  });
+});

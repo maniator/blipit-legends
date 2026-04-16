@@ -4,4 +4,5 @@ export enum Hit {
   Triple,
   Homerun,
   Walk,
+  HitByPitch,
 }

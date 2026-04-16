@@ -66,6 +66,8 @@ export const advanceRunners = (
       // batter goes to 1st — placed by caller
       break;
 
+    case Hit.HitByPitch:
+    // falls through — force advancement is identical to a base-on-balls
     case Hit.Walk:
       if (oldBase[0]) {
         if (oldBase[1]) {

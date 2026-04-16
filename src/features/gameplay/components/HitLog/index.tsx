@@ -11,6 +11,7 @@ const EVENT_LABEL: Record<Hit, string> = {
   [Hit.Triple]: "3B",
   [Hit.Homerun]: "HR",
   [Hit.Walk]: "BB",
+  [Hit.HitByPitch]: "HBP",
 };
 
 const HALF_ARROW = ["▲", "▼"] as const;

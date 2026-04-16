@@ -61,7 +61,7 @@ export const computeBattingStatsFromLogs = (
   for (const entry of playLog) {
     if (entry.team !== team) continue;
     const s = getOrCreate(statKey(entry));
-    if (entry.event === Hit.Walk) {
+    if (entry.event === Hit.Walk || entry.event === Hit.HitByPitch) {
       s.walks++;
     } else {
       s.hits++;

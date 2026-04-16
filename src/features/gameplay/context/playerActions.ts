@@ -80,6 +80,14 @@ export const playerBall = (
     pitchType ? `${pitchName(pitchType)} — ${text}` : `${text[0].toUpperCase()}${text.slice(1)}`;
 
   if (newBalls === 4) {
+    // MLB parity Phase 1: ~1 in 9 ball-four events becomes a hit-by-pitch instead of a walk.
+    // The extra roll is placed here (after the 4th ball is confirmed) so that all non-ball-4
+    // paths (balls 1–3, called strikes) are completely unaffected.
+    const hbpRoll = getRandomInt(100);
+    if (hbpRoll < 11) {
+      log(msg("hit by pitch — take your base!"));
+      return hitBall(Hit.HitByPitch, { ...stateWithPitch, pitchKey }, log);
+    }
     log(msg("ball four — take your base!"));
     return hitBall(Hit.Walk, { ...stateWithPitch, pitchKey }, log);
   }

@@ -86,7 +86,8 @@ const LineScore: React.FunctionComponent = () => {
   const totalInnings = Math.max(9, displayInnings);
   const inningCols = Array.from({ length: totalInnings }, (_, i) => i + 1);
   const hits = (team: 0 | 1) =>
-    playLog.filter((e) => e.team === team && e.event !== Hit.Walk).length;
+    playLog.filter((e) => e.team === team && e.event !== Hit.Walk && e.event !== Hit.HitByPitch)
+      .length;
 
   return (
     <Wrapper data-testid="scoreboard">

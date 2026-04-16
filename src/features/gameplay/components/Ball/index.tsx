@@ -9,7 +9,7 @@ import { Baseball } from "./styles";
 const Ball: React.FunctionComponent = () => {
   const { hitType, pitchKey } = useGameContext();
 
-  const isHit = hitType !== undefined && hitType !== Hit.Walk;
+  const isHit = hitType !== undefined && hitType !== Hit.Walk && hitType !== Hit.HitByPitch;
   const dist = isHit ? hitDistances[hitType!] : 0;
 
   // key={pitchKey} forces a remount on every pitch, restarting the animation cleanly.

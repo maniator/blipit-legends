@@ -275,7 +275,11 @@ describe("strike", () => {
 // ball/wait
 describe("ball", () => {
   it("ball 4 becomes a walk", () => {
-    vi.spyOn(rngModule, "random").mockReturnValueOnce(0.9).mockReturnValue(0);
+    // random=0.9 → ball outcome; hbpRoll=0.5 → 50 ≥ 11 → normal walk (not HBP).
+    vi.spyOn(rngModule, "random")
+      .mockReturnValueOnce(0.9)
+      .mockReturnValueOnce(0.5)
+      .mockReturnValue(0);
     const { state, logs } = dispatchAction(makeState({ balls: 3 }), "wait", {
       strategy: "balanced",
     });
@@ -1564,11 +1568,15 @@ describe("restore_game hit log consistency after load", () => {
 
     // Full log preserved
     expect(state.playLog).toHaveLength(4);
-    // Team-0 hits (excl. walk): Single + Double = 2
-    const team0Hits = state.playLog.filter((e) => e.team === 0 && e.event !== Hit.Walk).length;
+    // Team-0 hits (excl. walk/HBP): Single + Double = 2
+    const team0Hits = state.playLog.filter(
+      (e) => e.team === 0 && e.event !== Hit.Walk && e.event !== Hit.HitByPitch,
+    ).length;
     expect(team0Hits).toBe(2);
     // Team-1 hits: HR = 1
-    const team1Hits = state.playLog.filter((e) => e.team === 1 && e.event !== Hit.Walk).length;
+    const team1Hits = state.playLog.filter(
+      (e) => e.team === 1 && e.event !== Hit.Walk && e.event !== Hit.HitByPitch,
+    ).length;
     expect(team1Hits).toBe(1);
     // Walk entry present but not counted as hit
     const walks = state.playLog.filter((e) => e.event === Hit.Walk).length;
