@@ -27,6 +27,7 @@ Before producing any output, gather:
 ### Keep static (do not rewrite)
 
 All of the following must be true:
+
 - The commit set since the last description update has not added any new files, features, or fixes that are absent from the current description.
 - The current title still accurately names the overall scope.
 - The current description is already reviewer-readable prose (not a checklist — see below).
@@ -34,6 +35,7 @@ All of the following must be true:
 ### Update required
 
 Update if **any** of the following is true:
+
 - New commits introduce scope (new files, features, bug fixes) not covered by the current description.
 - The title no longer matches the actual scope of the branch.
 - The current description is an AI progress checklist (majority of lines are `- [ ]` / `- [x]` bullets).
@@ -52,26 +54,27 @@ When in doubt, prefer a targeted revision over a full rewrite.
 
 A reviewer-readable description has these sections. All are required except Notes.
 
-### Summary *(required)*
+### Summary _(required)_
 
 1–4 sentences. Answer: what changed and why? Give a reviewer enough context to understand the PR without reading the diff.
 
 > Example: "Adds a two-step confirmation flow when importing a custom team that contains player names already present in the database. Previously, imports silently overwrote matching records. Now the user is prompted before any overwrite occurs."
 
-### Changes *(required)*
+### Changes _(required)_
 
-A tight bullet list of **what was modified**, at the feature/file level. This is for navigation, not task tracking — each bullet should tell a reviewer *where to look*, not *what the agent did*.
+A tight bullet list of **what was modified**, at the feature/file level. This is for navigation, not task tracking — each bullet should tell a reviewer _where to look_, not _what the agent did_.
 
 > Example:
+>
 > - `src/features/customTeams/hooks/useImportCustomTeams.ts` — new two-step confirmation state machine
 > - `src/features/customTeams/components/CustomTeamEditor/` — duplicate-player modal wired to hook
 > - Unit tests for the confirm/cancel paths
 
-### Testing *(required)*
+### Testing _(required)_
 
 One or two sentences covering what validates the change: which tests were added or updated, which E2E specs cover it, and any manual verification done.
 
-### Notes *(optional)*
+### Notes _(optional)_
 
 Reviewer callouts: trade-offs made, known limitations, follow-up work deferred, or anything that warrants extra scrutiny.
 
@@ -79,14 +82,14 @@ Reviewer callouts: trade-offs made, known limitations, follow-up work deferred, 
 
 ## Anti-patterns — never include these
 
-| ❌ Anti-pattern | Why it fails reviewers |
-| --- | --- |
-| `- [x] Implemented the foo component` | Progress tracking — tells reviewers nothing about *what* the component does or *why* it was added |
-| `- [ ] Add tests` | Internal AI task — not relevant to what is being reviewed |
-| Long lists of `- [x]` / `- [ ]` bullets with no prose | Reviewers cannot extract scope, motivation, or trade-offs from a checklist |
-| Copy-pasting `git log` as the description | Commit messages are written for the commit, not for PR review context |
-| Empty description | No description is always worse than a short one |
-| Session-scoped summaries ("In this session I…") | A PR spans many sessions; describe the final state, not the journey |
+| ❌ Anti-pattern                                       | Why it fails reviewers                                                                            |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `- [x] Implemented the foo component`                 | Progress tracking — tells reviewers nothing about _what_ the component does or _why_ it was added |
+| `- [ ] Add tests`                                     | Internal AI task — not relevant to what is being reviewed                                         |
+| Long lists of `- [x]` / `- [ ]` bullets with no prose | Reviewers cannot extract scope, motivation, or trade-offs from a checklist                        |
+| Copy-pasting `git log` as the description             | Commit messages are written for the commit, not for PR review context                             |
+| Empty description                                     | No description is always worse than a short one                                                   |
+| Session-scoped summaries ("In this session I…")       | A PR spans many sessions; describe the final state, not the journey                               |
 
 ---
 
@@ -98,6 +101,7 @@ Return exactly two blocks:
 `<the PR title, one line>`
 
 **DESCRIPTION:**
+
 ```
 <the full PR description in Markdown — Summary, Changes, Testing, optional Notes>
 ```
