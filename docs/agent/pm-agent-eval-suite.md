@@ -32,9 +32,9 @@ We want to add a `stolenBasesAttempted` counter to `State`. What modules need to
 
 **Known-answer criteria:**
 
-- Identifies `gameStateTypes.ts` (State shape) as the primary change.
-- Identifies `stealAttempt.ts` as the increment site (both success and caught-stealing paths are handled there before `playerOut` is called).
-- Does NOT require changes to `playerOut.ts` for the counter — steal-specific tracking belongs in `stealAttempt.ts`, not the generic out handler.
+- Identifies `src/features/gameplay/context/gameStateTypes.ts` (State shape) as the primary change.
+- Identifies `src/features/gameplay/context/stealAttempt.ts` as the increment site (both success and caught-stealing paths are handled there before `playerOut` is called).
+- Does NOT require changes to `src/features/gameplay/context/playerOut.ts` for the counter — steal-specific tracking belongs in `stealAttempt.ts`, not the generic out handler.
 - Flags RxDB schema versioning requirement: bump `version`, add `migrationStrategies` entry.
 - Flags `docs/rxdb-persistence.md` for the schema-change checklist.
 - Lists required tests: unit test for increment in both success and caught-stealing, upgrade-path test for old saves.
@@ -49,12 +49,11 @@ We want to make the extra-inning tiebreak runner start on 1st instead of 2nd. Wh
 
 **Known-answer criteria:**
 
-- Identifies `gameOver.ts:65-74` as the primary change site (`baseLayout: [0, 1, 0]` → `[1, 0, 0]`).
+- Identifies `src/features/gameplay/context/gameOver.ts:65-74` as the primary change site (`baseLayout: [0, 1, 0]` → `[1, 0, 0]`).
 - Flags potential replay determinism impact (existing saved games with extra-inning state will replay differently).
-- Flags `baseball-rules-delta.md` as needing an update to document the deviation from MLB OBR Appendix.
-- Flags `docs/agent/baseball-rules-delta.md` Extra innings row.
+- Flags `docs/agent/baseball-rules-delta.md` as needing an update to document the deviation from MLB OBR Appendix (Extra innings row).
 - Recommends a seed-anchored regression test for extra-inning scenarios.
-- Notes that `HelpContent/index.tsx` (in-app rulebook) may need copy update.
+- Notes that `src/features/help/components/HelpContent/index.tsx` (in-app rulebook) may need copy update.
 
 ---
 
@@ -99,9 +98,9 @@ We want to add a "pitch-out" decision type to Manager Mode. Describe the correct
 
 **Known-answer criteria:**
 
-- Step 1: add `{ kind: "pitch_out" }` to `DecisionType` union in `decisionTypes.ts`.
-- Step 2: add detection logic in `detectDecision` in `reducer.ts`.
-- Step 3: implement the pitch-out outcome (ball + catcher throw-down) — can reference `playerBall` in `playerActions.ts`.
+- Step 1: add `{ kind: "pitch_out" }` to `DecisionType` union in `src/features/gameplay/context/decisionTypes.ts`.
+- Step 2: add detection logic in `detectDecision` in `src/features/gameplay/context/reducer.ts`.
+- Step 3: implement the pitch-out outcome (ball + catcher throw-down) — can reference `playerBall` in `src/features/gameplay/context/playerActions.ts`.
 - Cites context module cycle-free order from `copilot-instructions.md`: `strategy → advanceRunners → gameOver → playerOut → hitBall → buntAttempt → playerActions → reducer`.
 - Warns that adding a random call in `detectDecision` would break PRNG call order if the decision is not always offered.
 - Recommends a unit test for the new decision branch.
@@ -142,7 +141,7 @@ Runners on 1st and 3rd. Batter walks. What happens to each runner in official ba
 
 - **Official MLB:** Runner on 1st is forced to 2nd (1st occupied by batter). Runner on 3rd is NOT forced (no force play); stays on 3rd.
 - **Ballgame:** `advanceRunners(Hit.Walk, [1,0,1])` — `oldBase[0]` is true, `oldBase[1]` is false: runner from 1st moved to 2nd; `oldBase[2]` stays via `newRunnerIds[2] = ids[2]`. Correctly matches MLB.
-- Citation: `advanceRunners.ts:69-104`.
+- Citation: `src/features/gameplay/context/advanceRunners.ts:69-104`.
 
 ---
 
@@ -155,7 +154,7 @@ In the bottom of the 10th inning (tied game), which runner is placed on 2nd and 
 
 - **Official MLB:** The player who made the last out in the previous half-inning is placed on 2nd (OBR Appendix — automatic runner rule, permanent since 2022).
 - **Ballgame:** `extraRunnerId = lineupOrder[newHalfInning][(batterIndex[newHalfInning] - 1 + lineupSize) % lineupSize]`. This is the last batter index in the lineup for the team now batting — consistent with MLB intent.
-- Citation: `gameOver.ts:61-63`.
+- Citation: `src/features/gameplay/context/gameOver.ts:61-63`.
 
 ---
 
@@ -168,7 +167,7 @@ The away team scores 3 runs in the top of the 9th to go up 5-2. The home team al
 
 - **Official MLB:** Yes, the bottom of the 9th must be played — the home team is now trailing.
 - **Ballgame:** `nextHalfInning` checks `home > away` before skipping. With away leading (5 > 2), the skip does not fire. Bottom of the 9th is played. Correct.
-- Citation: `gameOver.ts:44-51`.
+- Citation: `src/features/gameplay/context/gameOver.ts:44-51`.
 
 ---
 
@@ -181,7 +180,7 @@ Runner on 2nd base only, 1 out. Ground ball hit. Is a double play possible?
 
 - **Official MLB:** No standard DP because there is no force play at 2nd (runner is on 2nd, not 1st). A DP would require a tag play, which is unusual and not a standard infielder DP.
 - **Ballgame:** `handleGrounder` checks `baseLayout[0] && outs < 2`. With no runner on 1st, the DP branch does not fire — simple ground out.
-- Citation: `hitBall.ts:58`.
+- Citation: `src/features/gameplay/context/hitBall.ts:58`.
 
 ---
 
@@ -194,7 +193,7 @@ Inning 8, 1 out, runner on 2nd, score tied. Manager wants to issue an intentiona
 
 - **Official MLB:** Yes, manager may issue IBB at any time.
 - **Ballgame:** `ibbAvailable` requires `outs === 2` (not 1). With 1 out, IBB is NOT offered, regardless of inning or score. The condition is intentionally conservative.
-- Citation: `reducer.ts:66-71`.
+- Citation: `src/features/gameplay/context/reducer.ts:66-71`.
 - Agent must clearly label this as a **Ballgame delta** from official rules.
 
 ---
@@ -220,8 +219,8 @@ The batter has 2 strikes and bunts foul. In real baseball, what happens? What do
 **Known-answer criteria:**
 
 - **Official MLB:** A foul bunt with 2 strikes is a strikeout (Rule 5.09(a)(3)).
-- **Ballgame:** `buntAttempt.ts` has no special 2-strike foul-bunt-strikeout logic. The bunt pop-up path records an out (pop-up, not a foul-bunt K), and the sac-bunt and single paths proceed normally. This is a **delta** — the 2-strike foul bunt strikeout rule is not implemented.
-- Citation: `buntAttempt.ts:85-141`.
+- **Ballgame:** `src/features/gameplay/context/buntAttempt.ts` has no special 2-strike foul-bunt-strikeout logic. The bunt pop-up path records an out (pop-up, not a foul-bunt K), and the sac-bunt and single paths proceed normally. This is a **delta** — the 2-strike foul bunt strikeout rule is not implemented.
+- Citation: `src/features/gameplay/context/buntAttempt.ts:85-141`.
 
 ---
 
@@ -234,7 +233,7 @@ Can a runner steal home in Ballgame?
 
 - **Official MLB:** Yes — any runner may attempt to steal any base including home.
 - **Ballgame:** `stealAttempt` only accepts `base: 0 | 1` (0 = 1st→2nd, 1 = 2nd→3rd). Steal of home (base 2→score) is not modeled. `detectDecision` only offers steal for base 0 or base 1.
-- Citation: `stealAttempt.ts:10`; `reducer.ts:74-83`; `decisionTypes.ts:3`.
+- Citation: `src/features/gameplay/context/stealAttempt.ts:10`; `src/features/gameplay/context/reducer.ts:74-83`; `src/features/gameplay/context/decisionTypes.ts:3`.
 - Agent must mark this as **not implemented**.
 
 ---
@@ -253,10 +252,10 @@ We want to implement steal of home (3rd→score) in the simulator. What is the s
 **Known-answer criteria:**
 
 - Must not extend `base` param of `stealAttempt` without first checking all callers.
-- Identifies `decisionTypes.ts:3` needs new `base: 0 | 1 | 2` or a separate `steal_home` kind.
-- Identifies `stealAttempt.ts` as the function to extend: `newBase[base] = 0; newBase[base + 1] = 1` fails for base 2 (no index 3) — must add a scoring path instead.
+- Identifies `src/features/gameplay/context/decisionTypes.ts:3` needs new `base: 0 | 1 | 2` or a separate `steal_home` kind.
+- Identifies `src/features/gameplay/context/stealAttempt.ts` as the function to extend: `newBase[base] = 0; newBase[base + 1] = 1` fails for base 2 (no index 3) — must add a scoring path instead.
 - Flags PRNG call-order impact: adding a new random call in `detectDecision` changes the sequence for all seeds.
-- Flags that `baseball-rules-delta.md` "steal of home" row must be updated from "not implemented" to implemented.
+- Flags that `docs/agent/baseball-rules-delta.md` "steal of home" row must be updated from "not implemented" to implemented.
 - Recommends seed-anchored regression test.
 
 ---
@@ -268,12 +267,12 @@ We want to make IBB use a proper 4-pitch sequence (matching MLB rule 5.05(b)(2))
 
 **Known-answer criteria:**
 
-- Identifies `playerOut.ts:incrementPitchCount` comment ("intentional_walk is modeled as a single pitch event") as the delta to remove.
-- Identifies `src/features/gameplay/context/handlers/sim.ts:94-103` (`case "intentional_walk"`) as the simulation handler that would need to apply four `playerBall`-equivalent pitch/count updates (or a dedicated `playerIntentionalBall` path), and cites `detectDecision` in `reducer.ts` only for the prompt/availability logic.
+- Identifies `src/features/gameplay/context/playerOut.ts` (the `incrementPitchCount` comment reading "intentional_walk is modeled as a single pitch event") as the delta to remove.
+- Identifies `src/features/gameplay/context/handlers/sim.ts:94-103` (`case "intentional_walk"`) as the simulation handler that would need to apply four `playerBall`-equivalent pitch/count updates (or a dedicated `playerIntentionalBall` path), and cites `detectDecision` in `src/features/gameplay/context/reducer.ts` only for the prompt/availability logic.
 - Flags PRNG call-order impact: 4 pitch-count increments instead of 1 will shift the RNG sequence for any seed where IBB fires — all existing save replays with IBB will diverge.
 - Flags `src/features/gameplay/context/pitchSimulation/index.ts` fatigue factor: 4 pitches now counted vs 1 — small fatigue increase.
 - Requires: determinism regression test, save-replay smoke test.
-- Flags `baseball-rules-delta.md` IBB row needs updating.
+- Flags `docs/agent/baseball-rules-delta.md` IBB row needs updating.
 
 ---
 

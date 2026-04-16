@@ -18,12 +18,12 @@ The PM Agent must consult this document for every baseball-rule question. Respon
 
 ### Innings and outs
 
-| Rule area               | Official MLB                              | Ballgame implementation                                                                                              | Status         | Source               |
-| ----------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------- | -------------------- |
-| Game length             | 9 innings standard; extras until a winner | 9 innings standard; extra innings continue via `nextHalfInning`, and no maximum inning cap is indicated in that flow | ✅ Matches MLB | `gameOver.ts:17-32`  |
-| Outs per half-inning    | 3 outs                                    | 3 outs (`newOuts === 3` triggers half-inning transition)                                                             | ✅ Matches MLB | `playerOut.ts:109`   |
-| Batting order           | 9 batters, sequential, wraps              | 9-slot fixed lineup, `nextBatter` wraps at index 9                                                                   | ✅ Matches MLB | `playerOut.ts:32-35` |
-| Half-inning state reset | Bases cleared, count reset                | `baseLayout`, `outs`, `strikes`, `balls`, `pendingDecision`, `hitType` all reset in `nextHalfInning`                 | ✅ Matches MLB | `gameOver.ts:17-32`  |
+| Rule area               | Official MLB                              | Ballgame implementation                                                                                              | Status         | Source                                                         |
+| ----------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------- | -------------------------------------------------------------- |
+| Game length             | 9 innings standard; extras until a winner | 9 innings standard; extra innings continue via `nextHalfInning`, and no maximum inning cap is indicated in that flow | ✅ Matches MLB | `src/features/gameplay/context/gameOver.ts:5-15,53-75`         |
+| Outs per half-inning    | 3 outs                                    | 3 outs (`newOuts === 3` triggers half-inning transition)                                                             | ✅ Matches MLB | `src/features/gameplay/context/playerOut.ts:109`               |
+| Batting order           | 9 batters, sequential, wraps              | 9-slot fixed lineup, `nextBatter` wraps at index 9                                                                   | ✅ Matches MLB | `src/features/gameplay/context/playerOut.ts:32-35`             |
+| Half-inning state reset | Bases cleared, count reset                | `baseLayout`, `outs`, `strikes`, `balls`, `pendingDecision`, `hitType` all reset in `nextHalfInning`                 | ✅ Matches MLB | `src/features/gameplay/context/gameOver.ts:17-32`              |
 
 ### Ball-strike count
 
@@ -126,11 +126,11 @@ Real baseball resolves each batted ball with full fielder positioning, reaction 
 
 ### Steal
 
-| Rule area                 | Official MLB                                           | Ballgame implementation                                                                           | Status                      | Source                                     |
-| ------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------- | --------------------------- | ------------------------------------------ |
-| Steal bases available     | Any runner may attempt to steal any unoccupied base    | Only 1st→2nd (base index 0) and 2nd→3rd (base index 1) offered                                    | ⚠️ Delta (no steal of home) | `decisionTypes.ts:3`; `stealAttempt.ts:10` |
-| Steal availability        | Manager's discretion                                   | Manager Mode only; offered when expected success > 72%, <2 outs, destination base empty           | ⚠️ Delta (constrained)      | `reducer.ts:40-52`, `74-83`                |
-| Steal success probability | Depends on runner speed, catcher arm, pitcher delivery | Base: 70% (1st→2nd), 60% (2nd→3rd); scaled by runner `speedMod` and `stratMod(strategy, "steal")` | ⚠️ Delta (simplified model) | `reducer.ts:40-48`                         |
+| Rule area                 | Official MLB                                           | Ballgame implementation                                                                           | Status                      | Source                                                                                                                       |
+| ------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Steal bases available     | Any runner may attempt to steal any unoccupied base    | Only 1st→2nd (base index 0) and 2nd→3rd (base index 1) offered                                    | ⚠️ Delta (no steal of home) | `src/features/gameplay/context/decisionTypes.ts:3-4`; `src/features/gameplay/context/stealAttempt.ts:10`                    |
+| Steal availability        | Manager's discretion                                   | Manager Mode only; offered when expected success > 72%, <2 outs, destination base empty           | ⚠️ Delta (constrained)      | `src/features/gameplay/context/reducer.ts:40-52`, `src/features/gameplay/context/reducer.ts:74-83`                          |
+| Steal success probability | Depends on runner speed, catcher arm, pitcher delivery | Base: 70% (1st→2nd), 60% (2nd→3rd); scaled by runner `speedMod` and `stratMod(strategy, "steal")` | ⚠️ Delta (simplified model) | `src/features/gameplay/context/reducer.ts:40-48`                                                                            |
 | Caught stealing           | Runner out; batter remains                             | Runner cleared from base; `playerOut(…, false)` — batter stays up, lineup does not advance        | ✅ Matches MLB              | `stealAttempt.ts:35-54`                    |
 
 ### Bunt
