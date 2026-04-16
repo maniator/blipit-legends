@@ -137,7 +137,7 @@ Real baseball resolves each batted ball with full fielder positioning, reaction 
 
 | Rule area                   | Official MLB                                                | Ballgame implementation                                                                                                          | Status                                 | Source                  |
 | --------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ----------------------- |
-| Bunt outcomes               | Sac bunt, bunt single, FC, bunt pop-up, foul-bunt strikeout | 4 mutually exclusive outcomes: single (8%), FC (12%), sac bunt (60%), pop-up (20%); contact strategy shifts single chance to 20% | ⚠️ Delta (no foul-bunt strikeout rule) | `buntAttempt.ts:21-141` |
+| Bunt outcomes               | Sac bunt, bunt single, FC, bunt pop-up, foul-bunt strikeout | 4 mutually exclusive outcomes: single (8%), FC (12%), sac bunt (60%), pop-up (20%); contact strategy shifts single chance to 20%; foul-bunt on 2-strike count → strikeout | ✅ Matches MLB | `buntAttempt.ts:21-143` |
 | Sac bunt runner advancement | All runners advance one base; batter out                    | Runner IDs shifted: `oldBase[1]→newBase[2]`, `oldBase[0]→newBase[1]`; batter out                                                 | ✅ Matches MLB                         | `buntAttempt.ts:85-128` |
 | FC on bunt                  | Lead runner out; batter safe at 1st                         | Lead runner removed; batter ID placed on 1st; one `playerOut(…, true)` for the lead runner out                                   | ✅ Matches MLB                         | `buntAttempt.ts:27-82`  |
 
@@ -186,7 +186,7 @@ These MLB rules have no equivalent in Ballgame. The PM Agent must flag them as o
 | Designated hitter           | Rule 5.11          | Not modeled; all players bat                    |
 | Replay / challenge system   | Rule 8.02          | Not modeled                                     |
 | Pitch clock                 | Rule 5.07(b)       | Not modeled                                     |
-| Hit by pitch                | Rule 5.05(b)(1)    | Not modeled                                     |
+| Hit by pitch                | Rule 5.05(b)(1)    | Implemented: ~11% of ball-4 walks become HBP; force advancement identical to walk; logged as "HBP" in hit log |
 | Dropped third strike        | Rule 5.05(a)(2)    | Not modeled                                     |
 | Wild pitch / passed ball    | Rule 9.13 / 9.14   | Not modeled as distinct events                  |
 | Pickoff                     | Rule 5.07          | Not modeled                                     |

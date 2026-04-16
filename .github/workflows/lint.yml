@@ -41,7 +41,6 @@ jobs:
 
       - name: Check for circular dependencies
         run: yarn check:circular-deps
-        continue-on-error: true
 
       - name: Typecheck E2E tests
         run: yarn typecheck:e2e
