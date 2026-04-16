@@ -65,8 +65,8 @@ flowchart TD
 
 RxDB does not support multi-collection transactions. The writes in steps G and H are separate. To handle a partial failure (e.g. player update succeeds but trade record insert fails):
 
-- Always write the `TradeRecord` **last**. If the trade record is absent, the UI treats the trade as if it never happened — the player updates are the "committed" state, so they take precedence.
-- On next app load, a consistency check function (`validateLeagueRosterIntegrity`) should detect any orphaned player moves (player is on a new team but no `TradeRecord` exists) and write a recovery `TradeRecord` with `source: "recovery"` for audit purposes.
+- Always write the `TradeRecord` **last**. If the trade record is absent, the **roster/player state is still authoritative** — the player updates are the "committed" state — but the trade will be missing from the **trade history/audit log** until a record is written.
+- On next app load, a consistency check function (`validateLeagueRosterIntegrity`) should detect any orphaned player moves (player is on a new team but no `TradeRecord` exists) and write a recovery `TradeRecord` with `source: "recovery"` for audit purposes only (it must never attempt to re-apply the trade, since the roster changes are already committed).
 
 ---
 

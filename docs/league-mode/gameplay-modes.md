@@ -144,7 +144,7 @@ if (locationState?.leagueContext) {
 
 ### What it is
 
-The user taps a single **"Simulate Day"** button on the `SchedulePage`. All unflagged PENDING games in the current game day are run through `headlessSim` in sequence. Results are committed atomically, and a **Night Summary modal** slides up showing all box scores.
+The user taps a single **"Simulate Day"** button on the `SchedulePage`. All unflagged PENDING games in the current game day are run through `headlessSim` in sequence. Each game's result is written individually (best-effort, sequential commits) — a failed write leaves that game PENDING while successfully written games stay completed. After the batch finishes, a **Night Summary modal** slides up showing all box scores that were saved.
 
 "Current game day" is defined as all `ScheduledGameRecord` docs in the same `leagueSeasonId` with the same `gameDay` value equal to `leagueSeason.currentGameDay`.
 

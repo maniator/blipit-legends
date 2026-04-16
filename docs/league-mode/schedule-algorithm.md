@@ -350,5 +350,5 @@ const tradeDeadlineGameDay = Math.floor(totalGameDays / 2);
 | 4 teams, seriesLength=1 (one-off) | Every game has a unique matchup per round; no series IDs repeated within a round |
 | Seed stability | Same inputs + same seed → identical `ScheduledGameSlot[]` output (deterministic) |
 | Game day parallelism | No team appears twice on the same `gameDay` |
-| Batch seed uniqueness | Every `ScheduledGameSlot` in a Simulate Day batch has a distinct `${leagueSeasonId}:${scheduledGameId}` seed — no two seeds are equal |
-| Cross-season seed isolation | Same `scheduledGameId` in two different seasons produces different seeds due to distinct `leagueSeasonId` prefix |
+| Batch seed uniqueness (season creation layer) | Every persisted `ScheduledGameRecord` in a Simulate Day batch is assigned a distinct RNG seed — no two seeds are equal |
+| Cross-season seed isolation (season creation layer) | The same logical scheduled game in two different seasons receives different RNG seeds because the season identifier is included in the seed derivation |

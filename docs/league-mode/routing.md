@@ -141,7 +141,7 @@ Wrap all `/stats/*` children in a shared layout component (`StatsHubLayout`) tha
 // Legacy redirects — keep /stats/:teamId working for old bookmarks
 { path: "stats/:teamId",                    element: <StatsLegacyRedirect /> },
 { path: "stats/:teamId/players/:playerId",  element: <StatsPlayerLegacyRedirect /> },
-{ path: "stats/players/:playerId",          element: <Navigate to={`/stats/exhibition/players/${...}`} replace /> },
+{ path: "stats/players/:playerId",          element: <StatsPlayersLegacyRedirect /> },
 { path: "career-stats",                     element: <Navigate to="/stats/exhibition" replace /> },
 ```
 

@@ -542,7 +542,7 @@ const tradeRecordsSchemaV1: RxJsonSchema<TradeRecord> = {
     leagueId:        { type: "string", maxLength: 128 },
     teamIds:         { type: "array", items: { type: "string" }, minItems: 2, maxItems: 2 },
     playerMoves:     { type: "array", items: { type: "object", additionalProperties: true } },
-    gameDayAtTrade:  { type: "number", minimum: 0, maximum: 9999, multipleOf: 1 },
+    gameDayAtTrade:  { type: "number", minimum: 1, maximum: 9999, multipleOf: 1 },
     source:          { type: "string", enum: ["user", "recovery"], maxLength: 16 },
   },
   required: [

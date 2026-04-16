@@ -53,7 +53,7 @@ Without cross-game fatigue, a few real-world dynamics are absent in v1:
 | Everyday lineup players feel grind of long series | Batters reset each game |
 | Manager rotation strategy (4-man vs. 5-man) | No mechanical incentive to rotate |
 
-In **Watch / Manage mode**, the human manager still sees within-game fatigue displayed on the `SubstitutionPanel` and pinch-hitter decision UI (PA count, contact/power penalties). Cross-game context (e.g. "this pitcher started yesterday") is absent in v1 but can be surfaced in a future phase.
+In **Watch / Manage mode**, the human manager sees within-game pitcher fatigue displayed on the `SubstitutionPanel`. The pinch-hitter decision UI currently focuses on platoon edge and candidate selection; PA-based batter fatigue (contact/power penalties) is a planned future enhancement and is not yet shown in the game UI. Cross-game context (e.g. "this pitcher started yesterday") is absent in v1 but can be surfaced in a future phase.
 
 In **headless simulation** (Box Score / Simulate Day), the AI manager uses within-game fatigue as a substitution signal. It has no cross-game memory.
 
