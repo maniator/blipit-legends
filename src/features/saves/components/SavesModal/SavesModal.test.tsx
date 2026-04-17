@@ -57,6 +57,17 @@ vi.mock("@feat/saves/hooks/useSaveStore", () => ({
   useSaveStore: vi.fn(() => makeMockStore()),
 }));
 
+vi.mock("@shared/hooks/useCustomTeams", () => ({
+  useCustomTeams: vi.fn(() => ({
+    teams: [],
+    loading: false,
+    createTeam: vi.fn(),
+    updateTeam: vi.fn(),
+    deleteTeam: vi.fn(),
+    refresh: vi.fn(),
+  })),
+}));
+
 vi.mock("@shared/utils/rng", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@shared/utils/rng")>();
   return { ...actual, getRngState: vi.fn().mockReturnValue(42) };
