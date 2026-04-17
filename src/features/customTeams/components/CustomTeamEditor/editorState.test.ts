@@ -124,6 +124,37 @@ describe("initEditorState", () => {
     expect(state.lineup[0].position).toBe("");
     expect(state.lineup[0].handedness).toBe("R");
   });
+
+  it("defaults pitcher stats when legacy pitcher doc is missing pitching block", () => {
+    const team = {
+      id: "ct_legacy_pitcher",
+      schemaVersion: 1,
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+      name: "Legacy Pitchers",
+      nameLowercase: "legacy pitchers",
+      roster: {
+        schemaVersion: 1,
+        lineup: [],
+        bench: [],
+        pitchers: [
+          {
+            id: "p_missing_pitching",
+            name: "No Pitch Block",
+            role: "pitcher" as const,
+            position: "P",
+            handedness: "R" as const,
+          },
+        ],
+      },
+      metadata: { archived: false },
+    };
+    const state = initEditorState(team as unknown as Parameters<typeof initEditorState>[0]);
+    expect(state.pitchers[0].velocity).toBe(60);
+    expect(state.pitchers[0].control).toBe(60);
+    expect(state.pitchers[0].movement).toBe(60);
+    expect(state.pitchers[0].stamina).toBe(60);
+  });
 });
 
 describe("validateEditorState", () => {

@@ -9,6 +9,52 @@ import { resolvePlayerConflict } from "./customTeamIdentity";
 import { removeTeamPlayerRecords, writePlayerRecords } from "./customTeamPlayerDocs";
 import { sanitizePlayer } from "./customTeamSanitizers";
 
+const DEFAULT_BATTER_POSITION = "DH";
+const DEFAULT_PITCHER_POSITION = "P";
+const DEFAULT_HANDEDNESS = "R" as const;
+const DEFAULT_BATTING_STAMINA = 50;
+const DEFAULT_PITCHING_STAMINA = 60;
+
+function normalizeImportedPlayer(
+  player: TeamPlayer,
+  section: "lineup" | "bench" | "pitchers",
+): TeamPlayer {
+  const isPitcher = player.role === "pitcher";
+  const normalizedPosition =
+    player.position === undefined ||
+    (typeof player.position === "string" && player.position.trim().length === 0)
+      ? isPitcher || section === "pitchers"
+        ? DEFAULT_PITCHER_POSITION
+        : DEFAULT_BATTER_POSITION
+      : player.position;
+  const normalizedHandedness =
+    player.handedness === undefined ? DEFAULT_HANDEDNESS : player.handedness;
+
+  if (isPitcher) {
+    const pitching = player.pitching;
+    return {
+      ...player,
+      position: normalizedPosition,
+      handedness: normalizedHandedness,
+      pitching: {
+        ...pitching,
+        stamina: pitching.stamina === undefined ? DEFAULT_PITCHING_STAMINA : pitching.stamina,
+      },
+    };
+  }
+
+  const batting = player.batting;
+  return {
+    ...player,
+    position: normalizedPosition,
+    handedness: normalizedHandedness,
+    batting: {
+      ...batting,
+      stamina: batting.stamina === undefined ? DEFAULT_BATTING_STAMINA : batting.stamina,
+    },
+  };
+}
+
 /**
  * Orchestrates the upsert of a single team and its player docs during an import.
  * Stores the team doc with empty embedded roster arrays (players live in the
@@ -32,7 +78,7 @@ export async function orchestrateTeamImport(
       p: TeamPlayer,
       section: "lineup" | "bench" | "pitchers",
       index: number,
-    ): TeamPlayer => sanitizePlayer(p, { section, index });
+    ): TeamPlayer => sanitizePlayer(normalizeImportedPlayer(p, section), { section, index });
     const clampedRoster = {
       ...team.roster,
       lineup: team.roster.lineup.map((p, i) => sanitizeImported(p, "lineup", i)),

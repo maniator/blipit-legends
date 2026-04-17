@@ -102,6 +102,136 @@ describe("importCustomTeams", () => {
     expect(Array.isArray(result.duplicateWarnings)).toBe(true);
   });
 
+  it("backfills legacy missing position/handedness/stamina fields on import", async () => {
+    const { fnv1a } = await import("@storage/hash");
+    const { exportCustomTeams: exportFn } = await import("./customTeamExportImport");
+    const { buildPlayerSig, TEAMS_EXPORT_KEY } = await import("./customTeamSignatures");
+    const team = {
+      id: "ct_import_legacy_defaults",
+      schemaVersion: 1,
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+      name: "Legacy Defaults",
+      roster: {
+        schemaVersion: 1,
+        lineup: [
+          {
+            id: "p_legacy_batter",
+            name: "Legacy Batter",
+            role: "batter" as const,
+            batting: { contact: 55, power: 45, speed: 50, stamina: 50 },
+            position: "CF",
+            handedness: "L" as const,
+          },
+        ],
+        bench: [],
+        pitchers: [
+          {
+            id: "p_legacy_pitcher",
+            name: "Legacy Pitcher",
+            role: "pitcher" as const,
+            pitching: { velocity: 65, control: 50, movement: 40, stamina: 60 },
+            position: "P",
+            handedness: "R" as const,
+          },
+        ],
+      },
+      metadata: { archived: false },
+    };
+    const bundle = JSON.parse(exportFn([withNL(team) as TeamWithRoster])) as {
+      payload: {
+        teams: Array<{
+          roster: {
+            lineup: Array<Record<string, unknown>>;
+            bench?: Array<Record<string, unknown>>;
+            pitchers: Array<Record<string, unknown>>;
+          };
+        }>;
+      };
+      sig: string;
+    };
+
+    const lineupPlayer = bundle.payload.teams[0].roster.lineup[0];
+    delete lineupPlayer["position"];
+    delete lineupPlayer["handedness"];
+    delete (lineupPlayer["batting"] as Record<string, unknown>)["stamina"];
+
+    const pitcher = bundle.payload.teams[0].roster.pitchers[0];
+    delete pitcher["position"];
+    delete pitcher["handedness"];
+    delete (pitcher["pitching"] as Record<string, unknown>)["stamina"];
+
+    for (const slot of ["lineup", "bench", "pitchers"] as const) {
+      const players = bundle.payload.teams[0].roster[slot] ?? [];
+      for (const player of players) {
+        player["sig"] = buildPlayerSig(player as Parameters<typeof buildPlayerSig>[0]);
+      }
+    }
+    bundle.sig = fnv1a(TEAMS_EXPORT_KEY + JSON.stringify(bundle.payload));
+
+    await store.importCustomTeams(JSON.stringify(bundle));
+    const imported = await store.getCustomTeam("ct_import_legacy_defaults");
+    expect(imported).not.toBeNull();
+    const importedBatter = imported!.roster.lineup[0];
+    expect(importedBatter.position).toBe("DH");
+    expect(importedBatter.handedness).toBe("R");
+    if (importedBatter.role !== "batter") throw new Error("Expected batter");
+    expect(importedBatter.batting.stamina).toBe(50);
+
+    const importedPitcher = imported!.roster.pitchers[0];
+    expect(importedPitcher.position).toBe("P");
+    expect(importedPitcher.handedness).toBe("R");
+    if (importedPitcher.role !== "pitcher") throw new Error("Expected pitcher");
+    expect(importedPitcher.pitching.stamina).toBe(60);
+  });
+
+  it("still rejects explicit invalid stamina values from imports", async () => {
+    const { fnv1a } = await import("@storage/hash");
+    const { exportCustomTeams: exportFn } = await import("./customTeamExportImport");
+    const { buildPlayerSig, TEAMS_EXPORT_KEY } = await import("./customTeamSignatures");
+    const team = {
+      id: "ct_import_invalid_stamina",
+      schemaVersion: 1,
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+      name: "Invalid Stamina",
+      roster: {
+        schemaVersion: 1,
+        lineup: [
+          {
+            id: "p_invalid_stamina",
+            name: "Invalid Stamina Batter",
+            role: "batter" as const,
+            batting: { contact: 55, power: 45, speed: 50, stamina: 50 },
+            position: "LF",
+            handedness: "R" as const,
+          },
+        ],
+        bench: [],
+        pitchers: [],
+      },
+      metadata: { archived: false },
+    };
+    const bundle = JSON.parse(exportFn([withNL(team) as TeamWithRoster])) as {
+      payload: {
+        teams: Array<{
+          roster: {
+            lineup: Array<Record<string, unknown>>;
+          };
+        }>;
+      };
+      sig: string;
+    };
+    const batter = bundle.payload.teams[0].roster.lineup[0];
+    (batter["batting"] as Record<string, unknown>)["stamina"] = "50";
+    batter["sig"] = buildPlayerSig(batter as Parameters<typeof buildPlayerSig>[0]);
+    bundle.sig = fnv1a(TEAMS_EXPORT_KEY + JSON.stringify(bundle.payload));
+
+    await expect(store.importCustomTeams(JSON.stringify(bundle))).rejects.toThrow(
+      /batting\.stamina must be a finite number/i,
+    );
+  });
+
   it("recomputes fingerprint from content on import (stale fingerprint is replaced)", async () => {
     const { exportCustomTeams: exportFn } = await import("./customTeamExportImport");
     const { buildPlayerSig } = await import("./customTeamSignatures");

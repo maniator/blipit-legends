@@ -5,8 +5,37 @@
 import { expect, test } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
+import { fnv1a } from "../../src/storage/hash";
 
 import { computeTeamsSignature, resetAppState } from "../utils/helpers";
+
+type TeamsExportBundle = {
+  payload: { teams: Array<{ roster: { lineup: unknown[]; bench?: unknown[]; pitchers: unknown[] } }> };
+  sig?: string;
+};
+
+/**
+ * Recomputes per-player signatures and bundle signature after tests mutate
+ * exported JSON to emulate legacy/compat payloads before re-importing.
+ */
+function resignTeamsBundle(bundle: TeamsExportBundle) {
+  for (const team of bundle.payload.teams) {
+    for (const slot of [team.roster.lineup, team.roster.bench ?? [], team.roster.pitchers]) {
+      for (const rawPlayer of slot as Array<Record<string, unknown>>) {
+        const signatureInput = {
+          name: rawPlayer.name,
+          role: rawPlayer.role,
+          batting: rawPlayer.batting,
+          pitching: rawPlayer.pitching,
+        };
+        rawPlayer.sig = fnv1a(JSON.stringify(signatureInput));
+      }
+    }
+  }
+
+  bundle.sig = fnv1a(`ballgame:teams:v1${JSON.stringify(bundle.payload)}`);
+  return bundle;
+}
 
 test.describe("Custom Teams — Import/Export", () => {
   test.beforeEach(async ({ page }) => {
@@ -205,7 +234,7 @@ test.describe("Custom Teams — Import/Export", () => {
     expect(errText).toMatch(/signature mismatch/i);
   });
 
-  test("import legacy teams file (no player fingerprints) — rejected with signature mismatch", async ({
+  test("import backfills missing position/handedness and missing batting/pitching stamina defaults", async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop", "Desktop-only");
@@ -213,45 +242,96 @@ test.describe("Custom Teams — Import/Export", () => {
     await page.getByTestId("home-manage-teams-button").click();
     await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
 
-    const fixturePath = path.join(__dirname, "../fixtures/legacy-teams-no-fingerprints.json");
+    await page.getByTestId("manage-teams-create-button").click();
+    await page.getByTestId("custom-team-regenerate-defaults-button").click();
+    await page.getByTestId("custom-team-name-input").fill("Compat Backfill Team");
+    await page.getByTestId("custom-team-save-button").click();
+    await expect(page.getByText("Compat Backfill Team")).toBeVisible({ timeout: 10_000 });
 
-    // Import the legacy file — current validation rejects it due per-player
-    // signature mismatch.
-    await page.getByTestId("import-teams-file-input").setInputFiles(fixturePath);
-    await expect(page.getByTestId("import-teams-error")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByTestId("import-teams-error")).toContainText(/signature mismatch/i);
-    await expect(page.getByTestId("custom-team-list-item")).toHaveCount(0);
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByTestId("export-all-teams-button").click();
+    const download = await downloadPromise;
+    const exportedPath = path.join(testInfo.outputDir, "compat-export.json");
+    await download.saveAs(exportedPath);
+
+    const compatObj = JSON.parse(fs.readFileSync(exportedPath, "utf-8"));
+    const team = compatObj.payload.teams[0];
+    delete team.roster.lineup[0].position;
+    delete team.roster.lineup[0].handedness;
+    delete team.roster.lineup[0].batting.stamina;
+    delete team.roster.pitchers[0].position;
+    delete team.roster.pitchers[0].handedness;
+    delete team.roster.pitchers[0].pitching.stamina;
+    resignTeamsBundle(compatObj);
+    const compatPath = path.join(testInfo.outputDir, "compat-missing-fields.json");
+    fs.writeFileSync(compatPath, JSON.stringify(compatObj));
+
+    page.once("dialog", (d) => d.accept());
+    await page.getByTestId("custom-team-delete-button").first().click();
+    await expect(page.getByText(/no custom teams yet/i)).toBeVisible({ timeout: 5_000 });
+
+    await page.getByTestId("import-teams-file-input").setInputFiles(compatPath);
+    await expect(page.getByTestId("import-teams-success")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("custom-team-list-item")).toHaveCount(1);
+
+    const roundTripDownloadPromise = page.waitForEvent("download");
+    await page.getByTestId("export-all-teams-button").click();
+    const roundTripDownload = await roundTripDownloadPromise;
+    const roundTripPath = path.join(testInfo.outputDir, "compat-round-trip.json");
+    await roundTripDownload.saveAs(roundTripPath);
+    const roundTrip = JSON.parse(fs.readFileSync(roundTripPath, "utf-8"));
+    expect(roundTrip.payload.teams[0].roster.lineup[0].position).toBeTruthy();
+    expect(["R", "L", "S"]).toContain(roundTrip.payload.teams[0].roster.lineup[0].handedness);
+    expect(roundTrip.payload.teams[0].roster.lineup[0].batting.stamina).toBe(50);
+    expect(roundTrip.payload.teams[0].roster.pitchers[0].position).toBeTruthy();
+    expect(["R", "L", "S"]).toContain(roundTrip.payload.teams[0].roster.pitchers[0].handedness);
+    expect(roundTrip.payload.teams[0].roster.pitchers[0].pitching.stamina).toBe(60);
   });
 
-  test("import legacy teams file — repeated imports remain rejected", async ({
+  test("re-importing a compat-normalized team is skipped (no duplicate created)", async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop", "Desktop-only");
 
-    // This test covers the no-migration path: in a fresh E2E DB the legacy bundle is
-    // imported directly (no teamSeed), so the stored fingerprint is also seed-free.
-    // On re-import, the seed-free incoming fingerprint matches the seed-free stored
-    // fingerprint, so the skip is detected correctly.
-    // Note: after a v3 DB migration on a real install the stored fingerprint would
-    // be seed-based and re-import would NOT be detected as a duplicate — this is a
-    // known limitation documented in the importCustomTeams JSDoc.
-
     await page.getByTestId("home-manage-teams-button").click();
     await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
 
-    const fixturePath = path.join(__dirname, "../fixtures/legacy-teams-no-fingerprints.json");
+    await page.getByTestId("manage-teams-create-button").click();
+    await page.getByTestId("custom-team-regenerate-defaults-button").click();
+    await page.getByTestId("custom-team-name-input").fill("Compat Duplicate Team");
+    await page.getByTestId("custom-team-save-button").click();
+    await expect(page.getByText("Compat Duplicate Team")).toBeVisible({ timeout: 10_000 });
 
-    // First import is rejected.
-    await page.getByTestId("import-teams-file-input").setInputFiles(fixturePath);
-    await expect(page.getByTestId("import-teams-error")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByTestId("import-teams-error")).toContainText(/signature mismatch/i);
-    await expect(page.getByTestId("custom-team-list-item")).toHaveCount(0);
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByTestId("export-all-teams-button").click();
+    const download = await downloadPromise;
+    const exportedPath = path.join(testInfo.outputDir, "compat-dup-export.json");
+    await download.saveAs(exportedPath);
 
-    // Second import remains rejected and still does not create teams.
-    await page.getByTestId("import-teams-file-input").setInputFiles(fixturePath);
-    await expect(page.getByTestId("import-teams-error")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByTestId("import-teams-error")).toContainText(/signature mismatch/i);
-    await expect(page.getByTestId("custom-team-list-item")).toHaveCount(0);
+    const compatObj = JSON.parse(fs.readFileSync(exportedPath, "utf-8"));
+    const team = compatObj.payload.teams[0];
+    delete team.roster.lineup[0].position;
+    delete team.roster.lineup[0].handedness;
+    delete team.roster.lineup[0].batting.stamina;
+    delete team.roster.pitchers[0].position;
+    delete team.roster.pitchers[0].handedness;
+    delete team.roster.pitchers[0].pitching.stamina;
+    resignTeamsBundle(compatObj);
+    const compatPath = path.join(testInfo.outputDir, "compat-dup.json");
+    fs.writeFileSync(compatPath, JSON.stringify(compatObj));
+
+    page.once("dialog", (d) => d.accept());
+    await page.getByTestId("custom-team-delete-button").first().click();
+    await expect(page.getByText(/no custom teams yet/i)).toBeVisible({ timeout: 5_000 });
+
+    await page.getByTestId("import-teams-file-input").setInputFiles(compatPath);
+    await expect(page.getByTestId("import-teams-success")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("custom-team-list-item")).toHaveCount(1);
+
+    await page.getByTestId("import-teams-file-input").setInputFiles(compatPath);
+    await expect(page.getByTestId("import-teams-success")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("import-teams-success")).toContainText(/already exist/i);
+    await expect(page.getByTestId("custom-team-list-item")).toHaveCount(1);
   });
 });
 

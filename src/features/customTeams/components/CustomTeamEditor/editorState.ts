@@ -220,18 +220,21 @@ const docBatterToEditor = (p: TeamBatterPlayer): EditorBatterPlayer => ({
   stamina: p.batting.stamina,
 });
 
-const docPitcherToEditor = (p: TeamPitcherPlayer): EditorPitcherPlayer => ({
-  id: p.id,
-  name: p.name,
-  role: "pitcher",
-  position: p.position ?? "",
-  handedness: p.handedness ?? "R",
-  velocity: p.pitching.velocity,
-  control: p.pitching.control,
-  movement: p.pitching.movement,
-  stamina: p.pitching.stamina,
-  ...(p.pitchingRole !== undefined && { pitchingRole: p.pitchingRole }),
-});
+const docPitcherToEditor = (p: TeamPitcherPlayer): EditorPitcherPlayer => {
+  const pitching = p.pitching ?? { velocity: 60, control: 60, movement: 60, stamina: 60 };
+  return {
+    id: p.id,
+    name: p.name,
+    role: "pitcher",
+    position: p.position ?? "",
+    handedness: p.handedness ?? "R",
+    velocity: pitching.velocity,
+    control: pitching.control,
+    movement: pitching.movement,
+    stamina: pitching.stamina,
+    ...(p.pitchingRole !== undefined && { pitchingRole: p.pitchingRole }),
+  };
+};
 
 const docPlayerToEditor = (p: TeamPlayer): EditorPlayer =>
   p.role === "pitcher" ? docPitcherToEditor(p) : docBatterToEditor(p);
