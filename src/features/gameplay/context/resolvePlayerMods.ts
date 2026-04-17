@@ -13,7 +13,7 @@ import type { PlayerCustomization, ResolvedPlayerMods } from "./playerTypes";
  * |------------|--------|--------------|-----------------------------------------------|
  * | contact    | ✓      | contactMod   | hitBall: pop-out threshold (+/- hit chance)   |
  * | power      | ✓      | powerMod     | hitBall: HR bonus probability                 |
- * | speed      | ✓      | speedMod     | reducer: steal success % (via baseRunnerIds)  |
+ * | speed      | ✓      | speedMod     | reducer steal success % + hitBall baserunning/DP/tag-up/stretch logic |
  * | stamina    | ✓      | staminaMod   | batter fatigue: contact/power penalties over PA |
  *
  * ### Pitcher stats
@@ -24,9 +24,9 @@ import type { PlayerCustomization, ResolvedPlayerMods } from "./playerTypes";
  * | movement   | ✓      | movementMod   | hitBall: pop-out threshold (hit difficulty ↑) |
  * | stamina    | ✓      | staminaMod    | pitcher fatigue: effectiveness decays with workload |
  *
- * ### Intentionally deferred stats (stored-only, not yet wired into sim)
- * - `handedness` (batter/pitcher): stored in TeamPlayer, not yet used to affect pitch outcomes.
- *   Planned for a future update when batter-vs-pitcher matchup splits are added.
+ * ### Partially wired / intentionally deferred fields
+ * - `handedness` (batter/pitcher): stored in TeamPlayer and used by pitch-resolution
+ *   matchup modifiers. Broader handedness-driven features and split expansions are deferred.
  * - `pitchingRole` ("SP" | "RP" | "SP/RP"): stored in TeamWithRoster, drives AI substitution logic only;
  *   does not yet affect pitch-by-pitch simulation.
  * - `staminaMod` source is role-aware in custom-team mapping:
