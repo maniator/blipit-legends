@@ -13,6 +13,19 @@ vi.mock("@shared/hooks/useTeamWithRoster", () => ({
 
 import ManagerModeControls from "./ManagerModeControls";
 
+vi.mock("@feat/customTeams/storage/customTeamStore", () => ({
+  CustomTeamStore: {
+    getCustomTeam: vi.fn().mockResolvedValue(null),
+    listCustomTeams: vi.fn().mockResolvedValue([]),
+    createCustomTeam: vi.fn().mockResolvedValue("ct_test"),
+    updateCustomTeam: vi.fn().mockResolvedValue(undefined),
+    deleteCustomTeam: vi.fn().mockResolvedValue(undefined),
+    archiveCustomTeam: vi.fn().mockResolvedValue(undefined),
+    unarchiveCustomTeam: vi.fn().mockResolvedValue(undefined),
+  },
+  makeCustomTeamStore: vi.fn(),
+}));
+
 const noop = () => {};
 
 /** Wraps the component with a minimal GameContext (needed for SubstitutionButton). */

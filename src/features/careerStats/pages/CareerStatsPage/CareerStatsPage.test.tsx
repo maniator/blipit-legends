@@ -116,12 +116,16 @@ describe("CareerStatsPage", () => {
   });
 
   it("renders the career stats page", async () => {
-    renderPage();
+    await act(async () => {
+      renderPage();
+    });
     expect(screen.getByTestId("career-stats-page")).toBeInTheDocument();
   });
 
   it("shows the Career Stats heading", async () => {
-    renderPage();
+    await act(async () => {
+      renderPage();
+    });
     expect(screen.getByRole("heading", { name: /career stats/i })).toBeInTheDocument();
   });
 
@@ -188,7 +192,9 @@ describe("CareerStatsPage", () => {
 
   it("back button navigates to home", async () => {
     const user = userEvent.setup();
-    renderPage();
+    await act(async () => {
+      renderPage();
+    });
     const backBtn = screen.getByRole("button", { name: /back/i });
     await user.click(backBtn);
     expect(mockNavigate).toHaveBeenCalledWith("/");
@@ -937,11 +943,9 @@ describe("CareerStatsPage", () => {
     });
     renderPage();
     await waitFor(() => {
-      // batting/pitching tabs should render once data loads
-      expect(screen.getByTestId("career-stats-batting-tab")).toBeInTheDocument();
+      // Section renders whenever teamSummary is non-null, regardless of gamesPlayed.
+      expect(screen.getByTestId("team-summary-section")).toBeInTheDocument();
     });
-    // Section renders whenever teamSummary is non-null, regardless of gamesPlayed.
-    expect(screen.getByTestId("team-summary-section")).toBeInTheDocument();
     expect(screen.getByTestId("summary-gp")).toHaveTextContent("0");
   });
 
