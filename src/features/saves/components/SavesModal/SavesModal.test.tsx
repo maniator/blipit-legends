@@ -83,7 +83,6 @@ vi.mock("@storage/saveIO", async (importOriginal) => {
   return {
     ...actual,
     downloadJson: vi.fn(),
-    saveFilename: vi.fn((name: string) => `${name || "save"}.json`),
   };
 });
 

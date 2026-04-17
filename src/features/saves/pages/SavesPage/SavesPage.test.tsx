@@ -27,7 +27,6 @@ vi.mock("@storage/saveIO", async (importOriginal) => {
   return {
     ...actual,
     downloadJson: vi.fn(),
-    saveFilename: vi.fn((name: string) => `${name || "save"}.json`),
   };
 });
 
@@ -216,7 +215,7 @@ describe("SavesPage", () => {
     await waitFor(() =>
       expect(downloadJson).toHaveBeenCalledWith(
         JSON.stringify({ test: "data" }),
-        "Team A vs Team B.json",
+        expect.stringMatching(/^ballgame-team-a-vs-team-b-\d{8}T\d{6}\.json$/),
       ),
     );
   });
