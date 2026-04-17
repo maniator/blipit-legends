@@ -64,7 +64,7 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
     label: string,
     val: number,
     htmlFor: string,
-    mk: (n: number) => EditorPlayerPatch,
+    toPatch: (n: number) => EditorPlayerPatch,
   ) => (
     <StatRow key={`stat-${htmlFor}`} $locked={isExistingPlayer}>
       <StatLabel htmlFor={htmlFor}>{label}</StatLabel>
@@ -78,7 +78,7 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           // Guard in addition to `disabled` — jsdom fires change events on disabled
           // elements via fireEvent, so the explicit check keeps tests meaningful.
-          if (!isExistingPlayer) onChange(mk(Number(e.target.value)));
+          if (!isExistingPlayer) onChange(toPatch(Number(e.target.value)));
         }}
       />
       <StatValue>{val}</StatValue>
