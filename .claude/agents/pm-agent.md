@@ -147,17 +147,17 @@ Every response in this mode must follow this structure:
 
 After producing a plan, always recommend the correct execution agent:
 
-| Task type | Execution agent |
-| --- | --- |
-| Technical review of a high-value or risky change | `senior-lead` |
-| Behavior-preserving refactor | `safe-refactor` |
-| UI / layout / visual snapshot change | `ui-visual-snapshot` |
-| Simulation bug or determinism issue | `simulation-correctness` |
-| RxDB schema / save / export-import change | `rxdb-save-integrity` |
-| CI workflow change | `ci-workflow` |
-| E2E test authoring, fixture creation, snapshot regen | `e2e-test-runner` |
-| Post-implementation realism check | `baseball-manager` |
-| Tuning probabilistic gameplay parameters | `baseball-manager` |
+| Task type                                            | Execution agent          |
+| ---------------------------------------------------- | ------------------------ |
+| Technical review of a high-value or risky change     | `senior-lead`            |
+| Behavior-preserving refactor                         | `safe-refactor`          |
+| UI / layout / visual snapshot change                 | `ui-visual-snapshot`     |
+| Simulation bug or determinism issue                  | `simulation-correctness` |
+| RxDB schema / save / export-import change            | `rxdb-save-integrity`    |
+| CI workflow change                                   | `ci-workflow`            |
+| E2E test authoring, fixture creation, snapshot regen | `e2e-test-runner`        |
+| Post-implementation realism check                    | `baseball-manager`       |
+| Tuning probabilistic gameplay parameters             | `baseball-manager`       |
 
 ---
 

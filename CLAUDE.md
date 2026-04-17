@@ -37,15 +37,15 @@ Pre-commit hooks (Husky + lint-staged) auto-run ESLint fix, Prettier, and Vitest
 
 ## Detailed Reference Docs
 
-| Doc | Contents |
-|-----|----------|
-| `docs/repo-layout.md` | Full directory tree, path aliases, feature ownership |
-| `docs/architecture.md` | Route architecture, auto-play scheduler, Manager Mode, notifications |
-| `docs/rxdb-persistence.md` | RxDB setup, schema versioning/migrations, SaveStore/CustomTeamStore APIs |
-| `docs/e2e-testing.md` | Playwright projects, helpers, `data-testid` reference, visual snapshots, CI |
-| `docs/style-guide.md` | **Consult before any new color, font size, or component** — color palette, typography, breakpoints, all button variants, forms, modals, tables |
-| `.github/copilot-instructions.md` | Technical gotchas and code conventions (full list) |
-| `.github/agents/README.md` | Specialist agent routing guide |
+| Doc                               | Contents                                                                                                                                       |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/repo-layout.md`             | Full directory tree, path aliases, feature ownership                                                                                           |
+| `docs/architecture.md`            | Route architecture, auto-play scheduler, Manager Mode, notifications                                                                           |
+| `docs/rxdb-persistence.md`        | RxDB setup, schema versioning/migrations, SaveStore/CustomTeamStore APIs                                                                       |
+| `docs/e2e-testing.md`             | Playwright projects, helpers, `data-testid` reference, visual snapshots, CI                                                                    |
+| `docs/style-guide.md`             | **Consult before any new color, font size, or component** — color palette, typography, breakpoints, all button variants, forms, modals, tables |
+| `.github/copilot-instructions.md` | Technical gotchas and code conventions (full list)                                                                                             |
+| `.github/agents/README.md`        | Specialist agent routing guide                                                                                                                 |
 
 ## Architecture
 
@@ -53,15 +53,15 @@ Pre-commit hooks (Husky + lint-staged) auto-run ESLint fix, Prettier, and Vitest
 
 Routes are defined in `src/router.tsx` using `createBrowserRouter`. `AppShell` is a pure layout component that passes navigation callbacks via outlet context — it does **not** mount the game persistently. The game lives at `/game` and mounts/unmounts with the route.
 
-| Route | Component |
-|-------|-----------|
-| `/` | `HomeScreen` |
-| `/exhibition/new` | `ExhibitionSetupPage` — new game entry point |
-| `/game` | `GamePage` — mounts on entry, unmounts on navigate-away |
-| `/saves` | `SavesPage` |
-| `/teams`, `/teams/new`, `/teams/:id/edit` | `ManageTeamsScreen` |
-| `/help` | `HelpPage` |
-| `/stats/:teamId`, `/stats/players/:playerId` | Career stats pages |
+| Route                                        | Component                                               |
+| -------------------------------------------- | ------------------------------------------------------- |
+| `/`                                          | `HomeScreen`                                            |
+| `/exhibition/new`                            | `ExhibitionSetupPage` — new game entry point            |
+| `/game`                                      | `GamePage` — mounts on entry, unmounts on navigate-away |
+| `/saves`                                     | `SavesPage`                                             |
+| `/teams`, `/teams/new`, `/teams/:id/edit`    | `ManageTeamsScreen`                                     |
+| `/help`                                      | `HelpPage`                                              |
+| `/stats/:teamId`, `/stats/players/:playerId` | Career stats pages                                      |
 
 `InstructionsModal`, `SavesModal`, and `DecisionPanel` are lazy-loaded via `React.lazy()` in `GameControls/index.tsx`.
 
@@ -78,12 +78,12 @@ Auto-play is driven by `useAutoPlayScheduler` — a speech-gated `setTimeout` lo
 
 ### Persistence
 
-| What | Where |
-|------|-------|
-| Game saves + pitch-by-pitch event log | RxDB (`saves` + `events` collections) |
-| Custom teams | RxDB (`customTeams` collection) |
-| Career stats | RxDB (`gameHistory` collection) |
-| UI preferences (speed, volume, managerMode, strategy) | `localStorage` |
+| What                                                  | Where                                 |
+| ----------------------------------------------------- | ------------------------------------- |
+| Game saves + pitch-by-pitch event log                 | RxDB (`saves` + `events` collections) |
+| Custom teams                                          | RxDB (`customTeams` collection)       |
+| Career stats                                          | RxDB (`gameHistory` collection)       |
+| UI preferences (speed, volume, managerMode, strategy) | `localStorage`                        |
 
 Game state is flushed to RxDB on `GamePage` unmount via `useRxdbGameSync`. **RxDB schema changes MUST bump `version` and add a migration strategy** — same-version schema changes cause a DB6 hash mismatch for all existing users.
 

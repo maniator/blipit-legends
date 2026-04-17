@@ -39,18 +39,18 @@ Your role is **technical leadership and cross-cutting review authority**. You do
 
 You must be invoked whenever a change matches **any** of the following:
 
-| Trigger | Reason |
-| --- | --- |
-| Any RxDB schema `properties`, `required`, or `indexes` change | DB6 risk for all users; migration correctness |
-| Any change to simulation PRNG call order | Seed replay breaks for all existing seeds |
-| Any change to save/export format (FNV-1a signature, event `idx` structure) | Save compatibility for all existing users |
-| Any change to CI workflow permissions, secrets, or container images | Security and supply-chain risk |
-| Any refactor touching ≥ 5 files in `src/features/gameplay/context/` | Reducer cycle order and invariant risk |
-| Any change to `.github/workflows/copilot-setup-steps.yml` | Copilot agent environment stability |
-| Any authentication or DB initialization change | App startup and data loss risk |
-| Release-cut changes (version bumps, tags, changelog) | Correctness of the release artifact |
-| Any change that `pm-agent` flags as P0 or P1 priority | Product-critical path |
-| Any change where a domain agent is uncertain about cross-cutting impact | Architectural judgment call |
+| Trigger                                                                    | Reason                                        |
+| -------------------------------------------------------------------------- | --------------------------------------------- |
+| Any RxDB schema `properties`, `required`, or `indexes` change              | DB6 risk for all users; migration correctness |
+| Any change to simulation PRNG call order                                   | Seed replay breaks for all existing seeds     |
+| Any change to save/export format (FNV-1a signature, event `idx` structure) | Save compatibility for all existing users     |
+| Any change to CI workflow permissions, secrets, or container images        | Security and supply-chain risk                |
+| Any refactor touching ≥ 5 files in `src/features/gameplay/context/`        | Reducer cycle order and invariant risk        |
+| Any change to `.github/workflows/copilot-setup-steps.yml`                  | Copilot agent environment stability           |
+| Any authentication or DB initialization change                             | App startup and data loss risk                |
+| Release-cut changes (version bumps, tags, changelog)                       | Correctness of the release artifact           |
+| Any change that `pm-agent` flags as P0 or P1 priority                      | Product-critical path                         |
+| Any change where a domain agent is uncertain about cross-cutting impact    | Architectural judgment call                   |
 
 For changes that do **not** match a trigger, the relevant domain agent can proceed without a Senior Lead review. Use good judgment — when in doubt, request one.
 
@@ -196,16 +196,16 @@ Every review must evaluate all five categories. Mark each as `✅ Clear`, `⚠�
 
 After issuing a verdict, always recommend the correct execution agent if not already specified:
 
-| Task type | Execution agent |
-| --- | --- |
-| Behavior-preserving refactor | `safe-refactor` |
-| UI / layout / visual snapshot change | `ui-visual-snapshot` |
-| Simulation bug or determinism fix | `simulation-correctness` |
-| RxDB schema / save / export change | `rxdb-save-integrity` |
-| CI workflow change | `ci-workflow` |
-| E2E test authoring, fixture creation, snapshot regen | `e2e-test-runner` |
-| Live QA on production site | `playwright-prod` |
-| Feature planning, risk review, or PR readiness | `pm-agent` |
+| Task type                                            | Execution agent          |
+| ---------------------------------------------------- | ------------------------ |
+| Behavior-preserving refactor                         | `safe-refactor`          |
+| UI / layout / visual snapshot change                 | `ui-visual-snapshot`     |
+| Simulation bug or determinism fix                    | `simulation-correctness` |
+| RxDB schema / save / export change                   | `rxdb-save-integrity`    |
+| CI workflow change                                   | `ci-workflow`            |
+| E2E test authoring, fixture creation, snapshot regen | `e2e-test-runner`        |
+| Live QA on production site                           | `playwright-prod`        |
+| Feature planning, risk review, or PR readiness       | `pm-agent`               |
 
 ---
 
