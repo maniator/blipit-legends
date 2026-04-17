@@ -37,7 +37,7 @@ type StatRowShape = { playerId: string };
 const RETRY_TEST_TIMEOUT_MS = 2000;
 
 afterEach(() => {
-  vi.clearAllMocks();
+  vi.restoreAllMocks();
 });
 
 /** Helper: returns a MutableRefObject wrapping `value`. */
