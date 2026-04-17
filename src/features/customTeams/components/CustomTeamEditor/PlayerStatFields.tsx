@@ -60,8 +60,36 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
   const cap = isPitcher ? PITCHER_STAT_CAP : HITTER_STAT_CAP;
   const shouldShowOverCapWarning = !isExistingPlayer && overCap;
 
-  const stat = (label: string, key: string, htmlFor: string) => {
-    const val = (player as unknown as Record<string, number | undefined>)[key] ?? 0;
+  const pitcherStat = (
+    label: string,
+    key: "velocity" | "control" | "movement",
+    htmlFor: string,
+  ) => {
+    const val = asPitcher?.[key] ?? 0;
+    return (
+      <StatRow key={`stat-${key}`} $locked={isExistingPlayer}>
+        <StatLabel htmlFor={htmlFor}>{label}</StatLabel>
+        <StatInput
+          id={htmlFor}
+          type="range"
+          min={0}
+          max={100}
+          value={val}
+          disabled={isExistingPlayer}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            // Guard in addition to `disabled` — jsdom fires change events on disabled
+            // elements via fireEvent, so the explicit check keeps tests meaningful.
+            if (!isExistingPlayer)
+              onChange({ [key]: Number(e.target.value) } as Partial<EditorPlayer>);
+          }}
+        />
+        <StatValue>{val}</StatValue>
+      </StatRow>
+    );
+  };
+
+  const batterStat = (label: string, key: "contact" | "power" | "speed", htmlFor: string) => {
+    const val = asBatter?.[key] ?? 0;
     return (
       <StatRow key={`stat-${key}`} $locked={isExistingPlayer}>
         <StatLabel htmlFor={htmlFor}>{label}</StatLabel>
@@ -89,15 +117,15 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
       <StatsGrid>
         {isPitcher ? (
           <>
-            {stat("Velocity", "velocity", `velocity-${player.id}`)}
-            {stat("Control", "control", `control-${player.id}`)}
-            {stat("Movement", "movement", `movement-${player.id}`)}
+            {pitcherStat("Velocity", "velocity", `velocity-${player.id}`)}
+            {pitcherStat("Control", "control", `control-${player.id}`)}
+            {pitcherStat("Movement", "movement", `movement-${player.id}`)}
           </>
         ) : (
           <>
-            {stat("Contact", "contact", `contact-${player.id}`)}
-            {stat("Power", "power", `power-${player.id}`)}
-            {stat("Speed", "speed", `speed-${player.id}`)}
+            {batterStat("Contact", "contact", `contact-${player.id}`)}
+            {batterStat("Power", "power", `power-${player.id}`)}
+            {batterStat("Speed", "speed", `speed-${player.id}`)}
           </>
         )}
       </StatsGrid>
