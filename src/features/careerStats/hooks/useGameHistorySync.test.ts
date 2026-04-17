@@ -22,6 +22,7 @@ vi.mock("@shared/utils/rng", () => ({
 // Import the hook and mocked modules after vi.mock declarations.
 import { GameHistoryStore } from "@feat/careerStats/storage/gameHistoryStore";
 import { useGameContext } from "@feat/gameplay/context/index";
+import { appLog } from "@shared/utils/logger";
 
 import { useGameHistorySync } from "./useGameHistorySync";
 
@@ -178,6 +179,7 @@ describe("useGameHistorySync", () => {
 
   describe("retry on transient failure", () => {
     it("retries exactly MAX_COMMIT_RETRIES (3) times after initial failure — 4 total calls", async () => {
+      const logSpy = vi.spyOn(appLog, "error").mockImplementation(() => {});
       const error = Object.assign(new Error("DB error"), { code: "QUOTA_EXCEEDED" });
       vi.mocked(GameHistoryStore.commitCompletedGame).mockRejectedValue(error);
       vi.mocked(useGameContext).mockReturnValue(makeContextValue({ gameOver: true }));
@@ -192,6 +194,7 @@ describe("useGameHistorySync", () => {
         },
         { timeout: RETRY_TEST_TIMEOUT_MS },
       );
+      expect(logSpy).toHaveBeenCalled();
     });
   });
 });

@@ -94,6 +94,10 @@ vi.mock("@shared/hooks/useCustomTeams", () => ({
   })),
 }));
 
+vi.mock("@shared/hooks/useTeamWithRoster", () => ({
+  useTeamWithRoster: vi.fn().mockReturnValue(null),
+}));
+
 describe("GameInner", () => {
   it("renders without crashing", () => {
     render(

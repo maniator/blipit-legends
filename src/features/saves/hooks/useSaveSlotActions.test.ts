@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { makeSaveDoc } from "@test/helpers/saves";
+import { downloadJson } from "@storage/saveIO";
+
+vi.mock("@storage/saveIO", () => ({
+  downloadJson: vi.fn(),
+  saveFilename: vi.fn((name: string) => `${name || "save"}.json`),
+}));
 
 import { useSaveSlotActions } from "./useSaveSlotActions";
 
@@ -49,8 +55,9 @@ describe("useSaveSlotActions", () => {
     const exportSave = vi.fn().mockResolvedValue('{"version":1}');
     const { handleExport } = useSaveSlotActions({ deleteSave: vi.fn(), exportSave });
     handleExport(makeSaveDoc({ id: "save-1", name: "My Save" }));
-    await new Promise((r) => setTimeout(r, 0));
+    await Promise.resolve();
     expect(exportSave).toHaveBeenCalledWith("save-1");
+    expect(downloadJson).toHaveBeenCalledWith('{"version":1}', "My Save.json");
   });
 
   it("handleExport: calls onError when exportSave rejects", async () => {
