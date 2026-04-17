@@ -55,7 +55,7 @@ describe("useSaveSlotActions", () => {
     const exportSave = vi.fn().mockResolvedValue('{"version":1}');
     const { handleExport } = useSaveSlotActions({ deleteSave: vi.fn(), exportSave });
     handleExport(makeSaveDoc({ id: "save-1", name: "My Save" }));
-    await Promise.resolve();
+    await vi.waitFor(() => expect(downloadJson).toHaveBeenCalled());
     expect(exportSave).toHaveBeenCalledWith("save-1");
     expect(downloadJson).toHaveBeenCalledWith('{"version":1}', "My Save.json");
   });

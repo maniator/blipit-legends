@@ -126,6 +126,8 @@ describe("CareerStatsPage", () => {
   });
   afterEach(async () => {
     consoleErrorSpy.mockRestore();
+    // Flush late microtask-driven state updates from useCareerStatsData effects so
+    // React doesn't emit post-test act() warnings for tests that only assert static UI.
     await act(async () => {});
   });
 
