@@ -3,7 +3,7 @@ import * as React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import type { EditorPlayer } from "./editorState";
+import type { EditorPlayer, EditorPlayerPatch } from "./editorState";
 import {
   BATTER_POSITION_OPTIONS,
   HANDEDNESS_OPTIONS,
@@ -27,7 +27,7 @@ type Props = {
   player: EditorPlayer;
   isPitcher?: boolean;
   isExistingPlayer?: boolean;
-  onChange: (patch: Partial<EditorPlayer>) => void;
+  onChange: (patch: EditorPlayerPatch) => void;
   onRemove: () => void;
   /** Called when the user clicks the export button. Undefined = no export button shown. */
   onExport?: () => void;
