@@ -134,6 +134,7 @@ export function customTeamToPlayerOverrides(team: TeamWithRoster): TeamCustomPla
   for (const player of team.roster.pitchers) {
     if (player.role !== "pitcher") continue;
     const pitching = player.pitching;
+    if (!pitching) continue;
     const existing = overrides[player.id] ?? {
       nickname: player.name,
       ...(player.position ? { position: player.position } : {}),

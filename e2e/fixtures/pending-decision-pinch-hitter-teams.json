@@ -195,16 +195,16 @@
                 "stamina": 20
               },
               "pitching": {
-                "control": 60,
+                "control": 52,
                 "velocity": 60,
                 "stamina": 60,
-                "movement": 60
+                "movement": 48
               },
               "position": "SP",
               "handedness": "R",
               "isPitcherEligible": true,
               "pitchingRole": "SP",
-              "sig": "6793197c"
+              "sig": "35c4e741"
             }
           ]
         },
@@ -371,16 +371,16 @@
                 "stamina": 20
               },
               "pitching": {
-                "control": 60,
+                "control": 52,
                 "velocity": 60,
                 "stamina": 60,
-                "movement": 60
+                "movement": 48
               },
               "position": "SP",
               "handedness": "R",
               "isPitcherEligible": true,
               "pitchingRole": "SP",
-              "sig": "181f8974"
+              "sig": "623fdfe9"
             }
           ]
         },
