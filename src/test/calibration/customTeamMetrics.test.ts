@@ -297,6 +297,7 @@ const buildCanonicalGames = (): Array<{ away: FixtureTeam; home: FixtureTeam; se
 const runGamesAndAssert = (
   games: Array<{ away: FixtureTeam; home: FixtureTeam; seed: string }>,
   rangeLabel: string,
+  expectedGameCount: number,
 ) => {
   let totalAB = 0,
     totalBB = 0,
@@ -376,7 +377,7 @@ const runGamesAndAssert = (
   );
   console.log("╚══════════════════════════════════════════════════════╝");
 
-  expect(games.length).toBeGreaterThan(0);
+  expect(games).toHaveLength(expectedGameCount);
   expect(totalBB).toBeGreaterThan(0);
   expect(totalK).toBeGreaterThan(0);
   expect(totalRuns).toBeGreaterThan(0);
@@ -388,10 +389,16 @@ describe("Custom-team metrics harness — 100 games (metrics-teams.json fixture)
   const canonicalGames = buildCanonicalGames();
 
   it("runs canonical fixture games 1-50 and reports aggregate metrics", () => {
-    runGamesAndAssert(canonicalGames.slice(0, 50), "games 1-50");
+    expect(canonicalGames).toHaveLength(100);
+    const firstHalf = canonicalGames.slice(0, 50);
+    expect(firstHalf).toHaveLength(50);
+    runGamesAndAssert(firstHalf, "games 1-50", 50);
   }, 70_000);
 
   it("runs canonical fixture games 51-100 and reports aggregate metrics", () => {
-    runGamesAndAssert(canonicalGames.slice(50, 100), "games 51-100");
+    expect(canonicalGames).toHaveLength(100);
+    const secondHalf = canonicalGames.slice(50, 100);
+    expect(secondHalf).toHaveLength(50);
+    runGamesAndAssert(secondHalf, "games 51-100", 50);
   }, 70_000);
 });
