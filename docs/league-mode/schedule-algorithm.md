@@ -36,8 +36,8 @@ Given identical inputs, output must be identical.
   2. Hash that input with `fnv1a`
   3. Parse the hex hash as an unsigned integer (`parseInt(hash, 16) >>> 0`)
   4. Convert that integer to lowercase base-36 (`value.toString(36)`)
-- The shared helper for this contract is `deriveScheduledGameSeed(leagueSeasonId, scheduledGameId)`
-- All simulation entry points must call this helper and must not reimplement hashing, separators, or encoding inline
+- Planned shared helper: `deriveScheduledGameSeed(leagueSeasonId, scheduledGameId)` in `src/features/leagueMode/utils/deriveScheduledGameSeed.ts`
+- Until that helper is added, any simulation entry point that needs this seed must follow the canonical derivation algorithm above exactly and must not change the hashing, separator, or encoding rules inline
 
 ## Validation targets
 
