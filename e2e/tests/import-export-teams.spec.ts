@@ -5,12 +5,14 @@
 import { expect, test } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
-import { fnv1a } from "../../src/storage/hash";
 
+import { fnv1a } from "../../src/storage/hash";
 import { computeTeamsSignature, resetAppState } from "../utils/helpers";
 
 type TeamsExportBundle = {
-  payload: { teams: Array<{ roster: { lineup: unknown[]; bench?: unknown[]; pitchers: unknown[] } }> };
+  payload: {
+    teams: Array<{ roster: { lineup: unknown[]; bench?: unknown[]; pitchers: unknown[] } }>;
+  };
   sig?: string;
 };
 

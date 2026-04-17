@@ -280,6 +280,102 @@ describe("importCustomTeams", () => {
       await freshDb.close();
     }
   });
+
+  it("keeps duplicate detection consistent when legacy import omits stamina fields", async () => {
+    await store.createCustomTeam({
+      name: "Existing Team",
+      roster: {
+        lineup: [
+          makePlayer({
+            id: "p_existing_batter",
+            name: "Legacy Duplicate Batter",
+            role: "batter",
+            batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+            position: "CF",
+            handedness: "R",
+          }),
+        ],
+        bench: [],
+        pitchers: [
+          makePlayer({
+            id: "p_existing_pitcher",
+            name: "Legacy Duplicate Pitcher",
+            role: "pitcher",
+            pitching: { velocity: 50, control: 50, movement: 50, stamina: 60 },
+            position: "P",
+            handedness: "R",
+          }),
+        ],
+      },
+    });
+
+    const { fnv1a } = await import("@storage/hash");
+    const { exportCustomTeams: exportFn } = await import("./customTeamExportImport");
+    const { buildPlayerSig, TEAMS_EXPORT_KEY } = await import("./customTeamSignatures");
+    const importTeam = {
+      id: "ct_import_missing_stamina_dupes",
+      schemaVersion: 1,
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+      name: "Incoming Team",
+      roster: {
+        schemaVersion: 1,
+        lineup: [
+          {
+            id: "p_import_batter",
+            name: "Legacy Duplicate Batter",
+            role: "batter" as const,
+            batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+            position: "CF",
+            handedness: "R" as const,
+          },
+        ],
+        bench: [],
+        pitchers: [
+          {
+            id: "p_import_pitcher",
+            name: "Legacy Duplicate Pitcher",
+            role: "pitcher" as const,
+            pitching: { velocity: 50, control: 50, movement: 50, stamina: 60 },
+            position: "P",
+            handedness: "R" as const,
+          },
+        ],
+      },
+      metadata: { archived: false },
+    };
+    const bundle = JSON.parse(exportFn([withNL(importTeam) as TeamWithRoster])) as {
+      payload: {
+        teams: Array<{
+          roster: {
+            lineup: Array<Record<string, unknown>>;
+            bench?: Array<Record<string, unknown>>;
+            pitchers: Array<Record<string, unknown>>;
+          };
+        }>;
+      };
+      sig: string;
+    };
+
+    delete (bundle.payload.teams[0].roster.lineup[0]["batting"] as Record<string, unknown>)[
+      "stamina"
+    ];
+    delete (bundle.payload.teams[0].roster.pitchers[0]["pitching"] as Record<string, unknown>)[
+      "stamina"
+    ];
+
+    for (const slot of ["lineup", "bench", "pitchers"] as const) {
+      const players = bundle.payload.teams[0].roster[slot] ?? [];
+      for (const player of players) {
+        player["sig"] = buildPlayerSig(player as Parameters<typeof buildPlayerSig>[0]);
+      }
+    }
+    bundle.sig = fnv1a(TEAMS_EXPORT_KEY + JSON.stringify(bundle.payload));
+
+    const result = await store.importCustomTeams(JSON.stringify(bundle));
+    expect(result.requiresDuplicateConfirmation).toBe(true);
+    expect(result.duplicatePlayerWarnings).toHaveLength(2);
+  });
 });
 
 describe("importCustomTeams — stat cap enforcement", () => {

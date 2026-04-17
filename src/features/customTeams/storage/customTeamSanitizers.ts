@@ -10,6 +10,8 @@ export { HITTER_STAT_CAP, PITCHER_STAT_CAP };
 export const STAT_MIN = 0;
 export const STAT_MAX = 100;
 export const ROSTER_SCHEMA_VERSION = 1;
+const DEFAULT_BATTING_STAMINA = 50;
+const DEFAULT_PITCHING_STAMINA = 60;
 
 export function requireNonEmpty(value: unknown, fieldPath: string): string {
   if (typeof value !== "string" || value.trim().length === 0) {
@@ -83,14 +85,14 @@ export function clampPlayerStats(player: TeamPlayer): TeamPlayer {
     contact: clampStat(batting.contact),
     power: clampStat(batting.power),
     speed: clampStat(batting.speed),
-    stamina: clampStat(batting.stamina),
+    stamina: clampStat(batting.stamina ?? DEFAULT_BATTING_STAMINA),
   });
 
   const clampedPitching = (pitching: NonNullable<TeamPlayer["pitching"]>) => ({
     velocity: clampStat(pitching.velocity),
     control: clampStat(pitching.control),
     movement: clampStat(pitching.movement),
-    stamina: clampStat(pitching.stamina),
+    stamina: clampStat(pitching.stamina ?? DEFAULT_PITCHING_STAMINA),
   });
 
   if (player.role === "pitcher") {

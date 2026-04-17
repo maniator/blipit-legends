@@ -13,6 +13,7 @@ import { createTestDb } from "@test/helpers/db";
 
 import {
   buildRoster,
+  clampPlayerStats,
   clampStat,
   HITTER_STAT_CAP,
   PITCHER_STAT_CAP,
@@ -132,6 +133,28 @@ describe("clampStat", () => {
     // (Infinity is not finite)
     expect(clampStat(Infinity)).toBe(0);
     expect(clampStat(-Infinity)).toBe(0);
+  });
+});
+
+describe("clampPlayerStats", () => {
+  it("defaults missing batting.stamina to 50 before clamping", () => {
+    const player = {
+      ...makePlayer(),
+      batting: { contact: 50, power: 50, speed: 50 },
+    } as unknown as TeamPlayer;
+    const result = clampPlayerStats(player);
+    if (result.role !== "batter") throw new Error("Expected batter player in test");
+    expect(result.batting.stamina).toBe(50);
+  });
+
+  it("defaults missing pitching.stamina to 60 before clamping", () => {
+    const player = {
+      ...makePlayer({ role: "pitcher" }),
+      pitching: { velocity: 50, control: 50, movement: 50 },
+    } as unknown as TeamPlayer;
+    const result = clampPlayerStats(player);
+    if (result.role !== "pitcher") throw new Error("Expected pitcher player in test");
+    expect(result.pitching.stamina).toBe(60);
   });
 });
 
