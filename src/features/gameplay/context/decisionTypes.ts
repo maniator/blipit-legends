@@ -19,6 +19,11 @@ export type DecisionType =
       pitcherHandedness?: "R" | "L";
       /** Current batter platoon edge (positive = batter edge). */
       currentBatterMatchupDeltaPct?: number;
+      /** Completed plate appearances for the current batter this game. */
+      currentBatterPlateAppearances?: number;
+      /** Current batter fatigue penalties for manager decision context. */
+      currentBatterFatigueContactPenalty?: number;
+      currentBatterFatiguePowerPenalty?: number;
     }
   | { kind: "defensive_shift" };
 

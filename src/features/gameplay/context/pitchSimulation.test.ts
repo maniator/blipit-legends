@@ -12,12 +12,51 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  computeBatterFatigueFactor,
   computeFatigueFactor,
   computeSwingRate,
   resolveBattedBallType,
   resolveContactQuality,
   resolveSwingOutcome,
 } from "./pitchSimulation";
+
+describe("computeBatterFatigueFactor", () => {
+  it("returns no penalties for fresh batters", () => {
+    const result = computeBatterFatigueFactor(2, 0);
+    expect(result.fatigueFactor).toBe(1);
+    expect(result.contactPenalty).toBe(0);
+    expect(result.powerPenalty).toBe(0);
+  });
+
+  it("increases penalties as plate appearances rise", () => {
+    const mid = computeBatterFatigueFactor(6, 0);
+    const late = computeBatterFatigueFactor(9, 0);
+    expect(late.fatigueFactor).toBeGreaterThan(mid.fatigueFactor);
+    expect(late.contactPenalty).toBeGreaterThanOrEqual(mid.contactPenalty);
+    expect(late.powerPenalty).toBeGreaterThanOrEqual(mid.powerPenalty);
+  });
+
+  it("higher stamina delays fatigue onset", () => {
+    const low = computeBatterFatigueFactor(6, -20);
+    const high = computeBatterFatigueFactor(6, 20);
+    expect(high.fatigueFactor).toBeLessThanOrEqual(low.fatigueFactor);
+    expect(high.contactPenalty).toBeLessThanOrEqual(low.contactPenalty);
+  });
+
+  it("applies symmetric threshold adjustment for ±5 staminaMod", () => {
+    // staminaMod=0: freshPaThreshold=3 → PA 3 is still fresh (paBeyond=0)
+    const zeroAtPA3 = computeBatterFatigueFactor(3, 0);
+    expect(zeroAtPA3.fatigueFactor).toBe(1);
+
+    // staminaMod=-5: freshPaThreshold=2 → PA 3 exceeds threshold, should be fatigued
+    const negFiveAtPA3 = computeBatterFatigueFactor(3, -5);
+    expect(negFiveAtPA3.fatigueFactor).toBeGreaterThan(1);
+
+    // staminaMod=+5: freshPaThreshold=4 → PA 3 is below threshold, still fresh
+    const posFiveAtPA3 = computeBatterFatigueFactor(3, 5);
+    expect(posFiveAtPA3.fatigueFactor).toBe(1);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // computeFatigueFactor

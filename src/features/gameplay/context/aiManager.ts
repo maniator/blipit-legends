@@ -105,12 +105,12 @@ export function makeAiTacticalDecision(state: State, decision: DecisionType): Ai
         // Composite score: contact first, then power, then platoon edge.
         const bestCandidate = candidates.reduce((best, c) => {
           const bestScore =
-            best.contactMod * PINCH_HITTER_CONTACT_WEIGHT +
-            best.powerMod * PINCH_HITTER_POWER_WEIGHT +
+            (best.effectiveContactMod ?? best.contactMod) * PINCH_HITTER_CONTACT_WEIGHT +
+            (best.effectivePowerMod ?? best.powerMod) * PINCH_HITTER_POWER_WEIGHT +
             (best.matchupDeltaPct ?? 0);
           const candidateScore =
-            c.contactMod * PINCH_HITTER_CONTACT_WEIGHT +
-            c.powerMod * PINCH_HITTER_POWER_WEIGHT +
+            (c.effectiveContactMod ?? c.contactMod) * PINCH_HITTER_CONTACT_WEIGHT +
+            (c.effectivePowerMod ?? c.powerMod) * PINCH_HITTER_POWER_WEIGHT +
             (c.matchupDeltaPct ?? 0);
           return candidateScore > bestScore ? c : best;
         });

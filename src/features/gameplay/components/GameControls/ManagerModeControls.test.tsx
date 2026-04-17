@@ -7,6 +7,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { makeContextValue } from "@test/testHelpers";
 
+vi.mock("@shared/hooks/useTeamWithRoster", () => ({
+  useTeamWithRoster: vi.fn().mockReturnValue(null),
+}));
+
 import ManagerModeControls from "./ManagerModeControls";
 
 vi.mock("@feat/customTeams/storage/customTeamStore", () => ({

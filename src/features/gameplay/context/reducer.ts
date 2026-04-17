@@ -13,6 +13,7 @@ import { handleSetupAction } from "./handlers/setup";
 import { handleSimAction } from "./handlers/sim";
 import { warnIfImpossible } from "./invariants";
 import type { LogAction } from "./logReducer";
+import { computeBatterFatigueFactor } from "./pitchSimulation";
 import type { Strategy } from "./playerTypes";
 import { PINCH_HITTER_CONTACT_WEIGHT, PINCH_HITTER_POWER_WEIGHT } from "./playerTypes";
 import { applyHandlersInOrder } from "./reducerHelpers";
@@ -114,6 +115,15 @@ export const detectDecision = (
       : "R";
 
     const currentBatterId = state.lineupOrder[teamIdx]?.[lineupIdx];
+    const plateAppearancesByTeam = (state.batterPlateAppearances ?? [{}, {}])[teamIdx] ?? {};
+    const currentBatterPa = currentBatterId ? (plateAppearancesByTeam[currentBatterId] ?? 0) : 0;
+    const currentBatterStaminaMod = currentBatterId
+      ? (teamMods[currentBatterId]?.staminaMod ?? 0)
+      : 0;
+    const currentBatterFatigue = computeBatterFatigueFactor(
+      currentBatterPa,
+      currentBatterStaminaMod,
+    );
     const currentBatterMatchupDeltaPct = currentBatterId
       ? getHandednessOutcomeModifiers(
           buildHandednessMatchup(
@@ -133,6 +143,11 @@ export const detectDecision = (
         const matchupDeltaPct = getHandednessOutcomeModifiers(
           buildHandednessMatchup(batterHandedness, pitcherHandedness),
         ).promptDeltaPct;
+        const plateAppearances = plateAppearancesByTeam[id] ?? 0;
+        const staminaMod = teamMods[id]?.staminaMod ?? 0;
+        const fatigue = computeBatterFatigueFactor(plateAppearances, staminaMod);
+        const effectiveContactMod = (teamMods[id]?.contactMod ?? 0) - fatigue.contactPenalty;
+        const effectivePowerMod = (teamMods[id]?.powerMod ?? 0) - fatigue.powerPenalty;
         return {
           id,
           name: state.playerOverrides[teamIdx]?.[id]?.nickname ?? id.slice(0, 8),
@@ -140,16 +155,21 @@ export const detectDecision = (
           handedness: batterHandedness,
           contactMod: teamMods[id]?.contactMod ?? 0,
           powerMod: teamMods[id]?.powerMod ?? 0,
+          plateAppearances,
+          fatigueContactPenalty: fatigue.contactPenalty,
+          fatiguePowerPenalty: fatigue.powerPenalty,
+          effectiveContactMod,
+          effectivePowerMod,
           matchupDeltaPct,
         };
       })
       .sort(
         (a, b) =>
-          b.contactMod * PINCH_HITTER_CONTACT_WEIGHT +
-          b.powerMod * PINCH_HITTER_POWER_WEIGHT +
+          (b.effectiveContactMod ?? b.contactMod) * PINCH_HITTER_CONTACT_WEIGHT +
+          (b.effectivePowerMod ?? b.powerMod) * PINCH_HITTER_POWER_WEIGHT +
           (b.matchupDeltaPct ?? 0) -
-          (a.contactMod * PINCH_HITTER_CONTACT_WEIGHT +
-            a.powerMod * PINCH_HITTER_POWER_WEIGHT +
+          ((a.effectiveContactMod ?? a.contactMod) * PINCH_HITTER_CONTACT_WEIGHT +
+            (a.effectivePowerMod ?? a.powerMod) * PINCH_HITTER_POWER_WEIGHT +
             (a.matchupDeltaPct ?? 0)),
       );
     return {
@@ -159,6 +179,9 @@ export const detectDecision = (
       lineupIdx,
       pitcherHandedness,
       currentBatterMatchupDeltaPct,
+      currentBatterPlateAppearances: currentBatterPa,
+      currentBatterFatigueContactPenalty: currentBatterFatigue.contactPenalty,
+      currentBatterFatiguePowerPenalty: currentBatterFatigue.powerPenalty,
     };
   }
 

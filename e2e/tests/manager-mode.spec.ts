@@ -63,7 +63,17 @@ test.describe("Manager Mode", () => {
     await expect(panel.getByText(/selected hitter platoon edge:\s*\+6%/i)).toBeVisible();
 
     const pinchHitterSelect = page.getByTestId("pinch-hitter-select");
-    await expect(pinchHitterSelect).toContainText("J. Lee (LF) [+6%]");
-    await expect(pinchHitterSelect).toContainText("K. Patel (DH) [-2%]");
+    // Option format: "Name (Pos) [C +N, P +N, PA N] [+N%]"
+    // Assert per-option to avoid false positives from cross-option regex matching.
+    const jLeeOption = pinchHitterSelect.locator("option").filter({ hasText: /^J\. Lee \(LF\)/ });
+    const kPatelOption = pinchHitterSelect
+      .locator("option")
+      .filter({ hasText: /^K\. Patel \(DH\)/ });
+
+    await expect(jLeeOption).toHaveCount(1);
+    await expect(kPatelOption).toHaveCount(1);
+
+    await expect(jLeeOption).toHaveText(/J\. Lee \(LF\).*PA 0.*\+6%/i);
+    await expect(kPatelOption).toHaveText(/K\. Patel \(DH\).*PA 0.*-2%/i);
   });
 });

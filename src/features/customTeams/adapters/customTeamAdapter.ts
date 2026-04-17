@@ -120,6 +120,9 @@ export function customTeamToPlayerOverrides(team: TeamWithRoster): TeamCustomPla
   const overrides: TeamCustomPlayerOverrides = {};
   const allPlayers = [...team.roster.lineup, ...team.roster.bench, ...team.roster.pitchers];
   for (const player of allPlayers) {
+    const staminaBase = player.pitching
+      ? (player.pitching.stamina ?? 60)
+      : (player.batting.stamina ?? 60);
     overrides[player.id] = {
       nickname: player.name,
       ...(player.position ? { position: player.position } : {}),
@@ -127,11 +130,11 @@ export function customTeamToPlayerOverrides(team: TeamWithRoster): TeamCustomPla
       contactMod: clampMod(player.batting.contact - 60),
       powerMod: clampMod(player.batting.power - 60),
       speedMod: clampMod(player.batting.speed - 60),
+      staminaMod: clampMod(staminaBase - 60),
       ...(player.pitching && {
         velocityMod: clampMod((player.pitching.velocity ?? 60) - 60),
         controlMod: clampMod((player.pitching.control ?? 60) - 60),
         movementMod: clampMod((player.pitching.movement ?? 60) - 60),
-        staminaMod: clampMod((player.pitching.stamina ?? 60) - 60),
       }),
     };
   }

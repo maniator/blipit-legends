@@ -46,6 +46,26 @@ export const incrementPitcherFatigue = (state: State): State => {
   return { ...state, pitcherBattersFaced: newFaced };
 };
 
+/**
+ * Increments completed plate appearances for the current batter by stable player ID.
+ * This is the workload signal for batter fatigue.
+ */
+export const incrementBatterPlateAppearances = (
+  state: State,
+  teamIdx: 0 | 1,
+  playerId: string,
+): State => {
+  const byTeam =
+    state.batterPlateAppearances ?? ([{}, {}] as [Record<string, number>, Record<string, number>]);
+  const nextByTeam: [Record<string, number>, Record<string, number>] = [
+    { ...byTeam[0] },
+    { ...byTeam[1] },
+  ];
+  const current = nextByTeam[teamIdx][playerId] ?? 0;
+  nextByTeam[teamIdx][playerId] = current + 1;
+  return { ...state, batterPlateAppearances: nextByTeam };
+};
+
 /** Options for `playerOut`. */
 export interface PlayerOutOptions {
   /**
@@ -84,8 +104,14 @@ export const playerOut = (
       }
     : null;
   const stateWithOut = outEntry ? { ...state, outLog: [...state.outLog, outEntry] } : state;
+  const stateWithBatterWorkload =
+    batterCompleted && playerId
+      ? incrementBatterPlateAppearances(stateWithOut, battingTeam, playerId)
+      : stateWithOut;
   // Increment pitcher fatigue when the batter's plate appearance is complete.
-  const stateWithFatigue = batterCompleted ? incrementPitcherFatigue(stateWithOut) : stateWithOut;
+  const stateWithFatigue = batterCompleted
+    ? incrementPitcherFatigue(stateWithBatterWorkload)
+    : stateWithBatterWorkload;
   const stateAfterBatter = batterCompleted ? nextBatter(stateWithFatigue) : stateWithFatigue;
 
   // Track out for the active pitcher on the pitching team.

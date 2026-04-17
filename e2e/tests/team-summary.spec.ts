@@ -43,9 +43,11 @@ test.describe("Team Summary and Leaders", () => {
     // are visible and gets empty results it never re-fetches, keeping summary-wl at
     // "0-0" for the entire 30 s guard timeout.
     // Scoped to WebKit only to avoid adding unnecessary latency on Chromium/Firefox.
+    // The wait was bumped from 2500ms → 4000ms after CI load under 8-shard parallelism
+    // occasionally exceeded the original budget, leaving summary-wl stuck at "0-0".
     const browserName = page.context().browser()?.browserType().name();
     if (browserName === "webkit") {
-      await page.waitForTimeout(2_500);
+      await page.waitForTimeout(4_000);
     }
     await page.goto("/stats");
     await expect(page.getByTestId("career-stats-page")).toBeVisible({ timeout: 15_000 });
@@ -86,7 +88,7 @@ test.describe("Team Summary and Leaders", () => {
       await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 10_000 });
       await importHistoryFixture(page, "team-summary-history.json");
       if (browserName === "webkit") {
-        await page.waitForTimeout(2_000);
+        await page.waitForTimeout(3_500);
       }
       await page.goto("/stats");
       await expect(page.getByTestId("career-stats-page")).toBeVisible({ timeout: 15_000 });
