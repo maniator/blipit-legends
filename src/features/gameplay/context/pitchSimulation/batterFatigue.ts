@@ -26,7 +26,9 @@ export const computeBatterFatigueFactor = (
   staminaMod: number,
 ): ComputeBatterFatigueFactorResult => {
   // Most batters remain effectively fresh early; higher stamina delays onset.
-  const freshPaThreshold = 3 + Math.round(staminaMod / 10);
+  // Round away from zero so ±5 staminaMod both have an effect (Math.round alone
+  // would round −0.5 toward +∞, making −5 silently identical to 0).
+  const freshPaThreshold = 3 + Math.sign(staminaMod) * Math.round(Math.abs(staminaMod) / 10);
   const paBeyond = Math.max(0, plateAppearances - freshPaThreshold);
 
   // Keep v1 effect gentle and bounded.

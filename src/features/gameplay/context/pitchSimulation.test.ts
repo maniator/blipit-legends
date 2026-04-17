@@ -42,6 +42,20 @@ describe("computeBatterFatigueFactor", () => {
     expect(high.fatigueFactor).toBeLessThanOrEqual(low.fatigueFactor);
     expect(high.contactPenalty).toBeLessThanOrEqual(low.contactPenalty);
   });
+
+  it("applies symmetric threshold adjustment for ±5 staminaMod", () => {
+    // staminaMod=0: freshPaThreshold=3 → PA 3 is still fresh (paBeyond=0)
+    const zeroAtPA3 = computeBatterFatigueFactor(3, 0);
+    expect(zeroAtPA3.fatigueFactor).toBe(1);
+
+    // staminaMod=-5: freshPaThreshold=2 → PA 3 exceeds threshold, should be fatigued
+    const negFiveAtPA3 = computeBatterFatigueFactor(3, -5);
+    expect(negFiveAtPA3.fatigueFactor).toBeGreaterThan(1);
+
+    // staminaMod=+5: freshPaThreshold=4 → PA 3 is below threshold, still fresh
+    const posFiveAtPA3 = computeBatterFatigueFactor(3, 5);
+    expect(posFiveAtPA3.fatigueFactor).toBe(1);
+  });
 });
 
 // ---------------------------------------------------------------------------
