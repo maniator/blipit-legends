@@ -14,6 +14,10 @@ vi.mock("@shared/hooks/useServiceWorkerUpdate", () => ({
   useServiceWorkerUpdate: vi.fn(),
 }));
 
+vi.mock("@shared/hooks/useSeedDemoTeams", () => ({
+  useSeedDemoTeams: vi.fn(),
+}));
+
 import { useServiceWorkerUpdate } from "@shared/hooks/useServiceWorkerUpdate";
 
 import RootLayout from "./index";

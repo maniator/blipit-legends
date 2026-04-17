@@ -341,7 +341,7 @@ describe("warnBattingStatsInvariant (dev-mode invariant)", () => {
   afterEach(() => vi.restoreAllMocks());
 
   it("fires a warn when K > AB (impossible state)", () => {
-    const warnSpy = vi.spyOn(loggerModule.appLog, "warn");
+    const warnSpy = vi.spyOn(loggerModule.appLog, "warn").mockImplementation(() => {});
     // batter #1: 3 Ks in strikeoutLog but 0 outLog entries → AB=0, K=3 (impossible)
     const strikeoutLog = [
       { team: 0 as const, batterNum: 1, playerId: "p_slot1" },
@@ -358,7 +358,7 @@ describe("warnBattingStatsInvariant (dev-mode invariant)", () => {
   });
 
   it("does NOT fire a warn for valid stats where AB difference is explained by walks", () => {
-    const warnSpy = vi.spyOn(loggerModule.appLog, "warn");
+    const warnSpy = vi.spyOn(loggerModule.appLog, "warn").mockImplementation(() => {});
     // Construct a state where:
     //   slot 1: 2 outs          → PA=2, AB=2
     //   slot 2: 1 out + 1 walk  → PA=2, AB=1  (fewer AB than slot 3, explained by BB)

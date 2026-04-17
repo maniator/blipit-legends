@@ -13,6 +13,16 @@ vi.mock("@shared/hooks/useTeamWithRoster", () => ({
   useTeamWithRoster: vi.fn(() => null),
 }));
 
+vi.mock("@storage/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@storage/db")>();
+  return {
+    ...actual,
+    teamsCollection: vi.fn().mockResolvedValue({
+      findByIds: vi.fn().mockReturnValue({ exec: vi.fn().mockResolvedValue(new Map()) }),
+    }),
+  };
+});
+
 const mockNavigate = vi.fn();
 vi.mock("react-router", async (importOriginal) => {
   const mod = await importOriginal<typeof import("react-router")>();

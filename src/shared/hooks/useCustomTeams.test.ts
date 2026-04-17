@@ -17,6 +17,7 @@ vi.mock("@feat/customTeams/storage/customTeamStore", () => {
 });
 
 import { CustomTeamStore } from "@feat/customTeams/storage/customTeamStore";
+import { appLog } from "@shared/utils/logger";
 
 import { useCustomTeams } from "./useCustomTeams";
 
@@ -68,11 +69,13 @@ describe("useCustomTeams", () => {
   });
 
   it("sets loading=false and returns empty list on store error", async () => {
+    const warnSpy = vi.spyOn(appLog, "warn").mockImplementation(() => {});
     mockStore.listCustomTeams.mockRejectedValue(new Error("DB unavailable"));
 
     const { result } = renderHook(() => useCustomTeams());
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.teams).toHaveLength(0);
+    expect(warnSpy).toHaveBeenCalledWith("Failed to load custom teams");
   });
 
   it("createTeam calls store, refreshes list, and returns the new id", async () => {
