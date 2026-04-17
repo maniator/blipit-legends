@@ -3,7 +3,7 @@ import * as React from "react";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock RxDB getDb so no real DB is needed.
 vi.mock("@storage/db", () => ({
@@ -61,9 +61,6 @@ import type { TeamWithRoster } from "@storage/types";
 
 import CareerStatsPage from "./index";
 
-const isActWarning = (message: unknown): boolean =>
-  typeof message === "string" && message.includes("not wrapped in act");
-
 /**
  * Creates a minimal valid TeamWithRoster for test mocks.
  * All required fields are filled with safe defaults.
@@ -104,14 +101,7 @@ function renderPage(initialEntry = "/stats/team1") {
 }
 
 describe("CareerStatsPage", () => {
-  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
-
   beforeEach(() => {
-    const originalConsoleError = console.error;
-    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => {
-      if (isActWarning(args[0])) return;
-      originalConsoleError(...(args as Parameters<typeof console.error>));
-    });
     vi.clearAllMocks();
     vi.mocked(useCustomTeams).mockReturnValue({
       teams: [],
@@ -124,20 +114,18 @@ describe("CareerStatsPage", () => {
     vi.mocked(GameHistoryStore.getTeamCareerBattingStats).mockResolvedValue([]);
     vi.mocked(GameHistoryStore.getTeamCareerPitchingStats).mockResolvedValue([]);
   });
-  afterEach(async () => {
-    consoleErrorSpy.mockRestore();
-    // Flush late microtask-driven state updates from useCareerStatsData effects so
-    // React doesn't emit post-test act() warnings for tests that only assert static UI.
-    await act(async () => {});
-  });
 
   it("renders the career stats page", async () => {
-    renderPage();
+    await act(async () => {
+      renderPage();
+    });
     expect(screen.getByTestId("career-stats-page")).toBeInTheDocument();
   });
 
   it("shows the Career Stats heading", async () => {
-    renderPage();
+    await act(async () => {
+      renderPage();
+    });
     expect(screen.getByRole("heading", { name: /career stats/i })).toBeInTheDocument();
   });
 
@@ -204,7 +192,9 @@ describe("CareerStatsPage", () => {
 
   it("back button navigates to home", async () => {
     const user = userEvent.setup();
-    renderPage();
+    await act(async () => {
+      renderPage();
+    });
     const backBtn = screen.getByRole("button", { name: /back/i });
     await user.click(backBtn);
     expect(mockNavigate).toHaveBeenCalledWith("/");
