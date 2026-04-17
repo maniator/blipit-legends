@@ -213,6 +213,11 @@ describe("SavesPage", () => {
     await waitFor(() => expect(screen.getByTestId("export-save-button")).toBeInTheDocument());
     await user.click(screen.getByTestId("export-save-button"));
     await waitFor(() => expect(SaveStore.exportRxdbSave).toHaveBeenCalledWith("save_1"));
-    expect(downloadJson).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(downloadJson).toHaveBeenCalledWith(
+        JSON.stringify({ test: "data" }),
+        "Team A vs Team B.json",
+      ),
+    );
   });
 });
