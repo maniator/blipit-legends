@@ -5,6 +5,7 @@ import { GameContext } from "@feat/gameplay/context/index";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { downloadJson } from "@storage/saveIO";
 import type { GameSaveSetup, SaveRecord } from "@storage/types";
 import { makeSaveDoc } from "@test/helpers/saves";
 import { makeContextValue, makeState } from "@test/testHelpers";
@@ -64,6 +65,15 @@ vi.mock("@shared/utils/rng", async (importOriginal) => {
 vi.mock("@shared/utils/saves", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@shared/utils/saves")>();
   return { ...actual, currentSeedStr: vi.fn().mockReturnValue("abc") };
+});
+
+vi.mock("@storage/saveIO", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@storage/saveIO")>();
+  return {
+    ...actual,
+    downloadJson: vi.fn(),
+    saveFilename: vi.fn((name: string) => `${name || "save"}.json`),
+  };
 });
 
 const noop = vi.fn();
@@ -313,7 +323,7 @@ describe("SavesModal", () => {
     expect(onSaveIdChange).toHaveBeenCalledWith(null);
   });
 
-  it("calls exportRxdbSave and createObjectURL when Export is clicked", async () => {
+  it("calls exportRxdbSave and downloadJson when Export is clicked", async () => {
     const { useSaveStore } = await import("@feat/saves/hooks/useSaveStore");
     const slot = makeSaveDoc({ ...slotBase });
     const mockExport = vi
@@ -322,24 +332,13 @@ describe("SavesModal", () => {
     vi.mocked(useSaveStore).mockReturnValue(
       makeMockStore({ saves: [slot], exportRxdbSave: mockExport }),
     );
-    (URL as unknown as Record<string, unknown>).createObjectURL = vi
-      .fn()
-      .mockReturnValue("blob:fake");
-    (URL as unknown as Record<string, unknown>).revokeObjectURL = vi.fn();
-    try {
-      renderModal();
-      await openPanel();
-      await act(async () => {
-        fireEvent.click(screen.getAllByRole("button", { name: /^export$/i })[0]);
-        await vi.waitFor(() =>
-          expect((URL as unknown as Record<string, unknown>).createObjectURL).toHaveBeenCalled(),
-        );
-      });
-      expect(mockExport).toHaveBeenCalledWith(slot.id);
-    } finally {
-      delete (URL as unknown as Record<string, unknown>).createObjectURL;
-      delete (URL as unknown as Record<string, unknown>).revokeObjectURL;
-    }
+    renderModal();
+    await openPanel();
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole("button", { name: /^export$/i })[0]);
+      await vi.waitFor(() => expect(downloadJson).toHaveBeenCalled());
+    });
+    expect(mockExport).toHaveBeenCalledWith(slot.id);
   });
 
   it("calls onLoadSave with the full slot when Load is clicked", async () => {

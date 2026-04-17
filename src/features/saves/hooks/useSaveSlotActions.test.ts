@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { makeSaveDoc } from "@test/helpers/saves";
 import { downloadJson } from "@storage/saveIO";
+import { makeSaveDoc } from "@test/helpers/saves";
 
 vi.mock("@storage/saveIO", () => ({
   downloadJson: vi.fn(),

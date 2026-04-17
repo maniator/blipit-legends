@@ -4,6 +4,7 @@ import type { ContextValue } from "@feat/gameplay/context/index";
 import { GameContext } from "@feat/gameplay/context/index";
 import { useCustomTeams } from "@shared/hooks/useCustomTeams";
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeContextValue } from "@test/testHelpers";
@@ -84,12 +85,13 @@ describe("GameControls", () => {
     expect(screen.getByRole("slider", { name: /game speed/i })).toBeInTheDocument();
   });
 
-  it("enabling Manager Mode requests notification permission", () => {
+  it("enabling Manager Mode requests notification permission", async () => {
     (Notification as any).permission = "default";
     const requestPermission = vi.fn().mockResolvedValue("granted");
     (Notification as any).requestPermission = requestPermission;
+    const user = userEvent.setup();
     renderWithContext(<GameControls gameStarted />, makeContextValue());
-    fireEvent.click(screen.getByRole("checkbox", { name: /manager mode/i }));
+    await user.click(screen.getByRole("checkbox", { name: /manager mode/i }));
     expect(requestPermission).toHaveBeenCalled();
     (Notification as any).permission = "granted";
   });

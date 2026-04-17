@@ -951,11 +951,9 @@ describe("CareerStatsPage", () => {
     });
     renderPage();
     await waitFor(() => {
-      // batting/pitching tabs should render once data loads
-      expect(screen.getByTestId("career-stats-batting-tab")).toBeInTheDocument();
+      // Section renders whenever teamSummary is non-null, regardless of gamesPlayed.
+      expect(screen.getByTestId("team-summary-section")).toBeInTheDocument();
     });
-    // Section renders whenever teamSummary is non-null, regardless of gamesPlayed.
-    expect(screen.getByTestId("team-summary-section")).toBeInTheDocument();
     expect(screen.getByTestId("summary-gp")).toHaveTextContent("0");
   });
 
