@@ -188,6 +188,14 @@ export function customTeamToPitcherRoster(team: TeamWithRoster): string[] {
  * Used by NewGameDialog to block game start with invalid (including legacy) teams.
  */
 export function validateCustomTeamForGame(team: TeamWithRoster): string | null {
+  const unsupportedRoleMessage = (
+    context: "a lineup player" | "a bench player" | "a pitcher entry",
+    role: string,
+    expectedRole: "batter" | "pitcher",
+  ) =>
+    `"${team.name}" has ${context} with unsupported role "${role}". ` +
+    `Edit the team and set these entries to role "${expectedRole}".`;
+
   if (!team.name || !team.name.trim()) {
     return `Team has no name. Please edit it before starting a game.`;
   }
@@ -202,7 +210,7 @@ export function validateCustomTeamForGame(team: TeamWithRoster): string | null {
   // Validate each lineup player has a non-empty name.
   for (const player of lineup) {
     if (player.role !== "batter") {
-      return `"${team.name}" has a lineup player with unsupported role "${player.role}". Edit the team and set lineup players to role "batter".`;
+      return unsupportedRoleMessage("a lineup player", player.role, "batter");
     }
     if (!player.name || !player.name.trim()) {
       return `"${team.name}" has a lineup player with no name. Edit the team to fix it before starting.`;
@@ -211,13 +219,13 @@ export function validateCustomTeamForGame(team: TeamWithRoster): string | null {
   // Validate each bench player uses the supported batter role.
   for (const player of team.roster?.bench ?? []) {
     if (player.role !== "batter") {
-      return `"${team.name}" has a bench player with unsupported role "${player.role}". Edit the team and set bench players to role "batter".`;
+      return unsupportedRoleMessage("a bench player", player.role, "batter");
     }
   }
   // Validate each pitcher has a non-empty name.
   for (const pitcher of pitchers) {
     if (pitcher.role !== "pitcher") {
-      return `"${team.name}" has a pitcher entry with unsupported role "${pitcher.role}". Edit the team and set pitcher entries to role "pitcher".`;
+      return unsupportedRoleMessage("a pitcher entry", pitcher.role, "pitcher");
     }
     if (!pitcher.name || !pitcher.name.trim()) {
       return `"${team.name}" has a pitcher with no name. Edit the team to fix it before starting.`;
