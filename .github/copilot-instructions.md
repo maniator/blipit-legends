@@ -45,6 +45,7 @@ Copilot-specific policy that remains in this file:
 - Prefer extracting shared logic over duplication.
 - Use American English in user-facing copy and docs.
 - Ensure PR title/body describe the full branch scope, not just the latest commit.
+- Always follow `.github/pull_request_template.md` when writing or updating PR descriptions.
 - **When you notice duplication**, fix it before adding more: extract first, then wire both consumers.
 - **Duplication in tests is acceptable** when it aids test readability, but shared test setup belongs in `@test/testHelpers`.
 - **Always make small, focused commits** — one logical change per commit. Never batch unrelated changes into a single commit. Small commits are easier to review, bisect, and revert.

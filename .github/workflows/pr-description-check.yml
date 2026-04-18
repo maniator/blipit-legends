@@ -1,0 +1,25 @@
+name: PR Description Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+    branches:
+      - master
+      - 'feat/**'
+
+jobs:
+  pr-description-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Validate PR description template usage
+        run: node .github/scripts/check-pr-description.mjs
+        env:
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
