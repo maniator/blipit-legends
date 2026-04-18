@@ -217,6 +217,40 @@ describe("customTeamToPlayerOverrides", () => {
     expect(overrides["p4"].staminaMod).toBe(20);
   });
 
+  it("maps batter stamina into staminaMod for non-pitchers", () => {
+    const team = makeTeam({
+      roster: {
+        ...makeTeam().roster,
+        lineup: [
+          {
+            ...makeTeam().roster.lineup[0],
+            batting: { contact: 70, power: 65, speed: 60, stamina: 80 },
+          },
+          makeTeam().roster.lineup[1],
+        ],
+      },
+    });
+    const overrides = customTeamToPlayerOverrides(team);
+    expect(overrides["p1"].staminaMod).toBe(20);
+  });
+
+  it("prefers pitching stamina over batting stamina when pitching data exists", () => {
+    const team = makeTeam({
+      roster: {
+        ...makeTeam().roster,
+        pitchers: [
+          {
+            ...makeTeam().roster.pitchers[0],
+            batting: { contact: 30, power: 25, speed: 30, stamina: 20 },
+            pitching: { velocity: 75, control: 65, movement: 70, stamina: 80 },
+          },
+        ],
+      },
+    });
+    const overrides = customTeamToPlayerOverrides(team);
+    expect(overrides["p4"].staminaMod).toBe(20);
+  });
+
   it("does not include pitching mods for batters", () => {
     const overrides = customTeamToPlayerOverrides(makeTeam());
     expect(overrides["p1"].velocityMod).toBeUndefined();
