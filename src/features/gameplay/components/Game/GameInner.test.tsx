@@ -101,9 +101,9 @@ vi.mock("@shared/hooks/useTeamWithRoster", () => ({
 describe("GameInner", () => {
   it("renders without crashing", () => {
     render(
-      <GameProviderWrapper>
+      <GameContext.Provider value={makeContextValue()}>
         <GameInner />
-      </GameProviderWrapper>,
+      </GameContext.Provider>,
     );
     expect(screen.getByTestId("scoreboard")).toBeInTheDocument();
   });
