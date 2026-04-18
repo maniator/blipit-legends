@@ -13,7 +13,7 @@ const stripHtmlComments = (input) =>
 const getSectionContent = (title) => {
   const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const match = body.match(
-    new RegExp(`^##\\s+${escaped}\\s*$([\\s\\S]*?)(?=^##\\s+|\\Z)`, 'im')
+    new RegExp(`^##\\s+${escaped}\\s*$\\n([\\s\\S]*?)(?=^##\\s+|\\Z)`, 'im')
   );
 
   if (!match) {
@@ -23,7 +23,7 @@ const getSectionContent = (title) => {
   return stripHtmlComments(match[1]).trim();
 };
 
-const requiredSections = ['Summary', 'Changes', 'Testing'];
+const requiredSections = ['Summary', 'Changes', 'Testing', 'Risks'];
 const missingOrEmpty = requiredSections.filter((section) => {
   const content = getSectionContent(section);
   return content.length === 0;
