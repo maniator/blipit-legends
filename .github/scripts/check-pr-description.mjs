@@ -12,10 +12,20 @@ if (!body) {
   process.exit(1);
 }
 
+/**
+ * Removes HTML comment blocks from a markdown string and returns the trimmed result.
+ * @param {string} input
+ * @returns {string}
+ */
 function stripHtmlComments(input) {
   return input.replace(/<!--[\s\S]*?-->/g, '').trim();
 }
 
+/**
+ * Splits input on newlines, trims each line, and filters out empty lines.
+ * @param {string} input
+ * @returns {string[]}
+ */
 function toNonEmptyTrimmedLines(input) {
   return input
     .split('\n')
@@ -23,10 +33,19 @@ function toNonEmptyTrimmedLines(input) {
     .filter((line) => line.length > 0);
 }
 
+/**
+ * Extracts the content of a markdown H2 section from the PR body.
+ * Section lookup is case-insensitive. Returns the trimmed content between the
+ * matching heading and the next H2 heading (or end of body), with HTML comments
+ * stripped. Returns an empty string if the section is not found.
+ * @param {string} title
+ * @returns {string}
+ */
 function getSectionContent(title) {
+  // matchAll always sets index on each match object per the ECMAScript spec.
   const headers = Array.from(body.matchAll(/^##\s+(.+?)\s*$/gm)).map(
     (match) => ({
-      index: match.index,
+      index: /** @type {number} */ (match.index),
       raw: match[0],
       title: match[1].trim()
     })
