@@ -176,6 +176,47 @@ describe("customTeamToPlayerOverrides", () => {
     expect(overrides["p4"].staminaMod).toBe(20);
   });
 
+  it("maps batter stamina into staminaMod for non-pitchers", () => {
+    const team = makeTeam({
+      roster: {
+        ...makeTeam().roster,
+        lineup: [
+          {
+            id: "p1",
+            name: "Tom Adams",
+            role: "batter",
+            position: "C",
+            handedness: "L",
+            batting: { contact: 70, power: 65, speed: 60, stamina: 80 },
+          },
+          makeTeam().roster.lineup[1],
+        ],
+      },
+    });
+    const overrides = customTeamToPlayerOverrides(team);
+    expect(overrides["p1"].staminaMod).toBe(20);
+  });
+
+  it("prefers pitching stamina over batting stamina when pitching data exists", () => {
+    const team = makeTeam({
+      roster: {
+        ...makeTeam().roster,
+        pitchers: [
+          {
+            id: "p4",
+            name: "Ray Davis",
+            role: "pitcher",
+            position: "P",
+            handedness: "R",
+            pitching: { velocity: 75, control: 65, movement: 70, stamina: 80 },
+          },
+        ],
+      },
+    });
+    const overrides = customTeamToPlayerOverrides(team);
+    expect(overrides["p4"].staminaMod).toBe(20);
+  });
+
   it("does not include pitching mods for batters", () => {
     const overrides = customTeamToPlayerOverrides(makeTeam());
     expect(overrides["p1"].velocityMod).toBeUndefined();
@@ -504,6 +545,48 @@ describe("validateCustomTeamForGame", () => {
       },
     });
     expect(validateCustomTeamForGame(team)).toBeNull();
+  });
+
+  it("returns error when lineup contains an unsupported role", () => {
+    const lineup = makeFullLineup();
+    lineup[0] = { ...lineup[0], role: "two-way" as never };
+    const team = makeValidTeam({ roster: { ...makeValidTeam().roster, lineup } });
+    const err = validateCustomTeamForGame(team);
+    expect(err).toBeTruthy();
+    expect(err).toContain("lineup player with unsupported role");
+  });
+
+  it("returns error when bench contains an unsupported role", () => {
+    const team = makeValidTeam({
+      roster: {
+        ...makeValidTeam().roster,
+        bench: [
+          {
+            id: "bench_tw",
+            name: "Legacy Bench Two-Way",
+            role: "two-way" as never,
+            position: "LF",
+            handedness: "R",
+            batting: { contact: 55, power: 55, speed: 55, stamina: 50 },
+          },
+        ],
+      },
+    });
+    const err = validateCustomTeamForGame(team);
+    expect(err).toBeTruthy();
+    expect(err).toContain("bench player with unsupported role");
+  });
+
+  it("returns error when pitchers list contains a non-pitcher role", () => {
+    const team = makeValidTeam({
+      roster: {
+        ...makeValidTeam().roster,
+        pitchers: [{ ...makeValidTeam().roster.pitchers[0], role: "batter" as never }],
+      },
+    });
+    const err = validateCustomTeamForGame(team);
+    expect(err).toBeTruthy();
+    expect(err).toContain("pitcher entry with unsupported role");
   });
 
   it("returns error when team name is empty", () => {

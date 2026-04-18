@@ -81,6 +81,12 @@ export interface State {
    */
   pitcherPitchCount: [number, number];
   /**
+   * Completed plate appearances per batter ID for this game.
+   * Keyed by stable player identity so substitutions never inherit workload.
+   * [away, home]
+   */
+  batterPlateAppearances: [Record<string, number>, Record<string, number>];
+  /**
    * Player IDs that have been substituted out (no-reentry rule) per team.
    * Once a player is in this set they may not re-enter the game.
    * [away, home]

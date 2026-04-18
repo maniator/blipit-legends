@@ -10,6 +10,9 @@ type Props = {
   lineupIdx: number;
   pitcherHandedness?: "R" | "L";
   currentBatterMatchupDeltaPct?: number;
+  currentBatterPlateAppearances?: number;
+  currentBatterFatigueContactPenalty?: number;
+  currentBatterFatiguePowerPenalty?: number;
   onSkip: () => void;
   onDispatch: (action: { type: string; payload?: unknown }) => void;
 };
@@ -20,6 +23,9 @@ const PinchHitterDecisionButtons: React.FunctionComponent<Props> = ({
   lineupIdx,
   pitcherHandedness,
   currentBatterMatchupDeltaPct,
+  currentBatterPlateAppearances,
+  currentBatterFatigueContactPenalty,
+  currentBatterFatiguePowerPenalty,
   onSkip,
   onDispatch,
 }) => {
@@ -57,8 +63,14 @@ const PinchHitterDecisionButtons: React.FunctionComponent<Props> = ({
     onDispatch({ type: "set_pinch_hitter_strategy", payload: "contact" });
   };
 
-  const candidateLabel = (c: PinchHitterCandidate) =>
-    c.position ? `${c.name} (${c.position})` : c.name;
+  const candidateLabel = (c: PinchHitterCandidate) => {
+    const name = c.position ? `${c.name} (${c.position})` : c.name;
+    const effectiveContact = c.effectiveContactMod ?? c.contactMod;
+    const effectivePower = c.effectivePowerMod ?? c.powerMod;
+    const pa = c.plateAppearances ?? 0;
+    const fatigue = (c.fatigueContactPenalty ?? 0) + (c.fatiguePowerPenalty ?? 0);
+    return `${name} [C ${effectiveContact >= 0 ? "+" : ""}${effectiveContact}, P ${effectivePower >= 0 ? "+" : ""}${effectivePower}, PA ${pa}${fatigue > 0 ? `, fatigue -${fatigue}` : ""}]`;
+  };
   const selectedCandidate = candidates.find((c) => c.id === selectedCandidateId) ?? candidates[0];
   const formatPct = (value: number) => `${value >= 0 ? "+" : ""}${value}%`;
 
@@ -70,8 +82,25 @@ const PinchHitterDecisionButtons: React.FunctionComponent<Props> = ({
       {currentBatterMatchupDeltaPct !== undefined && (
         <Odds>Current batter platoon edge: {formatPct(currentBatterMatchupDeltaPct)}</Odds>
       )}
+      {currentBatterPlateAppearances !== undefined && (
+        <Odds>Current batter workload: {currentBatterPlateAppearances} PA</Odds>
+      )}
+      {(currentBatterFatigueContactPenalty ?? 0) > 0 && (
+        <Odds>Current batter fatigue: contact -{currentBatterFatigueContactPenalty}</Odds>
+      )}
+      {(currentBatterFatiguePowerPenalty ?? 0) > 0 && (
+        <Odds>Current batter fatigue: power -{currentBatterFatiguePowerPenalty}</Odds>
+      )}
       {selectedCandidate?.matchupDeltaPct !== undefined && (
         <Odds>Selected hitter platoon edge: {formatPct(selectedCandidate.matchupDeltaPct)}</Odds>
+      )}
+      {selectedCandidate && (
+        <Odds>
+          Selected hitter workload: {selectedCandidate.plateAppearances ?? 0} PA
+          {((selectedCandidate.fatigueContactPenalty ?? 0) > 0 ||
+            (selectedCandidate.fatiguePowerPenalty ?? 0) > 0) &&
+            ` (contact -${selectedCandidate.fatigueContactPenalty ?? 0}, power -${selectedCandidate.fatiguePowerPenalty ?? 0})`}
+        </Odds>
       )}
       <select
         value={selectedCandidateId}

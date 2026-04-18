@@ -1005,6 +1005,81 @@ describe("pinch_hitter decision", () => {
     }
   });
 
+  it("detectDecision pinch_hitter includes fatigue-adjusted candidate fields", () => {
+    const state = makeState({
+      baseLayout: [0, 0, 1],
+      outs: 0,
+      inning: 8,
+      atBat: 0,
+      batterIndex: [3, 0],
+      rosterBench: [["b1"], []],
+      lineupOrder: [
+        ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9"],
+        ["ph1", "ph2", "ph3", "ph4", "ph5", "ph6", "ph7", "ph8", "ph9"],
+      ],
+      batterPlateAppearances: [{ b1: 6, p4: 7 }, {}],
+      resolvedMods: [
+        {
+          b1: {
+            contactMod: 8,
+            powerMod: 5,
+            speedMod: 0,
+            velocityMod: 0,
+            controlMod: 0,
+            movementMod: 0,
+            staminaMod: -10,
+          },
+          p4: {
+            contactMod: 0,
+            powerMod: 0,
+            speedMod: 0,
+            velocityMod: 0,
+            controlMod: 0,
+            movementMod: 0,
+            staminaMod: -10,
+          },
+        },
+        {},
+      ],
+    });
+    const d = detectDecision(state, "balanced", true);
+    expect(d?.kind).toBe("pinch_hitter");
+    if (d?.kind === "pinch_hitter") {
+      expect(d.currentBatterPlateAppearances).toBe(7);
+      expect((d.currentBatterFatigueContactPenalty ?? 0) > 0).toBe(true);
+      expect(d.candidates[0].plateAppearances).toBe(6);
+      expect((d.candidates[0].fatigueContactPenalty ?? 0) > 0).toBe(true);
+      expect((d.candidates[0].effectiveContactMod ?? 0) < d.candidates[0].contactMod).toBe(true);
+    }
+  });
+
+  it("pinch hitter substitution keeps workload identity on the incoming batter", () => {
+    const preloaded = makeState({
+      atBat: 0,
+      batterIndex: [3, 0],
+      strikes: 2,
+      lineupOrder: [
+        ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9"],
+        ["ph1", "ph2", "ph3", "ph4", "ph5", "ph6", "ph7", "ph8", "ph9"],
+      ],
+      rosterBench: [["b1"], []],
+      batterPlateAppearances: [{ p4: 4 }, {}],
+    });
+    const { state: afterSub } = dispatchAction(preloaded, "make_substitution", {
+      teamIdx: 0,
+      kind: "batter",
+      lineupIdx: 3,
+      benchPlayerId: "b1",
+    });
+    expect(afterSub.lineupOrder[0][3]).toBe("b1");
+    expect(afterSub.batterPlateAppearances[0].p4).toBe(4);
+    expect(afterSub.batterPlateAppearances[0].b1).toBeUndefined();
+
+    const { state: afterStrikeout } = dispatchAction(afterSub, "strike", { swung: true });
+    expect(afterStrikeout.batterPlateAppearances[0].p4).toBe(4);
+    expect(afterStrikeout.batterPlateAppearances[0].b1).toBe(1);
+  });
+
   it("set_pinch_hitter_strategy stores strategy and clears pending decision", () => {
     const { state, logs } = dispatchAction(
       makeState({
@@ -1623,6 +1698,24 @@ describe("restore_game hit log consistency after load", () => {
 // a player can perform involving saves, loads, and new games.
 // ---------------------------------------------------------------------------
 describe("save → load → save round-trip scenarios", () => {
+  it("restore_game preserves batter workload and continues incrementing from loaded values", () => {
+    const savedState = makeState({
+      atBat: 0,
+      batterIndex: [0, 0],
+      strikes: 2,
+      lineupOrder: [
+        ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9"],
+        ["ph1", "ph2", "ph3", "ph4", "ph5", "ph6", "ph7", "ph8", "ph9"],
+      ],
+      batterPlateAppearances: [{ p1: 3 }, {}],
+    });
+    const { state: loaded } = dispatchAction(makeState(), "restore_game", savedState);
+    expect(loaded.batterPlateAppearances[0].p1).toBe(3);
+
+    const { state: afterStrikeout } = dispatchAction(loaded, "strike", { swung: true });
+    expect(afterStrikeout.batterPlateAppearances[0].p1).toBe(4);
+  });
+
   it("load in-progress → play a hit → state reflects new hit", () => {
     // line_drive + roll 300 → single; 0.8 suppresses stretch-to-3rd.
     vi.spyOn(rngModule, "random").mockReturnValueOnce(0.3).mockReturnValue(0.8);

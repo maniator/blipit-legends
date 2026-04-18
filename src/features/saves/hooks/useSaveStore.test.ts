@@ -3,7 +3,7 @@ import "fake-indexeddb/auto";
 import * as React from "react";
 
 import { makeSaveStore } from "@feat/saves/storage/saveStore";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { RxDatabaseProvider } from "rxdb/plugins/react";
 import { getRxStorageMemory } from "rxdb/plugins/storage-memory";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -53,10 +53,12 @@ describe("useSaveStore", () => {
     const { result } = renderHook(() => useSaveStore(), { wrapper: makeWrapper(db) });
     await waitFor(() => expect(result.current.saves).toBeDefined());
 
-    await testStore.createSave(
-      { homeTeamId: "A", awayTeamId: "B", seed: "abc", setup: {} as never },
-      { name: "Test Save" },
-    );
+    await act(async () => {
+      await testStore.createSave(
+        { homeTeamId: "A", awayTeamId: "B", seed: "abc", setup: {} as never },
+        { name: "Test Save" },
+      );
+    });
 
     await waitFor(() => expect(result.current.saves).toHaveLength(1));
     expect(result.current.saves[0].name).toBe("Test Save");
@@ -70,13 +72,16 @@ describe("useSaveStore", () => {
     const { result } = renderHook(() => useSaveStore(), { wrapper: makeWrapper(db) });
     await waitFor(() => expect(result.current.saves).toHaveLength(1));
 
-    await testStore.deleteSave(saveId);
+    await act(async () => {
+      await testStore.deleteSave(saveId);
+    });
 
     await waitFor(() => expect(result.current.saves).toHaveLength(0));
   });
 
-  it("exposes stable write callbacks", () => {
+  it("exposes stable write callbacks", async () => {
     const { result, rerender } = renderHook(() => useSaveStore(), { wrapper: makeWrapper(db) });
+    await waitFor(() => expect(result.current.saves).toBeDefined());
     const first = result.current.createSave;
     rerender();
     expect(result.current.createSave).toBe(first);

@@ -351,6 +351,39 @@ describe("makeAiTacticalDecision", () => {
     }
   });
 
+  it("pinch_hitter: prefers fatigue-adjusted best bat when effective mods are provided", () => {
+    const state = makeState({ atBat: 0, inning: 8 });
+    const result = makeAiTacticalDecision(state, {
+      kind: "pinch_hitter",
+      candidates: [
+        {
+          id: "b1",
+          name: "Tired Contact Bat",
+          contactMod: 10,
+          powerMod: 0,
+          effectiveContactMod: 2,
+          effectivePowerMod: -1,
+        },
+        {
+          id: "b2",
+          name: "Fresh Bat",
+          contactMod: 7,
+          powerMod: 1,
+          effectiveContactMod: 7,
+          effectivePowerMod: 1,
+        },
+      ],
+      teamIdx: 0,
+      lineupIdx: 2,
+    });
+    expect(result.kind).toBe("tactical");
+    if (result.kind === "tactical") {
+      const payload = result.payload as Record<string, unknown>;
+      expect(payload.benchPlayerId).toBe("b2");
+      expect(result.reasonText).toContain("Fresh Bat");
+    }
+  });
+
   it("pinch_hitter: falls back to strategy when no bench candidates", () => {
     const state = makeState({ atBat: 0, inning: 8 });
     const result = makeAiTacticalDecision(state, {

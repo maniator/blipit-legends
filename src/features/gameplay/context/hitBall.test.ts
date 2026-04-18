@@ -396,3 +396,48 @@ describe("handleBallInPlay — strategy effects", () => {
     expect(aggressiveScored).toBe(true);
   });
 });
+
+describe("batter plate appearance tracking in hitBall", () => {
+  it("increments PA count for the batter on Hit.Single (confirmed hit)", () => {
+    mockRandom(0);
+    const state = makeState({ lineupOrder: [["batter-1", "batter-2"], []], atBat: 0 });
+    const next = hitBall(Hit.Single, state, noop);
+    expect(next.batterPlateAppearances[0]["batter-1"]).toBe(1);
+  });
+
+  it("increments PA count for the batter on Hit.Walk (no pop-out check)", () => {
+    mockRandom(0);
+    const state = makeState({ lineupOrder: [["batter-1", "batter-2"], []], atBat: 0 });
+    const next = hitBall(Hit.Walk, state, noop);
+    expect(next.batterPlateAppearances[0]["batter-1"]).toBe(1);
+  });
+
+  it("increments PA count for the batter on Hit.Homerun (no pop-out check)", () => {
+    mockRandom(0);
+    const state = makeState({ lineupOrder: [["batter-1", "batter-2"], []], atBat: 0 });
+    const next = hitBall(Hit.Homerun, state, noop);
+    expect(next.batterPlateAppearances[0]["batter-1"]).toBe(1);
+  });
+
+  it("does not increment the opposing team's PA map", () => {
+    mockRandom(0);
+    const state = makeState({
+      lineupOrder: [["batter-1"], ["opp-1"]],
+      atBat: 0,
+    });
+    const next = hitBall(Hit.Walk, state, noop);
+    expect(next.batterPlateAppearances[0]["batter-1"]).toBe(1);
+    expect(next.batterPlateAppearances[1]).toEqual({});
+  });
+
+  it("accumulates PA count correctly when batter already has prior plate appearances", () => {
+    mockRandom(0);
+    const state = makeState({
+      lineupOrder: [["batter-1"], []],
+      atBat: 0,
+      batterPlateAppearances: [{ "batter-1": 3 }, {}],
+    });
+    const next = hitBall(Hit.Walk, state, noop);
+    expect(next.batterPlateAppearances[0]["batter-1"]).toBe(4);
+  });
+});

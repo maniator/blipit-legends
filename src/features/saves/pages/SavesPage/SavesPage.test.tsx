@@ -22,6 +22,14 @@ vi.mock("@storage/db", () => ({
   }),
 }));
 
+vi.mock("@storage/saveIO", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@storage/saveIO")>();
+  return {
+    ...actual,
+    downloadJson: vi.fn(),
+  };
+});
+
 // jsdom doesn't implement window.confirm; stub it to return true so delete actions work.
 const confirmMock = vi.fn(() => true);
 vi.stubGlobal("confirm", confirmMock);
@@ -29,6 +37,7 @@ afterAll(() => vi.unstubAllGlobals());
 
 import { SaveStore } from "@feat/saves/storage/saveStore";
 
+import { downloadJson } from "@storage/saveIO";
 import { makeSaveDoc } from "@test/helpers/saves";
 
 import SavesPage from "./index";
@@ -199,16 +208,15 @@ describe("SavesPage", () => {
     vi.mocked(SaveStore.listSaves).mockResolvedValue([save]);
     vi.mocked(SaveStore.exportRxdbSave).mockResolvedValue(JSON.stringify({ test: "data" }));
     const user = userEvent.setup();
-    // Mock URL.createObjectURL and URL.revokeObjectURL
-    const createObjectURL = vi.fn().mockReturnValue("blob:test");
-    const revokeObjectURL = vi.fn();
-    Object.defineProperty(window, "URL", {
-      value: { createObjectURL, revokeObjectURL },
-      writable: true,
-    });
     renderSavesPage();
     await waitFor(() => expect(screen.getByTestId("export-save-button")).toBeInTheDocument());
     await user.click(screen.getByTestId("export-save-button"));
     await waitFor(() => expect(SaveStore.exportRxdbSave).toHaveBeenCalledWith("save_1"));
+    await waitFor(() =>
+      expect(downloadJson).toHaveBeenCalledWith(
+        JSON.stringify({ test: "data" }),
+        expect.stringMatching(/^ballgame-team-a-vs-team-b-\d{8}T\d{6}\.json$/),
+      ),
+    );
   });
 });
