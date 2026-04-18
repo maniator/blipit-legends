@@ -10,17 +10,91 @@ on:
 
 jobs:
   pr-description-check:
+    # No checkout needed — the script runs entirely from the PR_BODY env variable.
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       pull-requests: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
       - name: Validate PR description template usage
-        run: node .github/scripts/check-pr-description.mjs
+        # Requires non-empty Summary/Changes/Testing/Risks sections and rejects
+        # checklist-only bodies. All logic is inlined so no checkout is needed.
+        run: |
+          node - <<'EOF'
+          const body = (process.env.PR_BODY ?? '').replace(/\r\n/g, '\n').trim();
+
+          // Matches markdown task list items: - [ ] text  - [x] text  - [X] text
+          const CHECKLIST_ITEM_PATTERN = /^-\s+\[(?: |x|X)\](?:\s+|$)/;
+
+          if (!body) {
+            console.error('PR description is required and must follow the pull request template.');
+            process.exit(1);
+          }
+
+          /** Removes HTML comment blocks from a markdown string and returns the trimmed result. */
+          function stripHtmlComments(input) {
+            return input.replace(/<!--[\s\S]*?-->/g, '').trim();
+          }
+
+          /** Splits input on newlines, trims each line, and filters out empty lines. */
+          function toNonEmptyTrimmedLines(input) {
+            return input.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
+          }
+
+          /**
+           * Extracts the content of a markdown H2 section from the PR body.
+           * Case-insensitive. Returns trimmed content (HTML comments stripped) between
+           * the matching heading and the next H2, or empty string if not found.
+           */
+          function getSectionContent(title) {
+            // matchAll always sets index on each match object per the ECMAScript spec.
+            const headers = Array.from(body.matchAll(/^##\s+(.+?)\s*$/gm)).map((m) => ({
+              index: m.index,
+              raw: m[0],
+              title: m[1].trim(),
+            }));
+            const idx = headers.findIndex((h) => h.title.toLowerCase() === title.toLowerCase());
+            if (idx === -1) return '';
+            const start = headers[idx].index + headers[idx].raw.length;
+            const end = idx + 1 < headers.length ? headers[idx + 1].index : body.length;
+            return stripHtmlComments(body.slice(start, end)).trim();
+          }
+
+          const requiredSections = ['Summary', 'Changes', 'Testing', 'Risks'];
+          const sectionContentMap = new Map(
+            requiredSections.map((s) => [s, getSectionContent(s)])
+          );
+
+          const missingOrEmpty = requiredSections.filter(
+            (s) => (sectionContentMap.get(s) ?? '').length === 0
+          );
+          if (missingOrEmpty.length > 0) {
+            console.error(
+              `PR description must include non-empty sections: ${requiredSections.join(', ')}. Missing/empty: ${missingOrEmpty.join(', ')}.`
+            );
+            process.exit(1);
+          }
+
+          const nonHeadingLines = toNonEmptyTrimmedLines(stripHtmlComments(body)).filter(
+            (l) => !l.startsWith('## ')
+          );
+          const checklistItemCount = nonHeadingLines.reduce(
+            (n, l) => n + (CHECKLIST_ITEM_PATTERN.test(l) ? 1 : 0), 0
+          );
+          if (nonHeadingLines.length > 0 && checklistItemCount === nonHeadingLines.length) {
+            console.error('PR description cannot be checklist-only. Use prose content in the template sections.');
+            process.exit(1);
+          }
+
+          const hasProseInRequiredSections = requiredSections.some((s) => {
+            const lines = toNonEmptyTrimmedLines(sectionContentMap.get(s) ?? '');
+            return lines.some((l) => !CHECKLIST_ITEM_PATTERN.test(l));
+          });
+          if (!hasProseInRequiredSections) {
+            console.error('At least one required section must include prose content, not only checklist items.');
+            process.exit(1);
+          }
+
+          console.log('PR description matches required template sections.');
+          EOF
         env:
           PR_BODY: ${{ github.event.pull_request.body || '' }}
