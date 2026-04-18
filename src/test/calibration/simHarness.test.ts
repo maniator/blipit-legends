@@ -234,17 +234,8 @@ function runGame(seed: number): SimStats {
 }
 
 describe("Calibration harness — aggregate simulation balance", () => {
-  /**
-   * Baseline capture: runs 100 seeded games and logs aggregate stats.
-   *
-   * This test intentionally uses permissive bounds so it passes against both
-   * the pre-tuning baseline and the post-tuning target state.  The actual
-   * numbers are printed to stdout so they can be recorded in the QA findings
-   * document.  Once balance tuning is applied and the post-tuning run is
-   * recorded, the bounds below will be tightened to enforce the improvement.
-   */
-  it("runs 100 seeded games and reports aggregate metrics (baseline capture)", () => {
-    const NUM_GAMES = 100;
+  const runSeedRangeAndAssert = (startSeed: number, endSeed: number) => {
+    const numGames = endSeed - startSeed + 1;
     let totalPA = 0;
     let totalWalks = 0;
     let totalK = 0;
@@ -253,7 +244,7 @@ describe("Calibration harness — aggregate simulation balance", () => {
     let totalRuns = 0;
     const starterBF: number[] = [];
 
-    for (let seed = 1; seed <= NUM_GAMES; seed++) {
+    for (let seed = startSeed; seed <= endSeed; seed++) {
       const stats = runGame(seed);
       totalPA += stats.plateAppearances;
       totalWalks += stats.walks;
@@ -268,12 +259,11 @@ describe("Calibration harness — aggregate simulation balance", () => {
     const kPct = (totalK / totalPA) * 100;
     const hitPerPA = totalHits / totalPA;
     const hrPerPA = totalHR / totalPA;
-    const runsPerGame = totalRuns / NUM_GAMES;
+    const runsPerGame = totalRuns / numGames;
     const avgStarterBF =
       starterBF.length > 0 ? starterBF.reduce((a, b) => a + b, 0) / starterBF.length : 0;
 
-    // Print results for baseline capture — these values go into the QA findings doc.
-    console.log(`\n=== Calibration Results (${NUM_GAMES} games, seeds 1–${NUM_GAMES}) ===`);
+    console.log(`\n=== Calibration Results (${numGames} games, seeds ${startSeed}–${endSeed}) ===`);
     console.log(`Total PA:        ${totalPA}`);
     console.log(`BB%:             ${bbPct.toFixed(1)}%`);
     console.log(`K%:              ${kPct.toFixed(1)}%`);
@@ -282,14 +272,6 @@ describe("Calibration harness — aggregate simulation balance", () => {
     console.log(`Runs/game:       ${runsPerGame.toFixed(1)}`);
     console.log(`Avg starter BF:  ${avgStarterBF.toFixed(1)}`);
 
-    // Post-tuning pass-11 regression bounds (take base 750→220 across 11 passes).
-    // Harness uses stock teams (all-balanced, uniform mods) → lower BB% than custom-team browser runs.
-    // Stock-team BB% has plateaued at ~5.2–5.4% since pass 7 — the take-base lever primarily moves
-    // custom-team BB% (via batter strategy variance) rather than stock teams.
-    // Pass-11 harness readings: BB%=5.2%, K%=25.3%, runs/game=11.9.
-    // Passes 9–11 applied to close the remaining ~1.5 pp browser gap (10.5% → ~9% target):
-    //   pass 9 (370→320), pass 10 (320→270), pass 11 (270→220) at ~0.5 pp per 50-pt reduction.
-    // Upper bounds guard against regression to pre-fix state (BB%=15.3%).
     expect(totalPA, "should have processed some plate appearances").toBeGreaterThan(0);
     expect(
       bbPct,
@@ -314,5 +296,30 @@ describe("Calibration harness — aggregate simulation balance", () => {
       runsPerGame,
       "runs/game should be between 7 and 15 (pass-11 stock-team baseline ~12)",
     ).toBeLessThan(15);
-  }, 120_000); // 120s timeout for 100 full-game simulations
+  };
+
+  /**
+   * Baseline capture: runs seeded games and logs aggregate stats.
+   *
+   * This test intentionally uses permissive bounds so it passes against both
+   * the pre-tuning baseline and the post-tuning target state.  The actual
+   * numbers are printed to stdout so they can be recorded in the QA findings
+   * document.  Once balance tuning is applied and the post-tuning run is
+   * recorded, the bounds below will be tightened to enforce the improvement.
+   */
+  it("runs seeded games 1-50 and reports aggregate metrics (baseline capture)", () => {
+    // Post-tuning pass-11 regression bounds (take base 750→220 across 11 passes).
+    // Harness uses stock teams (all-balanced, uniform mods) → lower BB% than custom-team browser runs.
+    // Stock-team BB% has plateaued at ~5.2–5.4% since pass 7 — the take-base lever primarily moves
+    // custom-team BB% (via batter strategy variance) rather than stock teams.
+    // Pass-11 harness readings: BB%=5.2%, K%=25.3%, runs/game=11.9.
+    // Passes 9–11 applied to close the remaining ~1.5 pp browser gap (10.5% → ~9% target):
+    //   pass 9 (370→320), pass 10 (320→270), pass 11 (270→220) at ~0.5 pp per 50-pt reduction.
+    // Upper bounds guard against regression to pre-fix state (BB%=15.3%).
+    runSeedRangeAndAssert(1, 50);
+  }, 70_000);
+
+  it("runs seeded games 51-100 and reports aggregate metrics (baseline capture)", () => {
+    runSeedRangeAndAssert(51, 100);
+  }, 70_000);
 });

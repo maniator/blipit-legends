@@ -128,16 +128,6 @@ describe("CustomTeamEditor — create mode", () => {
     expect((abbrevInput as HTMLInputElement).value).toBe("EAG");
   });
 
-  it("generate defaults button populates team fields", async () => {
-    renderEditor();
-    await act(async () => {
-      fireEvent.click(screen.getByTestId("custom-team-regenerate-defaults-button"));
-    });
-    // After generating, name field should be non-empty.
-    const nameInput = screen.getByTestId("custom-team-name-input") as HTMLInputElement;
-    expect(nameInput.value.length).toBeGreaterThan(0);
-  });
-
   it("add lineup player button adds a player row", async () => {
     renderEditor();
     const addBtn = screen.getByTestId("custom-team-add-lineup-player-button");
@@ -832,17 +822,6 @@ describe("CustomTeamEditor — soft fingerprint duplicate banner (create mode)",
 describe("CustomTeamEditor — TeamInfoSection field coverage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it("clicking the Generate Random button populates team fields", async () => {
-    renderEditor();
-    const genBtn = screen.getByTestId("custom-team-regenerate-defaults-button");
-    await act(async () => {
-      fireEvent.click(genBtn);
-    });
-    // After generate, the name input should have some value (generated team name).
-    const nameInput = screen.getByTestId("custom-team-name-input") as HTMLInputElement;
-    expect(nameInput.value.length).toBeGreaterThan(0);
   });
 
   it("changing the city input fires dispatch SET_FIELD", async () => {

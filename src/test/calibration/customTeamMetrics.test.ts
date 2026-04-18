@@ -281,96 +281,124 @@ function runGame(awayTeam: FixtureTeam, homeTeam: FixtureTeam, seedStr: string):
   return { ab, bb, k, h, runs: state.score[0] + state.score[1], pitchingChanges };
 }
 
+const buildCanonicalGames = (): Array<{ away: FixtureTeam; home: FixtureTeam; seed: string }> => {
+  const teamByName = new Map(FIXTURE_TEAMS.map((t) => [t.name, t]));
+  const games: Array<{ away: FixtureTeam; home: FixtureTeam; seed: string }> = [];
+  for (const block of MATCHUP_BLOCKS) {
+    for (let g = 1; g <= GAMES_PER_BLOCK; g++) {
+      const away = teamByName.get(block.away)!;
+      const home = teamByName.get(block.home)!;
+      games.push({ away, home, seed: `${block.seedPrefix}g${g}` });
+    }
+  }
+  return games;
+};
+
+const runGamesAndAssert = (
+  games: Array<{ away: FixtureTeam; home: FixtureTeam; seed: string }>,
+  rangeLabel: string,
+  expectedGameCount: number,
+) => {
+  let totalAB = 0,
+    totalBB = 0,
+    totalK = 0,
+    totalH = 0,
+    totalRuns = 0,
+    totalPitchingChanges = 0;
+  const perGameRuns: number[] = [];
+
+  for (let i = 0; i < games.length; i++) {
+    const { away, home, seed } = games[i];
+    const result = runGame(away, home, seed);
+    totalAB += result.ab;
+    totalBB += result.bb;
+    totalK += result.k;
+    totalH += result.h;
+    totalRuns += result.runs;
+    totalPitchingChanges += result.pitchingChanges;
+    perGameRuns.push(result.runs);
+
+    if ((i + 1) % 10 === 0) {
+      const pa = totalAB + totalBB;
+      const bbPctNow = pa > 0 ? ((totalBB / pa) * 100).toFixed(1) : "?";
+      console.log(
+        `  [${i + 1}/${games.length}] ${away.name} @ ${home.name} seed=${seed} BB%=${bbPctNow}%`,
+      );
+    }
+  }
+
+  const totalPA = totalAB + totalBB;
+  const bbPct = (totalBB / totalPA) * 100;
+  const kPct = (totalK / totalPA) * 100;
+  const hPerPA = totalH / totalPA;
+  const runsPerGame = totalRuns / games.length;
+  const bbPerGame = totalBB / games.length;
+  const avgPitchingChanges = totalPitchingChanges / games.length;
+
+  const sortedRuns = [...perGameRuns].sort((a, b) => a - b);
+  const medianRuns = sortedRuns[Math.floor(sortedRuns.length / 2)];
+  const gamesValue = String(games.length);
+  const sliceValue = rangeLabel.slice(0, 31);
+
+  console.log("\n");
+  console.log("╔══════════════════════════════════════════════════════╗");
+  console.log("║  CUSTOM-TEAM METRICS HARNESS (in-process)            ║");
+  console.log("╠══════════════════════════════════════════════════════╣");
+  console.log(
+    `║  Games:             ${gamesValue}${" ".repeat(Math.max(0, 31 - gamesValue.length))}║`,
+  );
+  console.log(
+    `║  Slice:             ${sliceValue}${" ".repeat(Math.max(0, 31 - sliceValue.length))}║`,
+  );
+  console.log(`║  Teams:             metrics-teams.json fixture        ║`);
+  console.log("╠══════════════════════════════════════════════════════╣");
+  console.log(`║  Total PA:          ${String(totalPA).padEnd(33)}║`);
+  console.log(
+    `║  BB%:               ${bbPct.toFixed(2)}%${" ".repeat(32 - bbPct.toFixed(2).length)}║`,
+  );
+  console.log(
+    `║  K%:                ${kPct.toFixed(2)}%${" ".repeat(32 - kPct.toFixed(2).length)}║`,
+  );
+  console.log(
+    `║  H/PA:              ${hPerPA.toFixed(3)}${" ".repeat(34 - hPerPA.toFixed(3).length)}║`,
+  );
+  console.log(
+    `║  BB/game:           ${bbPerGame.toFixed(1)}${" ".repeat(34 - bbPerGame.toFixed(1).length)}║`,
+  );
+  console.log(
+    `║  Runs/game (mean):  ${runsPerGame.toFixed(1)}${" ".repeat(34 - runsPerGame.toFixed(1).length)}║`,
+  );
+  console.log(`║  Runs/game (median):${String(medianRuns).padEnd(35)}║`);
+  console.log(`║  Total BB:          ${String(totalBB).padEnd(33)}║`);
+  console.log(`║  Total K:           ${String(totalK).padEnd(33)}║`);
+  console.log(`║  Total H:           ${String(totalH).padEnd(33)}║`);
+  console.log(
+    `║  Pitching changes:  ${avgPitchingChanges.toFixed(1)}/game${" ".repeat(29 - avgPitchingChanges.toFixed(1).length)}║`,
+  );
+  console.log("╚══════════════════════════════════════════════════════╝");
+
+  expect(games).toHaveLength(expectedGameCount);
+  expect(totalBB).toBeGreaterThan(0);
+  expect(totalK).toBeGreaterThan(0);
+  expect(totalRuns).toBeGreaterThan(0);
+};
+
 // ── Test ───────────────────────────────────────────────────────────────────
 
 describe("Custom-team metrics harness — 100 games (metrics-teams.json fixture)", () => {
-  it("runs 100 games with canonical fixture teams and reports aggregate metrics", () => {
-    // Build team lookup by name
-    const teamByName = new Map(FIXTURE_TEAMS.map((t) => [t.name, t]));
+  const canonicalGames = buildCanonicalGames();
 
-    // Build full game list (same as metrics-baseline.spec.ts)
-    const games: Array<{ away: FixtureTeam; home: FixtureTeam; seed: string }> = [];
-    for (const block of MATCHUP_BLOCKS) {
-      for (let g = 1; g <= GAMES_PER_BLOCK; g++) {
-        const away = teamByName.get(block.away)!;
-        const home = teamByName.get(block.home)!;
-        games.push({ away, home, seed: `${block.seedPrefix}g${g}` });
-      }
-    }
+  it("runs canonical fixture games 1-50 and reports aggregate metrics", () => {
+    expect(canonicalGames).toHaveLength(100);
+    const firstHalf = canonicalGames.slice(0, 50);
+    expect(firstHalf).toHaveLength(50);
+    runGamesAndAssert(firstHalf, "games 1-50", 50);
+  }, 70_000);
 
-    let totalAB = 0,
-      totalBB = 0,
-      totalK = 0,
-      totalH = 0,
-      totalRuns = 0,
-      totalPitchingChanges = 0;
-    const perGameRuns: number[] = [];
-
-    for (let i = 0; i < games.length; i++) {
-      const { away, home, seed } = games[i];
-      const result = runGame(away, home, seed);
-      totalAB += result.ab;
-      totalBB += result.bb;
-      totalK += result.k;
-      totalH += result.h;
-      totalRuns += result.runs;
-      totalPitchingChanges += result.pitchingChanges;
-      perGameRuns.push(result.runs);
-
-      if ((i + 1) % 10 === 0) {
-        const pa = totalAB + totalBB;
-        const bbPctNow = pa > 0 ? ((totalBB / pa) * 100).toFixed(1) : "?";
-        console.log(`  [${i + 1}/100] ${away.name} @ ${home.name} seed=${seed} BB%=${bbPctNow}%`);
-      }
-    }
-
-    const totalPA = totalAB + totalBB;
-    const bbPct = (totalBB / totalPA) * 100;
-    const kPct = (totalK / totalPA) * 100;
-    const hPerPA = totalH / totalPA;
-    const runsPerGame = totalRuns / games.length;
-    const bbPerGame = totalBB / games.length;
-    const avgPitchingChanges = totalPitchingChanges / games.length;
-
-    const sortedRuns = [...perGameRuns].sort((a, b) => a - b);
-    const medianRuns = sortedRuns[Math.floor(sortedRuns.length / 2)];
-
-    console.log("\n");
-    console.log("╔══════════════════════════════════════════════════════╗");
-    console.log("║  CUSTOM-TEAM METRICS HARNESS (in-process)            ║");
-    console.log("╠══════════════════════════════════════════════════════╣");
-    console.log(`║  Games:             100 (10 matchups × 10 seeds)     ║`);
-    console.log(`║  Teams:             metrics-teams.json fixture        ║`);
-    console.log("╠══════════════════════════════════════════════════════╣");
-    console.log(`║  Total PA:          ${String(totalPA).padEnd(33)}║`);
-    console.log(
-      `║  BB%:               ${bbPct.toFixed(2)}%${" ".repeat(32 - bbPct.toFixed(2).length)}║`,
-    );
-    console.log(
-      `║  K%:                ${kPct.toFixed(2)}%${" ".repeat(32 - kPct.toFixed(2).length)}║`,
-    );
-    console.log(
-      `║  H/PA:              ${hPerPA.toFixed(3)}${" ".repeat(34 - hPerPA.toFixed(3).length)}║`,
-    );
-    console.log(
-      `║  BB/game:           ${bbPerGame.toFixed(1)}${" ".repeat(34 - bbPerGame.toFixed(1).length)}║`,
-    );
-    console.log(
-      `║  Runs/game (mean):  ${runsPerGame.toFixed(1)}${" ".repeat(34 - runsPerGame.toFixed(1).length)}║`,
-    );
-    console.log(`║  Runs/game (median):${String(medianRuns).padEnd(35)}║`);
-    console.log(`║  Total BB:          ${String(totalBB).padEnd(33)}║`);
-    console.log(`║  Total K:           ${String(totalK).padEnd(33)}║`);
-    console.log(`║  Total H:           ${String(totalH).padEnd(33)}║`);
-    console.log(
-      `║  Pitching changes:  ${avgPitchingChanges.toFixed(1)}/game${" ".repeat(29 - avgPitchingChanges.toFixed(1).length)}║`,
-    );
-    console.log("╚══════════════════════════════════════════════════════╝");
-
-    // Sanity bounds only — do not gate on specific tuning targets
-    expect(games.length).toBe(100);
-    expect(totalBB).toBeGreaterThan(0);
-    expect(totalK).toBeGreaterThan(0);
-    expect(totalRuns).toBeGreaterThan(0);
-  }, 120_000);
+  it("runs canonical fixture games 51-100 and reports aggregate metrics", () => {
+    expect(canonicalGames).toHaveLength(100);
+    const secondHalf = canonicalGames.slice(50, 100);
+    expect(secondHalf).toHaveLength(50);
+    runGamesAndAssert(secondHalf, "games 51-100", 50);
+  }, 70_000);
 });
