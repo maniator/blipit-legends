@@ -11,16 +11,25 @@ const stripHtmlComments = (input) =>
   input.replace(/<!--[\s\S]*?-->/g, '').trim();
 
 const getSectionContent = (title) => {
-  const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = body.match(
-    new RegExp(`^##\\s+${escaped}\\s*$\\n([\\s\\S]*?)(?=^##\\s+|\\Z)`, 'im')
+  const headers = Array.from(body.matchAll(/^##\s+(.+?)\s*$/gm)).map(
+    (match) => ({
+      index: match.index ?? 0,
+      raw: match[0],
+      title: match[1].trim()
+    })
   );
 
-  if (!match) {
+  const sectionIdx = headers.findIndex(
+    (header) => header.title.toLowerCase() === title.toLowerCase()
+  );
+
+  if (sectionIdx === -1) {
     return '';
   }
 
-  return stripHtmlComments(match[1]).trim();
+  const start = headers[sectionIdx].index + headers[sectionIdx].raw.length;
+  const end = sectionIdx + 1 < headers.length ? headers[sectionIdx + 1].index : body.length;
+  return stripHtmlComments(body.slice(start, end)).trim();
 };
 
 const requiredSections = ['Summary', 'Changes', 'Testing', 'Risks'];
@@ -43,7 +52,7 @@ const nonHeadingLines = stripHtmlComments(body)
   .filter((line) => !line.startsWith('## '));
 
 const checklistLineCount = nonHeadingLines.filter((line) =>
-  /^-\s+\[(?: |x|X)\]\s+/.test(line)
+  /^-\s+\[(?: |x|X)\](?:\s+|$)/.test(line)
 ).length;
 
 if (nonHeadingLines.length > 0 && checklistLineCount === nonHeadingLines.length) {
