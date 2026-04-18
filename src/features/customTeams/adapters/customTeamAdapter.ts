@@ -136,7 +136,7 @@ export function customTeamToPlayerOverrides(team: TeamWithRoster): TeamCustomPla
   }
 
   for (const player of team.roster.pitchers) {
-    if (player.role !== "pitcher") continue;
+    if (!isSupportedPitcherRole(player.role)) continue;
     const pitching = player.pitching;
     if (!pitching) continue;
     const existing = overrides[player.id] ?? {

@@ -156,6 +156,29 @@ describe("customTeamToPlayerOverrides", () => {
     expect(overrides["p4"].movementMod).toBe(10);
   });
 
+  it("includes pitching mods for legacy pitcher roles in pitcher slots", () => {
+    const team = makeTeam({
+      roster: {
+        ...makeTeam().roster,
+        pitchers: [
+          {
+            id: "p4",
+            name: "Ray Davis",
+            role: "SP",
+            position: "SP",
+            handedness: "R",
+            pitching: { velocity: 75, control: 65, movement: 70, stamina: 80 },
+          } as unknown as TeamWithRoster["roster"]["pitchers"][number],
+        ],
+      },
+    });
+    const overrides = customTeamToPlayerOverrides(team);
+    expect(overrides["p4"].velocityMod).toBe(10);
+    expect(overrides["p4"].controlMod).toBe(5);
+    expect(overrides["p4"].movementMod).toBe(10);
+    expect(overrides["p4"].staminaMod).toBe(20);
+  });
+
   it("includes staminaMod for pitchers with non-default stamina", () => {
     const team = makeTeam({
       roster: {

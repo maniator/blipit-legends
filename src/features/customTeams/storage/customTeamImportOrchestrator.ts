@@ -34,7 +34,7 @@ function normalizeImportedPlayer(
         : DEFAULT_BATTER_POSITION
       : rawPosition === "P" && (isPitcher || section === "pitchers")
         ? normalizedPitcherPosition
-      : player.position;
+        : player.position;
   const normalizedHandedness =
     player.handedness === undefined ? DEFAULT_HANDEDNESS : player.handedness;
 
