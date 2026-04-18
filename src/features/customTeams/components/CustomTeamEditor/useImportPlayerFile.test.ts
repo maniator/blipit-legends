@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { exportCustomPlayer } from "@feat/customTeams/storage/customTeamExportImport";
+import { fnv1a } from "@storage/hash";
 import { CustomTeamStore } from "@feat/customTeams/storage/customTeamStore";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -11,6 +12,10 @@ import type {
   TeamPlayer,
   TeamWithRoster,
 } from "@storage/types";
+import {
+  buildPlayerSig,
+  PLAYER_EXPORT_KEY,
+} from "@feat/customTeams/storage/customTeamExportImport";
 
 import type { EditorAction, EditorPlayer } from "./editorState";
 import type { PendingPlayerImport } from "./useImportPlayerFile";
@@ -83,6 +88,27 @@ const makeTeamDoc = (id: string, name: string, players: TeamPlayer[] = []): Team
 
 const makeFile = (content: string) =>
   new File([content], "player.json", { type: "application/json" });
+
+const makeLegacyMissingStaminaPlayerJson = (
+  playerJson: string,
+  role: "batter" | "pitcher",
+): string => {
+  const bundle = JSON.parse(playerJson) as {
+    payload: { player: Record<string, unknown> };
+    sig: string;
+  };
+  const player = bundle.payload.player;
+  if (role === "batter") {
+    const batting = player["batting"] as Record<string, unknown>;
+    delete batting["stamina"];
+  } else {
+    const pitching = player["pitching"] as Record<string, unknown>;
+    delete pitching["stamina"];
+  }
+  player["sig"] = buildPlayerSig(player as Parameters<typeof buildPlayerSig>[0]);
+  bundle.sig = fnv1a(PLAYER_EXPORT_KEY + JSON.stringify(bundle.payload));
+  return JSON.stringify(bundle);
+};
 
 const makeChangeEvent = (content: string): React.ChangeEvent<HTMLInputElement> => {
   const file = makeFile(content);
@@ -370,6 +396,85 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
         expect.objectContaining({
           section: "pitchers",
           warning: expect.stringContaining("Rival Squad"),
+        }),
+      );
+    });
+  });
+
+  it("shows soft fingerprint warning for legacy batter import missing stamina when defaulted to 50", async () => {
+    const playerJson = makeLegacyMissingStaminaPlayerJson(
+      makePlayerJson({
+        name: "Legacy Batter",
+        role: "batter",
+        batting: { contact: 60, power: 50, speed: 40, stamina: 50 },
+      }),
+      "batter",
+    );
+    _fileContent = playerJson;
+
+    const teamWithDuplicate = makeTeamDoc("ct_dup_legacy_batter", "Legacy Dup Team", [
+      {
+        id: "p_dup_legacy_batter",
+        name: "Legacy Batter",
+        role: "batter",
+        position: "C",
+        handedness: "R" as const,
+        batting: { contact: 60, power: 50, speed: 40, stamina: 50 },
+      },
+    ]);
+
+    const { result, setPendingPlayerImport } = renderImportHook({
+      allTeams: [teamWithDuplicate],
+    });
+    act(() => {
+      result.current("lineup")(makeChangeEvent(playerJson));
+    });
+
+    await waitFor(() => {
+      expect(setPendingPlayerImport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          section: "lineup",
+          warning: expect.stringContaining("Legacy Dup Team"),
+        }),
+      );
+    });
+  });
+
+  it("shows soft fingerprint warning for legacy pitcher import missing stamina when defaulted to 60", async () => {
+    const playerJson = makeLegacyMissingStaminaPlayerJson(
+      makePlayerJson({
+        role: "pitcher",
+        name: "Legacy Pitcher",
+        pitching: { velocity: 85, control: 70, movement: 65, stamina: 60 },
+      }),
+      "pitcher",
+    );
+    _fileContent = playerJson;
+
+    const teamWithDuplicate = makeTeamDoc("ct_dup_legacy_pitcher", "Legacy Pitch Dup", []);
+    teamWithDuplicate.roster.pitchers = [
+      {
+        id: "p_dup_legacy_pitcher",
+        name: "Legacy Pitcher",
+        role: "pitcher",
+        position: "P",
+        handedness: "R" as const,
+        pitching: { velocity: 85, control: 70, movement: 65, stamina: 60 },
+      },
+    ];
+
+    const { result, setPendingPlayerImport } = renderImportHook({
+      allTeams: [teamWithDuplicate],
+    });
+    act(() => {
+      result.current("pitchers")(makeChangeEvent(playerJson));
+    });
+
+    await waitFor(() => {
+      expect(setPendingPlayerImport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          section: "pitchers",
+          warning: expect.stringContaining("Legacy Pitch Dup"),
         }),
       );
     });

@@ -179,7 +179,7 @@ describe("importCustomTeams", () => {
     expect(importedBatter.batting.stamina).toBe(50);
 
     const importedPitcher = imported!.roster.pitchers[0];
-    expect(importedPitcher.position).toBe("P");
+    expect(importedPitcher.position).toBe("RP");
     expect(importedPitcher.handedness).toBe("R");
     if (importedPitcher.role !== "pitcher") throw new Error("Expected pitcher");
     expect(importedPitcher.pitching.stamina).toBe(60);
@@ -375,6 +375,47 @@ describe("importCustomTeams", () => {
     const result = await store.importCustomTeams(JSON.stringify(bundle));
     expect(result.requiresDuplicateConfirmation).toBe(true);
     expect(result.duplicatePlayerWarnings).toHaveLength(2);
+  });
+
+  it("normalizes legacy pitcher position P to editor-compatible values on import", async () => {
+    const { exportCustomTeams: exportFn } = await import("./customTeamExportImport");
+    const team = {
+      id: "ct_import_legacy_pitcher_position",
+      schemaVersion: 1,
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+      name: "Legacy Pitcher Position",
+      roster: {
+        schemaVersion: 1,
+        lineup: [
+          {
+            id: "p_anchor_batter",
+            name: "Anchor Batter",
+            role: "batter" as const,
+            batting: { contact: 55, power: 45, speed: 50, stamina: 50 },
+            position: "CF",
+            handedness: "R" as const,
+          },
+        ],
+        bench: [],
+        pitchers: [
+          {
+            id: "p_legacy_p",
+            name: "Legacy P Pitcher",
+            role: "pitcher" as const,
+            pitching: { velocity: 65, control: 50, movement: 40, stamina: 60 },
+            position: "P",
+            handedness: "R" as const,
+          },
+        ],
+      },
+      metadata: { archived: false },
+    };
+
+    await store.importCustomTeams(exportFn([withNL(team) as TeamWithRoster]));
+    const imported = await store.getCustomTeam("ct_import_legacy_pitcher_position");
+    expect(imported).not.toBeNull();
+    expect(imported!.roster.pitchers[0].position).toBe("RP");
   });
 });
 

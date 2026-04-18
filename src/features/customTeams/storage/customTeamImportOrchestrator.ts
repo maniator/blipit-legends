@@ -10,7 +10,7 @@ import { removeTeamPlayerRecords, writePlayerRecords } from "./customTeamPlayerD
 import { sanitizePlayer } from "./customTeamSanitizers";
 
 const DEFAULT_BATTER_POSITION = "DH";
-const DEFAULT_PITCHER_POSITION = "P";
+const DEFAULT_PITCHER_POSITION = "RP";
 const DEFAULT_HANDEDNESS = "R" as const;
 const DEFAULT_BATTING_STAMINA = 50;
 const DEFAULT_PITCHING_STAMINA = 60;
@@ -20,12 +20,20 @@ function normalizeImportedPlayer(
   section: "lineup" | "bench" | "pitchers",
 ): TeamPlayer {
   const isPitcher = player.role === "pitcher";
+  const rawPosition = typeof player.position === "string" ? player.position.trim() : "";
+  const normalizedPitcherPosition =
+    rawPosition.length === 0 || rawPosition === "P"
+      ? player.role === "pitcher" && player.pitchingRole === "SP"
+        ? "SP"
+        : DEFAULT_PITCHER_POSITION
+      : rawPosition;
   const normalizedPosition =
-    player.position === undefined ||
-    (typeof player.position === "string" && player.position.trim().length === 0)
+    rawPosition.length === 0
       ? isPitcher || section === "pitchers"
-        ? DEFAULT_PITCHER_POSITION
+        ? normalizedPitcherPosition
         : DEFAULT_BATTER_POSITION
+      : rawPosition === "P" && (isPitcher || section === "pitchers")
+        ? normalizedPitcherPosition
       : player.position;
   const normalizedHandedness =
     player.handedness === undefined ? DEFAULT_HANDEDNESS : player.handedness;

@@ -153,15 +153,28 @@ export function useImportPlayerFile({
           // Soft fingerprint duplicate check.
           // Build the sig from the same normalized stats used for the editorPlayer.
           const sectionRole: "batter" | "pitcher" = section === "pitchers" ? "pitcher" : "batter";
-          const incomingFp = buildPlayerSig({
-            name: importedPlayer.name,
-            role: sectionRole,
-            batting: importedPlayer.batting,
-            pitching:
-              sectionRole === "pitcher" && importedPlayer.pitching
-                ? importedPlayer.pitching
-                : undefined,
-          });
+          const incomingFp =
+            sectionRole === "pitcher"
+              ? buildPlayerSig({
+                  name: importedPlayer.name,
+                  role: "pitcher",
+                  pitching: {
+                    velocity: importedPlayer.pitching?.velocity ?? 60,
+                    control: importedPlayer.pitching?.control ?? 60,
+                    movement: importedPlayer.pitching?.movement ?? 60,
+                    stamina: importedPlayer.pitching?.stamina ?? 60,
+                  },
+                })
+              : buildPlayerSig({
+                  name: importedPlayer.name,
+                  role: "batter",
+                  batting: {
+                    contact: importedPlayer.batting?.contact ?? 40,
+                    power: importedPlayer.batting?.power ?? 40,
+                    speed: importedPlayer.batting?.speed ?? 40,
+                    stamina: importedPlayer.batting?.stamina ?? 50,
+                  },
+                });
 
           const editorPlayerFp = (p: EditorPlayer): string => {
             if (p.role === "pitcher") {
