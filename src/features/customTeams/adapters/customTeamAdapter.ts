@@ -100,12 +100,16 @@ export function resolveRestoreLabels(
 }
 
 type ModPreset = -20 | -10 | -5 | 0 | 5 | 10 | 20;
+type PitcherRoleLike = "pitcher" | "SP" | "RP" | "SP/RP" | undefined;
 
 /** Rounds a raw offset to the nearest valid ModPreset value. */
 function clampMod(offset: number): ModPreset {
   const presets: ModPreset[] = [-20, -10, -5, 0, 5, 10, 20];
   return presets.reduce((best, p) => (Math.abs(p - offset) < Math.abs(best - offset) ? p : best));
 }
+
+const isSupportedPitcherRole = (role: unknown): role is PitcherRoleLike =>
+  role === undefined || role === "pitcher" || role === "SP" || role === "RP" || role === "SP/RP";
 
 /**
  * Maps a TeamWithRoster's batting stats into the `TeamCustomPlayerOverrides`
@@ -188,9 +192,6 @@ export function customTeamToPitcherRoster(team: TeamWithRoster): string[] {
  * Used by NewGameDialog to block game start with invalid (including legacy) teams.
  */
 export function validateCustomTeamForGame(team: TeamWithRoster): string | null {
-  const isSupportedPitcherRole = (role: unknown): boolean =>
-    role === undefined || role === "pitcher" || role === "SP" || role === "RP" || role === "SP/RP";
-
   const unsupportedRoleMessage = (
     context: "a lineup player" | "a bench player" | "a pitcher entry",
     role: string,
