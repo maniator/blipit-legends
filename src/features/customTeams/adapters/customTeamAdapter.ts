@@ -188,6 +188,9 @@ export function customTeamToPitcherRoster(team: TeamWithRoster): string[] {
  * Used by NewGameDialog to block game start with invalid (including legacy) teams.
  */
 export function validateCustomTeamForGame(team: TeamWithRoster): string | null {
+  const isSupportedPitcherRole = (role: unknown): boolean =>
+    role === undefined || role === "pitcher" || role === "SP" || role === "RP" || role === "SP/RP";
+
   const unsupportedRoleMessage = (
     context: "a lineup player" | "a bench player" | "a pitcher entry",
     role: string,
@@ -209,7 +212,7 @@ export function validateCustomTeamForGame(team: TeamWithRoster): string | null {
   }
   // Validate each lineup player has a non-empty name.
   for (const player of lineup) {
-    if (player.role !== "batter") {
+    if (player.role !== undefined && player.role !== "batter") {
       return unsupportedRoleMessage("a lineup player", player.role, "batter");
     }
     if (!player.name || !player.name.trim()) {
@@ -218,13 +221,13 @@ export function validateCustomTeamForGame(team: TeamWithRoster): string | null {
   }
   // Validate each bench player uses the supported batter role.
   for (const player of team.roster?.bench ?? []) {
-    if (player.role !== "batter") {
+    if (player.role !== undefined && player.role !== "batter") {
       return unsupportedRoleMessage("a bench player", player.role, "batter");
     }
   }
   // Validate each pitcher has a non-empty name.
   for (const pitcher of pitchers) {
-    if (pitcher.role !== "pitcher") {
+    if (!isSupportedPitcherRole(pitcher.role)) {
       return unsupportedRoleMessage("a pitcher entry", pitcher.role, "pitcher");
     }
     if (!pitcher.name || !pitcher.name.trim()) {
