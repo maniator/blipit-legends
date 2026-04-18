@@ -22,14 +22,24 @@ jobs:
         # checklist-only bodies. All logic is inlined so no checkout is needed.
         run: |
           node - <<'EOF'
-          // PR_BODY is injected via the env block at the bottom of this step.
+          // Security note: the heredoc delimiter is single-quoted (<<'EOF'), which prevents
+          // the shell from expanding any variables or backticks inside the heredoc. PR_BODY
+          // is read only via process.env.PR_BODY inside the script, never interpolated into
+          // the shell command itself, so there is no injection risk.
+          //
+          // PR_BODY is defined in the env block at the end of this step.
           const body = (process.env.PR_BODY ?? '').replace(/\r\n/g, '\n').trim();
 
-          // Matches GFM/CommonMark task list items with space, lowercase x, or uppercase X.
-          // Intentionally does not match non-standard variants (e.g. "- [✓]", "- [-]")
-          // as GitHub only renders those three states as task list checkboxes.
-          // Empty checkbox lines (e.g. "- [x]" with no text) are treated as checklist items.
-          const checklistItemPattern = /^-\s+\[(?: |x|X)\](?:\s+|$)/;
+          // Matches GFM/CommonMark task list items. GFM allows '-', '*', and '+' as list
+          // bullets; unchecked (space character), lowercase 'x', and uppercase 'X' are the
+          // three valid checkbox states in GitHub-flavored Markdown. Intentionally does not
+          // match non-standard variants such as "- [✓]" or "- [-]" as GitHub only renders
+          // those three states as task list checkboxes.
+          // The pattern is tested against individual line strings (not multiline text), so
+          // '$' matches end-of-string (= end-of-line). A space or end-of-line is required
+          // immediately after the closing bracket: "- [x]" and "- [x] item" both match,
+          // while "- [x]item" (no space) does not.
+          const checklistItemPattern = /^[-*+]\s+\[(?: |x|X)\](?:\s+|$)/;
 
           if (!body) {
             console.error('PR description is required and must follow the pull request template.');
@@ -81,23 +91,32 @@ jobs:
             process.exit(1);
           }
 
+          // Exclude ATX headings (H1–H6, e.g. "## Summary") and setext heading underlines /
+          // thematic breaks (lines of only '=' or '-' characters) so only prose/checklist
+          // content is evaluated. CommonMark requires a space after # for a valid ATX heading.
+          // Lines of only '-' match both setext H2 underlines and thematic breaks (---); both
+          // are excluded since neither constitutes prose content. Setext heading title lines
+          // are not excluded and would count as prose if present.
           const nonHeadingLines = toNonEmptyTrimmedLines(stripHtmlComments(body)).filter(
-            // CommonMark requires a space after # for a valid heading, so /^#{1,6}\s/ is correct.
-            (line) => !/^#{1,6}\s/.test(line)
+            (line) => !/^(?:#{1,6}\s|=+$|-+$)/.test(line)
           );
-          const checklistItemCount = nonHeadingLines.filter(
+          const taskListItemCount = nonHeadingLines.filter(
             (line) => checklistItemPattern.test(line)
           ).length;
-          if (checklistItemCount > 0 && checklistItemCount === nonHeadingLines.length) {
+          if (taskListItemCount > 0 && taskListItemCount === nonHeadingLines.length) {
             console.error('PR description cannot be checklist-only. Use prose content in the template sections.');
             process.exit(1);
           }
 
-          const hasProseInRequiredSections = requiredSections.some((s) => {
+          // This check is distinct from the body-wide check above. The body-wide check
+          // catches the case where the entire body is task-list items. This check catches
+          // the case where prose exists somewhere in the body (e.g. outside any section)
+          // but every required section still contains only task-list items.
+          const anyRequiredSectionHasProse = requiredSections.some((s) => {
             const lines = toNonEmptyTrimmedLines(sectionContentMap.get(s) ?? '');
             return lines.some((line) => !checklistItemPattern.test(line));
           });
-          if (!hasProseInRequiredSections) {
+          if (!anyRequiredSectionHasProse) {
             console.error('At least one required section must include prose content, not only checklist items.');
             process.exit(1);
           }
