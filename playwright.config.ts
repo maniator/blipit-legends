@@ -59,6 +59,8 @@ export default defineConfig({
         "**/metrics-baseline.spec.ts",
         "**/take-screenshots.spec.ts",
       ],
+      // Static project routing for formerly runtime-skipped tests.
+      grepInvert: /@mobile-only|@iphone-15-only/,
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
     },
     {
@@ -69,6 +71,8 @@ export default defineConfig({
         "**/metrics-baseline.spec.ts",
         "**/take-screenshots.spec.ts",
       ],
+      // Tablet excludes desktop-, chromium-, iPhone-15-, and phone-only tests.
+      grepInvert: /@desktop-only|@chromium-only|@iphone-15-only|@mobile-only/,
       use: { ...devices["iPad (gen 7)"], viewport: { width: 820, height: 1180 } },
     },
     {
@@ -79,6 +83,8 @@ export default defineConfig({
         "**/metrics-baseline.spec.ts",
         "**/take-screenshots.spec.ts",
       ],
+      // Pro Max runs mobile tests, but not desktop/chromium/iPhone-15-specific ones.
+      grepInvert: /@desktop-only|@chromium-only|@iphone-15-only/,
       use: { ...devices["iPhone 15 Pro Max"] },
     },
     {
@@ -89,6 +95,8 @@ export default defineConfig({
         "**/metrics-baseline.spec.ts",
         "**/take-screenshots.spec.ts",
       ],
+      // iPhone 15 is the only project that runs @iphone-15-only snapshots.
+      grepInvert: /@desktop-only|@chromium-only/,
       use: { ...devices["iPhone 15"] },
     },
     {
@@ -99,6 +107,8 @@ export default defineConfig({
         "**/metrics-baseline.spec.ts",
         "**/take-screenshots.spec.ts",
       ],
+      // Pixel runs mobile and chromium tests, but excludes desktop/iPhone-15-specific ones.
+      grepInvert: /@desktop-only|@iphone-15-only/,
       use: { ...devices["Pixel 7"] },
     },
     {
@@ -109,6 +119,8 @@ export default defineConfig({
         "**/metrics-baseline.spec.ts",
         "**/take-screenshots.spec.ts",
       ],
+      // Pixel runs mobile and chromium tests, but excludes desktop/iPhone-15-specific ones.
+      grepInvert: /@desktop-only|@iphone-15-only/,
       use: { ...devices["Pixel 5"] },
     },
   ],

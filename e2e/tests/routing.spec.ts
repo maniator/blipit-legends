@@ -116,20 +116,21 @@ test.describe("Routing — game view navigation", () => {
     await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 10_000 });
   });
 
-  test("game UI is unmounted (not visible) after navigating away from /game", async ({
-    page,
-  }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Runs on desktop only");
-    await startGameViaPlayBall(page, { seed: "routing-unmount1" });
-    await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 10_000 });
+  test(
+    "game UI is unmounted (not visible) after navigating away from /game",
+    { tag: "@desktop-only" },
+    async ({ page }) => {
+      await startGameViaPlayBall(page, { seed: "routing-unmount1" });
+      await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 10_000 });
 
-    await page.getByTestId("back-to-home-button").click();
-    await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 5_000 });
+      await page.getByTestId("back-to-home-button").click();
+      await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 5_000 });
 
-    // The scoreboard should not exist in the DOM once the /game route is unmounted.
-    await expect(page.getByTestId("scoreboard")).not.toBeVisible({ timeout: 3_000 });
-    await expect(page.getByTestId("field-view")).not.toBeVisible({ timeout: 3_000 });
-  });
+      // The scoreboard should not exist in the DOM once the /game route is unmounted.
+      await expect(page.getByTestId("scoreboard")).not.toBeVisible({ timeout: 3_000 });
+      await expect(page.getByTestId("field-view")).not.toBeVisible({ timeout: 3_000 });
+    },
+  );
 
   test("Resume Current Game navigates back to /game", async ({ page }) => {
     await startGameViaPlayBall(page, { seed: "routing-resume1" });
@@ -170,53 +171,59 @@ test.describe("Routing — teams sub-routes", () => {
     await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
   });
 
-  test("direct navigation to /teams/:id/edit loads the team form", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Runs on desktop only");
-    test.setTimeout(60_000);
+  test(
+    "direct navigation to /teams/:id/edit loads the team form",
+    { tag: "@desktop-only" },
+    async ({ page }) => {
+      test.setTimeout(60_000);
 
-    // Create a team via the UI so we have a real ID in the DB.
-    await page.getByTestId("home-manage-teams-button").click();
-    await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
-    await page.getByTestId("manage-teams-create-button").click();
-    await expect(page.getByTestId("manage-teams-editor-shell")).toBeVisible({ timeout: 10_000 });
+      // Create a team via the UI so we have a real ID in the DB.
+      await page.getByTestId("home-manage-teams-button").click();
+      await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
+      await page.getByTestId("manage-teams-create-button").click();
+      await expect(page.getByTestId("manage-teams-editor-shell")).toBeVisible({ timeout: 10_000 });
 
-    // Fill in the team name so we have something to assert on.
-    await page.getByTestId("custom-team-name-input").fill("Deep Link Team");
+      // Fill in the team name so we have something to assert on.
+      await page.getByTestId("custom-team-name-input").fill("Deep Link Team");
 
-    // Generate a random roster to meet the save requirements.
-    await page.getByTestId("custom-team-regenerate-defaults-button").click();
-    await page.waitForTimeout(500);
+      // Generate a random roster to meet the save requirements.
+      await page.getByTestId("custom-team-regenerate-defaults-button").click();
+      await page.waitForTimeout(500);
 
-    // Override just the name (generate may overwrite it).
-    await page.getByTestId("custom-team-name-input").fill("Deep Link Team");
+      // Override just the name (generate may overwrite it).
+      await page.getByTestId("custom-team-name-input").fill("Deep Link Team");
 
-    // Save the team and capture the edit URL from the resulting list.
-    await page.getByTestId("custom-team-save-button").click();
-    await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
+      // Save the team and capture the edit URL from the resulting list.
+      await page.getByTestId("custom-team-save-button").click();
+      await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
 
-    // Click Edit on the newly created team to capture the edit URL.
-    await page.getByTestId("custom-team-edit-button").first().click();
-    const editUrl = page.url();
-    expect(editUrl).toMatch(/\/teams\/[^/]+\/edit/);
+      // Click Edit on the newly created team to capture the edit URL.
+      await page.getByTestId("custom-team-edit-button").first().click();
+      const editUrl = page.url();
+      expect(editUrl).toMatch(/\/teams\/[^/]+\/edit/);
 
-    // Navigate away then deep-link back to the same edit URL.
-    await page.goto("/");
-    await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 10_000 });
-    await page.goto(editUrl);
+      // Navigate away then deep-link back to the same edit URL.
+      await page.goto("/");
+      await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 10_000 });
+      await page.goto(editUrl);
 
-    // Editor must load with the team name populated (not empty).
-    await expect(page.getByTestId("manage-teams-editor-shell")).toBeVisible({ timeout: 15_000 });
-    const nameInput = page.getByTestId("custom-team-name-input");
-    await expect(nameInput).toBeVisible({ timeout: 10_000 });
-    await expect(nameInput).not.toHaveValue("");
-  });
+      // Editor must load with the team name populated (not empty).
+      await expect(page.getByTestId("manage-teams-editor-shell")).toBeVisible({ timeout: 15_000 });
+      const nameInput = page.getByTestId("custom-team-name-input");
+      await expect(nameInput).toBeVisible({ timeout: 10_000 });
+      await expect(nameInput).not.toHaveValue("");
+    },
+  );
 
-  test("/teams/:id/edit with unknown id shows not-found state", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Runs on desktop only");
-    await page.goto("/teams/nonexistent-team-id/edit");
-    await expect(page.getByTestId("manage-teams-editor-shell")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText(/team not found/i)).toBeVisible({ timeout: 5_000 });
-  });
+  test(
+    "/teams/:id/edit with unknown id shows not-found state",
+    { tag: "@desktop-only" },
+    async ({ page }) => {
+      await page.goto("/teams/nonexistent-team-id/edit");
+      await expect(page.getByTestId("manage-teams-editor-shell")).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText(/team not found/i)).toBeVisible({ timeout: 5_000 });
+    },
+  );
 });
 
 test.describe("Routing — help page", () => {
@@ -260,11 +267,7 @@ test.describe("Routing — deep-link and unknown paths", () => {
  * These tests are desktop-only to keep CI time reasonable; the behaviour is
  * viewport-independent because it's purely router correctness.
  */
-test.describe("Routing — direct-navigation smoke tests", () => {
-  test.beforeEach(({}, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Deep-link smoke runs on desktop only");
-  });
-
+test.describe("Routing — direct-navigation smoke tests", { tag: "@desktop-only" }, () => {
   test("direct visit to / shows Home screen", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
@@ -311,49 +314,50 @@ test.describe("Routing — direct-navigation smoke tests", () => {
 });
 
 test.describe("Routing — autoplay pauses off /game", () => {
-  test("autoplay stops producing log entries when navigating away from /game", async ({
-    page,
-  }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Autoplay pause test runs on desktop only");
-    test.setTimeout(60_000);
+  test(
+    "autoplay stops producing log entries when navigating away from /game",
+    { tag: "@desktop-only" },
+    async ({ page }) => {
+      test.setTimeout(60_000);
 
-    await page.addInitScript(() => {
-      localStorage.setItem("speed", "150"); // SPEED_FAST
-    });
+      await page.addInitScript(() => {
+        localStorage.setItem("speed", "150"); // SPEED_FAST
+      });
 
-    await startGameViaPlayBall(page, { seed: "routing-pause1" });
-    // Wait for a few autoplay entries to confirm the scheduler is running.
-    await waitForLogLines(page, 5, 30_000);
+      await startGameViaPlayBall(page, { seed: "routing-pause1" });
+      // Wait for a few autoplay entries to confirm the scheduler is running.
+      await waitForLogLines(page, 5, 30_000);
 
-    // Count entries before navigating away.
-    const countBefore = await page
-      .getByTestId("play-by-play-log")
-      .locator("[data-log-index]")
-      .count();
+      // Count entries before navigating away.
+      const countBefore = await page
+        .getByTestId("play-by-play-log")
+        .locator("[data-log-index]")
+        .count();
 
-    // Navigate away — autoplay should pause.
-    await page.getByTestId("back-to-home-button").click();
-    await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 5_000 });
+      // Navigate away — autoplay should pause.
+      await page.getByTestId("back-to-home-button").click();
+      await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 5_000 });
 
-    // Wait a short period; with autoplay running this would produce more entries.
-    await page.waitForTimeout(2_000);
+      // Wait a short period; with autoplay running this would produce more entries.
+      await page.waitForTimeout(2_000);
 
-    // Navigate back to /game.
-    await page.getByTestId("home-resume-current-game-button").click();
-    await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 10_000 });
+      // Navigate back to /game.
+      await page.getByTestId("home-resume-current-game-button").click();
+      await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 10_000 });
 
-    // Expand the log to check.
-    const logToggle = page.getByRole("button", { name: /expand play-by-play/i });
-    if (await logToggle.isVisible()) await logToggle.click();
+      // Expand the log to check.
+      const logToggle = page.getByRole("button", { name: /expand play-by-play/i });
+      if (await logToggle.isVisible()) await logToggle.click();
 
-    // Entry count must not have grown significantly while we were on Home.
-    // Allow 1 extra entry for any in-flight pitch at navigation time.
-    const countAfter = await page
-      .getByTestId("play-by-play-log")
-      .locator("[data-log-index]")
-      .count();
-    expect(countAfter).toBeLessThanOrEqual(countBefore + 2);
-  });
+      // Entry count must not have grown significantly while we were on Home.
+      // Allow 1 extra entry for any in-flight pitch at navigation time.
+      const countAfter = await page
+        .getByTestId("play-by-play-log")
+        .locator("[data-log-index]")
+        .count();
+      expect(countAfter).toBeLessThanOrEqual(countBefore + 2);
+    },
+  );
 });
 
 test.describe("New Game seed auto-regeneration", () => {

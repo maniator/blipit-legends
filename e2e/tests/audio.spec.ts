@@ -48,15 +48,8 @@ test.describe("Volume bar visibility", () => {
 // Audio system initialization (desktop only — viewport-independent)
 // ---------------------------------------------------------------------------
 
-test.describe("Audio initialization", () => {
-  test("AudioContext is constructed and resume() called on home screen load", async ({
-    page,
-  }, testInfo) => {
-    test.skip(
-      testInfo.project.name !== "desktop",
-      "Audio init test is viewport-independent — desktop project only",
-    );
-
+test.describe("Audio initialization", { tag: "@desktop-only" }, () => {
+  test("AudioContext is constructed and resume() called on home screen load", async ({ page }) => {
     // Intercept AudioContext before the app's own scripts run so we can track calls.
     await page.addInitScript(() => {
       const Orig =
@@ -83,12 +76,7 @@ test.describe("Audio initialization", () => {
     expect(resumeCount).toBeGreaterThan(0);
   });
 
-  test("muting then unmuting music does not throw errors", async ({ page }, testInfo) => {
-    test.skip(
-      testInfo.project.name !== "desktop",
-      "Mute/unmute test is viewport-independent — desktop project only",
-    );
-
+  test("muting then unmuting music does not throw errors", async ({ page }) => {
     // Collect console errors AND uncaught page exceptions before navigating.
     const consoleErrors: string[] = [];
     const pageErrors: Error[] = [];
