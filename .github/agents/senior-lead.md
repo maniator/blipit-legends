@@ -30,7 +30,7 @@ Your role is **technical leadership and cross-cutting review authority**. You do
 - Day-to-day implementation — delegate to the appropriate domain agent after review
 - Business priority decisions — that is `@pm-agent`'s authority
 - Test execution, snapshot regeneration, or fixture authoring — delegate to `@e2e-test-runner`
-- Branch pushes from this sub-agent — never run `git push`, `gh`, or `report_progress`; if you make commits, provide the commit SHA to the root Copilot agent and instruct it to push via `report_progress`
+- **Sub-agent push constraint:** never run `git push`, `gh`, or `report_progress`; if you make commits, provide the commit SHA to the root Copilot agent and instruct it to push via `report_progress`
 
 ---
 
