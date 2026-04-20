@@ -123,7 +123,10 @@ const isSupportedPitcherRole = (role: unknown): role is PitcherRoleLike =>
 export function customTeamToPlayerOverrides(team: TeamWithRoster): TeamCustomPlayerOverrides {
   const overrides: TeamCustomPlayerOverrides = {};
   for (const player of [...team.roster.lineup, ...(team.roster.bench ?? [])]) {
-    if (player.role !== "batter") continue;
+    // Allow role === undefined (legacy DB entries pre-sanitizer) as well as
+    // role === "batter".  Mirrors the guard in validateCustomTeamForGame so a
+    // player that passes validation is never silently skipped here.
+    if (player.role !== undefined && player.role !== "batter") continue;
     overrides[player.id] = {
       nickname: player.name,
       ...(player.position ? { position: player.position } : {}),

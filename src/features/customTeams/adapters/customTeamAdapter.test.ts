@@ -240,6 +240,30 @@ describe("customTeamToPlayerOverrides", () => {
     expect(overrides["p4"].staminaMod).toBe(20);
   });
 
+  it("includes batting overrides for legacy lineup players with role === undefined", () => {
+    const team = makeTeam({
+      roster: {
+        ...makeTeam().roster,
+        lineup: [
+          {
+            id: "p1",
+            name: "Tom Adams",
+            // No role field — simulates a legacy export saved before schema hardening
+            position: "C",
+            handedness: "L" as const,
+            batting: { contact: 70, power: 65, speed: 60, stamina: 80 },
+          } as unknown as TeamWithRoster["roster"]["lineup"][number],
+        ],
+      },
+    });
+    const overrides = customTeamToPlayerOverrides(team);
+    // Legacy players with no role should NOT be silently dropped — they should
+    // receive batting overrides just like explicit role="batter" players.
+    expect(overrides["p1"]).toBeDefined();
+    expect(overrides["p1"].contactMod).toBe(10);
+    expect(overrides["p1"].staminaMod).toBe(20);
+  });
+
   it("does not include pitching mods for batters", () => {
     const overrides = customTeamToPlayerOverrides(makeTeam());
     expect(overrides["p1"].velocityMod).toBeUndefined();
