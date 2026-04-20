@@ -311,15 +311,30 @@ describe("customTeamToPlayerOverrides", () => {
 });
 
 describe("customTeamToHandednessMap", () => {
-  it("returns a playerId->handedness lookup for rostered players", () => {
+  it("returns a playerId->handedness lookup for rostered players with explicit handedness", () => {
     const map = customTeamToHandednessMap(makeTeam());
     expect(map["p1"]).toBe("L");
     expect(map["p4"]).toBe("R");
+    expect(map["p2"]).toBe("R");
   });
 
-  it("defaults to 'R' for players that do not have explicit handedness", () => {
-    const map = customTeamToHandednessMap(makeTeam());
-    expect(map["p2"]).toBe("R");
+  it("omits players without explicit handedness so gameplay uses the deterministic fallback", () => {
+    const team = makeTeam({
+      roster: {
+        ...makeTeam().roster,
+        lineup: [
+          {
+            ...makeTeam().roster.lineup[0],
+            id: "p_no_hand",
+            handedness: undefined as unknown as "R",
+          },
+        ],
+        bench: [],
+        pitchers: [],
+      },
+    });
+    const map = customTeamToHandednessMap(team);
+    expect("p_no_hand" in map).toBe(false);
   });
 });
 

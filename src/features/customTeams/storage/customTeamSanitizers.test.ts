@@ -355,6 +355,44 @@ describe("sanitizePlayer", () => {
       "roster lineup[0].jerseyNumber must be a finite number or null",
     );
   });
+
+  it("throws when pitchingRole is an unrecognised value", () => {
+    const player = {
+      ...makePlayer({ role: "pitcher" }),
+      pitchingRole: "closer",
+    } as unknown as TeamPitcherPlayer;
+    expect(() => sanitizePlayer(player, { index: 0, section: "pitchers" })).toThrow(
+      'roster pitchers[0].pitchingRole must be "SP", "RP", "SP/RP", or undefined',
+    );
+  });
+
+  it('accepts pitchingRole "SP"', () => {
+    const player = makePlayer({ role: "pitcher", pitchingRole: "SP" });
+    const result = sanitizePlayer(player, { index: 0, section: "pitchers" });
+    if (result.role !== "pitcher") throw new Error("Expected pitcher");
+    expect(result.pitchingRole).toBe("SP");
+  });
+
+  it('accepts pitchingRole "RP"', () => {
+    const player = makePlayer({ role: "pitcher", pitchingRole: "RP" });
+    const result = sanitizePlayer(player, { index: 0, section: "pitchers" });
+    if (result.role !== "pitcher") throw new Error("Expected pitcher");
+    expect(result.pitchingRole).toBe("RP");
+  });
+
+  it('accepts pitchingRole "SP/RP"', () => {
+    const player = makePlayer({ role: "pitcher", pitchingRole: "SP/RP" });
+    const result = sanitizePlayer(player, { index: 0, section: "pitchers" });
+    if (result.role !== "pitcher") throw new Error("Expected pitcher");
+    expect(result.pitchingRole).toBe("SP/RP");
+  });
+
+  it("accepts pitchingRole undefined", () => {
+    const player = makePlayer({ role: "pitcher", pitchingRole: undefined });
+    const result = sanitizePlayer(player, { index: 0, section: "pitchers" });
+    if (result.role !== "pitcher") throw new Error("Expected pitcher");
+    expect(result.pitchingRole).toBeUndefined();
+  });
 });
 
 describe("buildRoster", () => {

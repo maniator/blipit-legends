@@ -224,13 +224,25 @@ export function sanitizePlayer(
     ),
   });
 
+  const pitchingRole = player.role === "pitcher" ? player.pitchingRole : undefined;
+  if (
+    pitchingRole !== undefined &&
+    pitchingRole !== "SP" &&
+    pitchingRole !== "RP" &&
+    pitchingRole !== "SP/RP"
+  ) {
+    throw new Error(
+      `roster ${section}[${index}].pitchingRole must be "SP", "RP", "SP/RP", or undefined — got "${String(pitchingRole)}"`,
+    );
+  }
+
   const sanitized: TeamPlayer =
     player.role === "pitcher"
       ? {
           ...sanitizedBase,
           role: "pitcher",
           pitching: sanitizePitching(player.pitching),
-          pitchingRole: player.pitchingRole,
+          pitchingRole,
         }
       : {
           ...sanitizedBase,

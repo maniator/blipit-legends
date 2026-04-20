@@ -162,13 +162,18 @@ export function customTeamToPlayerOverrides(team: TeamWithRoster): TeamCustomPla
 
 /**
  * Returns a lookup of playerId -> handedness for every rostered player.
- * Players without an explicit handedness field default to "R".
+ * Only players with an explicit handedness field are included; players without
+ * one are intentionally omitted so that the gameplay layer's deterministic
+ * fallback (`deterministicHandednessForPlayerId`) is reached and produces a
+ * stable hash-distributed R/L/S variety for any legacy DB entries.
  */
 export function customTeamToHandednessMap(team: TeamWithRoster): Record<string, Handedness> {
   const handednessByPlayer: Record<string, Handedness> = {};
   const allPlayers = [...team.roster.lineup, ...(team.roster.bench ?? []), ...team.roster.pitchers];
   for (const player of allPlayers) {
-    handednessByPlayer[player.id] = player.handedness ?? "R";
+    if (player.handedness) {
+      handednessByPlayer[player.id] = player.handedness;
+    }
   }
   return handednessByPlayer;
 }

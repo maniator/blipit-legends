@@ -41,27 +41,37 @@ function normalizeImportedPlayer(
     player.handedness === undefined ? DEFAULT_HANDEDNESS : player.handedness;
 
   if (isPitcher) {
-    const pitching = player.pitching;
+    const pitching =
+      typeof player.pitching === "object" && player.pitching !== null ? player.pitching : undefined;
     return {
       ...player,
       position: normalizedPosition,
       handedness: normalizedHandedness,
-      pitching: {
-        ...pitching,
-        stamina: pitching.stamina === undefined ? DEFAULT_PITCHING_STAMINA : pitching.stamina,
-      },
+      // Only backfill stamina when the pitching block exists; otherwise leave it
+      // untouched so sanitizePlayer produces the correct descriptive error.
+      ...(pitching !== undefined && {
+        pitching: {
+          ...pitching,
+          stamina: pitching.stamina === undefined ? DEFAULT_PITCHING_STAMINA : pitching.stamina,
+        },
+      }),
     };
   }
 
-  const batting = player.batting;
+  const batting =
+    typeof player.batting === "object" && player.batting !== null ? player.batting : undefined;
   return {
     ...player,
     position: normalizedPosition,
     handedness: normalizedHandedness,
-    batting: {
-      ...batting,
-      stamina: batting.stamina === undefined ? DEFAULT_BATTING_STAMINA : batting.stamina,
-    },
+    // Only backfill stamina when the batting block exists; otherwise leave it
+    // untouched so sanitizePlayer produces the correct descriptive error.
+    ...(batting !== undefined && {
+      batting: {
+        ...batting,
+        stamina: batting.stamina === undefined ? DEFAULT_BATTING_STAMINA : batting.stamina,
+      },
+    }),
   };
 }
 
