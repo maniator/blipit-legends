@@ -19,7 +19,7 @@ You are a Playwright end-to-end testing expert for `maniator/blipit-legends`. Yo
 - **You CAN regenerate visual snapshot baselines and create local commits for them.** Because you run inside the same container as CI, the PNGs you generate are pixel-identical to what CI expects. No need to wait for the `update-visual-snapshots` workflow.
 - Do not regenerate snapshots unless you are intentionally changing a visual. Only update the snapshots actually affected by your change.
 - Prefer `loadFixture(page, "name.json")` over `startGameViaPlayBall` + long `waitForLogLines` timeouts whenever a test only needs a pre-existing game state.
-- Keep tests deterministic — all randomness flows through the seeded PRNG in `src/utils/rng.ts`. Use a fixed `seed` option in `startGameViaPlayBall` or `configureNewGame` when the test needs a predictable play sequence.
+- Keep tests deterministic — all randomness flows through the seeded PRNG in `src/shared/utils/rng.ts` (typically imported via `@shared/utils/rng`). Use a fixed `seed` option in `startGameViaPlayBall` or `configureNewGame` when the test needs a predictable play sequence.
 - **`line` reporter is the default** (both locally and in CI alongside `github`+`blob`). The `line` reporter prints each test result as it finishes, so failures surface immediately — you can start fixing failing tests in earlier shards while later shards are still running, instead of waiting for the full run to finish. Do not change this to `list` or suppress it.
 
 ## Container environment
