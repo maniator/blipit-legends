@@ -134,7 +134,7 @@ Sub-agents **must never** run `git push`, `gh`, or `report_progress`. Sub-agents
 - Requires seed + event index captured before touching any code
 - Validates invariants: batting line consistency, lineup wrap, home/away mapping, scoreboard totals
 - Adds seed-anchored regression tests for every fixed bug
-- All randomness flows through `src/utils/rng.ts` — no `Math.random()` in simulation code
+- All randomness flows through `src/shared/utils/rng.ts` — no `Math.random()` in simulation code
 
 ---
 
@@ -218,7 +218,7 @@ Use this table to determine when `@senior-lead` review is required and what evid
 
 | Gotcha                     | Detail                                                                                                                                                                                                                                                                                                                                 |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Determinism                | All `random()` calls flow through `src/utils/rng.ts`. Any conditional call insertion/removal breaks seed replay.                                                                                                                                                                                                                       |
+| Determinism                | All `random()` calls flow through `src/shared/utils/rng.ts`. Any conditional call insertion/removal breaks seed replay.                                                                                                                                                                                                                |
 | Snapshot environment       | Regenerate baselines inside `mcr.microsoft.com/playwright:v1.58.2-noble` using the `e2e-test-runner` agent (`docker run --update-snapshots`) or via the `update-visual-snapshots` workflow. Never commit locally generated PNGs.                                                                                                       |
 | Copilot setup workflow     | `copilot-setup-steps.yml` must not use `container:` — known bootstrap shell compatibility issue.                                                                                                                                                                                                                                       |
 | Reducer cycle order        | `strategy → advanceRunners → gameOver → playerOut → hitBall → buntAttempt → playerActions → reducer`. No circular imports.                                                                                                                                                                                                             |

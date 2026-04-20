@@ -169,7 +169,7 @@ sudo chown -hR "$(id -u):$(id -g)" dist/ node_modules/ .yarn/ 2>/dev/null || tru
 
 Because you run inside the same `mcr.microsoft.com/playwright:v1.58.2-noble` container as CI, any snapshot PNGs you generate are pixel-identical to CI baselines. You can regenerate them and create local commits immediately — no need to wait for the `update-visual-snapshots` workflow.
 
-> **⚠️ CRITICAL — you cannot push.** This agent runs as a sub-agent. It has access to `git commit` but **NOT** to `report_progress` and NOT to `git push` / `gh`. After creating a local commit, you **must** tell the calling agent (Copilot) the exact commit SHA and instruct it to run `report_progress` to push. Never attempt `git push` or `gh` in this agent — it will fail with a 403 and the changes will be silently stranded in an unpushed local commit.
+> **⚠️ CRITICAL — you cannot push.** This agent runs as a sub-agent. It has access to `git commit` but **NOT** to `report_progress` and NOT to `git push` / `gh`. After creating a local commit, you **must** tell the root Copilot agent the exact commit SHA and instruct it to run `report_progress` to push. Never attempt `git push` or `gh` in this agent — it will fail with a 403 and the changes will be silently stranded in an unpushed local commit.
 
 ### Step-by-step snapshot update flow
 

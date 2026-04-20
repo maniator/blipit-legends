@@ -59,7 +59,7 @@ When investigating a simulation bug, capture all reproducibility context before 
 
 ## Randomness and PRNG rules
 
-- All randomness flows through `src/utils/rng.ts` (`mulberry32`). Never call `Math.random()` directly in simulation code.
+- All randomness flows through `src/shared/utils/rng.ts` (`mulberry32`). Never call `Math.random()` directly in simulation code.
 - `random()` must be called in exactly the same order for a given game path — any conditional call insertion or removal is a determinism break.
 - The RNG state can be inspected via `getRngState()` and restored via `restoreRng()` (used in save/load).
 - When adding diagnostics, log the RNG state alongside any debug output to aid seed replay.
