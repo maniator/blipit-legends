@@ -67,7 +67,7 @@ const LeagueListPage: React.FunctionComponent = () => {
             <LeagueItem key={league.id}>
               <LeagueName>{league.name}</LeagueName>
               <ViewLink
-                href={`/league/${league.id}`}
+                to={`/league/${league.id}`}
                 aria-label={`View ${league.name}`}
                 data-testid={`league-view-link-${league.id}`}
               >

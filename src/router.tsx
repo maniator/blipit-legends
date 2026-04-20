@@ -13,6 +13,7 @@ const ContactPage = React.lazy(() => import("@feat/contact/pages/ContactPage"));
 const ExhibitionSetupPage = React.lazy(() => import("@feat/exhibition/pages/ExhibitionSetupPage"));
 const GamePage = React.lazy(() => import("@feat/gameplay/pages/GamePage"));
 const HelpPage = React.lazy(() => import("@feat/help/pages/HelpPage"));
+const LeagueDetailPage = React.lazy(() => import("@feat/leagueMode/pages/LeagueDetailPage"));
 const LeagueListPage = React.lazy(() => import("@feat/leagueMode/pages/LeagueListPage"));
 const LeagueSetupPage = React.lazy(() => import("@feat/leagueMode/pages/LeagueSetupPage"));
 const PlayerCareerPage = React.lazy(() => import("@feat/careerStats/pages/PlayerCareerPage"));
@@ -137,6 +138,14 @@ export const router = createBrowserRouter([
             element: (
               <React.Suspense fallback={null}>
                 <LeagueSetupPage />
+              </React.Suspense>
+            ),
+          },
+          {
+            path: "league/:leagueId",
+            element: (
+              <React.Suspense fallback={null}>
+                <LeagueDetailPage />
               </React.Suspense>
             ),
           },

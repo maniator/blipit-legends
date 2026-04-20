@@ -154,8 +154,8 @@ const LeagueSetupPage: React.FunctionComponent = () => {
           activeLeagueSeasonId: season.id,
         });
 
-        // 7. Navigate — Phase 2B will add /league/:leagueId; navigate to / for now
-        navigate("/");
+        // 7. Navigate to the league detail page
+        navigate(`/league/${league.id}`);
       } catch (err) {
         setSubmitError(
           err instanceof Error ? err.message : "An unexpected error occurred. Please try again.",

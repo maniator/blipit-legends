@@ -1,4 +1,5 @@
 import { mq } from "@shared/utils/mediaQueries";
+import { Link } from "react-router";
 import styled from "styled-components";
 
 export { BackBtn, PageContainer, PageHeader } from "@shared/components/PageLayout/styles";
@@ -49,7 +50,7 @@ export const LeagueName = styled.span`
   white-space: nowrap;
 `;
 
-export const ViewLink = styled.a`
+export const ViewLink = styled(Link)`
   color: ${({ theme }) => theme.colors.textLink};
   font-size: ${({ theme }) => theme.fontSizes.base};
   font-family: inherit;
