@@ -25,6 +25,7 @@ import type { ExhibitionGameSetup, LeagueGameLocationState } from "@storage/type
 import {
   BackLink,
   ByeLabel,
+  ChampionBanner,
   EmptyState,
   ErrorMessage,
   GameDayHeading,
@@ -36,6 +37,7 @@ import {
   PageTitle,
   PlayButton,
   ScheduleTable,
+  SeasonCompleteBadge,
   SeasonInfo,
   SeasonNotStarted,
   SeasonStats,
@@ -319,6 +321,18 @@ const LeagueDetailPage: React.FunctionComponent = () => {
             </SimulateErrorMessage>
           )}
         </>
+      )}
+
+      {season && season.status === "complete" && (
+        <SeasonCompleteBadge data-testid="season-complete-badge">
+          Season Complete ✓
+        </SeasonCompleteBadge>
+      )}
+
+      {season && season.status === "complete" && season.championTeamId && (
+        <ChampionBanner data-testid="champion-banner">
+          🏆 Champion: {getTeamName(season.championTeamId)}
+        </ChampionBanner>
       )}
 
       {!gamesLoading && season && standings.length > 0 && (

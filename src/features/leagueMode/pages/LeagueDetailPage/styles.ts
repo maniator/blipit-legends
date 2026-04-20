@@ -293,6 +293,42 @@ export const SimulateErrorMessage = styled.p`
   margin-top: ${({ theme }) => theme.spacing.s10};
 `;
 
+export const ChampionBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  background: rgba(242, 193, 78, 0.14);
+  border: 1px solid ${({ theme }) => theme.colors.accentBright};
+  border-radius: ${({ theme }) => theme.radii.card};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  color: ${({ theme }) => theme.colors.accentBright};
+  font-size: ${({ theme }) => theme.fontSizes.body};
+  font-weight: 700;
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  letter-spacing: ${({ theme }) => theme.letterSpacing.tight};
+
+  ${mq.mobile} {
+    font-size: ${({ theme }) => theme.fontSizes.base};
+    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  }
+`;
+
+export const SeasonCompleteBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  background: rgba(242, 193, 78, 0.12);
+  border: 1px solid ${({ theme }) => theme.colors.accentBright};
+  border-radius: ${({ theme }) => theme.radii.pill};
+  color: ${({ theme }) => theme.colors.accentBright};
+  font-size: ${({ theme }) => theme.fontSizes.base};
+  font-weight: 700;
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  letter-spacing: ${({ theme }) => theme.letterSpacing.tight};
+  text-transform: uppercase;
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+`;
+
 export const StandingsSection = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.xl};
 `;

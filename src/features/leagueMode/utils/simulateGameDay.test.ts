@@ -6,6 +6,7 @@ import type { LeagueSeasonRecord, ScheduledGameRecord } from "../storage/types";
 vi.mock("../storage/scheduledGameStore", () => ({
   scheduledGameStore: {
     listGamesForDay: vi.fn(),
+    listGamesForSeason: vi.fn().mockResolvedValue([]),
     markScheduledGameCompleted: vi.fn(),
   },
 }));
@@ -13,6 +14,15 @@ vi.mock("../storage/scheduledGameStore", () => ({
 vi.mock("../storage/leagueSeasonStore", () => ({
   leagueSeasonStore: {
     advanceGameDay: vi.fn(),
+    getLeagueSeason: vi.fn().mockResolvedValue(null),
+    markSeasonComplete: vi.fn(),
+  },
+}));
+
+vi.mock("../storage/leagueStore", () => ({
+  leagueStore: {
+    getLeague: vi.fn().mockResolvedValue(null),
+    archiveLeague: vi.fn(),
   },
 }));
 

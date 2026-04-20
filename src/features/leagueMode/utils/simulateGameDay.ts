@@ -1,6 +1,10 @@
 import { leagueSeasonStore } from "../storage/leagueSeasonStore";
+import { leagueStore } from "../storage/leagueStore";
 import { scheduledGameStore } from "../storage/scheduledGameStore";
 import type { LeagueSeasonRecord } from "../storage/types";
+import { calculateStandings } from "./calculateStandings";
+import { determineChampion } from "./determineChampion";
+import { isSeasonComplete } from "./isSeasonComplete";
 import { simulateGame } from "./simulateGame";
 
 export async function simulateGameDay(
@@ -20,4 +24,19 @@ export async function simulateGameDay(
   }
 
   await leagueSeasonStore.advanceGameDay(leagueSeason.id, gameDay + 1);
+
+  // Check whether the season is now complete and finalize if so.
+  const allGames = await scheduledGameStore.listGamesForSeason(leagueSeason.id);
+  const updatedSeason = await leagueSeasonStore.getLeagueSeason(leagueSeason.id);
+  if (updatedSeason && isSeasonComplete(updatedSeason, allGames)) {
+    const league = await leagueStore.getLeague(leagueSeason.leagueId);
+    if (league) {
+      const standings = calculateStandings(allGames, league.teamIds);
+      const champion = determineChampion(standings);
+      if (champion) {
+        await leagueSeasonStore.markSeasonComplete(leagueSeason.id, champion);
+        await leagueStore.archiveLeague(leagueSeason.leagueId);
+      }
+    }
+  }
 }
