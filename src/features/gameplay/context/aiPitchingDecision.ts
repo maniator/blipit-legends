@@ -183,13 +183,20 @@ export function makeAiPitchingDecision(
     : 0;
   const fatigueFactor = computeFatigueFactor(pitchCount, battersFaced, staminaMod);
 
-  const isHighFatigue = fatigueFactor >= fatigueFactor_HIGH;
+  // Gate by pitch count first so that computeFatigueFactor's floor of 1.0 (returned
+  // for any pitch count below the fresh threshold) cannot trigger a change for a
+  // fresh pitcher.  At max aggressiveness (100) highCount=75 which equals the
+  // fatigue-free zone, so fatigueFactor_HIGH would also be 1.0 — identical to
+  // a pitcher at 0 pitches.  The pitch-count gate prevents that false positive.
+  const isHighFatigue = pitchCount >= highCount && fatigueFactor >= fatigueFactor_HIGH;
 
   const isTightGame = Math.abs((state.score[0] ?? 0) - (state.score[1] ?? 0)) <= 2;
   const hasRunnersOn =
     state.baseLayout != null && (state.baseLayout[0] || state.baseLayout[1] || state.baseLayout[2]);
   const isMediumFatigue =
-    fatigueFactor >= fatigueFactor_MEDIUM && (state.inning >= 7 || isTightGame || hasRunnersOn);
+    pitchCount >= mediumCount &&
+    fatigueFactor >= fatigueFactor_MEDIUM &&
+    (state.inning >= 7 || isTightGame || hasRunnersOn);
 
   if (!isHighFatigue && !isMediumFatigue) return { kind: "none" };
 

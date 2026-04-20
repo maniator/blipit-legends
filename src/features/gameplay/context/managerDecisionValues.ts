@@ -7,8 +7,16 @@
  * Design notes:
  * - These are control-layer values (localStorage + save setup), NOT game State.
  *   They are never added to the reducer to keep determinism concerns isolated.
- * - All defaults reproduce the pre-existing simulator behavior so changing
- *   nothing is a no-op for existing games.
+ * - Defaults preserve prior simulator behavior where practical, with the
+ *   following intentional changes called out explicitly:
+ *   • Bunt detection is now situational (inning ≥ 6, close game ≤ 2 run diff)
+ *     rather than the previous unconditional positional check (`outs < 2 &&
+ *     runner on 1st/2nd`).  The old check offered bunts in clearly wrong
+ *     situations (e.g. inning 1 up by 10) and the new default is
+ *     baseball-correct.  Users who want the old broad behavior can leave
+ *     buntEnabled on and accept all offers regardless of context.
+ *   • `stealMinOfferPct` default of 72 matches the prior hard-coded `> 72`
+ *     threshold, preserving the exact steal-offer boundary.
  * - The AI steal threshold bug (0.62 fraction vs 65 integer %) is corrected
  *   here as the canonical fix; the new default 65 is the baseball-correct value.
  * - defensiveShiftEnabled defaults to false to reflect the 2023 MLB shift ban
