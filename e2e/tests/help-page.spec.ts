@@ -15,8 +15,6 @@ import { expect, test } from "@playwright/test";
 import { disableAnimations, resetAppState } from "../utils/helpers";
 
 /** Mobile project names — viewports ≤ 768 px where PageContainer scrolls. */
-const MOBILE_PROJECTS = ["iphone-15-pro-max", "iphone-15", "pixel-7", "pixel-5"];
-
 /** Open every closed <details> in the help page and wait until all 9 are open. */
 async function expandAllSections(page: Page): Promise<void> {
   const closedSummaries = page.locator('[data-testid="help-page"] details:not([open]) > summary');
@@ -49,13 +47,8 @@ test.describe("Help page — all sections present", () => {
   });
 });
 
-test.describe("Help page — mobile scrollability regression", () => {
-  test.beforeEach(async ({ page }, testInfo) => {
-    // Skip navigation setup entirely on non-mobile projects — saves CI time.
-    test.skip(
-      !MOBILE_PROJECTS.includes(testInfo.project.name),
-      "Mobile-only (≤ 768 px): desktop/tablet use normal document-level scroll",
-    );
+test.describe("Help page — mobile scrollability regression", { tag: "@mobile-only" }, () => {
+  test.beforeEach(async ({ page }) => {
     await resetAppState(page);
     await disableAnimations(page);
     await page.getByTestId("home-help-button").click();

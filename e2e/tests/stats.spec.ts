@@ -81,11 +81,9 @@ test.describe("Player Stats Panel — structure", () => {
   });
 });
 
-test.describe("Player Stats Panel — RBI values (desktop only)", () => {
-  test("RBI values update after a scoring play", async ({ page }, testInfo) => {
+test.describe("Player Stats Panel — RBI values (desktop only)", { tag: "@desktop-only" }, () => {
+  test("RBI values update after a scoring play", async ({ page }) => {
     // Restrict to desktop to keep CI runtime lean.
-    test.skip(testInfo.project.name !== "desktop", "RBI scoring test is desktop-only");
-
     // Load a fixture that already has playLog entries with rbi>0 — no need to
     // wait for autoplay to reach a scoring play.
     await loadFixture(page, "mid-game-with-rbi.json");
@@ -98,9 +96,7 @@ test.describe("Player Stats Panel — RBI values (desktop only)", () => {
     expect(allRbi.some((t) => t !== "–" && t.trim() !== "")).toBe(true);
   });
 
-  test("RBI stats are preserved after save and reload", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "RBI save/load test is desktop-only");
-
+  test("RBI stats are preserved after save and reload", async ({ page }) => {
     // Load fixture that already has RBI values — no autoplay wait needed.
     await loadFixture(page, "mid-game-with-rbi.json");
 
@@ -128,8 +124,7 @@ test.describe("Player Stats Panel — RBI values (desktop only)", () => {
 
   test("imported old save (no rbi field) loads without errors and shows stats", async ({
     page,
-  }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Import RBI backfill test is desktop-only");
+  }) => {
     await resetAppState(page);
     await startGameViaPlayBall(page, { seed: "importrbi" });
     await waitForLogLines(page, 3);

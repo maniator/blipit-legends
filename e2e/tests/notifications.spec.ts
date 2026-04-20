@@ -31,18 +31,12 @@ import {
  * Decision panel test — manager mode enabled via the dialog so it is active
  * from the first pitch.  Waiting 120 s means we need a 150 s test timeout.
  */
-test.describe("Notifications smoke — decision panel", () => {
+test.describe("Notifications smoke — decision panel", { tag: "@chromium-only" }, () => {
   test.beforeEach(async ({ context }) => {
     await context.grantPermissions(["notifications"]);
   });
 
-  test("decision panel appears when notification permission is granted", async ({
-    page,
-    browserName,
-  }) => {
-    // Notification API behavior varies; run on Chromium where it is reliable.
-    test.skip(browserName !== "chromium", "Notification smoke runs on Chromium only");
-
+  test("decision panel appears when notification permission is granted", async ({ page }) => {
     // Collect app console output to verify the notification attempt.
     const consoleMsgs: string[] = [];
     page.on("console", (msg) => consoleMsgs.push(msg.text()));
@@ -65,18 +59,13 @@ test.describe("Notifications smoke — decision panel", () => {
  * The badge shows one of: "🔔 on", "🔔 click to enable", or "🔕 blocked"
  * depending on the current Notification permission level.
  */
-test.describe("Notifications smoke — permission badge", () => {
+test.describe("Notifications smoke — permission badge", { tag: "@chromium-only" }, () => {
   test.beforeEach(async ({ page, context }) => {
     await context.grantPermissions(["notifications"]);
     await resetAppState(page);
   });
 
-  test("notification state indicator appears when manager mode is enabled", async ({
-    page,
-    browserName,
-  }) => {
-    test.skip(browserName !== "chromium", "Notification badge test runs on Chromium only");
-
+  test("notification state indicator appears when manager mode is enabled", async ({ page }) => {
     await startGameViaPlayBall(page, { seed: "notif-badge1" });
 
     // Enable manager mode via the UI toggle.  handleManagerModeChange fires

@@ -22,6 +22,17 @@ Playwright E2E tests live in `e2e/` and are separate from the Vitest unit tests 
 
 The `determinism` project is intentionally isolated to desktop because it spawns two sequential fresh browser contexts per test — running it on all 6 device projects would multiply CI time by 6× for no additional coverage value (PRNG determinism is not viewport-dependent).
 
+### Static project routing tags (avoid runtime `test.skip`)
+
+Project-specific tests should use tags plus `grepInvert` in `playwright.config.ts`, not runtime `test.skip(...)` calls inside test bodies. Current tags:
+
+- `@desktop-only`
+- `@chromium-only`
+- `@iphone-15-only`
+- `@mobile-only` (iphone-15-pro-max, iphone-15, pixel-7, pixel-5)
+
+This keeps CI skip counts clean and ensures project scoping is resolved at collection time.
+
 ### Key design decisions
 
 - **`vite preview` webServer** — E2E tests run against the production build (`dist/`), not `yarn dev`. This avoids the RxDB `RxDBDevModePlugin` dynamic import hanging the DB initialisation in headless Chromium.

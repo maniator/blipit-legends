@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { resetAppState } from "../utils/helpers";
 
-test.describe("Offline — service worker navigation fallback", () => {
+test.describe("Offline — service worker navigation fallback", { tag: "@desktop-only" }, () => {
   test.afterEach(async ({ context }) => {
     await context.setOffline(false);
   });
@@ -10,8 +10,7 @@ test.describe("Offline — service worker navigation fallback", () => {
   test("navigates offline to a client-side route and renders app shell", async ({
     page,
     context,
-  }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Offline SW test runs on desktop only");
+  }) => {
     test.setTimeout(60_000);
 
     // Step 1: Load the app while online so the SW installs, activates, and precaches all assets

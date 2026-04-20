@@ -86,119 +86,118 @@ test.describe("Smoke", () => {
     await waitForLogLines(page, 3, 30_000);
   });
 
-  test("game-over: finished-game fixture shows FINAL banner", async ({ page }, testInfo) => {
-    // Loads a pre-built finished-game fixture and verifies the FINAL banner is displayed.
-    // This is a fast smoke check for the game-over UI state, not a full autoplay regression.
-    // Restrict to desktop Chromium to avoid multiplying CI time.
-    test.skip(testInfo.project.name !== "desktop", "Game-over UI test runs on desktop only");
-    test.setTimeout(60_000);
+  test(
+    "game-over: finished-game fixture shows FINAL banner",
+    { tag: "@desktop-only" },
+    async ({ page }) => {
+      // Loads a pre-built finished-game fixture and verifies the FINAL banner is displayed.
+      // This is a fast smoke check for the game-over UI state, not a full autoplay regression.
+      // Restrict to desktop Chromium to avoid multiplying CI time.
+      test.setTimeout(60_000);
 
-    await loadFixture(page, "finished-game.json");
-    await expect(page.getByText("FINAL")).toBeVisible({ timeout: 15_000 });
+      await loadFixture(page, "finished-game.json");
+      await expect(page.getByText("FINAL")).toBeVisible({ timeout: 15_000 });
 
-    // After FINAL, the scoreboard should still be visible and no errors thrown.
-    await expect(page.getByTestId("scoreboard")).toBeVisible();
-  });
+      // After FINAL, the scoreboard should still be visible and no errors thrown.
+      await expect(page.getByTestId("scoreboard")).toBeVisible();
+    },
+  );
 
-  test("autoplay runs a full game from seed to FINAL (freeze regression)", async ({
-    page,
-  }, testInfo) => {
-    // Exercises the full autoplay path from a fresh game to FINAL so CI catches any
-    // scheduler freeze regression. Desktop-only to keep CI time reasonable.
-    test.skip(
-      testInfo.project.name !== "desktop",
-      "Full-game autoplay regression runs on desktop only",
-    );
-    test.setTimeout(180_000);
+  test(
+    "autoplay runs a full game from seed to FINAL (freeze regression)",
+    { tag: "@desktop-only" },
+    async ({ page }) => {
+      // Exercises the full autoplay path from a fresh game to FINAL so CI catches any
+      // scheduler freeze regression. Desktop-only to keep CI time reasonable.
+      test.setTimeout(180_000);
 
-    // Set speed and the E2E inning-pause flag via evaluate so they are already in
-    // localStorage when the app first mounts. addInitScript alone is unreliable here
-    // because the scripts run before page scripts on each navigation but the exact
-    // interaction with the React useLocalStorage hook can be racy. Using evaluate
-    // after an explicit goto ensures the values are present before startGameViaPlayBall
-    // navigates; localStorage persists across same-origin navigations so the settings
-    // remain active throughout the game.
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.evaluate(() => {
-      localStorage.setItem("speed", "150"); // SPEED_FAST
-      localStorage.setItem("_e2eNoInningPause", "1"); // disable muted half-inning pause in CI
-    });
-    await startGameViaPlayBall(page, { seed: "smoke-final1" });
+      // Set speed and the E2E inning-pause flag via evaluate so they are already in
+      // localStorage when the app first mounts. addInitScript alone is unreliable here
+      // because the scripts run before page scripts on each navigation but the exact
+      // interaction with the React useLocalStorage hook can be racy. Using evaluate
+      // after an explicit goto ensures the values are present before startGameViaPlayBall
+      // navigates; localStorage persists across same-origin navigations so the settings
+      // remain active throughout the game.
+      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.evaluate(() => {
+        localStorage.setItem("speed", "150"); // SPEED_FAST
+        localStorage.setItem("_e2eNoInningPause", "1"); // disable muted half-inning pause in CI
+      });
+      await startGameViaPlayBall(page, { seed: "smoke-final1" });
 
-    // Expand the play-by-play log so [data-log-index] elements are in the DOM.
-    // Without this the log is collapsed and the stall watchdog below always sees
-    // count=0, causing a false-positive "stalled" error even when the game runs fine.
-    await waitForLogLines(page, 1, 20_000);
+      // Expand the play-by-play log so [data-log-index] elements are in the DOM.
+      // Without this the log is collapsed and the stall watchdog below always sees
+      // count=0, causing a false-positive "stalled" error even when the game runs fine.
+      await waitForLogLines(page, 1, 20_000);
 
-    // Wait for FINAL with a progress watchdog that distinguishes a slow CI runner
-    // from a frozen game. If no new log lines appear for 15 s, fail immediately with
-    // actionable diagnostics so the failure is easy to triage.
-    // timeout is 160_000 to handle seeds that go to extra innings (smoke-final1 ties
-    // 3-3 after 9 innings); combined with the 20 s waitForLogLines above this stays
-    // within the 180 s test.setTimeout budget.
-    let lastLogCount = 0;
-    let lastLogChangeTime = Date.now();
-    await expect(async () => {
-      if (await page.getByText("FINAL").isVisible()) return;
+      // Wait for FINAL with a progress watchdog that distinguishes a slow CI runner
+      // from a frozen game. If no new log lines appear for 15 s, fail immediately with
+      // actionable diagnostics so the failure is easy to triage.
+      // timeout is 160_000 to handle seeds that go to extra innings (smoke-final1 ties
+      // 3-3 after 9 innings); combined with the 20 s waitForLogLines above this stays
+      // within the 180 s test.setTimeout budget.
+      let lastLogCount = 0;
+      let lastLogChangeTime = Date.now();
+      await expect(async () => {
+        if (await page.getByText("FINAL").isVisible()) return;
 
-      const currentCount = await page.locator("[data-log-index]").count();
-      if (currentCount > lastLogCount) {
-        lastLogCount = currentCount;
-        lastLogChangeTime = Date.now();
-      }
-      const stalledMs = Date.now() - lastLogChangeTime;
-      if (stalledMs > 15_000) {
-        const scoreboardText = await page
-          .getByTestId("scoreboard")
-          .textContent()
-          .catch(() => "?");
-        throw new Error(
-          `autoplay stalled: no new log lines for ${stalledMs}ms ` +
-            `(log count=${currentCount}; scoreboard="${scoreboardText?.trim()}")`,
-        );
-      }
-      throw new Error("FINAL not yet visible");
-    }).toPass({ timeout: 160_000, intervals: [500] });
+        const currentCount = await page.locator("[data-log-index]").count();
+        if (currentCount > lastLogCount) {
+          lastLogCount = currentCount;
+          lastLogChangeTime = Date.now();
+        }
+        const stalledMs = Date.now() - lastLogChangeTime;
+        if (stalledMs > 15_000) {
+          const scoreboardText = await page
+            .getByTestId("scoreboard")
+            .textContent()
+            .catch(() => "?");
+          throw new Error(
+            `autoplay stalled: no new log lines for ${stalledMs}ms ` +
+              `(log count=${currentCount}; scoreboard="${scoreboardText?.trim()}")`,
+          );
+        }
+        throw new Error("FINAL not yet visible");
+      }).toPass({ timeout: 160_000, intervals: [500] });
 
-    // Scoreboard must still be visible after game completes.
-    await expect(page.getByTestId("scoreboard")).toBeVisible();
-  });
+      // Scoreboard must still be visible after game completes.
+      await expect(page.getByTestId("scoreboard")).toBeVisible();
+    },
+  );
 
   // ---------------------------------------------------------------------------
   // Long-session performance stability: after 50+ log lines the app must still
   // respond to interactions within a reasonable time (no freeze / stall).
   // ---------------------------------------------------------------------------
 
-  test("app remains responsive after 50+ autoplay log entries (no stall)", async ({
-    page,
-  }, testInfo) => {
-    // Long-running: generates 50+ autoplay entries before asserting responsiveness.
-    // Restrict to desktop Chromium — viewport does not affect scheduling behavior.
-    test.skip(
-      testInfo.project.name !== "desktop",
-      "Long-session responsiveness test runs on desktop only",
-    );
-    test.setTimeout(120_000);
+  test(
+    "app remains responsive after 50+ autoplay log entries (no stall)",
+    { tag: "@desktop-only" },
+    async ({ page }) => {
+      // Long-running: generates 50+ autoplay entries before asserting responsiveness.
+      // Restrict to desktop Chromium — viewport does not affect scheduling behavior.
+      test.setTimeout(120_000);
 
-    // Use fast speed so we hit 50 entries quickly. Set via evaluate so the value
-    // is in localStorage before startGameViaPlayBall mounts the app.
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.evaluate(() => {
-      localStorage.setItem("speed", "150"); // SPEED_FAST
-    });
-    await startGameViaPlayBall(page, { seed: "perf-smoke1" });
-    await waitForLogLines(page, 50, 90_000);
+      // Use fast speed so we hit 50 entries quickly. Set via evaluate so the value
+      // is in localStorage before startGameViaPlayBall mounts the app.
+      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.evaluate(() => {
+        localStorage.setItem("speed", "150"); // SPEED_FAST
+      });
+      await startGameViaPlayBall(page, { seed: "perf-smoke1" });
+      await waitForLogLines(page, 50, 90_000);
 
-    // The Saves button must still be clickable and the modal open quickly —
-    // verifies the main thread is not frozen after a long autoplay burst.
-    const savesBtn = page.getByTestId("saves-button");
-    await expect(savesBtn).toBeVisible();
+      // The Saves button must still be clickable and the modal open quickly —
+      // verifies the main thread is not frozen after a long autoplay burst.
+      const savesBtn = page.getByTestId("saves-button");
+      await expect(savesBtn).toBeVisible();
 
-    await savesBtn.click();
-    // If the main thread is frozen, this assertion will time out (generous 5 s bound).
-    await expect(page.getByTestId("saves-modal")).toBeVisible({ timeout: 5_000 });
+      await savesBtn.click();
+      // If the main thread is frozen, this assertion will time out (generous 5 s bound).
+      await expect(page.getByTestId("saves-modal")).toBeVisible({ timeout: 5_000 });
 
-    // Close the modal to leave a clean state.
-    await page.getByRole("button", { name: /close/i }).click();
-  });
+      // Close the modal to leave a clean state.
+      await page.getByRole("button", { name: /close/i }).click();
+    },
+  );
 });
