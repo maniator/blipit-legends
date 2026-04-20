@@ -294,10 +294,10 @@ describe("makeAiTacticalDecision", () => {
       { ...DEFAULT_MANAGER_DECISION_VALUES, aiStealThreshold: 75 },
     );
     expect(resultLow.kind).toBe("none");
-    // threshold 60: successPct 60 >= 60 → steal
+    // threshold 60: successPct 61 > 60 → steal (strict > matches detectDecision semantics)
     const resultHigh = makeAiTacticalDecision(
       state,
-      { kind: "steal", base: 0, successPct: 60 },
+      { kind: "steal", base: 0, successPct: 61 },
       { ...DEFAULT_MANAGER_DECISION_VALUES, aiStealThreshold: 60 },
     );
     expect(resultHigh.kind).toBe("tactical");

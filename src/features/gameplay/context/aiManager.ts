@@ -53,7 +53,8 @@ export function makeAiTacticalDecision(
     case "steal": {
       // aiStealThreshold is an integer percentage (e.g. 65 means 65%).
       // decision.successPct is also an integer percentage from computeStealSuccessPct.
-      if (decision.successPct >= decisionValues.aiStealThreshold) {
+      // Use strict > to match detectDecision's threshold semantics (pct > stealMinOfferPct).
+      if (decision.successPct > decisionValues.aiStealThreshold) {
         return {
           kind: "tactical",
           actionType: "steal_attempt",

@@ -18,11 +18,11 @@
 export interface ManagerDecisionValues {
   /**
    * Minimum steal success % at which the human manager is offered a steal
-   * decision prompt. Range: 62–85 (integer %). Default: 70.
+   * decision prompt. Range: 62–85 (integer %). Default: 72.
    *
    * Higher = only offer steals with a very high success chance.
    * Lower  = offer steals more aggressively (higher risk).
-   * ~70% is the MLB run-expectancy break-even for stealing 2nd.
+   * 72 matches the previous hard-coded threshold (pct > 72, i.e. 73%+).
    */
   stealMinOfferPct: number;
 
@@ -74,7 +74,7 @@ export interface ManagerDecisionValues {
 }
 
 export const DEFAULT_MANAGER_DECISION_VALUES: ManagerDecisionValues = {
-  stealMinOfferPct: 70,
+  stealMinOfferPct: 72,
   aiStealThreshold: 65,
   buntEnabled: true,
   ibbEnabled: true,

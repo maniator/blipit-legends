@@ -170,7 +170,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     if (setup.managedTeam !== null) setManagedTeam(setup.managedTeam);
     setManagerMode(setup.managerMode);
     setDecisionValues(
-      setup.decisionValues !== undefined
+      setup.decisionValues != null
         ? sanitizeManagerDecisionValues(setup.decisionValues)
         : DEFAULT_MANAGER_DECISION_VALUES,
     );
@@ -339,7 +339,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     setManagedTeam(setup.managedTeam ?? 0);
     setStrategy(setup.strategy);
     setDecisionValues(
-      setup.decisionValues !== undefined
+      setup.decisionValues != null
         ? sanitizeManagerDecisionValues(setup.decisionValues)
         : DEFAULT_MANAGER_DECISION_VALUES,
     );
@@ -398,7 +398,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       setManagedTeam(setup.managedTeam ?? 0);
       setStrategy(setup.strategy);
       setDecisionValues(
-        setup.decisionValues !== undefined
+        setup.decisionValues != null
           ? sanitizeManagerDecisionValues(setup.decisionValues)
           : DEFAULT_MANAGER_DECISION_VALUES,
       );
