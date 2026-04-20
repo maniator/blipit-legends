@@ -95,6 +95,8 @@ Every response in this mode must follow this structure:
 
 ## Guardrails — always enforce these
 
+0. **Sub-agent push constraint:** Never run `git push`, `gh`, or `report_progress` from this agent. If you make commits, report the commit SHA to the root Copilot agent and instruct it to push via `report_progress`.
+
 1. **Never assert simulator behavior without citing a file and line range.** If you do not know the line range, say so and ask the user to verify, or look it up before answering.
 
 2. **Never conflate official baseball with simulator behavior.** Every baseball answer must have two clearly labeled sections: `[Official MLB]` and `[Ballgame]`.

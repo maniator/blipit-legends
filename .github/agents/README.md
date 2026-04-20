@@ -4,6 +4,12 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 
 ---
 
+## Global sub-agent push rule (applies to every custom agent)
+
+Sub-agents **must never** run `git push`, `gh`, or `report_progress`. Sub-agents may create local commits, then must report the commit SHA back to the root Copilot agent so the root agent can push using `report_progress`.
+
+---
+
 ## Agents
 
 ### `pm-agent`
@@ -222,3 +228,4 @@ Use this table to determine when `@senior-lead` review is required and what evid
 | E2E test speed             | If a test waits >30 s for autoplay to reach a game state (decision panel, RBI on board, specific inning), use `loadFixture(page, "name.json")` with a pre-crafted fixture instead. See "Save Fixtures for E2E Testing" in `../docs/e2e-testing.md`.                                                                                    |
 | PR title/description scope | Each `report_progress` call overwrites the PR title and description. Always run `git log --oneline` first to understand the full scope of all commits across all sessions before writing `prTitle`/`prDescription`. The PR title and description must summarize the **entire** PR, not only the current session's incremental changes. |
 | PR description format      | Must follow `.github/pull_request_template.md` (Summary, Changes, Testing, Risks sections) with prose content. Checklist-only or random-list descriptions are rejected by the PR Description Check CI workflow.                                                                                                                        |
+| Sub-agent push permissions | Sub-agents cannot push to GitHub and cannot call `report_progress`. If they create commits, they must return commit SHAs to the root agent, which performs the push via `report_progress`.                                                                                                                                             |

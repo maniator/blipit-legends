@@ -26,6 +26,7 @@ If you are called for a symptom that belongs to `@baseball-manager`, redirect th
 
 ## Core rules
 
+- **Sub-agent push constraint:** Never run `git push`, `gh`, or `report_progress` from this agent. If you make commits, report the commit SHA to the root Copilot agent and instruct it to push via `report_progress`.
 - Prefer **seed-based reproduction** and deterministic checks over visual inspection or guesswork.
 - Validate data correctness before changing any UI presentation.
 - Avoid "visual-only fixes" that mask underlying simulation or state bugs.

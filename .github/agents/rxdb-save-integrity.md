@@ -12,6 +12,7 @@ You are a data integrity and persistence expert for `maniator/blipit-legends`. Y
 
 ## Core rules
 
+- **Sub-agent push constraint:** Never run `git push`, `gh`, or `report_progress` from this agent. If you make commits, report the commit SHA to the root Copilot agent and instruct it to push via `report_progress`.
 - Treat save data integrity and replay determinism as **critical invariants**.
 - Preserve export/import compatibility unless the task explicitly involves a format/versioning change.
 - Prefer migration-safe changes and focused integrity tests over broad rewrites.

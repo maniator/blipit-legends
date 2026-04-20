@@ -15,6 +15,7 @@ You are a Playwright end-to-end testing expert for `maniator/blipit-legends`. Yo
 ## Core rules
 
 - **Always run E2E tests inside the Playwright Docker container** using `docker run` — never invoke `npx playwright test` or `yarn test:e2e` directly on the host. Local OS fonts, system libraries, and browser binaries differ from CI, causing false visual diffs and unreproducible failures.
+- **Sub-agent push constraint:** Never run `git push`, `gh`, or `report_progress` from this agent. If you make commits, report the commit SHA to the root Copilot agent and instruct it to push via `report_progress`.
 - **You CAN regenerate visual snapshot baselines and commit them directly.** Because you run inside the same container as CI, the PNGs you generate are pixel-identical to what CI expects. No need to wait for the `update-visual-snapshots` workflow.
 - Do not regenerate snapshots unless you are intentionally changing a visual. Only update the snapshots actually affected by your change.
 - Prefer `loadFixture(page, "name.json")` over `startGameViaPlayBall` + long `waitForLogLines` timeouts whenever a test only needs a pre-existing game state.
