@@ -176,6 +176,13 @@ function buildStore(getDbFn: GetDb) {
       return docs.map((d) => d.toJSON() as unknown as SaveRecord);
     },
 
+    /** Fetches a single save header by ID. Returns null if not found. */
+    async getSave(saveId: string): Promise<SaveRecord | null> {
+      const db = await getDbFn();
+      const doc = await db.saves.findOne(saveId).exec();
+      return doc ? (doc.toJSON() as unknown as SaveRecord) : null;
+    },
+
     /**
      * Exports a save as a self-contained signed JSON string bundling the save
      * header and all its event documents.  The result can be shared and later

@@ -13,6 +13,7 @@ import {
   Button,
   Controls,
   HelpButton,
+  LeagueSaveBanner,
   PausePlayButton,
   SpeedLabel,
   SpeedRow,
@@ -34,6 +35,10 @@ type Props = {
   onBackToHome?: () => void;
   /** When true, shows a disabled "Saving…" button instead of "New Game". */
   isCommitting?: boolean;
+  /** When provided and gameOver is true, shows "← Back to League" instead of "New Game". */
+  onBackToLeague?: () => void;
+  /** When true, shows a small info banner indicating this is a league save. */
+  isLeagueSave?: boolean;
 };
 
 const GameControls: React.FunctionComponent<Props> = ({
@@ -42,6 +47,8 @@ const GameControls: React.FunctionComponent<Props> = ({
   onLoadSave,
   onBackToHome,
   isCommitting = false,
+  onBackToLeague,
+  isLeagueSave = false,
 }) => {
   const {
     speed,
@@ -81,6 +88,9 @@ const GameControls: React.FunctionComponent<Props> = ({
 
   return (
     <>
+      {isLeagueSave && (
+        <LeagueSaveBanner>📋 League save — results already recorded</LeagueSaveBanner>
+      )}
       <Controls>
         {onBackToHome && (
           <Button
@@ -93,10 +103,14 @@ const GameControls: React.FunctionComponent<Props> = ({
           </Button>
         )}
         {gameOver &&
-          onNewGame &&
+          (onBackToLeague || onNewGame) &&
           (isCommitting ? (
             <Button $variant="new" disabled data-testid="new-game-button">
               Saving…
+            </Button>
+          ) : onBackToLeague ? (
+            <Button $variant="home" onClick={onBackToLeague} data-testid="back-to-league-button">
+              ← Back to League
             </Button>
           ) : (
             <Button $variant="new" onClick={onNewGame} data-testid="new-game-button">

@@ -37,6 +37,8 @@ type Props = {
   onGameOver?: () => void;
   /** League context — present when this game was launched from league mode. */
   leagueGameContext?: LeagueGameContext | null;
+  /** Called when the user clicks "← Back to League"; receives the league ID to navigate to. */
+  onBackToLeague?: (leagueId: string) => void;
 };
 
 const Game: React.FunctionComponent<Props> = ({
@@ -50,6 +52,7 @@ const Game: React.FunctionComponent<Props> = ({
   onSavingStateChange,
   onGameOver,
   leagueGameContext,
+  onBackToLeague,
 }) => {
   const actionBufferRef = React.useRef<GameAction[]>([]);
   const [db, setDb] = React.useState<BallgameDb | null>(null);
@@ -129,6 +132,7 @@ const Game: React.FunctionComponent<Props> = ({
           onSavingStateChange={onSavingStateChange}
           onGameOver={onGameOver}
           leagueGameContext={leagueGameContext}
+          onBackToLeague={onBackToLeague}
         />
       </GameProviderWrapper>
     </RxDatabaseProvider>

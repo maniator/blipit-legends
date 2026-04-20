@@ -382,6 +382,17 @@ export const DecisionToggleRow = styled.div`
   }
 `;
 
+export const LeagueSaveBanner = styled.p`
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.textHint};
+  margin: 0;
+  padding: ${({ theme }) => theme.spacing.xs} 0;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  width: 100%;
+`;
+
 export const DecisionResetButton = styled.button`
   align-self: flex-start;
   background: transparent;

@@ -68,6 +68,8 @@ interface Props {
   onGameOver?: () => void;
   /** League context — present when this game was launched from league mode. */
   leagueGameContext?: LeagueGameContext | null;
+  /** Called when the user clicks "← Back to League"; receives the league ID to navigate to. */
+  onBackToLeague?: (leagueId: string) => void;
 }
 
 const GameInner: React.FunctionComponent<Props> = ({
@@ -82,6 +84,7 @@ const GameInner: React.FunctionComponent<Props> = ({
   onSavingStateChange,
   onGameOver,
   leagueGameContext,
+  onBackToLeague,
 }) => {
   const { dispatch, dispatchLog, teams, gameOver } = useGameContext();
   const [, setManagerMode] = useLocalStorage("managerMode", false);
@@ -114,6 +117,10 @@ const GameInner: React.FunctionComponent<Props> = ({
   // True when the currently-loaded save was already in FINAL state on load.
   // Prevents useGameHistorySync from re-committing stats for a completed game.
   const [wasAlreadyFinalOnLoad, setWasAlreadyFinalOnLoad] = React.useState(false);
+
+  // League ID from a loaded save — used to show "← Back to League" for saves
+  // loaded after the initial game launch (pendingLoadSave or handleModalLoad).
+  const [loadedSaveLeagueId, setLoadedSaveLeagueId] = React.useState<string | null>(null);
 
   useRxdbGameSync(rxSaveIdRef, actionBufferRef, { wasAlreadyFinalOnLoad });
   const { isCommitting } = useGameHistorySync(rxSaveIdRef, wasAlreadyFinalOnLoad);
@@ -194,6 +201,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     rxSaveIdRef.current = rxAutoSave.id;
     // If the restored save was already FINAL, mark it so history sync skips re-commit.
     setWasAlreadyFinalOnLoad(snap.state.gameOver === true);
+    setLoadedSaveLeagueId(setup.leagueContext?.leagueId ?? null);
     setGameActive(true);
     onGameSessionStarted?.();
   }, [
@@ -205,6 +213,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     setManagedTeam,
     setManagerMode,
     setDecisionValues,
+    setLoadedSaveLeagueId,
     onGameSessionStarted,
   ]);
 
@@ -216,8 +225,9 @@ const GameInner: React.FunctionComponent<Props> = ({
     managedTeam: 0 | 1 | null,
     playerOverrides: PlayerOverrides,
   ) => {
-    // A fresh game is never "already final".
+    // A fresh game is never "already final" and not loaded from a league save.
     setWasAlreadyFinalOnLoad(false);
+    setLoadedSaveLeagueId(null);
     setManagerMode(managedTeam !== null);
     if (managedTeam !== null) {
       setManagedTeam(managedTeam);
@@ -282,6 +292,7 @@ const GameInner: React.FunctionComponent<Props> = ({
 
   const handleNewGame = () => {
     rxSaveIdRef.current = null;
+    setLoadedSaveLeagueId(null);
     dispatch({ type: "reset" });
     dispatchLog({ type: "reset" });
     setGameActive(false);
@@ -378,6 +389,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     rxSaveIdRef.current = pendingLoadSave.id;
     // If the loaded save was already FINAL, mark it so history sync skips re-commit.
     setWasAlreadyFinalOnLoad(snap.state.gameOver === true);
+    setLoadedSaveLeagueId(setup.leagueContext?.leagueId ?? null);
     setGameActive(true);
     onGameSessionStarted?.();
     onConsumePendingLoad?.();
@@ -392,6 +404,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     setManagedTeam,
     setStrategy,
     setDecisionValues,
+    setLoadedSaveLeagueId,
     onGameSessionStarted,
     onConsumePendingLoad,
   ]);
@@ -437,6 +450,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       rxSaveIdRef.current = slot.id;
       // If the loaded save was already FINAL, mark it so history sync skips re-commit.
       setWasAlreadyFinalOnLoad(snap.state.gameOver === true);
+      setLoadedSaveLeagueId(slot.setup.leagueContext?.leagueId ?? null);
       setGameActive(true); // no-op if already active; triggers scheduler if game was over
       onGameSessionStarted?.();
     },
@@ -447,9 +461,18 @@ const GameInner: React.FunctionComponent<Props> = ({
       setManagedTeam,
       setStrategy,
       setDecisionValues,
+      setLoadedSaveLeagueId,
       onGameSessionStarted,
     ],
   );
+
+  const backToLeagueId = leagueGameContext?.leagueId ?? loadedSaveLeagueId;
+
+  const handleBackToLeague = React.useCallback(() => {
+    if (backToLeagueId) {
+      onBackToLeague?.(backToLeagueId);
+    }
+  }, [backToLeagueId, onBackToLeague]);
 
   return (
     <GameDiv>
@@ -461,6 +484,8 @@ const GameInner: React.FunctionComponent<Props> = ({
         onLoadSave={handleModalLoad}
         onBackToHome={onBackToHome}
         isCommitting={isCommitting}
+        onBackToLeague={backToLeagueId ? handleBackToLeague : undefined}
+        isLeagueSave={!!loadedSaveLeagueId}
       />
       <GameBody>
         <FieldPanel>

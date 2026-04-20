@@ -61,6 +61,13 @@ const GamePage: React.FunctionComponent = () => {
     navigate("/exhibition/new");
   }, [navigate]);
 
+  const handleBackToLeague = React.useCallback(
+    (leagueId: string) => {
+      navigate(`/league/${leagueId}`);
+    },
+    [navigate],
+  );
+
   const [isCommitting, setIsCommitting] = React.useState(false);
 
   const blocker = useBlocker(isCommitting);
@@ -100,6 +107,7 @@ const GamePage: React.FunctionComponent = () => {
         onSavingStateChange={setIsCommitting}
         onGameOver={ctx.onGameOver}
         leagueGameContext={leagueGameContextRef.current}
+        onBackToLeague={handleBackToLeague}
       />
       {blocker.state === "blocked" && (
         <SavingBanner role="status" aria-live="polite" data-testid="saving-stats-banner">

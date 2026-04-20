@@ -20,10 +20,15 @@ import { calculateStandings } from "@feat/leagueMode/utils/calculateStandings";
 import { simulateGameDay } from "@feat/leagueMode/utils/simulateGameDay";
 import { useNavigate, useParams } from "react-router";
 
-import type { ExhibitionGameSetup, LeagueGameLocationState } from "@storage/types";
+import { getDb } from "@storage/db";
+import type { ExhibitionGameSetup, LeagueGameLocationState, SaveRecord } from "@storage/types";
 
 import {
   BackLink,
+  BoxScorePanel,
+  BoxScoreStatusText,
+  BoxScoreTable,
+  BoxScoreToggle,
   ByeLabel,
   ChampionBanner,
   EmptyState,
@@ -75,6 +80,11 @@ const LeagueDetailPage: React.FunctionComponent = () => {
   const [startingSeason, setStartingSeason] = React.useState(false);
   const [simulatingDay, setSimulatingDay] = React.useState(false);
   const [simulateDayError, setSimulateDayError] = React.useState<string | null>(null);
+
+  const [expandedBoxScores, setExpandedBoxScores] = React.useState<Set<string>>(new Set());
+  const [loadedBoxScores, setLoadedBoxScores] = React.useState<Map<string, SaveRecord | null>>(
+    new Map(),
+  );
 
   // Load team names for schedule display
   React.useEffect(() => {
@@ -174,6 +184,95 @@ const LeagueDetailPage: React.FunctionComponent = () => {
       }
     },
     [league, season, navigate],
+  );
+
+  const handleToggleBoxScore = React.useCallback(
+    (gameId: string, completedGameId: string) => {
+      const isExpanded = expandedBoxScores.has(gameId);
+      setExpandedBoxScores((prev) => {
+        const next = new Set(prev);
+        if (isExpanded) {
+          next.delete(gameId);
+        } else {
+          next.add(gameId);
+        }
+        return next;
+      });
+      if (!isExpanded && !loadedBoxScores.has(gameId)) {
+        getDb()
+          .then(async (db) => {
+            const doc = await db.saves.findOne(completedGameId).exec();
+            const save = doc ? (doc.toJSON() as unknown as SaveRecord) : null;
+            setLoadedBoxScores((prev) => {
+              const next = new Map(prev);
+              next.set(gameId, save);
+              return next;
+            });
+          })
+          .catch(() => {
+            setLoadedBoxScores((prev) => {
+              const next = new Map(prev);
+              next.set(gameId, null);
+              return next;
+            });
+          });
+      }
+    },
+    [expandedBoxScores, loadedBoxScores],
+  );
+
+  const renderBoxScore = React.useCallback(
+    (game: ScheduledGameRecord): React.ReactNode => {
+      if (!loadedBoxScores.has(game.id)) {
+        return <BoxScoreStatusText>Loading…</BoxScoreStatusText>;
+      }
+      const save = loadedBoxScores.get(game.id);
+      if (!save || !save.stateSnapshot) {
+        return <BoxScoreStatusText>Box score unavailable</BoxScoreStatusText>;
+      }
+      const { state } = save.stateSnapshot;
+      const awayLabel = state.teamLabels?.[0] ?? teamNameMap[game.awayTeamId] ?? game.awayTeamId;
+      const homeLabel = state.teamLabels?.[1] ?? teamNameMap[game.homeTeamId] ?? game.homeTeamId;
+      const awayRuns = state.inningRuns[0] ?? [];
+      const homeRuns = state.inningRuns[1] ?? [];
+      const finalAway = save.scoreSnapshot?.away ?? awayRuns.reduce((a, b) => a + (b ?? 0), 0);
+      const finalHome = save.scoreSnapshot?.home ?? homeRuns.reduce((a, b) => a + (b ?? 0), 0);
+      const innings = Math.max(awayRuns.length, homeRuns.length, 9);
+      return (
+        <BoxScoreTable>
+          <thead>
+            <tr>
+              <th>Team</th>
+              {Array.from({ length: innings }, (_, i) => (
+                <th key={i}>{i + 1}</th>
+              ))}
+              <th>R</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{awayLabel}</td>
+              {Array.from({ length: innings }, (_, i) => (
+                <td key={i}>{awayRuns[i] ?? 0}</td>
+              ))}
+              <td>
+                <strong>{finalAway}</strong>
+              </td>
+            </tr>
+            <tr>
+              <td>{homeLabel}</td>
+              {Array.from({ length: innings }, (_, i) => (
+                <td key={i}>{homeRuns[i] ?? 0}</td>
+              ))}
+              <td>
+                <strong>{finalHome}</strong>
+              </td>
+            </tr>
+          </tbody>
+        </BoxScoreTable>
+      );
+    },
+    [loadedBoxScores, teamNameMap],
   );
 
   // Group games by gameDay — always called (no conditional return before hooks)
@@ -390,31 +489,54 @@ const LeagueDetailPage: React.FunctionComponent = () => {
                 <GameDaySection key={gameDay}>
                   <GameDayHeading>Game Day {gameDay + 1}</GameDayHeading>
                   {dayGames.map((game) => (
-                    <GameRow key={game.id} data-testid={`game-row-${game.id}`}>
-                      {game.status === "bye" ? (
-                        <ByeLabel>BYE — {getTeamName(game.homeTeamId)}</ByeLabel>
-                      ) : (
-                        <>
-                          <TeamName>{getTeamName(game.awayTeamId)}</TeamName>
-                          <VsSeparator>vs</VsSeparator>
-                          <TeamName>{getTeamName(game.homeTeamId)}</TeamName>
-                        </>
+                    <React.Fragment key={game.id}>
+                      <GameRow data-testid={`game-row-${game.id}`}>
+                        {game.status === "bye" ? (
+                          <ByeLabel>BYE — {getTeamName(game.homeTeamId)}</ByeLabel>
+                        ) : (
+                          <>
+                            <TeamName>{getTeamName(game.awayTeamId)}</TeamName>
+                            <VsSeparator>vs</VsSeparator>
+                            <TeamName>{getTeamName(game.homeTeamId)}</TeamName>
+                          </>
+                        )}
+                        <StatusBadge $status={game.status}>
+                          {getStatusLabel(game.status)}
+                        </StatusBadge>
+                        {game.status === "scheduled" && (
+                          <PlayButton
+                            type="button"
+                            data-testid={`play-game-button-${game.id}`}
+                            aria-label="Play game"
+                            disabled={
+                              launchingGameId === game.id || game.gameDay !== season?.currentGameDay
+                            }
+                            onClick={() => {
+                              void handlePlayGame(game);
+                            }}
+                          >
+                            {launchingGameId === game.id ? "Loading…" : "▶ Play"}
+                          </PlayButton>
+                        )}
+                        {game.status === "completed" && game.completedGameId && (
+                          <BoxScoreToggle
+                            type="button"
+                            data-testid={`box-score-toggle-${game.id}`}
+                            aria-expanded={expandedBoxScores.has(game.id)}
+                            onClick={() => {
+                              handleToggleBoxScore(game.id, game.completedGameId!);
+                            }}
+                          >
+                            {expandedBoxScores.has(game.id) ? "▴ Box Score" : "▾ Box Score"}
+                          </BoxScoreToggle>
+                        )}
+                      </GameRow>
+                      {expandedBoxScores.has(game.id) && game.completedGameId && (
+                        <BoxScorePanel data-testid={`box-score-panel-${game.id}`}>
+                          {renderBoxScore(game)}
+                        </BoxScorePanel>
                       )}
-                      <StatusBadge $status={game.status}>{getStatusLabel(game.status)}</StatusBadge>
-                      {game.status === "scheduled" && (
-                        <PlayButton
-                          type="button"
-                          data-testid={`play-game-button-${game.id}`}
-                          aria-label="Play game"
-                          disabled={launchingGameId === game.id}
-                          onClick={() => {
-                            void handlePlayGame(game);
-                          }}
-                        >
-                          {launchingGameId === game.id ? "Loading…" : "▶ Play"}
-                        </PlayButton>
-                      )}
-                    </GameRow>
+                    </React.Fragment>
                   ))}
                 </GameDaySection>
               );

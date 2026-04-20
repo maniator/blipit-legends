@@ -376,3 +376,84 @@ export const StandingsTable = styled.table`
     }
   }
 `;
+
+export const BoxScoreToggle = styled.button`
+  background: transparent;
+  color: ${({ theme }) => theme.colors.textHint};
+  border: 1px solid ${({ theme }) => theme.colors.borderSubtle};
+  border-radius: ${({ theme }) => theme.radii.sm};
+  padding: 2px ${({ theme }) => theme.spacing.xs};
+  font-family: inherit;
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.textBody};
+    border-color: ${({ theme }) => theme.colors.borderPanel};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 2px;
+  }
+
+  ${mq.mobile} {
+    font-size: ${({ theme }) => theme.fontSizes.xs};
+    padding: 1px ${({ theme }) => theme.spacing.xs};
+  }
+`;
+
+export const BoxScorePanel = styled.div`
+  background: ${({ theme }) => theme.colors.bgSurface};
+  border: 1px solid ${({ theme }) => theme.colors.borderSubtle};
+  border-top: none;
+  border-radius: 0 0 ${({ theme }) => theme.radii.md} ${({ theme }) => theme.radii.md};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  overflow-x: auto;
+
+  ${mq.mobile} {
+    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  }
+`;
+
+export const BoxScoreTable = styled.table`
+  border-collapse: collapse;
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  min-width: max-content;
+
+  th,
+  td {
+    padding: 2px ${({ theme }) => theme.spacing.xs};
+    text-align: center;
+    color: ${({ theme }) => theme.colors.textBody};
+    border-bottom: 1px solid ${({ theme }) => theme.colors.borderSubtle};
+    white-space: nowrap;
+  }
+
+  th {
+    color: ${({ theme }) => theme.colors.textHint};
+    font-weight: 600;
+    font-size: ${({ theme }) => theme.fontSizes.xs};
+  }
+
+  td:first-child,
+  th:first-child {
+    text-align: left;
+    min-width: 80px;
+  }
+
+  td:last-child,
+  th:last-child {
+    font-weight: 700;
+    padding-left: ${({ theme }) => theme.spacing.sm};
+    border-left: 1px solid ${({ theme }) => theme.colors.borderPanel};
+  }
+`;
+
+export const BoxScoreStatusText = styled.p`
+  color: ${({ theme }) => theme.colors.textHint};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  margin: 0;
+`;
