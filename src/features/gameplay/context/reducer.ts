@@ -13,6 +13,8 @@ import { handleSetupAction } from "./handlers/setup";
 import { handleSimAction } from "./handlers/sim";
 import { warnIfImpossible } from "./invariants";
 import type { LogAction } from "./logReducer";
+import type { ManagerDecisionValues } from "./managerDecisionValues";
+import { DEFAULT_MANAGER_DECISION_VALUES } from "./managerDecisionValues";
 import { computeBatterFatigueFactor } from "./pitchSimulation";
 import type { Strategy } from "./playerTypes";
 import { PINCH_HITTER_CONTACT_WEIGHT, PINCH_HITTER_POWER_WEIGHT } from "./playerTypes";
@@ -49,13 +51,28 @@ const computeStealSuccessPct = (base: 0 | 1, strategy: Strategy, state: State): 
   return Math.round(base_pct * stratMod(strategy, "steal") * speedFactor);
 };
 
-// Minimum steal success probability required to offer the steal decision (>72 means 73%+).
-const STEAL_MIN_PCT = 72;
-
+/**
+ * Evaluates the current game state to determine if a manager decision should
+ * be offered (human manager) or processed (AI manager).
+ *
+ * Decision detection order (earlier branches take priority):
+ *   1. IBB / steal (with possible ibb_or_steal hybrid — see note below)
+ *   2. Pinch hitter (start-of-at-bat, 0-0 count only)
+ *   3. Sacrifice bunt
+ *   4. Count hints (count30, count02)
+ *
+ * Note on ibb_or_steal: this kind is structurally unreachable. IBB requires
+ * outs === 2 while steal requires outs < 2, so both conditions can never be
+ * satisfied simultaneously. The type is retained for type completeness.
+ *
+ * @param decisionValues - Optional runtime tuning values. Defaults to
+ *   DEFAULT_MANAGER_DECISION_VALUES so existing callers are unaffected.
+ */
 export const detectDecision = (
   state: State,
   strategy: Strategy,
   managerMode: boolean,
+  decisionValues: ManagerDecisionValues = DEFAULT_MANAGER_DECISION_VALUES,
 ): DecisionType | null => {
   if (!managerMode) return null;
   if (state.gameOver) return null;
@@ -65,6 +82,7 @@ export const detectDecision = (
   const scoreDiff = Math.abs(state.score[0] - state.score[1]);
 
   const ibbAvailable =
+    decisionValues.ibbEnabled &&
     !baseLayout[0] &&
     (baseLayout[1] || baseLayout[2]) &&
     outs === 2 &&
@@ -75,11 +93,13 @@ export const detectDecision = (
   if (outs < 2) {
     if (baseLayout[0] && !baseLayout[1]) {
       const pct = computeStealSuccessPct(0, strategy, state);
-      if (pct > STEAL_MIN_PCT) stealDecision = { kind: "steal", base: 0, successPct: pct };
+      if (pct > decisionValues.stealMinOfferPct)
+        stealDecision = { kind: "steal", base: 0, successPct: pct };
     }
     if (!stealDecision && baseLayout[1] && !baseLayout[2]) {
       const pct = computeStealSuccessPct(1, strategy, state);
-      if (pct > STEAL_MIN_PCT) stealDecision = { kind: "steal", base: 1, successPct: pct };
+      if (pct > decisionValues.stealMinOfferPct)
+        stealDecision = { kind: "steal", base: 1, successPct: pct };
     }
   }
 
@@ -92,6 +112,7 @@ export const detectDecision = (
   // pinch_hitter is checked before bunt: it's a start-of-at-bat decision (0-0 count only)
   // and runners on 2nd/3rd would otherwise always hit the bunt branch first.
   if (
+    decisionValues.pinchHitterEnabled &&
     state.inning >= 7 &&
     outs < 2 &&
     (baseLayout[1] || baseLayout[2]) &&
@@ -185,7 +206,21 @@ export const detectDecision = (
     };
   }
 
-  if (outs < 2 && (baseLayout[0] || baseLayout[1])) return { kind: "bunt" };
+  // Sacrifice bunt: requires situational context to avoid offering in clearly
+  // non-bunt situations (e.g. inning 1 up by 4 runs).
+  // The AI bunt path (makeAiTacticalDecision) uses tighter criteria (inning >= 7,
+  // trailing, exactly 0 outs); the human prompt is offered one inning earlier and
+  // without requiring the team to be trailing, to give the manager flexibility.
+  if (
+    decisionValues.buntEnabled &&
+    outs === 0 &&
+    (baseLayout[0] || baseLayout[1]) &&
+    state.inning >= 6 &&
+    scoreDiff <= 2 &&
+    balls <= 1
+  ) {
+    return { kind: "bunt" };
+  }
 
   if (balls === 3 && strikes === 0) return { kind: "count30" };
   if (balls === 0 && strikes === 2) return { kind: "count02" };

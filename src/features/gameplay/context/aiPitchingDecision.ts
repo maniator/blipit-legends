@@ -10,19 +10,33 @@ import {
 } from "./handednessMatchup";
 import { computeFatigueFactor } from "./pitchSimulation";
 
-/** Pitch-count reference thresholds used to derive fatigue-factor limits below. */
+/**
+ * Reference pitch-count thresholds at default aggressiveness (50 / modern MLB average).
+ * These are exported so other modules (e.g. SubstitutionPanel) can use them as
+ * display references without duplicating the constants.
+ */
 export const AI_FATIGUE_THRESHOLD_HIGH = 100;
 export const AI_FATIGUE_THRESHOLD_MEDIUM = 85;
 
 /**
- * Fatigue-factor limits for AI pitching-change decisions.
- * Derived from the reference thresholds at default stamina (staminaMod = 0, battersFaced = 0):
+ * Derives the effective high/medium pitch-count thresholds from the
+ * aiPitchingChangeAggressiveness knob (0–100).
  *
- * computeFatigueFactor(100, 0, 0) = 1.0 + 0.009*(100-75) = 1.225  →  AI_FATIGUE_FACTOR_HIGH
- * computeFatigueFactor(85,  0, 0) = 1.0 + 0.009*(85-75)  = 1.09   →  AI_FATIGUE_FACTOR_MEDIUM
+ *   aggressiveness  0  → medium=110, high=125  (old-school, complete-game era)
+ *   aggressiveness 50  → medium=85,  high=100  (modern MLB average — the defaults)
+ *   aggressiveness 100 → medium=60,  high=75   (bullpen-first / opener era)
+ *
+ * Linear interpolation: delta = (50 - aggressiveness) * 0.5
  */
-const AI_FATIGUE_FACTOR_HIGH = 1.225;
-const AI_FATIGUE_FACTOR_MEDIUM = 1.09;
+const derivePitchCountThresholds = (
+  aggressiveness: number,
+): { highCount: number; mediumCount: number } => {
+  const delta = (50 - aggressiveness) * 0.5;
+  return {
+    highCount: Math.round(AI_FATIGUE_THRESHOLD_HIGH + delta),
+    mediumCount: Math.round(AI_FATIGUE_THRESHOLD_MEDIUM + delta),
+  };
+};
 
 /**
  * Returns true if a pitcher ID is a viable in-game replacement:
@@ -138,12 +152,20 @@ const findMatchupAwareReliever = (
  * at the start of a new at-bat (0-0 count, beginning of plate appearance).
  *
  * Returns the decision to take, or `{ kind: "none" }` if no action is warranted.
+ *
+ * @param aggressiveness - AI pitching-change aggressiveness knob (0–100). Default 50
+ *   reproduces the prior hard-coded behavior. See derivePitchCountThresholds.
  */
 export function makeAiPitchingDecision(
   state: State,
   pitchingTeamIdx: 0 | 1,
   pitcherRoles: Record<string, string> = {},
+  aggressiveness = 50,
 ): AiDecision {
+  const { highCount, mediumCount } = derivePitchCountThresholds(aggressiveness);
+  const fatigueFactor_HIGH = computeFatigueFactor(highCount, 0, 0);
+  const fatigueFactor_MEDIUM = computeFatigueFactor(mediumCount, 0, 0);
+
   const pitchCount = (state.pitcherPitchCount ?? [0, 0])[pitchingTeamIdx];
   const battersFaced = (state.pitcherBattersFaced ?? [0, 0])[pitchingTeamIdx];
   const activePitcherIdx = (state.activePitcherIdx ?? [0, 0])[pitchingTeamIdx];
@@ -156,18 +178,18 @@ export function makeAiPitchingDecision(
     : 0;
   const fatigueFactor = computeFatigueFactor(pitchCount, battersFaced, staminaMod);
 
-  const isHighFatigue = fatigueFactor >= AI_FATIGUE_FACTOR_HIGH;
+  const isHighFatigue = fatigueFactor >= fatigueFactor_HIGH;
 
   const isTightGame = Math.abs((state.score[0] ?? 0) - (state.score[1] ?? 0)) <= 2;
   const hasRunnersOn =
     state.baseLayout != null && (state.baseLayout[0] || state.baseLayout[1] || state.baseLayout[2]);
   const isMediumFatigue =
-    fatigueFactor >= AI_FATIGUE_FACTOR_MEDIUM && (state.inning >= 7 || isTightGame || hasRunnersOn);
+    fatigueFactor >= fatigueFactor_MEDIUM && (state.inning >= 7 || isTightGame || hasRunnersOn);
 
   if (!isHighFatigue && !isMediumFatigue) return { kind: "none" };
 
   const pullProbability = isHighFatigue
-    ? Math.min(1, 0.6 + (fatigueFactor - AI_FATIGUE_FACTOR_HIGH) * 2.5)
+    ? Math.min(1, 0.6 + (fatigueFactor - fatigueFactor_HIGH) * 2.5)
     : 0.4;
   if (random() > pullProbability) return { kind: "none" };
 

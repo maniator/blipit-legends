@@ -2,6 +2,11 @@ import * as React from "react";
 
 import type { PitchingRole } from "@feat/gameplay/components/SubstitutionPanel";
 import { ContextValue, Strategy, useGameContext } from "@feat/gameplay/context/index";
+import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
+import {
+  DEFAULT_MANAGER_DECISION_VALUES,
+  sanitizeManagerDecisionValues,
+} from "@feat/gameplay/context/managerDecisionValues";
 import { useAutoPlayScheduler } from "@feat/gameplay/hooks/useAutoPlayScheduler";
 import { useGameAudio } from "@feat/gameplay/hooks/useGameAudio";
 import { useGameRefs } from "@feat/gameplay/hooks/useGameRefs";
@@ -36,6 +41,10 @@ export const useGameControls = ({
   const [managerMode, setManagerMode] = useLocalStorage("managerMode", false);
   const [strategy, setStrategy] = useLocalStorage<Strategy>("strategy", "balanced");
   const [managedTeam, setManagedTeam] = useLocalStorage<0 | 1>("managedTeam", 0);
+  const [rawDecisionValues, setRawDecisionValues] = useLocalStorage<Partial<ManagerDecisionValues>>(
+    "managerDecisionValues",
+    DEFAULT_MANAGER_DECISION_VALUES,
+  );
   // paused is session-only — no persistence needed. useState is guaranteed
   // reactive; useLocalStorage was unreliable here due to useSyncExternalStore
   // emitter timing in usehooks-ts v3.
@@ -54,6 +63,9 @@ export const useGameControls = ({
       : 1;
   const safeAlertVolume =
     typeof alertVolume === "number" && alertVolume >= 0 && alertVolume <= 1 ? alertVolume : 1;
+  const decisionValues: ManagerDecisionValues = sanitizeManagerDecisionValues(
+    rawDecisionValues ?? {},
+  );
 
   // Write back corrected values so localStorage self-heals on first bad render.
   React.useEffect(() => {
@@ -108,6 +120,7 @@ export const useGameControls = ({
     skipDecision,
     dispatchLog,
     allTeamPitcherRoles,
+    decisionValues,
   });
 
   useAutoPlayScheduler({
@@ -143,6 +156,17 @@ export const useGameControls = ({
     setAlertVolumeState,
   });
 
+  const setDecisionValues = React.useCallback(
+    (values: ManagerDecisionValues) => {
+      setRawDecisionValues(sanitizeManagerDecisionValues(values));
+    },
+    [setRawDecisionValues],
+  );
+
+  const resetDecisionValues = React.useCallback(() => {
+    setRawDecisionValues(DEFAULT_MANAGER_DECISION_VALUES);
+  }, [setRawDecisionValues]);
+
   return {
     dispatch,
     speed: safeSpeed,
@@ -157,6 +181,9 @@ export const useGameControls = ({
     setStrategy,
     managedTeam: safeManagedTeam,
     setManagedTeam,
+    decisionValues,
+    setDecisionValues,
+    resetDecisionValues,
     teams,
     gameOver,
     handlePitch,

@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { GameContext } from "@feat/gameplay/context/index";
+import { DEFAULT_MANAGER_DECISION_VALUES } from "@feat/gameplay/context/managerDecisionValues";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
@@ -39,10 +40,13 @@ describe("ManagerModeControls", () => {
     managedTeam: 0 as const,
     teams: ["Yankees", "Red Sox"],
     notifPermission: "granted" as NotificationPermission,
+    decisionValues: DEFAULT_MANAGER_DECISION_VALUES,
     onManagerModeChange: noop,
     onStrategyChange: noop,
     onManagedTeamChange: noop,
     onRequestNotifPermission: noop,
+    onDecisionValuesChange: noop,
+    onDecisionValuesReset: noop,
   };
 
   it("renders Manager Mode checkbox", () => {
@@ -165,5 +169,35 @@ describe("ManagerModeControls", () => {
       />,
     );
     expect(screen.queryByRole("button", { name: /substitution/i })).toBeNull();
+  });
+
+  it("shows Decision Tuning toggle when managerMode is true", () => {
+    render(<ManagerModeControls {...defaultProps} managerMode={true} />);
+    expect(screen.getByTestId("manager-decision-tuning-toggle")).toBeTruthy();
+  });
+
+  it("does not show Decision Tuning panel until toggle is clicked", () => {
+    render(<ManagerModeControls {...defaultProps} managerMode={true} />);
+    expect(screen.queryByTestId("manager-decision-tuning-panel")).toBeNull();
+  });
+
+  it("shows Decision Tuning panel after toggle is clicked", async () => {
+    render(<ManagerModeControls {...defaultProps} managerMode={true} />);
+    await userEvent.click(screen.getByTestId("manager-decision-tuning-toggle"));
+    expect(screen.getByTestId("manager-decision-tuning-panel")).toBeTruthy();
+  });
+
+  it("calls onDecisionValuesReset when reset button is clicked", async () => {
+    const onReset = vi.fn();
+    render(
+      <ManagerModeControls
+        {...defaultProps}
+        managerMode={true}
+        onDecisionValuesReset={onReset}
+      />,
+    );
+    await userEvent.click(screen.getByTestId("manager-decision-tuning-toggle"));
+    await userEvent.click(screen.getByTestId("manager-decision-tuning-reset"));
+    expect(onReset).toHaveBeenCalledOnce();
   });
 });

@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { makeState } from "@test/testHelpers";
 
+import { DEFAULT_MANAGER_DECISION_VALUES } from "@feat/gameplay/context/managerDecisionValues";
+
 import { usePitchDispatch } from "./usePitchDispatch";
 
 afterEach(() => vi.restoreAllMocks());
@@ -11,7 +13,8 @@ afterEach(() => vi.restoreAllMocks());
 describe("usePitchDispatch", () => {
   it("dispatches set_pending_decision when manager mode and decision available", () => {
     const dispatch = vi.fn();
-    const state = makeState({ baseLayout: [1, 0, 0], outs: 1, atBat: 0 });
+    // Bunt conditions: inning >= 6, runner on 1st, outs < 2, close game, balls <= 1
+    const state = makeState({ baseLayout: [1, 0, 0], outs: 0, atBat: 0, inning: 6, score: [0, 1] });
     vi.spyOn(rngModule, "random").mockReturnValue(0.5);
 
     const { result } = renderHook(() =>
@@ -476,6 +479,7 @@ describe("usePitchDispatch — AI defensive shift (no dead tick)", () => {
         skipDecision: false,
         dispatchLog: undefined,
         allTeamPitcherRoles: [{}, {}],
+        decisionValues: { ...DEFAULT_MANAGER_DECISION_VALUES, defensiveShiftEnabled: true },
       }),
     );
     act(() => {
@@ -498,6 +502,8 @@ describe("usePitchDispatch — skip decision", () => {
       outs: 0,
       balls: 0,
       strikes: 0,
+      inning: 6,
+      score: [0, 1], // close game (bunt conditions)
     });
 
     // First call with skipDecision=false should offer bunt
