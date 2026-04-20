@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { DEMO_TEAMS, type DemoPlayerDef } from "@feat/customTeams/generation/demoTeams";
+import { DEFAULT_PITCHING_STAMINA } from "@feat/customTeams/storage/customTeamSanitizers";
 import { CustomTeamStore } from "@feat/customTeams/storage/customTeamStore";
 import { appLog } from "@shared/utils/logger";
 
@@ -22,7 +23,12 @@ function mapDemoPlayer(p: DemoPlayerDef): TeamPlayer {
       id: generatePlayerId(),
       name: p.name,
       role: "pitcher",
-      pitching: p.pitching ?? { velocity: 50, control: 50, movement: 50, stamina: 50 },
+      pitching: p.pitching ?? {
+        velocity: 50,
+        control: 50,
+        movement: 50,
+        stamina: DEFAULT_PITCHING_STAMINA,
+      },
       position: p.position,
       handedness: p.handedness,
       ...(p.pitchingRole !== undefined && { pitchingRole: p.pitchingRole }),

@@ -86,7 +86,14 @@ export function useImportPlayerFile({
                   id: makePlayerId(),
                   name: importedPlayer.name,
                   role: "pitcher",
-                  position: importedPlayer.position ?? "",
+                  // Normalize legacy "P" position (and empty) to "SP"/"RP" so the
+                  // editor position <select> (which only has "SP"/"RP" options) is valid.
+                  position:
+                    !importedPlayer.position || importedPlayer.position === "P"
+                      ? importedPlayer.pitchingRole === "RP"
+                        ? "RP"
+                        : "SP"
+                      : importedPlayer.position,
                   handedness: importedPlayer.handedness ?? "R",
                   velocity: importedPlayer.pitching?.velocity ?? 60,
                   control: importedPlayer.pitching?.control ?? 60,

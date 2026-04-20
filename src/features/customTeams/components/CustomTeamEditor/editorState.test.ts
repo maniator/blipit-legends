@@ -624,6 +624,58 @@ describe("editorStateToCreateInput", () => {
     };
     expect(() => editorStateToCreateInput(state)).toThrow("Pitcher is missing pitching stats.");
   });
+
+  it("restricts pitcher position to SP or RP (never SP/RP) so the position select stays valid", () => {
+    // A swingman pitcher (no explicit position/pitchingRole) previously produced
+    // position: "SP/RP" which is not a valid PITCHER_POSITION_OPTIONS value.
+    const swingman = {
+      id: makePlayerId(),
+      name: "Swing Man",
+      role: "pitcher" as const,
+      position: "",
+      handedness: "R" as const,
+      velocity: 80,
+      control: 70,
+      movement: 65,
+      // no pitchingRole set — previously defaulted normalizedPitchingRole to "SP/RP"
+    };
+    const state = {
+      ...initEditorState(),
+      name: "Eagles",
+      abbreviation: "EAG",
+      lineup: [makePlayer()],
+      pitchers: [swingman],
+    };
+    const input = editorStateToCreateInput(state);
+    const p = input.roster.pitchers![0];
+    // position must be "SP" or "RP" — never "SP/RP"
+    expect(p.position).toBe("SP");
+    // pitchingRole carries the eligibility value
+    expect(p.pitchingRole).toBe("SP/RP");
+  });
+
+  it("keeps explicit SP/RP pitcher position as-is when trimmedPosition is SP or RP", () => {
+    const spPitcher = {
+      id: makePlayerId(),
+      name: "Starter",
+      role: "pitcher" as const,
+      position: "SP",
+      handedness: "L" as const,
+      velocity: 85,
+      control: 72,
+      movement: 68,
+    };
+    const state = {
+      ...initEditorState(),
+      name: "Eagles",
+      abbreviation: "EAG",
+      lineup: [makePlayer()],
+      pitchers: [spPitcher],
+    };
+    const input = editorStateToCreateInput(state);
+    const p = input.roster.pitchers![0];
+    expect(p.position).toBe("SP");
+  });
 });
 
 describe("editorReducer — additional cases", () => {

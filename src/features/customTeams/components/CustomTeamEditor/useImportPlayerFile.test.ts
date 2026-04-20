@@ -650,4 +650,60 @@ describe("useImportPlayerFile — role/section mismatch", () => {
     });
     expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: "SET_ERROR" }));
   });
+
+  it("normalizes legacy pitcher position 'P' to 'SP' on import", async () => {
+    // A legacy export with position:"P" must not reach the EditorPlayer as-is,
+    // because the pitcher position <select> only supports "SP" and "RP".
+    const pitcherJson = makePlayerJson({
+      role: "pitcher",
+      name: "Legacy Pos Pitcher",
+      position: "P",
+    });
+    _fileContent = pitcherJson;
+
+    const { result, dispatch } = renderImportHook();
+    act(() => {
+      result.current("pitchers")(makeChangeEvent(pitcherJson));
+    });
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "ADD_PLAYER", section: "pitchers" }),
+      );
+    });
+    // position must be "SP" or "RP" — never the legacy "P"
+    const addPlayerAction = (dispatch as ReturnType<typeof vi.fn>).mock.calls
+      .map((args: unknown[]) => args[0] as EditorAction)
+      .find((a) => a.type === "ADD_PLAYER") as
+      | Extract<EditorAction, { type: "ADD_PLAYER" }>
+      | undefined;
+    expect(addPlayerAction?.player?.position).toBe("SP");
+  });
+
+  it("normalizes legacy pitcher position 'P' to 'RP' when pitchingRole is RP", async () => {
+    const pitcherJson = makePlayerJson({
+      role: "pitcher",
+      name: "Legacy RP Pitcher",
+      position: "P",
+      pitchingRole: "RP",
+    });
+    _fileContent = pitcherJson;
+
+    const { result, dispatch } = renderImportHook();
+    act(() => {
+      result.current("pitchers")(makeChangeEvent(pitcherJson));
+    });
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "ADD_PLAYER", section: "pitchers" }),
+      );
+    });
+    const addPlayerAction = (dispatch as ReturnType<typeof vi.fn>).mock.calls
+      .map((args: unknown[]) => args[0] as EditorAction)
+      .find((a) => a.type === "ADD_PLAYER") as
+      | Extract<EditorAction, { type: "ADD_PLAYER" }>
+      | undefined;
+    expect(addPlayerAction?.player?.position).toBe("RP");
+  });
 });

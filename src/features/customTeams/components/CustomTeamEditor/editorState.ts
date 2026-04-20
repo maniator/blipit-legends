@@ -359,11 +359,16 @@ const editorToTeamPlayer = (p: EditorPlayer): TeamPlayer => {
       throw new Error("Pitcher is missing pitching stats.");
     }
 
+    // `position` must be "SP" or "RP" (the only values in PITCHER_POSITION_OPTIONS).
+    // `pitchingRole` is the eligibility field and may additionally be "SP/RP".
+    const normalizedPosition =
+      trimmedPosition === "SP" || trimmedPosition === "RP" ? trimmedPosition : "SP";
+
     return {
       id: p.id,
       name: p.name.trim(),
       role: "pitcher",
-      position: normalizedPitchingRole,
+      position: normalizedPosition,
       handedness: p.handedness,
       pitching: {
         velocity: p.velocity,
