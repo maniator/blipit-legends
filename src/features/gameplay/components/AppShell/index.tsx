@@ -101,6 +101,10 @@ const AppShell: React.FunctionComponent = () => {
     navigate("/contact");
   }, [navigate]);
 
+  const handleLeague = React.useCallback(() => {
+    navigate("/league");
+  }, [navigate]);
+
   const handleCareerStats = React.useCallback(() => {
     navigate("/stats");
   }, [navigate]);
@@ -129,8 +133,8 @@ const AppShell: React.FunctionComponent = () => {
       onBackToHome: handleBackToHome,
       hasActiveSession,
       onGameOver: handleGameOver,
-      onLeague: () => undefined,
-      hasLeague: false,
+      onLeague: handleLeague,
+      hasLeague: true,
     }),
     [
       handleStartFromExhibition,
@@ -147,6 +151,7 @@ const AppShell: React.FunctionComponent = () => {
       handleBackToHome,
       hasActiveSession,
       handleGameOver,
+      handleLeague,
     ],
   );
 

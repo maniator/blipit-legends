@@ -14,6 +14,8 @@ type Props = {
   onCareerStats?: () => void;
   /** When provided, shows a "Contact / Report Bug" button at the bottom of the menu. */
   onContact?: () => void;
+  /** When provided, shows a "League Mode" button. */
+  onLeague?: () => void;
 };
 
 const HomeScreen: React.FunctionComponent<Props> = ({
@@ -24,6 +26,7 @@ const HomeScreen: React.FunctionComponent<Props> = ({
   onHelp,
   onCareerStats,
   onContact,
+  onLeague,
 }) => (
   <HomeContainer data-testid="home-screen">
     <HomeLogo>
@@ -47,6 +50,11 @@ const HomeScreen: React.FunctionComponent<Props> = ({
           Career Stats
         </SecondaryBtn>
       )}
+      {onLeague && (
+        <SecondaryBtn onClick={onLeague} data-testid="home-league-button">
+          🏆 League Mode
+        </SecondaryBtn>
+      )}
       <SecondaryBtn onClick={onManageTeams} data-testid="home-manage-teams-button">
         Manage Teams
       </SecondaryBtn>
@@ -64,14 +72,16 @@ const HomeScreen: React.FunctionComponent<Props> = ({
         </>
       )}
     </MenuGroup>
-    <LeagueTeaserBox data-testid="league-play-teaser">
-      <LeagueTeaserTitle>
-        <span aria-hidden="true">🏆</span> League play coming soon
-      </LeagueTeaserTitle>
-      <LeagueTeaserSub>
-        Season schedules, standings, and playoffs are on the roadmap.
-      </LeagueTeaserSub>
-    </LeagueTeaserBox>
+    {!onLeague && (
+      <LeagueTeaserBox data-testid="league-play-teaser">
+        <LeagueTeaserTitle>
+          <span aria-hidden="true">🏆</span> League play coming soon
+        </LeagueTeaserTitle>
+        <LeagueTeaserSub>
+          Season schedules, standings, and playoffs are on the roadmap.
+        </LeagueTeaserSub>
+      </LeagueTeaserBox>
+    )}
     <Attribution>
       Created by <AttributionLink href="https://naftali.dev">naftali.dev</AttributionLink>
     </Attribution>

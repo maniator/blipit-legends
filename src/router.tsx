@@ -13,6 +13,8 @@ const ContactPage = React.lazy(() => import("@feat/contact/pages/ContactPage"));
 const ExhibitionSetupPage = React.lazy(() => import("@feat/exhibition/pages/ExhibitionSetupPage"));
 const GamePage = React.lazy(() => import("@feat/gameplay/pages/GamePage"));
 const HelpPage = React.lazy(() => import("@feat/help/pages/HelpPage"));
+const LeagueListPage = React.lazy(() => import("@feat/leagueMode/pages/LeagueListPage"));
+const LeagueSetupPage = React.lazy(() => import("@feat/leagueMode/pages/LeagueSetupPage"));
 const PlayerCareerPage = React.lazy(() => import("@feat/careerStats/pages/PlayerCareerPage"));
 const SavesPage = React.lazy(() => import("@feat/saves/pages/SavesPage"));
 
@@ -28,6 +30,7 @@ function HomeRoute() {
       onHelp={ctx.onHelp}
       onContact={ctx.onContact}
       onCareerStats={ctx.hasCareerStats ? ctx.onCareerStats : undefined}
+      onLeague={ctx.hasLeague ? ctx.onLeague : undefined}
     />
   );
 }
@@ -118,6 +121,22 @@ export const router = createBrowserRouter([
             element: (
               <React.Suspense fallback={null}>
                 <ExhibitionSetupPage />
+              </React.Suspense>
+            ),
+          },
+          {
+            path: "league",
+            element: (
+              <React.Suspense fallback={null}>
+                <LeagueListPage />
+              </React.Suspense>
+            ),
+          },
+          {
+            path: "league/new",
+            element: (
+              <React.Suspense fallback={null}>
+                <LeagueSetupPage />
               </React.Suspense>
             ),
           },
