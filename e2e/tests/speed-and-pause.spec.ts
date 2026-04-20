@@ -2,11 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { pauseGame, resumeGame, startGameViaPlayBall, waitForLogLines } from "../utils/helpers";
 
-test.describe("Speed slider", () => {
-  test.beforeEach(({}, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Speed slider tests run on desktop only");
-  });
-
+test.describe("Speed slider", { tag: "@desktop-only" }, () => {
   test("speed slider is visible during an active game", async ({ page }) => {
     await startGameViaPlayBall(page);
     const slider = page.getByTestId("speed-slider");
@@ -40,11 +36,7 @@ test.describe("Speed slider", () => {
   });
 });
 
-test.describe("Pause / play button", () => {
-  test.beforeEach(({}, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Pause/play tests run on desktop only");
-  });
-
+test.describe("Pause / play button", { tag: "@desktop-only" }, () => {
   test("pause button appears once game starts and is not shown before", async ({ page }) => {
     await startGameViaPlayBall(page);
     await expect(page.getByTestId("pause-play-button")).toBeVisible({ timeout: 10_000 });

@@ -97,13 +97,7 @@ async function setupLayout(page: Page, viewport: Viewport): Promise<void> {
   await pauseGame(page);
 }
 
-test.describe("Game layout snapshots", () => {
-  // All layout snapshot tests run on desktop Chromium only — viewport
-  // dimensions are overridden per-test, so the device preset is irrelevant.
-  test.beforeEach(async ({}, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Layout snapshots run on desktop project only");
-  });
-
+test.describe("Game layout snapshots", { tag: "@desktop-only" }, () => {
   test("game layout - mobile portrait (390×844)", async ({ page }) => {
     const vp: Viewport = { width: 390, height: 844 };
     await setupLayout(page, vp);

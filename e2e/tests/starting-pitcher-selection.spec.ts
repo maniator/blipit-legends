@@ -36,17 +36,13 @@ async function createAndSaveTeam(
   await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 10_000 });
 }
 
-test.describe("Starting pitcher selector — New Game dialog", () => {
+test.describe("Starting pitcher selector — New Game dialog", { tag: "@desktop-only" }, () => {
   test.beforeEach(async ({ page }) => {
     await resetAppState(page);
     await disableAnimations(page);
   });
 
-  test("pitcher selector is absent when no team is managed (just watch)", async ({
-    page,
-  }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Desktop-only");
-
+  test("pitcher selector is absent when no team is managed (just watch)", async ({ page }) => {
     await createAndSaveTeam(page, "SP Test Home 1");
     await createAndSaveTeam(page, "SP Test Away 1");
 
@@ -59,11 +55,7 @@ test.describe("Starting pitcher selector — New Game dialog", () => {
     await expect(page.getByTestId("starting-pitcher-select")).not.toBeVisible();
   });
 
-  test("pitcher selector appears for the managed team in a custom game", async ({
-    page,
-  }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Desktop-only");
-
+  test("pitcher selector appears for the managed team in a custom game", async ({ page }) => {
     await createAndSaveTeam(page, "SP Test Home 2");
     await createAndSaveTeam(page, "SP Test Away 2");
 
@@ -91,11 +83,7 @@ test.describe("Starting pitcher selector — New Game dialog", () => {
     }
   });
 
-  test("selecting a starter and starting the game applies the chosen pitcher", async ({
-    page,
-  }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Desktop-only");
-
+  test("selecting a starter and starting the game applies the chosen pitcher", async ({ page }) => {
     await createAndSaveTeam(page, "SP Apply Home");
     await createAndSaveTeam(page, "SP Apply Away");
 

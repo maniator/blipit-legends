@@ -7,16 +7,12 @@ import { expect, test } from "@playwright/test";
 
 import { computeSaveSignature, resetAppState } from "../utils/helpers";
 
-test.describe("Import Save — missing custom team rejection", () => {
+test.describe("Import Save — missing custom team rejection", { tag: "@desktop-only" }, () => {
   test.beforeEach(async ({ page }) => {
     await resetAppState(page);
   });
 
-  test("importing a save referencing a missing custom team shows an error", async ({
-    page,
-  }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Desktop-only");
-
+  test("importing a save referencing a missing custom team shows an error", async ({ page }) => {
     // Build a valid signed save JSON with a custom homeTeamId
     const saveDoc = {
       id: "save_e2e_missing_team",

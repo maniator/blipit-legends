@@ -39,7 +39,7 @@ function resignTeamsBundle(bundle: TeamsExportBundle) {
   return bundle;
 }
 
-test.describe("Custom Teams — Import/Export", () => {
+test.describe("Custom Teams — Import/Export", { tag: "@desktop-only" }, () => {
   test.beforeEach(async ({ page }) => {
     await resetAppState(page);
   });
@@ -47,8 +47,6 @@ test.describe("Custom Teams — Import/Export", () => {
   test("export-all button downloads a signed teams JSON file with player sigs", async ({
     page,
   }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Desktop-only");
-
     await page.getByTestId("home-manage-teams-button").click();
     await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
 
@@ -99,8 +97,6 @@ test.describe("Custom Teams — Import/Export", () => {
   test("per-team export button downloads a JSON file for that team only", async ({
     page,
   }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Desktop-only");
-
     await page.getByTestId("home-manage-teams-button").click();
     await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
 
@@ -127,8 +123,6 @@ test.describe("Custom Teams — Import/Export", () => {
   test("import teams from exported file — success message and new team visible in list", async ({
     page,
   }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Desktop-only");
-
     await page.getByTestId("home-manage-teams-button").click();
     await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
 
@@ -159,8 +153,6 @@ test.describe("Custom Teams — Import/Export", () => {
   test("re-importing the same team is silently skipped (no duplicate created)", async ({
     page,
   }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Desktop-only");
-
     await page.getByTestId("home-manage-teams-button").click();
     await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
 
@@ -193,8 +185,6 @@ test.describe("Custom Teams — Import/Export", () => {
   });
 
   test("import shows error for a file with wrong type", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Desktop-only");
-
     await page.getByTestId("home-manage-teams-button").click();
     await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
 
@@ -207,8 +197,6 @@ test.describe("Custom Teams — Import/Export", () => {
   });
 
   test("import rejects a file with a tampered bundle signature", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Desktop-only");
-
     await page.getByTestId("home-manage-teams-button").click();
     await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
 
@@ -239,8 +227,6 @@ test.describe("Custom Teams — Import/Export", () => {
   test("import backfills missing position/handedness and missing batting/pitching stamina defaults", async ({
     page,
   }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Desktop-only");
-
     await page.getByTestId("home-manage-teams-button").click();
     await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
 
@@ -293,7 +279,13 @@ test.describe("Custom Teams — Import/Export", () => {
   test("re-importing a compat-normalized team is skipped (no duplicate created)", async ({
     page,
   }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Desktop-only");
+    // This test covers the no-migration path: in a fresh E2E DB the legacy bundle is
+    // imported directly (no teamSeed), so the stored fingerprint is also seed-free.
+    // On re-import, the seed-free incoming fingerprint matches the seed-free stored
+    // fingerprint, so the skip is detected correctly.
+    // Note: after a v3 DB migration on a real install the stored fingerprint would
+    // be seed-based and re-import would NOT be detected as a duplicate — this is a
+    // known limitation documented in the importCustomTeams JSDoc.
 
     await page.getByTestId("home-manage-teams-button").click();
     await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
@@ -339,74 +331,77 @@ test.describe("Custom Teams — Import/Export", () => {
 
 // ── Cross-team player import blocked with owning-team message ─────────────────
 
-test.describe("Custom Team Editor — cross-team player import conflict", () => {
-  test.beforeEach(async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Desktop-only");
-    await resetAppState(page);
-  });
-
-  test("blocks cross-team player import with owning-team error message", async ({
-    page,
-  }, testInfo) => {
-    // ── Step 1: Create Team A and export one of its players ──────────────────
-    await page.getByTestId("home-manage-teams-button").click();
-    await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
-
-    await page.getByTestId("manage-teams-create-button").click();
-    await page.getByTestId("custom-team-regenerate-defaults-button").click();
-    await page.getByTestId("custom-team-name-input").fill("Team A");
-    await page.getByTestId("custom-team-save-button").click();
-    await expect(page.getByText("Team A")).toBeVisible({ timeout: 15_000 });
-
-    // Open Team A editor and export the first lineup player
-    await page.getByTestId("custom-team-edit-button").first().click();
-    await expect(page.getByTestId("custom-team-lineup-section")).toBeVisible({ timeout: 10_000 });
-    // Wait explicitly for the export button — this guarantees that Team A's
-    // players have been fully loaded from the DB into the editor state before
-    // we attempt to export.  On slow CI runners there is a brief window where
-    // the lineup section element is visible but the player rows (and their
-    // export buttons) have not yet rendered from the async DB hydration.
-    await expect(page.getByTestId("export-player-button").first()).toBeVisible({
-      timeout: 15_000,
+test.describe(
+  "Custom Team Editor — cross-team player import conflict",
+  { tag: "@desktop-only" },
+  () => {
+    test.beforeEach(async ({ page }) => {
+      await resetAppState(page);
     });
 
-    const downloadPromise = page.waitForEvent("download");
-    await page.getByTestId("export-player-button").first().click();
-    const download = await downloadPromise;
+    test("blocks cross-team player import with owning-team error message", async ({
+      page,
+    }, testInfo) => {
+      // ── Step 1: Create Team A and export one of its players ──────────────────
+      await page.getByTestId("home-manage-teams-button").click();
+      await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
 
-    const playerPath = path.join(testInfo.outputDir, "team-a-player.json");
-    await download.saveAs(playerPath);
+      await page.getByTestId("manage-teams-create-button").click();
+      await page.getByTestId("custom-team-regenerate-defaults-button").click();
+      await page.getByTestId("custom-team-name-input").fill("Team A");
+      await page.getByTestId("custom-team-save-button").click();
+      await expect(page.getByText("Team A")).toBeVisible({ timeout: 15_000 });
 
-    // ── Step 2: Navigate back and create Team B ──────────────────────────────
-    await page.getByTestId("manage-teams-editor-back-button").click();
-    await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
+      // Open Team A editor and export the first lineup player
+      await page.getByTestId("custom-team-edit-button").first().click();
+      await expect(page.getByTestId("custom-team-lineup-section")).toBeVisible({ timeout: 10_000 });
+      // Wait explicitly for the export button — this guarantees that Team A's
+      // players have been fully loaded from the DB into the editor state before
+      // we attempt to export.  On slow CI runners there is a brief window where
+      // the lineup section element is visible but the player rows (and their
+      // export buttons) have not yet rendered from the async DB hydration.
+      await expect(page.getByTestId("export-player-button").first()).toBeVisible({
+        timeout: 15_000,
+      });
 
-    await page.getByTestId("manage-teams-create-button").click();
-    await page.getByTestId("custom-team-regenerate-defaults-button").click();
-    await page.getByTestId("custom-team-name-input").fill("Team B");
-    await page.getByTestId("custom-team-save-button").click();
-    await expect(page.getByText("Team B")).toBeVisible({ timeout: 15_000 });
+      const downloadPromise = page.waitForEvent("download");
+      await page.getByTestId("export-player-button").first().click();
+      const download = await downloadPromise;
 
-    // Open Team B editor
-    // Find Team B's list item by text and click its edit button to avoid any
-    // sort-order ambiguity between Team A and Team B on slow CI runners
-    // (sorting by updatedAt desc can be non-deterministic when both timestamps
-    // are nearly equal).
-    await page
-      .getByTestId("custom-team-list-item")
-      .filter({ hasText: "Team B" })
-      .getByTestId("custom-team-edit-button")
-      .click();
-    await expect(page.getByTestId("custom-team-lineup-section")).toBeVisible({ timeout: 10_000 });
+      const playerPath = path.join(testInfo.outputDir, "team-a-player.json");
+      await download.saveAs(playerPath);
 
-    // ── Step 3: Attempt to import Team A's player into Team B ─────────────────
-    await page.getByTestId("import-lineup-player-input").setInputFiles(playerPath);
+      // ── Step 2: Navigate back and create Team B ──────────────────────────────
+      await page.getByTestId("manage-teams-editor-back-button").click();
+      await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
 
-    // Current UX uses a lineup-scoped duplicate confirmation banner naming Team A.
-    await expect(page.getByTestId("player-import-lineup-duplicate-banner")).toBeVisible({
-      timeout: 10_000,
+      await page.getByTestId("manage-teams-create-button").click();
+      await page.getByTestId("custom-team-regenerate-defaults-button").click();
+      await page.getByTestId("custom-team-name-input").fill("Team B");
+      await page.getByTestId("custom-team-save-button").click();
+      await expect(page.getByText("Team B")).toBeVisible({ timeout: 15_000 });
+
+      // Open Team B editor
+      // Find Team B's list item by text and click its edit button to avoid any
+      // sort-order ambiguity between Team A and Team B on slow CI runners
+      // (sorting by updatedAt desc can be non-deterministic when both timestamps
+      // are nearly equal).
+      await page
+        .getByTestId("custom-team-list-item")
+        .filter({ hasText: "Team B" })
+        .getByTestId("custom-team-edit-button")
+        .click();
+      await expect(page.getByTestId("custom-team-lineup-section")).toBeVisible({ timeout: 10_000 });
+
+      // ── Step 3: Attempt to import Team A's player into Team B ─────────────────
+      await page.getByTestId("import-lineup-player-input").setInputFiles(playerPath);
+
+      // Current UX uses a lineup-scoped duplicate confirmation banner naming Team A.
+      await expect(page.getByTestId("player-import-lineup-duplicate-banner")).toBeVisible({
+        timeout: 10_000,
+      });
+      const errText = await page.getByTestId("player-import-lineup-duplicate-banner").textContent();
+      expect(errText).toMatch(/may already exist on team "Team A"/i);
     });
-    const errText = await page.getByTestId("player-import-lineup-duplicate-banner").textContent();
-    expect(errText).toMatch(/may already exist on team "Team A"/i);
-  });
-});
+  },
+);

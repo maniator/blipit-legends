@@ -200,228 +200,230 @@ async function extractGameStats(page: import("@playwright/test").Page): Promise<
 test.describe("Metrics baseline — 200 games via Instant mode (desktop only)", () => {
   test.setTimeout(60 * 60 * 1000); // 60 minutes for 200 games
 
-  test("collect aggregate metrics across 200 seeded Instant-mode games", async ({
-    page,
-  }, testInfo) => {
-    // Desktop Chromium only — other projects would multiply CI time.
-    test.skip(testInfo.project.name !== "desktop", "Metrics baseline: desktop only");
+  test(
+    "collect aggregate metrics across 200 seeded Instant-mode games",
+    { tag: "@desktop-only" },
+    async ({ page }) => {
+      // Desktop Chromium only — other projects would multiply CI time.
+      // ── One-time setup ─────────────────────────────────────────────────────
+      // Configure localStorage before the app mounts so Instant mode and
+      // muted announcements are active from the very first navigation.
+      await page.addInitScript(() => {
+        localStorage.setItem("speed", "0"); // SPEED_INSTANT = 0
+        localStorage.setItem("announcementVolume", "0"); // mute TTS
+        localStorage.setItem("alertVolume", "0"); // mute alert sounds
+        localStorage.setItem("_e2eNoInningPause", "1"); // skip half-inning pause
+        localStorage.setItem("managerMode", "false"); // fully unmanaged
+      });
 
-    // ── One-time setup ─────────────────────────────────────────────────────
-    // Configure localStorage before the app mounts so Instant mode and
-    // muted announcements are active from the very first navigation.
-    await page.addInitScript(() => {
-      localStorage.setItem("speed", "0"); // SPEED_INSTANT = 0
-      localStorage.setItem("announcementVolume", "0"); // mute TTS
-      localStorage.setItem("alertVolume", "0"); // mute alert sounds
-      localStorage.setItem("_e2eNoInningPause", "1"); // skip half-inning pause
-      localStorage.setItem("managerMode", "false"); // fully unmanaged
-    });
+      // ── Console error/warning capture ──────────────────────────────────────
+      // Register before resetAppState/importTeamsFixture so initial app load,
+      // DB init, and fixture import errors are included in the final summary.
+      const consoleErrors: string[] = [];
+      const consoleWarnings: string[] = [];
+      page.on("console", (msg) => {
+        if (msg.type() === "error") consoleErrors.push(`[E] ${msg.text()}`);
+        else if (msg.type() === "warning") consoleWarnings.push(`[W] ${msg.text()}`);
+      });
+      // Also capture uncaught JS exceptions — these are emitted via 'pageerror',
+      // not 'console', so they would otherwise be missed.
+      page.on("pageerror", (err) => {
+        consoleErrors.push(`[PAGEERROR] ${err.message}`);
+      });
 
-    // ── Console error/warning capture ──────────────────────────────────────
-    // Register before resetAppState/importTeamsFixture so initial app load,
-    // DB init, and fixture import errors are included in the final summary.
-    const consoleErrors: string[] = [];
-    const consoleWarnings: string[] = [];
-    page.on("console", (msg) => {
-      if (msg.type() === "error") consoleErrors.push(`[E] ${msg.text()}`);
-      else if (msg.type() === "warning") consoleWarnings.push(`[W] ${msg.text()}`);
-    });
-    // Also capture uncaught JS exceptions — these are emitted via 'pageerror',
-    // not 'console', so they would otherwise be missed.
-    page.on("pageerror", (err) => {
-      consoleErrors.push(`[PAGEERROR] ${err.message}`);
-    });
+      await resetAppState(page);
+      await importTeamsFixture(page, "metrics-teams.json");
 
-    await resetAppState(page);
-    await importTeamsFixture(page, "metrics-teams.json");
-
-    // ── Build game list ─────────────────────────────────────────────────────
-    // 10 matchup combos × GAMES_PER_BLOCK seeds each = 200 games total.
-    const games: Array<{ away: string; home: string; seed: string }> = [];
-    for (const block of MATCHUP_BLOCKS) {
-      for (let g = 1; g <= GAMES_PER_BLOCK; g++) {
-        games.push({
-          away: block.away,
-          home: block.home,
-          seed: `${block.seedPrefix}g${g}`,
-        });
-      }
-    }
-
-    // ── Per-game loop ───────────────────────────────────────────────────────
-    let totalAB = 0;
-    let totalBB = 0;
-    let totalK = 0;
-    let totalH = 0;
-    let totalRuns = 0;
-    let gamesCompleted = 0;
-    const perGameRuns: number[] = [];
-
-    for (let i = 0; i < games.length; i++) {
-      const { away, home, seed } = games[i];
-
-      await page.goto("/exhibition/new");
-      await waitForNewGameDialog(page);
-
-      // Set matchup teams.
-      await page.getByTestId("new-game-custom-away-team-select").selectOption({ label: away });
-      await page.getByTestId("new-game-custom-home-team-select").selectOption({ label: home });
-
-      // Inject seed directly into React state via the fiber's onChange prop.
-      // This is more reliable than synthetic DOM events in fast-paced test loops.
-      const seedField = page.getByTestId("seed-input");
-      await seedField.evaluate((el: HTMLInputElement, value: string) => {
-        const nativeSetter = Object.getOwnPropertyDescriptor(
-          HTMLInputElement.prototype,
-          "value",
-        )!.set!;
-        nativeSetter.call(el, value);
-        const fk = Object.keys(el).find((k) => k.startsWith("__reactFiber"));
-        if (fk) {
-          const onChange = (
-            el as unknown as Record<
-              string,
-              { memoizedProps?: { onChange?: (e: { target: HTMLInputElement }) => void } }
-            >
-          )[fk]?.memoizedProps?.onChange;
-          if (onChange) {
-            onChange({ target: el });
-            return;
-          }
+      // ── Build game list ─────────────────────────────────────────────────────
+      // 10 matchup combos × GAMES_PER_BLOCK seeds each = 200 games total.
+      const games: Array<{ away: string; home: string; seed: string }> = [];
+      for (const block of MATCHUP_BLOCKS) {
+        for (let g = 1; g <= GAMES_PER_BLOCK; g++) {
+          games.push({
+            away: block.away,
+            home: block.home,
+            seed: `${block.seedPrefix}g${g}`,
+          });
         }
-        el.dispatchEvent(new Event("input", { bubbles: true }));
-      }, seed);
-      await page.waitForTimeout(100);
-
-      // Start the game.
-      await page.getByTestId("play-ball-button").click();
-      await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 15_000 });
-
-      // Wait for FINAL.
-      await waitForFinal(page, 90_000);
-
-      // Collect stats from batting-stats table and scoreboard.
-      const stats = await extractGameStats(page);
-      totalAB += stats.ab;
-      totalBB += stats.bb;
-      totalK += stats.k;
-      totalH += stats.h;
-      const runs = stats.awayScore + stats.homeScore;
-      totalRuns += runs;
-      perGameRuns.push(runs);
-      gamesCompleted++;
-
-      // Progress update every 10 games.
-      if ((i + 1) % 10 === 0) {
-        const pa = totalAB + totalBB;
-        const bbPctNow = pa > 0 ? ((totalBB / pa) * 100).toFixed(1) : "?";
-        console.log(
-          `  [${i + 1}/${games.length}] ${away}@${home} seed=${seed} ` +
-            `R=${stats.awayScore}-${stats.homeScore} runs=${runs} BB%=${bbPctNow}%`,
-        );
       }
-    }
 
-    // ── Aggregate reporting ─────────────────────────────────────────────────
-    const totalPA = totalAB + totalBB;
-    const bbPct = totalPA > 0 ? ((totalBB / totalPA) * 100).toFixed(1) : "N/A";
-    const kPct = totalPA > 0 ? ((totalK / totalPA) * 100).toFixed(1) : "N/A";
-    const hPerPA = totalPA > 0 ? (totalH / totalPA).toFixed(3) : "N/A";
-    const runsPerGame = (totalRuns / gamesCompleted).toFixed(1);
-    const bbPerGame = (totalBB / gamesCompleted).toFixed(1);
+      // ── Per-game loop ───────────────────────────────────────────────────────
+      let totalAB = 0;
+      let totalBB = 0;
+      let totalK = 0;
+      let totalH = 0;
+      let totalRuns = 0;
+      let gamesCompleted = 0;
+      const perGameRuns: number[] = [];
 
-    const sortedRuns = [...perGameRuns].sort((a, b) => a - b);
-    const medianRuns = sortedRuns[Math.floor(sortedRuns.length / 2)];
+      for (let i = 0; i < games.length; i++) {
+        const { away, home, seed } = games[i];
 
-    console.log("\n");
-    console.log("╔══════════════════════════════════════════════════════╗");
-    console.log("║  BROWSER-DRIVEN METRICS BASELINE                     ║");
-    console.log("╠══════════════════════════════════════════════════════╣");
-    console.log(`║  Games completed:   ${String(gamesCompleted).padEnd(33)}║`);
-    console.log(`║  Matchups:          10 combos × 5 teams (metrics-teams.json) ║`);
-    console.log(`║  Speed mode:        Instant (SPEED_INSTANT = 0)      ║`);
-    console.log(`║  Manager mode:      Off (fully unmanaged)             ║`);
-    console.log("╠══════════════════════════════════════════════════════╣");
-    console.log(`║  Total PA (exact):  ${String(totalPA).padEnd(33)}║`);
-    console.log(
-      `║  BB%:               ${bbPct}%${" ".repeat(Math.max(0, 35 - String(bbPct).length - 1))}║`,
-    );
-    console.log(
-      `║  K%:                ${kPct}%${" ".repeat(Math.max(0, 35 - String(kPct).length - 1))}║`,
-    );
-    console.log(
-      `║  H/PA:              ${hPerPA}${" ".repeat(Math.max(0, 35 - String(hPerPA).length))}║`,
-    );
-    console.log(
-      `║  BB/game:           ${bbPerGame}${" ".repeat(Math.max(0, 35 - String(bbPerGame).length))}║`,
-    );
-    console.log(
-      `║  Runs/game (mean):  ${runsPerGame}${" ".repeat(Math.max(0, 35 - String(runsPerGame).length))}║`,
-    );
-    console.log(`║  Runs/game (median):${String(medianRuns).padEnd(35)}║`);
-    console.log(`║  Total BB:          ${String(totalBB).padEnd(33)}║`);
-    console.log(`║  Total K:           ${String(totalK).padEnd(33)}║`);
-    console.log(`║  Total H:           ${String(totalH).padEnd(33)}║`);
-    console.log("╚══════════════════════════════════════════════════════╝");
-    console.log("\n");
+        await page.goto("/exhibition/new");
+        await waitForNewGameDialog(page);
 
-    // ── Console errors/warnings summary ─────────────────────────────────────
-    const knownNoise = [
-      "ERR_BLOCKED_BY_CLIENT", // GTM blocked by adblock — always present, harmless
-      "RxDB Open Core RxStorage", // RxDB premium upsell banner — expected noise
-      "useRxdbGameSync: failed to update progress", // expected local-only sync noise during Instant-mode runs
-    ];
-    const filteredErrors = consoleErrors.filter((m) => !knownNoise.some((n) => m.includes(n)));
-    const filteredWarnings = consoleWarnings.filter((m) => !knownNoise.some((n) => m.includes(n)));
-    const COL = 52; // inner content width (after 2-space prefix, before trailing ║)
-    if (filteredErrors.length > 0) {
+        // Set matchup teams.
+        await page.getByTestId("new-game-custom-away-team-select").selectOption({ label: away });
+        await page.getByTestId("new-game-custom-home-team-select").selectOption({ label: home });
+
+        // Inject seed directly into React state via the fiber's onChange prop.
+        // This is more reliable than synthetic DOM events in fast-paced test loops.
+        const seedField = page.getByTestId("seed-input");
+        await seedField.evaluate((el: HTMLInputElement, value: string) => {
+          const nativeSetter = Object.getOwnPropertyDescriptor(
+            HTMLInputElement.prototype,
+            "value",
+          )!.set!;
+          nativeSetter.call(el, value);
+          const fk = Object.keys(el).find((k) => k.startsWith("__reactFiber"));
+          if (fk) {
+            const onChange = (
+              el as unknown as Record<
+                string,
+                { memoizedProps?: { onChange?: (e: { target: HTMLInputElement }) => void } }
+              >
+            )[fk]?.memoizedProps?.onChange;
+            if (onChange) {
+              onChange({ target: el });
+              return;
+            }
+          }
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+        }, seed);
+        await page.waitForTimeout(100);
+
+        // Start the game.
+        await page.getByTestId("play-ball-button").click();
+        await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 15_000 });
+
+        // Wait for FINAL.
+        await waitForFinal(page, 90_000);
+
+        // Collect stats from batting-stats table and scoreboard.
+        const stats = await extractGameStats(page);
+        totalAB += stats.ab;
+        totalBB += stats.bb;
+        totalK += stats.k;
+        totalH += stats.h;
+        const runs = stats.awayScore + stats.homeScore;
+        totalRuns += runs;
+        perGameRuns.push(runs);
+        gamesCompleted++;
+
+        // Progress update every 10 games.
+        if ((i + 1) % 10 === 0) {
+          const pa = totalAB + totalBB;
+          const bbPctNow = pa > 0 ? ((totalBB / pa) * 100).toFixed(1) : "?";
+          console.log(
+            `  [${i + 1}/${games.length}] ${away}@${home} seed=${seed} ` +
+              `R=${stats.awayScore}-${stats.homeScore} runs=${runs} BB%=${bbPctNow}%`,
+          );
+        }
+      }
+
+      // ── Aggregate reporting ─────────────────────────────────────────────────
+      const totalPA = totalAB + totalBB;
+      const bbPct = totalPA > 0 ? ((totalBB / totalPA) * 100).toFixed(1) : "N/A";
+      const kPct = totalPA > 0 ? ((totalK / totalPA) * 100).toFixed(1) : "N/A";
+      const hPerPA = totalPA > 0 ? (totalH / totalPA).toFixed(3) : "N/A";
+      const runsPerGame = (totalRuns / gamesCompleted).toFixed(1);
+      const bbPerGame = (totalBB / gamesCompleted).toFixed(1);
+
+      const sortedRuns = [...perGameRuns].sort((a, b) => a - b);
+      const medianRuns = sortedRuns[Math.floor(sortedRuns.length / 2)];
+
+      console.log("\n");
       console.log("╔══════════════════════════════════════════════════════╗");
-      console.log("║  CONSOLE ERRORS (filtered) — WILL FAIL TEST          ║");
+      console.log("║  BROWSER-DRIVEN METRICS BASELINE                     ║");
       console.log("╠══════════════════════════════════════════════════════╣");
-      for (const msg of filteredErrors.slice(0, 20)) {
-        const truncated = msg.length > COL ? msg.slice(0, COL - 3) + "..." : msg;
-        console.log(`║  ${truncated.padEnd(COL)}║`);
-      }
-      if (filteredErrors.length > 20) {
-        const errorsSummary = `... and ${filteredErrors.length - 20} more errors`;
-        console.log(`║  ${errorsSummary.padEnd(COL)}║`);
-      }
+      console.log(`║  Games completed:   ${String(gamesCompleted).padEnd(33)}║`);
+      console.log(`║  Matchups:          10 combos × 5 teams (metrics-teams.json) ║`);
+      console.log(`║  Speed mode:        Instant (SPEED_INSTANT = 0)      ║`);
+      console.log(`║  Manager mode:      Off (fully unmanaged)             ║`);
+      console.log("╠══════════════════════════════════════════════════════╣");
+      console.log(`║  Total PA (exact):  ${String(totalPA).padEnd(33)}║`);
+      console.log(
+        `║  BB%:               ${bbPct}%${" ".repeat(Math.max(0, 35 - String(bbPct).length - 1))}║`,
+      );
+      console.log(
+        `║  K%:                ${kPct}%${" ".repeat(Math.max(0, 35 - String(kPct).length - 1))}║`,
+      );
+      console.log(
+        `║  H/PA:              ${hPerPA}${" ".repeat(Math.max(0, 35 - String(hPerPA).length))}║`,
+      );
+      console.log(
+        `║  BB/game:           ${bbPerGame}${" ".repeat(Math.max(0, 35 - String(bbPerGame).length))}║`,
+      );
+      console.log(
+        `║  Runs/game (mean):  ${runsPerGame}${" ".repeat(Math.max(0, 35 - String(runsPerGame).length))}║`,
+      );
+      console.log(`║  Runs/game (median):${String(medianRuns).padEnd(35)}║`);
+      console.log(`║  Total BB:          ${String(totalBB).padEnd(33)}║`);
+      console.log(`║  Total K:           ${String(totalK).padEnd(33)}║`);
+      console.log(`║  Total H:           ${String(totalH).padEnd(33)}║`);
       console.log("╚══════════════════════════════════════════════════════╝");
       console.log("\n");
-    }
-    if (filteredWarnings.length > 0) {
-      console.log("╔══════════════════════════════════════════════════════╗");
-      console.log("║  CONSOLE WARNINGS (filtered) — informational only    ║");
-      console.log("╠══════════════════════════════════════════════════════╣");
-      for (const msg of filteredWarnings.slice(0, 10)) {
-        const truncated = msg.length > COL ? msg.slice(0, COL - 3) + "..." : msg;
-        console.log(`║  ${truncated.padEnd(COL)}║`);
-      }
-      if (filteredWarnings.length > 10) {
-        const warningsSummary = `... and ${filteredWarnings.length - 10} more warnings`;
-        console.log(`║  ${warningsSummary.padEnd(COL)}║`);
-      }
-      console.log("╚══════════════════════════════════════════════════════╝");
-      console.log("\n");
-    }
-    if (filteredErrors.length === 0 && filteredWarnings.length === 0) {
-      console.log("ℹ️  No unexpected console errors or warnings.\n");
-    }
 
-    // Wide sanity bounds — passes in both pre- and post-tuning states.
-    // Tighten after post-tuning baseline is captured.
-    expect(gamesCompleted, "should have completed all games").toBe(games.length);
-    expect(totalBB, "should have recorded some walks").toBeGreaterThan(0);
-    expect(totalK, "should have recorded some strikeouts").toBeGreaterThan(0);
-    expect(Number(runsPerGame), "runs/game sanity").toBeGreaterThan(0);
-    expect(Number(bbPct), "BB% sanity — below 40%").toBeLessThan(40);
+      // ── Console errors/warnings summary ─────────────────────────────────────
+      const knownNoise = [
+        "ERR_BLOCKED_BY_CLIENT", // GTM blocked by adblock — always present, harmless
+        "RxDB Open Core RxStorage", // RxDB premium upsell banner — expected noise
+        "useRxdbGameSync: failed to update progress", // expected local-only sync noise during Instant-mode runs
+      ];
+      const filteredErrors = consoleErrors.filter((m) => !knownNoise.some((n) => m.includes(n)));
+      const filteredWarnings = consoleWarnings.filter(
+        (m) => !knownNoise.some((n) => m.includes(n)),
+      );
+      const COL = 52; // inner content width (after 2-space prefix, before trailing ║)
+      if (filteredErrors.length > 0) {
+        console.log("╔══════════════════════════════════════════════════════╗");
+        console.log("║  CONSOLE ERRORS (filtered) — WILL FAIL TEST          ║");
+        console.log("╠══════════════════════════════════════════════════════╣");
+        for (const msg of filteredErrors.slice(0, 20)) {
+          const truncated = msg.length > COL ? msg.slice(0, COL - 3) + "..." : msg;
+          console.log(`║  ${truncated.padEnd(COL)}║`);
+        }
+        if (filteredErrors.length > 20) {
+          const errorsSummary = `... and ${filteredErrors.length - 20} more errors`;
+          console.log(`║  ${errorsSummary.padEnd(COL)}║`);
+        }
+        console.log("╚══════════════════════════════════════════════════════╝");
+        console.log("\n");
+      }
+      if (filteredWarnings.length > 0) {
+        console.log("╔══════════════════════════════════════════════════════╗");
+        console.log("║  CONSOLE WARNINGS (filtered) — informational only    ║");
+        console.log("╠══════════════════════════════════════════════════════╣");
+        for (const msg of filteredWarnings.slice(0, 10)) {
+          const truncated = msg.length > COL ? msg.slice(0, COL - 3) + "..." : msg;
+          console.log(`║  ${truncated.padEnd(COL)}║`);
+        }
+        if (filteredWarnings.length > 10) {
+          const warningsSummary = `... and ${filteredWarnings.length - 10} more warnings`;
+          console.log(`║  ${warningsSummary.padEnd(COL)}║`);
+        }
+        console.log("╚══════════════════════════════════════════════════════╝");
+        console.log("\n");
+      }
+      if (filteredErrors.length === 0 && filteredWarnings.length === 0) {
+        console.log("ℹ️  No unexpected console errors or warnings.\n");
+      }
 
-    // Fail the run if there were actionable (non-noise) console errors or
-    // uncaught page exceptions — so metrics numbers are never accepted from a
-    // broken app state.
-    expect(
-      filteredErrors,
-      "unexpected console errors / pageerrors during metrics run (see box above)",
-    ).toHaveLength(0);
-  });
+      // Wide sanity bounds — passes in both pre- and post-tuning states.
+      // Tighten after post-tuning baseline is captured.
+      expect(gamesCompleted, "should have completed all games").toBe(games.length);
+      expect(totalBB, "should have recorded some walks").toBeGreaterThan(0);
+      expect(totalK, "should have recorded some strikeouts").toBeGreaterThan(0);
+      expect(Number(runsPerGame), "runs/game sanity").toBeGreaterThan(0);
+      expect(Number(bbPct), "BB% sanity — below 40%").toBeLessThan(40);
+
+      // Fail the run if there were actionable (non-noise) console errors or
+      // uncaught page exceptions — so metrics numbers are never accepted from a
+      // broken app state.
+      expect(
+        filteredErrors,
+        "unexpected console errors / pageerrors during metrics run (see box above)",
+      ).toHaveLength(0);
+    },
+  );
 });

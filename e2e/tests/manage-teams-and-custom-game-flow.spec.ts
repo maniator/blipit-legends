@@ -342,61 +342,62 @@ test.describe("Label resolution — no raw IDs in any user-facing surface", () =
     await resetAppState(page);
   });
 
-  test("custom team game: scoreboard, log, and saves list show friendly names (no raw IDs)", async ({
-    page,
-  }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Runs on desktop only");
-    test.setTimeout(90_000);
+  test(
+    "custom team game: scoreboard, log, and saves list show friendly names (no raw IDs)",
+    { tag: "@desktop-only" },
+    async ({ page }) => {
+      test.setTimeout(90_000);
 
-    // Create two custom teams.
-    await page.getByTestId("home-manage-teams-button").click();
+      // Create two custom teams.
+      await page.getByTestId("home-manage-teams-button").click();
 
-    await page.getByTestId("manage-teams-create-button").click();
-    await page.getByTestId("custom-team-regenerate-defaults-button").click();
-    await page.getByTestId("custom-team-name-input").fill("Golden Foxes");
-    await page.getByTestId("custom-team-save-button").click();
-    await expect(page.getByText("Golden Foxes")).toBeVisible({ timeout: 15_000 });
+      await page.getByTestId("manage-teams-create-button").click();
+      await page.getByTestId("custom-team-regenerate-defaults-button").click();
+      await page.getByTestId("custom-team-name-input").fill("Golden Foxes");
+      await page.getByTestId("custom-team-save-button").click();
+      await expect(page.getByText("Golden Foxes")).toBeVisible({ timeout: 15_000 });
 
-    await page.getByTestId("manage-teams-create-button").click();
-    await page.getByTestId("custom-team-regenerate-defaults-button").click();
-    await page.getByTestId("custom-team-name-input").fill("Silver Bears");
-    await page.getByTestId("custom-team-save-button").click();
-    await expect(page.getByText("Silver Bears")).toBeVisible({ timeout: 15_000 });
+      await page.getByTestId("manage-teams-create-button").click();
+      await page.getByTestId("custom-team-regenerate-defaults-button").click();
+      await page.getByTestId("custom-team-name-input").fill("Silver Bears");
+      await page.getByTestId("custom-team-save-button").click();
+      await expect(page.getByText("Silver Bears")).toBeVisible({ timeout: 15_000 });
 
-    // Start a game with the two custom teams.
-    await page.getByTestId("manage-teams-back-button").click();
-    await page.getByTestId("home-new-game-button").click();
-    await expect(page.getByTestId("exhibition-setup-page")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByTestId("new-game-custom-away-team-select")).toBeVisible({
-      timeout: 15_000,
-    });
-    await page.getByTestId("play-ball-button").click();
-    await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 10_000 });
+      // Start a game with the two custom teams.
+      await page.getByTestId("manage-teams-back-button").click();
+      await page.getByTestId("home-new-game-button").click();
+      await expect(page.getByTestId("exhibition-setup-page")).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByTestId("new-game-custom-away-team-select")).toBeVisible({
+        timeout: 15_000,
+      });
+      await page.getByTestId("play-ball-button").click();
+      await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 10_000 });
 
-    // Wait for several play-by-play entries so the log is populated.
-    await waitForLogLines(page, 5, 30_000);
+      // Wait for several play-by-play entries so the log is populated.
+      await waitForLogLines(page, 5, 30_000);
 
-    // Check scoreboard, log, and hit-log for raw IDs.
-    await expectNoRawIdsVisible(page);
+      // Check scoreboard, log, and hit-log for raw IDs.
+      await expectNoRawIdsVisible(page);
 
-    // Save the game then check the saves list entry name is also friendly.
-    await saveCurrentGame(page);
-    const savesModal = page.getByTestId("saves-modal");
-    const saveName = await savesModal
-      .locator("[data-testid='saves-list-item']")
-      .first()
-      .textContent();
-    expect(saveName ?? "").not.toMatch(/custom:|ct_[a-z0-9]/i);
+      // Save the game then check the saves list entry name is also friendly.
+      await saveCurrentGame(page);
+      const savesModal = page.getByTestId("saves-modal");
+      const saveName = await savesModal
+        .locator("[data-testid='saves-list-item']")
+        .first()
+        .textContent();
+      expect(saveName ?? "").not.toMatch(/custom:|ct_[a-z0-9]/i);
 
-    // Also check on the /saves page after navigating there.
-    await page.getByTestId("saves-modal-close-button").click();
-    await page.getByTestId("back-to-home-button").click();
-    await page.getByTestId("home-load-saves-button").click();
-    await expect(page.getByTestId("saves-page")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText("Loading saves…")).not.toBeVisible({ timeout: 15_000 });
-    const savesPageName = await page.getByTestId("saves-list-item").first().textContent();
-    expect(savesPageName ?? "").not.toMatch(/custom:|ct_[a-z0-9]/i);
-  });
+      // Also check on the /saves page after navigating there.
+      await page.getByTestId("saves-modal-close-button").click();
+      await page.getByTestId("back-to-home-button").click();
+      await page.getByTestId("home-load-saves-button").click();
+      await expect(page.getByTestId("saves-page")).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText("Loading saves…")).not.toBeVisible({ timeout: 15_000 });
+      const savesPageName = await page.getByTestId("saves-list-item").first().textContent();
+      expect(savesPageName ?? "").not.toMatch(/custom:|ct_[a-z0-9]/i);
+    },
+  );
 });
 
 // ── Issue §4: import teams → start game → save → load ──────────────────────
@@ -406,69 +407,69 @@ test.describe("Custom Team Import — start game → save → load flow", () => 
     await resetAppState(page);
   });
 
-  test("import a team via file, start an exhibition game, save it, then reload it", async ({
-    page,
-  }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Desktop-only");
+  test(
+    "import a team via file, start an exhibition game, save it, then reload it",
+    { tag: "@desktop-only" },
+    async ({ page }, testInfo) => {
+      // Step 1: Create a team and export it.
+      await page.getByTestId("home-manage-teams-button").click();
+      await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
 
-    // Step 1: Create a team and export it.
-    await page.getByTestId("home-manage-teams-button").click();
-    await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
+      await page.getByTestId("manage-teams-create-button").click();
+      await page.getByTestId("custom-team-regenerate-defaults-button").click();
+      await page.getByTestId("custom-team-name-input").fill("Import Flow Home");
+      await page.getByTestId("custom-team-save-button").click();
+      await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
 
-    await page.getByTestId("manage-teams-create-button").click();
-    await page.getByTestId("custom-team-regenerate-defaults-button").click();
-    await page.getByTestId("custom-team-name-input").fill("Import Flow Home");
-    await page.getByTestId("custom-team-save-button").click();
-    await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
+      await page.getByTestId("manage-teams-create-button").click();
+      await page.getByTestId("custom-team-regenerate-defaults-button").click();
+      await page.getByTestId("custom-team-name-input").fill("Import Flow Away");
+      await page.getByTestId("custom-team-save-button").click();
+      await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
 
-    await page.getByTestId("manage-teams-create-button").click();
-    await page.getByTestId("custom-team-regenerate-defaults-button").click();
-    await page.getByTestId("custom-team-name-input").fill("Import Flow Away");
-    await page.getByTestId("custom-team-save-button").click();
-    await expect(page.getByTestId("manage-teams-screen")).toBeVisible({ timeout: 10_000 });
+      const downloadPromise = page.waitForEvent("download");
+      await page.getByTestId("export-all-teams-button").click();
+      const download = await downloadPromise;
+      const tmpPath = path.join(testInfo.outputDir, "import-flow-teams.json");
+      await download.saveAs(tmpPath);
 
-    const downloadPromise = page.waitForEvent("download");
-    await page.getByTestId("export-all-teams-button").click();
-    const download = await downloadPromise;
-    const tmpPath = path.join(testInfo.outputDir, "import-flow-teams.json");
-    await download.saveAs(tmpPath);
+      // Step 2: Delete both teams and re-import from file.
+      for (let i = 0; i < 2; i++) {
+        page.once("dialog", (d) => d.accept());
+        await page.getByTestId("custom-team-delete-button").first().click();
+        await page.waitForTimeout(300);
+      }
+      await expect(page.getByText(/no custom teams yet/i)).toBeVisible({ timeout: 15_000 });
 
-    // Step 2: Delete both teams and re-import from file.
-    for (let i = 0; i < 2; i++) {
-      page.once("dialog", (d) => d.accept());
-      await page.getByTestId("custom-team-delete-button").first().click();
-      await page.waitForTimeout(300);
-    }
-    await expect(page.getByText(/no custom teams yet/i)).toBeVisible({ timeout: 15_000 });
+      await page.getByTestId("import-teams-file-input").setInputFiles(tmpPath);
+      await expect(page.getByTestId("import-teams-success")).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByTestId("custom-team-list")).toBeVisible({ timeout: 15_000 });
 
-    await page.getByTestId("import-teams-file-input").setInputFiles(tmpPath);
-    await expect(page.getByTestId("import-teams-success")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByTestId("custom-team-list")).toBeVisible({ timeout: 15_000 });
+      // Step 3: Start an exhibition game using the imported teams.
+      await page.getByTestId("manage-teams-back-button").click();
+      await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
+      await startGameViaPlayBall(page);
+      await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 10_000 });
+      await waitForLogLines(page, 3, 30_000);
 
-    // Step 3: Start an exhibition game using the imported teams.
-    await page.getByTestId("manage-teams-back-button").click();
-    await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
-    await startGameViaPlayBall(page);
-    await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 10_000 });
-    await waitForLogLines(page, 3, 30_000);
+      // Step 4: Save the game.
+      await saveCurrentGame(page);
+      await page.getByTestId("saves-modal-close-button").click();
 
-    // Step 4: Save the game.
-    await saveCurrentGame(page);
-    await page.getByTestId("saves-modal-close-button").click();
+      // Step 5: Go back to home, navigate to saves, and load the save.
+      await page.getByTestId("back-to-home-button").click();
+      await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
+      await page.getByTestId("home-load-saves-button").click();
+      await expect(page.getByTestId("saves-page")).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText("Loading saves…")).not.toBeVisible({ timeout: 15_000 });
 
-    // Step 5: Go back to home, navigate to saves, and load the save.
-    await page.getByTestId("back-to-home-button").click();
-    await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
-    await page.getByTestId("home-load-saves-button").click();
-    await expect(page.getByTestId("saves-page")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText("Loading saves…")).not.toBeVisible({ timeout: 15_000 });
+      const loadBtn = page.getByTestId("load-save-button").first();
+      await expect(loadBtn).toBeVisible({ timeout: 15_000 });
+      await loadBtn.click();
 
-    const loadBtn = page.getByTestId("load-save-button").first();
-    await expect(loadBtn).toBeVisible({ timeout: 15_000 });
-    await loadBtn.click();
-
-    // Game should be restored and playable.
-    await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 10_000 });
-    await expectNoRawIdsVisible(page);
-  });
+      // Game should be restored and playable.
+      await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 10_000 });
+      await expectNoRawIdsVisible(page);
+    },
+  );
 });

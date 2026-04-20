@@ -63,30 +63,30 @@ test.describe("Visual", () => {
    * <details> element and then wait until all 9 sections are structurally
    * open before snapshotting.
    */
-  test("How to Play modal all sections expanded screenshot", async ({ page }, testInfo) => {
-    test.skip(
-      testInfo.project.name !== "desktop",
-      "All sections expanded snapshot is desktop-only",
-    );
-    // Start a game to reach /game where the How to Play button is available.
-    await startGameViaPlayBall(page, { seed: "howtoplay2" });
-    await page.getByRole("button", { name: /how to play/i }).click();
-    await expect(page.getByTestId("instructions-modal")).toBeVisible();
-    // Use Playwright clicks (correct screen coordinates) so the dialog's
-    // outside-click handler doesn't close it due to clientX/Y = 0.
-    const closedSummaries = page.locator(
-      '[data-testid="instructions-modal"] details:not([open]) > summary',
-    );
-    while ((await closedSummaries.count()) > 0) {
-      await closedSummaries.first().click();
-    }
-    // Wait until all 9 sections are structurally open before snapshotting.
-    await expect(page.locator('[data-testid="instructions-modal"] details[open]')).toHaveCount(9);
-    await expect(page.getByTestId("instructions-modal")).toHaveScreenshot(
-      "instructions-modal-all-sections.png",
-      { maxDiffPixelRatio: 0.05 },
-    );
-  });
+  test(
+    "How to Play modal all sections expanded screenshot",
+    { tag: "@desktop-only" },
+    async ({ page }) => {
+      // Start a game to reach /game where the How to Play button is available.
+      await startGameViaPlayBall(page, { seed: "howtoplay2" });
+      await page.getByRole("button", { name: /how to play/i }).click();
+      await expect(page.getByTestId("instructions-modal")).toBeVisible();
+      // Use Playwright clicks (correct screen coordinates) so the dialog's
+      // outside-click handler doesn't close it due to clientX/Y = 0.
+      const closedSummaries = page.locator(
+        '[data-testid="instructions-modal"] details:not([open]) > summary',
+      );
+      while ((await closedSummaries.count()) > 0) {
+        await closedSummaries.first().click();
+      }
+      // Wait until all 9 sections are structurally open before snapshotting.
+      await expect(page.locator('[data-testid="instructions-modal"] details[open]')).toHaveCount(9);
+      await expect(page.getByTestId("instructions-modal")).toHaveScreenshot(
+        "instructions-modal-all-sections.png",
+        { maxDiffPixelRatio: 0.05 },
+      );
+    },
+  );
 });
 
 // ─── Help page (/help) ─────────────────────────────────────────────────────
@@ -101,9 +101,7 @@ test.describe("Visual — Help page", () => {
     await disableAnimations(page);
   });
 
-  test("help page screenshot (desktop)", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Help page snapshot is desktop-only");
-
+  test("help page screenshot (desktop)", { tag: "@desktop-only" }, async ({ page }) => {
     await page.getByTestId("home-help-button").click();
     await expect(page.getByTestId("help-page")).toBeVisible({ timeout: 10_000 });
 
@@ -116,9 +114,7 @@ test.describe("Visual — Help page", () => {
    * iphone-15 representative: confirms the help page is readable and
    * the Back button is not obscured on narrow viewports.
    */
-  test("help page screenshot (iphone-15)", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "iphone-15", "Help page mobile snapshot is iphone-15 only");
-
+  test("help page screenshot (iphone-15)", { tag: "@iphone-15-only" }, async ({ page }) => {
     await page.getByTestId("home-help-button").click();
     await expect(page.getByTestId("help-page")).toBeVisible({ timeout: 10_000 });
 
@@ -139,28 +135,29 @@ test.describe("Visual — Help page", () => {
    * Visual diff failures here most likely indicate a CSS regression in
    * PageContainer mobile styles (flex-shrink / overflow-y).
    */
-  test("help page all sections expanded screenshot (iphone-15)", async ({ page }, testInfo) => {
-    test.skip(
-      testInfo.project.name !== "iphone-15",
-      "Help page expanded sections snapshot is iphone-15 only",
-    );
+  test(
+    "help page all sections expanded screenshot (iphone-15)",
+    { tag: "@iphone-15-only" },
+    async ({ page }) => {
+      await page.getByTestId("home-help-button").click();
+      await expect(page.getByTestId("help-page")).toBeVisible({ timeout: 10_000 });
 
-    await page.getByTestId("home-help-button").click();
-    await expect(page.getByTestId("help-page")).toBeVisible({ timeout: 10_000 });
+      // Expand every closed section.
+      const closedSummaries = page.locator(
+        '[data-testid="help-page"] details:not([open]) > summary',
+      );
+      while ((await closedSummaries.count()) > 0) {
+        await closedSummaries.first().click();
+      }
+      await expect(page.locator('[data-testid="help-page"] details[open]')).toHaveCount(9);
 
-    // Expand every closed section.
-    const closedSummaries = page.locator('[data-testid="help-page"] details:not([open]) > summary');
-    while ((await closedSummaries.count()) > 0) {
-      await closedSummaries.first().click();
-    }
-    await expect(page.locator('[data-testid="help-page"] details[open]')).toHaveCount(9);
-
-    // Snapshot at the initial scroll position (top of page).
-    await expect(page.getByTestId("help-page")).toHaveScreenshot(
-      "help-page-mobile-all-sections.png",
-      { maxDiffPixelRatio: 0.05 },
-    );
-  });
+      // Snapshot at the initial scroll position (top of page).
+      await expect(page.getByTestId("help-page")).toHaveScreenshot(
+        "help-page-mobile-all-sections.png",
+        { maxDiffPixelRatio: 0.05 },
+      );
+    },
+  );
 });
 
 // ─── Saves page (/saves) ──────────────────────────────────────────────────
@@ -175,37 +172,38 @@ test.describe("Visual — Saves page", () => {
     await disableAnimations(page);
   });
 
-  test("saves page empty state screenshot (desktop)", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "Saves page snapshot is desktop-only");
+  test(
+    "saves page empty state screenshot (desktop)",
+    { tag: "@desktop-only" },
+    async ({ page }) => {
+      await page.getByTestId("home-load-saves-button").click();
+      await expect(page.getByTestId("saves-page")).toBeVisible({ timeout: 10_000 });
+      // Wait for loading indicator to clear
+      await expect(page.getByText("Loading saves…")).not.toBeVisible({ timeout: 5_000 });
 
-    await page.getByTestId("home-load-saves-button").click();
-    await expect(page.getByTestId("saves-page")).toBeVisible({ timeout: 10_000 });
-    // Wait for loading indicator to clear
-    await expect(page.getByText("Loading saves…")).not.toBeVisible({ timeout: 5_000 });
-
-    await expect(page.getByTestId("saves-page")).toHaveScreenshot("saves-page-empty.png", {
-      maxDiffPixelRatio: 0.05,
-    });
-  });
+      await expect(page.getByTestId("saves-page")).toHaveScreenshot("saves-page-empty.png", {
+        maxDiffPixelRatio: 0.05,
+      });
+    },
+  );
 
   /**
    * iphone-15 representative: confirms the page header and back button
    * fit without overflow on narrow viewports.
    */
-  test("saves page empty state screenshot (iphone-15)", async ({ page }, testInfo) => {
-    test.skip(
-      testInfo.project.name !== "iphone-15",
-      "Saves page mobile snapshot is iphone-15 only",
-    );
+  test(
+    "saves page empty state screenshot (iphone-15)",
+    { tag: "@iphone-15-only" },
+    async ({ page }) => {
+      await page.getByTestId("home-load-saves-button").click();
+      await expect(page.getByTestId("saves-page")).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText("Loading saves…")).not.toBeVisible({ timeout: 5_000 });
 
-    await page.getByTestId("home-load-saves-button").click();
-    await expect(page.getByTestId("saves-page")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText("Loading saves…")).not.toBeVisible({ timeout: 5_000 });
-
-    await expect(page.getByTestId("saves-page")).toHaveScreenshot("saves-page-empty-mobile.png", {
-      maxDiffPixelRatio: 0.05,
-    });
-  });
+      await expect(page.getByTestId("saves-page")).toHaveScreenshot("saves-page-empty-mobile.png", {
+        maxDiffPixelRatio: 0.05,
+      });
+    },
+  );
 });
 
 // ─── Home page — League play teaser ──────────────────────────────────────────
@@ -213,9 +211,8 @@ test.describe("Visual — Saves page", () => {
  * Desktop-only snapshot that captures the "League play coming soon" teaser
  * that appears on the Home screen below the main menu.
  */
-test.describe("Visual — Home League teaser", () => {
-  test("home screen with league teaser (desktop)", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "League teaser snapshot is desktop-only");
+test.describe("Visual — Home League teaser", { tag: "@desktop-only" }, () => {
+  test("home screen with league teaser (desktop)", async ({ page }) => {
     await resetAppState(page);
     await disableAnimations(page);
     await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
@@ -232,9 +229,8 @@ test.describe("Visual — Home League teaser", () => {
  * pre-populated by the auto-generation on mount.  The seed value itself is
  * masked (it changes every run) but the field must be non-empty.
  */
-test.describe("Visual — New Game seed auto-generated", () => {
-  test("New Game page with auto-generated seed (desktop)", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "New Game seed snapshot is desktop-only");
+test.describe("Visual — New Game seed auto-generated", { tag: "@desktop-only" }, () => {
+  test("New Game page with auto-generated seed (desktop)", async ({ page }) => {
     await resetAppState(page);
     await disableAnimations(page);
     await waitForNewGameDialog(page);

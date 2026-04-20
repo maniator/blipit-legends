@@ -69,6 +69,8 @@ Before starting any task, check whether it belongs to a specialist agent. The ta
 | E2E test authoring, fixture creation, visual snapshot regeneration                                                                                                                          | `@e2e-test-runner`        |
 | Live QA against production site (blipit.net)                                                                                                                                                | `@playwright-prod`        |
 
+**Workflow + E2E execution rule:** If a `@ci-workflow` task includes running or validating Playwright tests, route execution to `@e2e-test-runner` and keep `@ci-workflow` focused on workflow/YAML changes.
+
 **Routing sequence for mixed tasks:** route to `@pm-agent` first for a plan + risk review, then route to the specialist execution agent named in the plan.
 
 ---
