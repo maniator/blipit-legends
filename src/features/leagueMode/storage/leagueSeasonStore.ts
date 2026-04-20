@@ -45,6 +45,16 @@ export function buildLeagueSeasonStore(getDbFn: GetDb) {
     async getActiveSeasonForLeague(leagueId: string): Promise<LeagueSeasonRecord | null> {
       const db = await getDbFn();
       const docs = await db.leagueSeasons.find({ selector: { leagueId, status: "active" } }).exec();
+      if (docs.length > 1) {
+        // Data integrity invariant: at most one active season per league.
+        // Log and return the most recently updated one to fail gracefully.
+        const sorted = [...docs].sort((a, b) => b.updatedAt - a.updatedAt);
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[leagueSeasonStore] Data integrity warning: ${docs.length} active seasons found for league ${leagueId}. Returning most recently updated.`,
+        );
+        return sorted[0].toJSON() as unknown as LeagueSeasonRecord;
+      }
       return docs[0] ? (docs[0].toJSON() as unknown as LeagueSeasonRecord) : null;
     },
 
