@@ -17,26 +17,46 @@ const DEFAULT_BATTER_POSITION = "DH";
 const DEFAULT_PITCHER_POSITION = "RP";
 const DEFAULT_HANDEDNESS = "R" as const;
 
+/**
+ * Returned by `importPlayerIntoTeam` when the player's role does not match the target
+ * section (e.g. a pitcher placed in "lineup"/"bench", or a non-pitcher in "pitchers").
+ * Callers (e.g. `CustomTeamStore.importPlayer`) should convert this to an appropriate
+ * error — it represents an API contract violation, not a user-facing conflict.
+ */
+export type ImportPlayerSectionMismatchResult = {
+  status: "sectionMismatch";
+  message: string;
+};
+
 function normalizeImportedPlayer(
   player: TeamPlayer,
   section: "lineup" | "bench" | "pitchers",
 ): TeamPlayer {
   const isPitcher = player.role === "pitcher";
-  const rawPosition = typeof player.position === "string" ? player.position.trim() : "";
+
+  // Cast to unknown for runtime type-narrowing of untrusted import data.
+  // Position is only backfilled when it is absent (undefined) or empty string.
+  // Non-string, non-empty values (e.g. a number) are passed through unchanged so
+  // sanitizePlayer receives them and generates a descriptive type error rather than
+  // silently replacing the value.
+  const positionRaw = player.position as unknown;
+  const isBackfillCase = positionRaw === undefined || positionRaw === "";
+  const rawTrimmed =
+    typeof positionRaw === "string" && positionRaw.trim() !== "" ? positionRaw.trim() : undefined;
   const normalizedPitcherPosition =
-    rawPosition.length === 0 || rawPosition === "P"
-      ? player.role === "pitcher" && player.pitchingRole === "SP"
-        ? "SP"
-        : DEFAULT_PITCHER_POSITION
-      : rawPosition;
-  const normalizedPosition =
-    rawPosition.length === 0
-      ? isPitcher || section === "pitchers"
-        ? normalizedPitcherPosition
-        : DEFAULT_BATTER_POSITION
-      : rawPosition === "P" && (isPitcher || section === "pitchers")
-        ? normalizedPitcherPosition
-        : player.position;
+    player.role === "pitcher" && player.pitchingRole === "SP" ? "SP" : DEFAULT_PITCHER_POSITION;
+
+  let normalizedPosition: unknown;
+  if (isBackfillCase) {
+    normalizedPosition =
+      isPitcher || section === "pitchers" ? normalizedPitcherPosition : DEFAULT_BATTER_POSITION;
+  } else if (rawTrimmed === "P" && (isPitcher || section === "pitchers")) {
+    // Legacy "P" → normalize to an editor-compatible value.
+    normalizedPosition = normalizedPitcherPosition;
+  } else {
+    // Pass through as-is (including non-string values so sanitizePlayer can reject them).
+    normalizedPosition = positionRaw;
+  }
   const normalizedHandedness =
     player.handedness === undefined ? DEFAULT_HANDEDNESS : player.handedness;
 
@@ -45,7 +65,9 @@ function normalizeImportedPlayer(
       typeof player.pitching === "object" && player.pitching !== null ? player.pitching : undefined;
     return {
       ...player,
-      position: normalizedPosition,
+      // Cast needed: normalizedPosition may be a non-string value from untrusted import data;
+      // sanitizePlayer will validate and reject it with a descriptive error if so.
+      position: normalizedPosition as string,
       handedness: normalizedHandedness,
       // Only backfill stamina when the pitching block exists; otherwise leave it
       // untouched so sanitizePlayer produces the correct descriptive error.
@@ -62,7 +84,8 @@ function normalizeImportedPlayer(
     typeof player.batting === "object" && player.batting !== null ? player.batting : undefined;
   return {
     ...player,
-    position: normalizedPosition,
+    // Cast needed: see note above for position.
+    position: normalizedPosition as string,
     handedness: normalizedHandedness,
     // Only backfill stamina when the batting block exists; otherwise leave it
     // untouched so sanitizePlayer produces the correct descriptive error.
@@ -155,7 +178,25 @@ export interface ImportPlayerIntoTeamOptions {
 export async function importPlayerIntoTeam(
   db: BallgameDb,
   { player, targetTeamId, targetTeam, section, updateFn }: ImportPlayerIntoTeamOptions,
-): Promise<ImportPlayerResult> {
+): Promise<ImportPlayerResult | ImportPlayerSectionMismatchResult> {
+  // Role ↔ section consistency guard.
+  // The pitchers section must only hold pitcher-role players; lineup and bench must
+  // not contain pitchers. Return a typed error rather than throwing so callers can
+  // decide how to surface the violation (e.g. the store converts it to a thrown Error).
+  const playerIsPitcher = player.role === "pitcher";
+  if (section === "pitchers" && !playerIsPitcher) {
+    return {
+      status: "sectionMismatch",
+      message: `Cannot import a non-pitcher player into the pitchers section.`,
+    };
+  }
+  if ((section === "lineup" || section === "bench") && playerIsPitcher) {
+    return {
+      status: "sectionMismatch",
+      message: `Cannot import a pitcher-role player into the ${section} section.`,
+    };
+  }
+
   // Cross-team identity check
   const conflictResult = await resolvePlayerConflict(db, player.id, targetTeamId);
   if (conflictResult.status === "conflict") {

@@ -251,6 +251,139 @@ describe("importPlayer", () => {
     await expect(store.importPlayer(id, "not valid json", "lineup")).rejects.toThrow();
   });
 
+  it("throws when importing a pitcher into the lineup section", async () => {
+    const targetId = await store.createCustomTeam(
+      makeInput({
+        name: "Section Guard Lineup",
+        roster: {
+          lineup: [makePlayer({ id: "p_sg_bat", name: "Batter" })],
+          bench: [],
+          pitchers: [],
+        },
+      }),
+    );
+    const pitcher: TeamPlayer = {
+      id: "p_sg_pitcher",
+      name: "Misplaced Pitcher",
+      role: "pitcher",
+      pitching: { velocity: 60, control: 55, movement: 45, stamina: 60 },
+      position: "SP",
+      handedness: "R",
+    };
+    const pitcherJson = exportCustomPlayer(pitcher);
+    await expect(store.importPlayer(targetId, pitcherJson, "lineup")).rejects.toThrow(
+      /cannot import a pitcher-role player into the lineup/i,
+    );
+    // Roster must be unchanged
+    const team = await store.getCustomTeam(targetId);
+    expect(team?.roster.lineup).toHaveLength(1);
+  });
+
+  it("throws when importing a pitcher into the bench section", async () => {
+    const targetId = await store.createCustomTeam(
+      makeInput({
+        name: "Section Guard Bench",
+        roster: {
+          lineup: [makePlayer({ id: "p_sgb_bat", name: "Batter" })],
+          bench: [],
+          pitchers: [],
+        },
+      }),
+    );
+    const pitcher: TeamPlayer = {
+      id: "p_sgb_pitcher",
+      name: "Bench Pitcher",
+      role: "pitcher",
+      pitching: { velocity: 60, control: 55, movement: 45, stamina: 60 },
+      position: "RP",
+      handedness: "L",
+    };
+    const pitcherJson = exportCustomPlayer(pitcher);
+    await expect(store.importPlayer(targetId, pitcherJson, "bench")).rejects.toThrow(
+      /cannot import a pitcher-role player into the bench/i,
+    );
+  });
+
+  it("throws when importing a non-pitcher into the pitchers section", async () => {
+    const targetId = await store.createCustomTeam(
+      makeInput({
+        name: "Section Guard Pitchers",
+        roster: {
+          lineup: [makePlayer({ id: "p_sgp_bat", name: "Batter" })],
+          bench: [],
+          pitchers: [],
+        },
+      }),
+    );
+    const batter: TeamPlayer = {
+      id: "p_sgp_batter",
+      name: "Misplaced Batter",
+      role: "batter",
+      batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+      position: "CF",
+      handedness: "R",
+    };
+    const batterJson = exportCustomPlayer(batter);
+    await expect(store.importPlayer(targetId, batterJson, "pitchers")).rejects.toThrow(
+      /cannot import a non-pitcher player into the pitchers/i,
+    );
+    // Roster must be unchanged
+    const team = await store.getCustomTeam(targetId);
+    expect(team?.roster.pitchers).toHaveLength(0);
+  });
+
+  it("allows importing a pitcher into the pitchers section", async () => {
+    const targetId = await store.createCustomTeam(
+      makeInput({
+        name: "Valid Pitcher Section",
+        roster: {
+          lineup: [makePlayer({ id: "p_vps_bat", name: "Batter" })],
+          bench: [],
+          pitchers: [],
+        },
+      }),
+    );
+    const pitcher: TeamPlayer = {
+      id: "p_vps_pitcher",
+      name: "Valid Pitcher",
+      role: "pitcher",
+      pitching: { velocity: 60, control: 55, movement: 45, stamina: 60 },
+      position: "SP",
+      handedness: "R",
+    };
+    const pitcherJson = exportCustomPlayer(pitcher);
+    const result = await store.importPlayer(targetId, pitcherJson, "pitchers");
+    expect(result.status).toBe("success");
+    const team = await store.getCustomTeam(targetId);
+    expect(team?.roster.pitchers.some((p) => p.name === "Valid Pitcher")).toBe(true);
+  });
+
+  it("allows importing a batter into the lineup section", async () => {
+    const targetId = await store.createCustomTeam(
+      makeInput({
+        name: "Valid Batter Lineup",
+        roster: {
+          lineup: [makePlayer({ id: "p_vbl_existing", name: "Existing" })],
+          bench: [],
+          pitchers: [],
+        },
+      }),
+    );
+    const batter: TeamPlayer = {
+      id: "p_vbl_new",
+      name: "Valid Lineup Batter",
+      role: "batter",
+      batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+      position: "LF",
+      handedness: "L",
+    };
+    const batterJson = exportCustomPlayer(batter);
+    const result = await store.importPlayer(targetId, batterJson, "lineup");
+    expect(result.status).toBe("success");
+    const team = await store.getCustomTeam(targetId);
+    expect(team?.roster.lineup.some((p) => p.name === "Valid Lineup Batter")).toBe(true);
+  });
+
   it("succeeds importing a free agent (teamId = FREE_AGENT_TEAM_ID) and moves them to the target team", async () => {
     // Create team, then detach player to make them a free agent
     const teamId = await store.createCustomTeam(

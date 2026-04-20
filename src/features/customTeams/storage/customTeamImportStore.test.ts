@@ -464,6 +464,17 @@ describe("importCustomTeams — stat cap enforcement", () => {
         schemaVersion: 1,
         lineup: [
           {
+            id: "p_overcap_lineup_bat",
+            name: "Anchor Batter",
+            role: "batter" as const,
+            batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+            position: "CF",
+            handedness: "R" as const,
+          },
+        ],
+        bench: [],
+        pitchers: [
+          {
             id: "p_overcap_pitch",
             name: "Over Cap Pitcher",
             role: "pitcher" as const,
@@ -472,8 +483,6 @@ describe("importCustomTeams — stat cap enforcement", () => {
             handedness: "R" as const,
           },
         ],
-        bench: [],
-        pitchers: [],
       },
       metadata: { archived: false },
     };
@@ -517,5 +526,165 @@ describe("importCustomTeams — stat cap enforcement", () => {
     expect(player.batting.contact).toBe(100);
     expect(player.batting.power).toBe(20);
     expect(player.batting.speed).toBe(10);
+  });
+});
+
+// ── normalizeImportedPlayer — position backfill tightening ────────────────────
+
+describe("importCustomTeams — position backfill tightening (Change 3)", () => {
+  it("rejects a bundle where a player has a non-string (number) position — not silently backfilled", async () => {
+    const { fnv1a } = await import("@storage/hash");
+    const { exportCustomTeams: exportFn } = await import("./customTeamExportImport");
+    const { buildPlayerSig, TEAMS_EXPORT_KEY } = await import("./customTeamSignatures");
+
+    const team = {
+      id: "ct_nonstr_pos_number",
+      schemaVersion: 1,
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+      name: "Non-String Position Number",
+      roster: {
+        schemaVersion: 1,
+        lineup: [
+          {
+            id: "p_nonstr_bat",
+            name: "Number Position Batter",
+            role: "batter" as const,
+            batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+            position: "CF",
+            handedness: "R" as const,
+          },
+        ],
+        bench: [],
+        pitchers: [],
+      },
+      metadata: { archived: false },
+    };
+
+    const bundle = JSON.parse(exportFn([withNL(team) as TeamWithRoster])) as {
+      payload: {
+        teams: Array<{
+          roster: { lineup: Array<Record<string, unknown>> };
+        }>;
+      };
+      sig: string;
+    };
+
+    // Replace position with a number (wrong type) and re-sign
+    bundle.payload.teams[0].roster.lineup[0]["position"] = 123;
+    bundle.payload.teams[0].roster.lineup[0]["sig"] = buildPlayerSig(
+      bundle.payload.teams[0].roster.lineup[0] as Parameters<typeof buildPlayerSig>[0],
+    );
+    bundle.sig = fnv1a(TEAMS_EXPORT_KEY + JSON.stringify(bundle.payload));
+
+    // sanitizePlayer must reject the non-string position (not backfill it to "DH")
+    await expect(store.importCustomTeams(JSON.stringify(bundle))).rejects.toThrow(
+      /position must be a non-empty string/i,
+    );
+    // Team must not have been persisted
+    const found = await store.getCustomTeam("ct_nonstr_pos_number");
+    expect(found).toBeNull();
+  });
+
+  it("still backfills position when it is undefined (legacy export)", async () => {
+    const { fnv1a } = await import("@storage/hash");
+    const { exportCustomTeams: exportFn } = await import("./customTeamExportImport");
+    const { buildPlayerSig, TEAMS_EXPORT_KEY } = await import("./customTeamSignatures");
+
+    const team = {
+      id: "ct_undef_pos_backfill",
+      schemaVersion: 1,
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+      name: "Undefined Position Backfill",
+      roster: {
+        schemaVersion: 1,
+        lineup: [
+          {
+            id: "p_undef_bat",
+            name: "Undefined Position Batter",
+            role: "batter" as const,
+            batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+            position: "CF",
+            handedness: "R" as const,
+          },
+        ],
+        bench: [],
+        pitchers: [],
+      },
+      metadata: { archived: false },
+    };
+
+    const bundle = JSON.parse(exportFn([withNL(team) as TeamWithRoster])) as {
+      payload: {
+        teams: Array<{
+          roster: { lineup: Array<Record<string, unknown>> };
+        }>;
+      };
+      sig: string;
+    };
+
+    delete bundle.payload.teams[0].roster.lineup[0]["position"];
+    bundle.payload.teams[0].roster.lineup[0]["sig"] = buildPlayerSig(
+      bundle.payload.teams[0].roster.lineup[0] as Parameters<typeof buildPlayerSig>[0],
+    );
+    bundle.sig = fnv1a(TEAMS_EXPORT_KEY + JSON.stringify(bundle.payload));
+
+    await store.importCustomTeams(JSON.stringify(bundle));
+    const imported = await store.getCustomTeam("ct_undef_pos_backfill");
+    expect(imported).not.toBeNull();
+    // undefined position should be backfilled to the default batter position "DH"
+    expect(imported!.roster.lineup[0].position).toBe("DH");
+  });
+
+  it("still backfills position when it is an empty string (legacy export)", async () => {
+    const { fnv1a } = await import("@storage/hash");
+    const { exportCustomTeams: exportFn } = await import("./customTeamExportImport");
+    const { buildPlayerSig, TEAMS_EXPORT_KEY } = await import("./customTeamSignatures");
+
+    const team = {
+      id: "ct_empty_pos_backfill",
+      schemaVersion: 1,
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+      name: "Empty Position Backfill",
+      roster: {
+        schemaVersion: 1,
+        lineup: [
+          {
+            id: "p_empty_bat",
+            name: "Empty Position Batter",
+            role: "batter" as const,
+            batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+            position: "CF",
+            handedness: "R" as const,
+          },
+        ],
+        bench: [],
+        pitchers: [],
+      },
+      metadata: { archived: false },
+    };
+
+    const bundle = JSON.parse(exportFn([withNL(team) as TeamWithRoster])) as {
+      payload: {
+        teams: Array<{
+          roster: { lineup: Array<Record<string, unknown>> };
+        }>;
+      };
+      sig: string;
+    };
+
+    bundle.payload.teams[0].roster.lineup[0]["position"] = "";
+    bundle.payload.teams[0].roster.lineup[0]["sig"] = buildPlayerSig(
+      bundle.payload.teams[0].roster.lineup[0] as Parameters<typeof buildPlayerSig>[0],
+    );
+    bundle.sig = fnv1a(TEAMS_EXPORT_KEY + JSON.stringify(bundle.payload));
+
+    await store.importCustomTeams(JSON.stringify(bundle));
+    const imported = await store.getCustomTeam("ct_empty_pos_backfill");
+    expect(imported).not.toBeNull();
+    // empty-string position should be backfilled to the default batter position "DH"
+    expect(imported!.roster.lineup[0].position).toBe("DH");
   });
 });

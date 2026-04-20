@@ -312,6 +312,98 @@ describe("parseExportedCustomTeams — roster constraint validation", () => {
   });
 });
 
+// ── parseExportedCustomTeams — slot invariants ───────────────────────────────
+
+describe("parseExportedCustomTeams — slot invariants", () => {
+  /** Build a signed bundle with the given teams payload. */
+  function signedBundleFromTeams(teams: unknown[]): string {
+    const payload = { teams };
+    const sig = fnv1a(TEAMS_EXPORT_KEY + JSON.stringify(payload));
+    return JSON.stringify({ type: "customTeams", formatVersion: 1, payload, sig });
+  }
+
+  it("accepts a valid bundle where pitchers are in pitchers and batters in lineup/bench", () => {
+    const batter = makePlayer({ name: "Line Batter" });
+    const pitcher = makePlayer({ name: "Starting Pitcher", role: "pitcher" });
+    const team = makeTeam({
+      roster: {
+        schemaVersion: 1,
+        lineup: [batter],
+        bench: [],
+        pitchers: [pitcher],
+      },
+    });
+    expect(() => parseExportedCustomTeams(exportCustomTeams([team]))).not.toThrow();
+  });
+
+  it("rejects a bundle where a pitcher-role player is in roster.lineup", () => {
+    const batter = makePlayer({ name: "Batter" });
+    const pitcher = makePlayer({ name: "Wrong Section Pitcher", role: "pitcher" });
+    // Build the bundle manually so we can place the pitcher in lineup
+    const pitcherWithSig = { ...pitcher, sig: buildPlayerSig(pitcher) };
+    const batterWithSig = { ...batter, sig: buildPlayerSig(batter) };
+    const team = {
+      id: "ct_slot_test",
+      name: "Slot Test",
+      metadata: {},
+      fingerprint: buildTeamFingerprint(makeTeam()),
+      roster: {
+        schemaVersion: 1,
+        lineup: [batterWithSig, pitcherWithSig], // pitcher in lineup — invalid
+        bench: [],
+        pitchers: [],
+      },
+    };
+    expect(() => parseExportedCustomTeams(signedBundleFromTeams([team]))).toThrow(
+      /pitcher-role player cannot be placed in the lineup/i,
+    );
+  });
+
+  it("rejects a bundle where a pitcher-role player is in roster.bench", () => {
+    const batter = makePlayer({ name: "Batter" });
+    const pitcher = makePlayer({ name: "Bench Pitcher", role: "pitcher" });
+    const pitcherWithSig = { ...pitcher, sig: buildPlayerSig(pitcher) };
+    const batterWithSig = { ...batter, sig: buildPlayerSig(batter) };
+    const team = {
+      id: "ct_bench_slot_test",
+      name: "Bench Slot Test",
+      metadata: {},
+      fingerprint: buildTeamFingerprint(makeTeam()),
+      roster: {
+        schemaVersion: 1,
+        lineup: [batterWithSig],
+        bench: [pitcherWithSig], // pitcher in bench — invalid
+        pitchers: [],
+      },
+    };
+    expect(() => parseExportedCustomTeams(signedBundleFromTeams([team]))).toThrow(
+      /pitcher-role player cannot be placed in the bench/i,
+    );
+  });
+
+  it("rejects a bundle where a batter-role player is in roster.pitchers", () => {
+    const batter = makePlayer({ name: "Wrong Batter" });
+    const lineupBatter = makePlayer({ name: "Lineup Batter" });
+    const batterWithSig = { ...batter, sig: buildPlayerSig(batter) };
+    const lineupWithSig = { ...lineupBatter, sig: buildPlayerSig(lineupBatter) };
+    const team = {
+      id: "ct_pitchers_slot_test",
+      name: "Pitchers Slot Test",
+      metadata: {},
+      fingerprint: buildTeamFingerprint(makeTeam()),
+      roster: {
+        schemaVersion: 1,
+        lineup: [lineupWithSig],
+        bench: [],
+        pitchers: [batterWithSig], // batter in pitchers — invalid
+      },
+    };
+    expect(() => parseExportedCustomTeams(signedBundleFromTeams([team]))).toThrow(
+      /must have role "pitcher"/i,
+    );
+  });
+});
+
 // ── exportCustomTeams — identity fields per player ────────────────────────────
 
 describe("exportCustomTeams — identity fields per player", () => {

@@ -335,6 +335,11 @@ function buildStore(getDbFn: GetDb) {
         targetTeam,
         section,
         updateFn: (id, updates) => this.updateCustomTeam(id, updates),
+      }).then((result) => {
+        if (result.status === "sectionMismatch") {
+          throw new Error(result.message);
+        }
+        return result;
       });
     },
   };
