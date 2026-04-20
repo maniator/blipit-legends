@@ -79,8 +79,8 @@ test.describe("Visual", () => {
       while ((await closedSummaries.count()) > 0) {
         await closedSummaries.first().click();
       }
-      // Wait until all 9 sections are structurally open before snapshotting.
-      await expect(page.locator('[data-testid="instructions-modal"] details[open]')).toHaveCount(9);
+      // Wait until all 10 sections are structurally open before snapshotting.
+      await expect(page.locator('[data-testid="instructions-modal"] details[open]')).toHaveCount(10);
       await expect(page.getByTestId("instructions-modal")).toHaveScreenshot(
         "instructions-modal-all-sections.png",
         { maxDiffPixelRatio: 0.05 },
@@ -149,7 +149,7 @@ test.describe("Visual — Help page", () => {
       while ((await closedSummaries.count()) > 0) {
         await closedSummaries.first().click();
       }
-      await expect(page.locator('[data-testid="help-page"] details[open]')).toHaveCount(9);
+      await expect(page.locator('[data-testid="help-page"] details[open]')).toHaveCount(10);
 
       // Snapshot at the initial scroll position (top of page).
       await expect(page.getByTestId("help-page")).toHaveScreenshot(
