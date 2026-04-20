@@ -15,6 +15,9 @@ import { useLeagueSeason } from "@feat/leagueMode/hooks/useLeagueSeason";
 import { useScheduledGames } from "@feat/leagueMode/hooks/useScheduledGames";
 import { leagueSeasonStore } from "@feat/leagueMode/storage/leagueSeasonStore";
 import type { ScheduledGameRecord } from "@feat/leagueMode/storage/types";
+import type { TeamStanding } from "@feat/leagueMode/utils/calculateStandings";
+import { calculateStandings } from "@feat/leagueMode/utils/calculateStandings";
+import { simulateGameDay } from "@feat/leagueMode/utils/simulateGameDay";
 import { useNavigate, useParams } from "react-router";
 
 import type { ExhibitionGameSetup, LeagueGameLocationState } from "@storage/types";
@@ -36,6 +39,11 @@ import {
   SeasonInfo,
   SeasonNotStarted,
   SeasonStats,
+  SimulateDayButton,
+  SimulateErrorMessage,
+  StandingsHeading,
+  StandingsSection,
+  StandingsTable,
   StartSeasonButton,
   StatItem,
   StatusBadge,
@@ -47,20 +55,24 @@ const LeagueDetailPage: React.FunctionComponent = () => {
   const { leagueId } = useParams<{ leagueId: string }>();
   const navigate = useNavigate();
 
+  const [refreshKey, setRefreshKey] = React.useState(0);
+
   const { league, isLoading: leagueLoading, error: leagueError } = useLeague(leagueId);
   const {
     season,
     isLoading: seasonLoading,
     error: seasonError,
-  } = useLeagueSeason(league?.activeLeagueSeasonId);
+  } = useLeagueSeason(league?.activeLeagueSeasonId, refreshKey);
   const {
     games,
     isLoading: gamesLoading,
     error: gamesError,
-  } = useScheduledGames(season?.id ?? null);
+  } = useScheduledGames(season?.id ?? null, refreshKey);
 
   const [teamNameMap, setTeamNameMap] = React.useState<Record<string, string>>({});
   const [startingSeason, setStartingSeason] = React.useState(false);
+  const [simulatingDay, setSimulatingDay] = React.useState(false);
+  const [simulateDayError, setSimulateDayError] = React.useState<string | null>(null);
 
   // Load team names for schedule display
   React.useEffect(() => {
@@ -96,6 +108,20 @@ const LeagueDetailPage: React.FunctionComponent = () => {
       setStartingSeason(false);
     }
   }, [season, navigate]);
+
+  const handleSimulateDay = React.useCallback(async () => {
+    if (!season) return;
+    setSimulatingDay(true);
+    setSimulateDayError(null);
+    try {
+      await simulateGameDay(season, season.currentGameDay);
+      setRefreshKey((k) => k + 1);
+    } catch (err: unknown) {
+      setSimulateDayError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSimulatingDay(false);
+    }
+  }, [season]);
 
   // Tracks which game is currently launching (prevents double-click).
   const [launchingGameId, setLaunchingGameId] = React.useState<string | null>(null);
@@ -173,6 +199,14 @@ const LeagueDetailPage: React.FunctionComponent = () => {
     [games],
   );
   const byeCount = React.useMemo(() => games.filter((g) => g.status === "bye").length, [games]);
+
+  const currentDayGames = gameDayMap.get(season?.currentGameDay ?? -1) ?? [];
+  const hasScheduledGamesOnCurrentDay = currentDayGames.some((g) => g.status === "scheduled");
+
+  const standings = React.useMemo<TeamStanding[]>(
+    () => (league && games.length > 0 ? calculateStandings(games, league.teamIds) : []),
+    [games, league],
+  );
 
   const error = leagueError ?? seasonError ?? gamesError;
   const isLoading = leagueLoading || (league != null && seasonLoading);
@@ -265,6 +299,66 @@ const LeagueDetailPage: React.FunctionComponent = () => {
             Season has not started yet.
           </SeasonNotStarted>
         </>
+      )}
+
+      {season && season.status === "active" && (
+        <>
+          <SimulateDayButton
+            type="button"
+            data-testid="simulate-day-button"
+            onClick={() => {
+              void handleSimulateDay();
+            }}
+            disabled={simulatingDay || !hasScheduledGamesOnCurrentDay}
+          >
+            {simulatingDay ? "Simulating…" : "Simulate Day"}
+          </SimulateDayButton>
+          {simulateDayError && (
+            <SimulateErrorMessage data-testid="simulate-day-error">
+              {simulateDayError}
+            </SimulateErrorMessage>
+          )}
+        </>
+      )}
+
+      {!gamesLoading && season && standings.length > 0 && (
+        <StandingsSection>
+          <StandingsHeading>Standings</StandingsHeading>
+          <StandingsTable data-testid="standings-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Team</th>
+                <th>W</th>
+                <th>L</th>
+                <th>PCT</th>
+                <th>R</th>
+                <th>RA</th>
+                <th>DIFF</th>
+              </tr>
+            </thead>
+            <tbody>
+              {standings.map((s, i) => (
+                <tr key={s.teamId}>
+                  <td>{i + 1}</td>
+                  <td>{getTeamName(s.teamId)}</td>
+                  <td>{s.wins}</td>
+                  <td>{s.losses}</td>
+                  <td>
+                    {s.gamesPlayed === 0
+                      ? ".000"
+                      : `.${Math.round(s.winPct * 1000)
+                          .toString()
+                          .padStart(3, "0")}`}
+                  </td>
+                  <td>{s.runsScored}</td>
+                  <td>{s.runsAllowed}</td>
+                  <td>{s.runDifferential > 0 ? `+${s.runDifferential}` : s.runDifferential}</td>
+                </tr>
+              ))}
+            </tbody>
+          </StandingsTable>
+        </StandingsSection>
       )}
 
       {!gamesLoading && games.length > 0 && (

@@ -254,3 +254,89 @@ export const BackLink = styled(Link)`
     border-radius: ${({ theme }) => theme.radii.sm};
   }
 `;
+
+export const SimulateDayButton = styled.button`
+  background: transparent;
+  color: ${({ theme }) => theme.colors.accentPrimary};
+  border: 1px solid ${({ theme }) => theme.colors.accentPrimary};
+  border-radius: ${({ theme }) => theme.radii.pill};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.xxl};
+  font-family: inherit;
+  font-size: ${({ theme }) => theme.fontSizes.body};
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  margin-left: ${({ theme }) => theme.spacing.md};
+
+  &:hover {
+    opacity: 0.88;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 2px;
+  }
+`;
+
+export const SimulateErrorMessage = styled.p`
+  color: ${({ theme }) => theme.colors.dangerText};
+  background: ${({ theme }) => theme.colors.errorBgTransparent};
+  border: 1px solid ${({ theme }) => theme.colors.borderDanger};
+  border-radius: ${({ theme }) => theme.radii.md};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  font-size: ${({ theme }) => theme.fontSizes.base};
+  margin-top: ${({ theme }) => theme.spacing.s10};
+`;
+
+export const StandingsSection = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+`;
+
+export const StandingsHeading = styled.h2`
+  color: ${({ theme }) => theme.colors.textSecondaryLink};
+  font-size: ${({ theme }) => theme.fontSizes.sub};
+  font-weight: 600;
+  letter-spacing: ${({ theme }) => theme.letterSpacing.tight};
+  text-transform: uppercase;
+  margin: 0 0 ${({ theme }) => theme.spacing.sm};
+`;
+
+export const StandingsTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  font-size: ${({ theme }) => theme.fontSizes.base};
+
+  th,
+  td {
+    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+    text-align: right;
+    color: ${({ theme }) => theme.colors.textBody};
+    border-bottom: 1px solid ${({ theme }) => theme.colors.borderSubtle};
+  }
+
+  th {
+    color: ${({ theme }) => theme.colors.textHint};
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: ${({ theme }) => theme.fontSizes.sm};
+  }
+
+  td:first-child,
+  th:first-child {
+    text-align: left;
+  }
+
+  ${mq.mobile} {
+    font-size: ${({ theme }) => theme.fontSizes.sm};
+
+    th,
+    td {
+      padding: 2px ${({ theme }) => theme.spacing.xs};
+    }
+  }
+`;

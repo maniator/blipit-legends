@@ -4,7 +4,7 @@ import type { ScheduledGameRecord } from "@feat/leagueMode/storage/types";
 
 import { scheduledGameStore } from "../storage/scheduledGameStore";
 
-export function useScheduledGames(leagueSeasonId: string | null | undefined) {
+export function useScheduledGames(leagueSeasonId: string | null | undefined, refreshKey?: number) {
   const [games, setGames] = React.useState<ScheduledGameRecord[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
@@ -34,7 +34,7 @@ export function useScheduledGames(leagueSeasonId: string | null | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [leagueSeasonId]);
+  }, [leagueSeasonId, refreshKey]);
 
   return { games, isLoading, error };
 }

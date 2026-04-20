@@ -4,7 +4,7 @@ import type { LeagueSeasonRecord } from "@feat/leagueMode/storage/types";
 
 import { leagueSeasonStore } from "../storage/leagueSeasonStore";
 
-export function useLeagueSeason(leagueSeasonId: string | null | undefined) {
+export function useLeagueSeason(leagueSeasonId: string | null | undefined, refreshKey?: number) {
   const [season, setSeason] = React.useState<LeagueSeasonRecord | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
@@ -34,7 +34,7 @@ export function useLeagueSeason(leagueSeasonId: string | null | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [leagueSeasonId]);
+  }, [leagueSeasonId, refreshKey]);
 
   return { season, isLoading, error };
 }

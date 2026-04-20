@@ -46,6 +46,9 @@ export interface ScheduledGameRecord {
   homeTeamId: string;
   status: ScheduledGameStatus;
   completedGameId?: string;
+  winnerId?: string;
+  homeScore?: number;
+  awayScore?: number;
   schemaVersion: number;
 }
 

@@ -81,7 +81,7 @@ export const leagueSeasonsV1CollectionConfig = {
 };
 
 const scheduledGamesSchemaV1: RxJsonSchema<ScheduledGameRecord> = {
-  version: 0,
+  version: 1,
   primaryKey: "id",
   type: "object",
   properties: {
@@ -92,6 +92,9 @@ const scheduledGamesSchemaV1: RxJsonSchema<ScheduledGameRecord> = {
     homeTeamId: { type: "string", maxLength: 128 },
     status: { type: "string", maxLength: 32 },
     completedGameId: { type: "string", maxLength: 128 },
+    winnerId: { type: "string", maxLength: 128 },
+    homeScore: { type: "number", minimum: 0, maximum: 9999, multipleOf: 1 },
+    awayScore: { type: "number", minimum: 0, maximum: 9999, multipleOf: 1 },
     schemaVersion: { type: "number", minimum: 0, maximum: 999, multipleOf: 1 },
   },
   required: [
@@ -106,7 +109,15 @@ const scheduledGamesSchemaV1: RxJsonSchema<ScheduledGameRecord> = {
   indexes: ["leagueSeasonId", ["leagueSeasonId", "gameDay"], ["leagueSeasonId", "status"]],
 };
 
-/** v1 collection config for the `scheduledGames` collection. No migration strategies. */
+/** v1 collection config for the `scheduledGames` collection. Includes migration from v0. */
 export const scheduledGamesV1CollectionConfig = {
   schema: scheduledGamesSchemaV1,
+  migrationStrategies: {
+    1: (oldDoc: Record<string, unknown>) => ({
+      ...oldDoc,
+      winnerId: undefined,
+      homeScore: undefined,
+      awayScore: undefined,
+    }),
+  },
 };

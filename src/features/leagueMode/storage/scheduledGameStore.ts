@@ -7,7 +7,7 @@ import { getDb } from "@storage/db";
 import type { ScheduledGameRecord } from "./types";
 
 /** Schema version written to every new ScheduledGameRecord. */
-const SCHEDULED_GAME_SCHEMA_VERSION = 0;
+const SCHEDULED_GAME_SCHEMA_VERSION = 1;
 
 type GetDb = () => Promise<BallgameDb>;
 
@@ -45,6 +45,7 @@ export function buildScheduledGameStore(getDbFn: GetDb) {
     async markScheduledGameCompleted(
       scheduledGameId: string,
       completedGameId: string,
+      result?: { winnerId: string; homeScore: number; awayScore: number },
     ): Promise<void> {
       const db = await getDbFn();
       const doc = await db.scheduledGames.findOne(scheduledGameId).exec();
@@ -55,7 +56,17 @@ export function buildScheduledGameStore(getDbFn: GetDb) {
       if (doc.status === "bye") {
         throw new Error(`Cannot complete a bye game: ${scheduledGameId}`);
       }
-      await doc.patch({ status: "completed", completedGameId });
+      if (result) {
+        await doc.patch({
+          status: "completed",
+          completedGameId,
+          winnerId: result.winnerId,
+          homeScore: result.homeScore,
+          awayScore: result.awayScore,
+        });
+      } else {
+        await doc.patch({ status: "completed", completedGameId });
+      }
     },
   };
 }

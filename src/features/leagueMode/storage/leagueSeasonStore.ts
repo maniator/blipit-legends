@@ -73,6 +73,13 @@ export function buildLeagueSeasonStore(getDbFn: GetDb) {
       if (doc.status === "complete") return;
       await doc.patch({ status: "complete", championTeamId, updatedAt: Date.now() });
     },
+
+    async advanceGameDay(leagueSeasonId: string, newGameDay: number): Promise<void> {
+      const db = await getDbFn();
+      const doc = await db.leagueSeasons.findOne(leagueSeasonId).exec();
+      if (!doc) throw new Error(`LeagueSeason not found: ${leagueSeasonId}`);
+      await doc.patch({ currentGameDay: newGameDay, updatedAt: Date.now() });
+    },
   };
 }
 
