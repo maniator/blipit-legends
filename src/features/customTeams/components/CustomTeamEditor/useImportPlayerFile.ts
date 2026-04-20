@@ -4,6 +4,10 @@ import {
   buildPlayerSig,
   parseExportedCustomPlayer,
 } from "@feat/customTeams/storage/customTeamExportImport";
+import {
+  DEFAULT_BATTING_STAMINA,
+  DEFAULT_PITCHING_STAMINA,
+} from "@feat/customTeams/storage/customTeamSanitizers";
 import { CustomTeamStore } from "@feat/customTeams/storage/customTeamStore";
 
 import type { TeamPlayer, TeamWithRoster } from "@storage/types";
@@ -162,7 +166,7 @@ export function useImportPlayerFile({
                     velocity: importedPlayer.pitching?.velocity ?? 60,
                     control: importedPlayer.pitching?.control ?? 60,
                     movement: importedPlayer.pitching?.movement ?? 60,
-                    stamina: importedPlayer.pitching?.stamina ?? 60,
+                    stamina: importedPlayer.pitching?.stamina ?? DEFAULT_PITCHING_STAMINA,
                   },
                 })
               : buildPlayerSig({
@@ -172,7 +176,7 @@ export function useImportPlayerFile({
                     contact: importedPlayer.batting?.contact ?? 40,
                     power: importedPlayer.batting?.power ?? 40,
                     speed: importedPlayer.batting?.speed ?? 40,
-                    stamina: importedPlayer.batting?.stamina ?? 50,
+                    stamina: importedPlayer.batting?.stamina ?? DEFAULT_BATTING_STAMINA,
                   },
                 });
 
@@ -185,7 +189,7 @@ export function useImportPlayerFile({
                   velocity: p.velocity ?? 60,
                   control: p.control ?? 60,
                   movement: p.movement ?? 60,
-                  stamina: p.stamina ?? 60,
+                  stamina: p.stamina ?? DEFAULT_PITCHING_STAMINA,
                 },
               });
             }
@@ -196,7 +200,7 @@ export function useImportPlayerFile({
                 contact: p.contact,
                 power: p.power,
                 speed: p.speed,
-                stamina: p.stamina ?? 50,
+                stamina: p.stamina ?? DEFAULT_BATTING_STAMINA,
               },
             });
           };

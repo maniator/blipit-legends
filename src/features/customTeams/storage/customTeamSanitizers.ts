@@ -10,8 +10,8 @@ export { HITTER_STAT_CAP, PITCHER_STAT_CAP };
 export const STAT_MIN = 0;
 export const STAT_MAX = 100;
 export const ROSTER_SCHEMA_VERSION = 1;
-const DEFAULT_BATTING_STAMINA = 50;
-const DEFAULT_PITCHING_STAMINA = 60;
+export const DEFAULT_BATTING_STAMINA = 50;
+export const DEFAULT_PITCHING_STAMINA = 60;
 
 export function requireNonEmpty(value: unknown, fieldPath: string): string {
   if (typeof value !== "string" || value.trim().length === 0) {

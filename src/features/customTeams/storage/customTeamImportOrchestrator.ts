@@ -7,13 +7,15 @@ import type { TeamPlayer, TeamWithRoster, UpdateCustomTeamInput } from "@storage
 import { type ImportPlayerResult } from "./customTeamExportBundles";
 import { resolvePlayerConflict } from "./customTeamIdentity";
 import { removeTeamPlayerRecords, writePlayerRecords } from "./customTeamPlayerDocs";
-import { sanitizePlayer } from "./customTeamSanitizers";
+import {
+  DEFAULT_BATTING_STAMINA,
+  DEFAULT_PITCHING_STAMINA,
+  sanitizePlayer,
+} from "./customTeamSanitizers";
 
 const DEFAULT_BATTER_POSITION = "DH";
 const DEFAULT_PITCHER_POSITION = "RP";
 const DEFAULT_HANDEDNESS = "R" as const;
-const DEFAULT_BATTING_STAMINA = 50;
-const DEFAULT_PITCHING_STAMINA = 60;
 
 function normalizeImportedPlayer(
   player: TeamPlayer,
