@@ -144,13 +144,13 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
       <StaminaSectionLabel>Durability</StaminaSectionLabel>
       {isPitcher
         ? staminaRow(
-            "Pitching Stamina",
+            "Stamina",
             asPitcher?.stamina ?? DEFAULT_PITCHING_STAMINA,
             `pitching-stamina-${player.id}`,
             (n) => ({ stamina: n }),
           )
         : staminaRow(
-            "Batting Stamina",
+            "Stamina",
             asBatter?.stamina ?? DEFAULT_BATTING_STAMINA,
             `batting-stamina-${player.id}`,
             (n) => ({ stamina: n }),

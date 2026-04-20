@@ -169,7 +169,11 @@ const GameInner: React.FunctionComponent<Props> = ({
     setStrategy(setup.strategy);
     if (setup.managedTeam !== null) setManagedTeam(setup.managedTeam);
     setManagerMode(setup.managerMode);
-    if (setup.decisionValues !== undefined) setDecisionValues(setup.decisionValues);
+    setDecisionValues(
+      setup.decisionValues !== undefined
+        ? sanitizeManagerDecisionValues(setup.decisionValues)
+        : DEFAULT_MANAGER_DECISION_VALUES,
+    );
     rxSaveIdRef.current = rxAutoSave.id;
     // If the restored save was already FINAL, mark it so history sync skips re-commit.
     setWasAlreadyFinalOnLoad(snap.state.gameOver === true);
@@ -334,7 +338,11 @@ const GameInner: React.FunctionComponent<Props> = ({
     setManagerMode(setup.managerMode);
     setManagedTeam(setup.managedTeam ?? 0);
     setStrategy(setup.strategy);
-    if (setup.decisionValues !== undefined) setDecisionValues(setup.decisionValues);
+    setDecisionValues(
+      setup.decisionValues !== undefined
+        ? sanitizeManagerDecisionValues(setup.decisionValues)
+        : DEFAULT_MANAGER_DECISION_VALUES,
+    );
 
     rxSaveIdRef.current = pendingLoadSave.id;
     // If the loaded save was already FINAL, mark it so history sync skips re-commit.
@@ -389,7 +397,11 @@ const GameInner: React.FunctionComponent<Props> = ({
       setManagerMode(setup.managerMode);
       setManagedTeam(setup.managedTeam ?? 0);
       setStrategy(setup.strategy);
-      if (setup.decisionValues !== undefined) setDecisionValues(setup.decisionValues);
+      setDecisionValues(
+        setup.decisionValues !== undefined
+          ? sanitizeManagerDecisionValues(setup.decisionValues)
+          : DEFAULT_MANAGER_DECISION_VALUES,
+      );
 
       rxSaveIdRef.current = slot.id;
       // If the loaded save was already FINAL, mark it so history sync skips re-commit.
