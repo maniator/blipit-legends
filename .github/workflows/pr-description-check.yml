@@ -17,6 +17,13 @@ jobs:
     permissions:
       pull-requests: read
     steps:
+      - name: Set up Node.js
+        # No checkout needed — node-version is hardcoded to match .nvmrc (Node 24).
+        # Using setup-node ensures a consistent Node version regardless of runner-image drift.
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
       - name: Validate PR description template usage
         # Requires non-empty Summary/Changes/Testing/Risks sections and rejects
         # checklist-only bodies. All logic is inlined so no checkout is needed.
@@ -30,16 +37,14 @@ jobs:
           // PR_BODY is defined in the env block at the end of this step.
           const body = (process.env.PR_BODY ?? '').replace(/\r\n/g, '\n').trim();
 
-          // Matches GFM/CommonMark task list items. GFM allows '-', '*', and '+' as list
-          // bullets; unchecked (space character), lowercase 'x', and uppercase 'X' are the
-          // three valid checkbox states in GitHub-flavored Markdown. Intentionally does not
-          // match non-standard variants such as "- [✓]" or "- [-]" as GitHub only renders
-          // those three states as task list checkboxes.
-          // The pattern is tested against individual line strings (not multiline text), so
-          // '$' matches end-of-string (= end-of-line). A space or end-of-line is required
-          // immediately after the closing bracket: "- [x]" and "- [x] item" both match,
-          // while "- [x]item" (no space) does not.
-          const checklistItemPattern = /^[-*+]\s+\[(?: |x|X)\](?:\s+|$)/;
+          // Matches GitHub task list items with optional indentation, unordered markers
+          // ("-", "*", "+"), or ordered markers (for example "1."), and checkbox states
+          // of unchecked (space character), lowercase 'x', or uppercase 'X'. Intentionally
+          // does not match non-standard variants such as "- [✓]" or "- [-]" as GitHub only
+          // renders those three states as task list checkboxes. A space or end-of-line is
+          // required immediately after the closing bracket: "- [x]" and "- [x] item" both
+          // match, while "- [x]item" (no space) does not.
+          const checklistItemPattern = /^\s*(?:[-*+]|\d+\.)\s+\[(?: |x|X)\](?:\s+|$)/;
 
           if (!body) {
             console.error('PR description is required and must follow the pull request template.');
