@@ -1,5 +1,10 @@
 import * as React from "react";
 
+import {
+  DEFAULT_BATTING_STAMINA,
+  DEFAULT_PITCHING_STAMINA,
+} from "@feat/customTeams/storage/customTeamSanitizers";
+
 import type { EditorPlayer, EditorPlayerPatch } from "./editorState";
 import {
   HITTER_STAT_CAP,
@@ -110,6 +115,19 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
           : `Total: ${total} / ${cap}`}
       </StatBudgetRow>
       {isExistingPlayer && <IdentityLockHint>Stats are locked after creation.</IdentityLockHint>}
+      {isPitcher
+        ? statRow(
+            "Pitching Stamina",
+            asPitcher?.stamina ?? DEFAULT_PITCHING_STAMINA,
+            `pitching-stamina-${player.id}`,
+            (n) => ({ stamina: n }),
+          )
+        : statRow(
+            "Batting Stamina",
+            asBatter?.stamina ?? DEFAULT_BATTING_STAMINA,
+            `batting-stamina-${player.id}`,
+            (n) => ({ stamina: n }),
+          )}
     </>
   );
 };

@@ -10,7 +10,9 @@ export { HITTER_STAT_CAP, PITCHER_STAT_CAP };
 export const STAT_MIN = 0;
 export const STAT_MAX = 100;
 export const ROSTER_SCHEMA_VERSION = 1;
+/** Default stamina for batting stats when not explicitly set (0–100 scale). */
 export const DEFAULT_BATTING_STAMINA = 50;
+/** Default stamina for pitching stats when not explicitly set (0–100 scale). */
 export const DEFAULT_PITCHING_STAMINA = 60;
 
 export function requireNonEmpty(value: unknown, fieldPath: string): string {

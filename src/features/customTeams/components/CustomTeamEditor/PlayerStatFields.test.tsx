@@ -1,5 +1,9 @@
 import * as React from "react";
 
+import {
+  DEFAULT_BATTING_STAMINA,
+  DEFAULT_PITCHING_STAMINA,
+} from "@feat/customTeams/storage/customTeamSanitizers";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -134,5 +138,73 @@ describe("PlayerStatFields", () => {
       fireEvent.change(contactSlider, { target: { value: "99" } });
       expect(onChange).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("PlayerStatFields — stamina sliders", () => {
+  it("renders Batting Stamina slider for hitters with default value when stamina is absent", () => {
+    render(<PlayerStatFields player={makeHitter()} onChange={vi.fn()} />);
+    const slider = screen.getByLabelText(/batting stamina/i);
+    expect(slider).toBeInTheDocument();
+    expect(slider).toHaveValue(String(DEFAULT_BATTING_STAMINA));
+  });
+
+  it("renders Pitching Stamina slider for pitchers with default value when stamina is absent", () => {
+    render(<PlayerStatFields player={makePitcher()} onChange={vi.fn()} />);
+    const slider = screen.getByLabelText(/pitching stamina/i);
+    expect(slider).toBeInTheDocument();
+    expect(slider).toHaveValue(String(DEFAULT_PITCHING_STAMINA));
+  });
+
+  it("does NOT render Pitching Stamina for hitters", () => {
+    render(<PlayerStatFields player={makeHitter()} onChange={vi.fn()} />);
+    expect(screen.queryByLabelText(/pitching stamina/i)).not.toBeInTheDocument();
+  });
+
+  it("does NOT render Batting Stamina for pitchers", () => {
+    render(<PlayerStatFields player={makePitcher()} onChange={vi.fn()} />);
+    expect(screen.queryByLabelText(/batting stamina/i)).not.toBeInTheDocument();
+  });
+
+  it("reflects explicit stamina value on hitter slider", () => {
+    render(<PlayerStatFields player={{ ...makeHitter(), stamina: 80 }} onChange={vi.fn()} />);
+    expect(screen.getByLabelText(/batting stamina/i)).toHaveValue("80");
+  });
+
+  it("reflects explicit stamina value on pitcher slider", () => {
+    render(<PlayerStatFields player={{ ...makePitcher(), stamina: 90 }} onChange={vi.fn()} />);
+    expect(screen.getByLabelText(/pitching stamina/i)).toHaveValue("90");
+  });
+
+  it("calls onChange with stamina patch when hitter stamina slider changes", () => {
+    const onChange = vi.fn();
+    render(<PlayerStatFields player={makeHitter()} onChange={onChange} />);
+    fireEvent.change(screen.getByLabelText(/batting stamina/i), { target: { value: "75" } });
+    expect(onChange).toHaveBeenCalledWith({ stamina: 75 });
+  });
+
+  it("calls onChange with stamina patch when pitcher stamina slider changes", () => {
+    const onChange = vi.fn();
+    render(<PlayerStatFields player={makePitcher()} onChange={onChange} />);
+    fireEvent.change(screen.getByLabelText(/pitching stamina/i), { target: { value: "85" } });
+    expect(onChange).toHaveBeenCalledWith({ stamina: 85 });
+  });
+
+  it("stamina slider is disabled for existing hitter and does not call onChange", () => {
+    const onChange = vi.fn();
+    render(<PlayerStatFields player={makeHitter()} isExistingPlayer={true} onChange={onChange} />);
+    const slider = screen.getByLabelText(/batting stamina/i);
+    expect(slider).toBeDisabled();
+    fireEvent.change(slider, { target: { value: "99" } });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("stamina slider is disabled for existing pitcher and does not call onChange", () => {
+    const onChange = vi.fn();
+    render(<PlayerStatFields player={makePitcher()} isExistingPlayer={true} onChange={onChange} />);
+    const slider = screen.getByLabelText(/pitching stamina/i);
+    expect(slider).toBeDisabled();
+    fireEvent.change(slider, { target: { value: "99" } });
+    expect(onChange).not.toHaveBeenCalled();
   });
 });
