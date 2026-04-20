@@ -13,9 +13,11 @@ describe("HomeScreen", () => {
     expect(screen.getByTestId("home-screen")).toBeInTheDocument();
   });
 
-  it("shows the New Game button", () => {
+  it("shows the Exhibition Game button", () => {
     render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} />);
-    expect(screen.getByTestId("home-new-game-button")).toBeInTheDocument();
+    const btn = screen.getByTestId("home-new-game-button");
+    expect(btn).toBeInTheDocument();
+    expect(btn).toHaveTextContent("Exhibition Game");
   });
 
   it("shows the Load Saved Game button", () => {
@@ -45,7 +47,7 @@ describe("HomeScreen", () => {
     expect(screen.getByTestId("home-resume-current-game-button")).toBeInTheDocument();
   });
 
-  it("calls onNewGame when New Game button is clicked", () => {
+  it("calls onNewGame when Exhibition Game button is clicked", () => {
     const onNewGame = vi.fn();
     render(<HomeScreen onNewGame={onNewGame} onLoadSaves={noop} onManageTeams={noop} />);
     fireEvent.click(screen.getByTestId("home-new-game-button"));

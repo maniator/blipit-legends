@@ -40,7 +40,7 @@ const HomeScreen: React.FunctionComponent<Props> = ({
         </PrimaryBtn>
       )}
       <PrimaryBtn onClick={onNewGame} data-testid="home-new-game-button">
-        New Game
+        Exhibition Game
       </PrimaryBtn>
       <SecondaryBtn onClick={onLoadSaves} data-testid="home-load-saves-button">
         Load Saved Game
