@@ -139,7 +139,11 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
           ? `⚠ ${total} / ${cap} — ${Math.abs(rem)} over cap`
           : `Total: ${total} / ${cap}`}
       </StatBudgetRow>
-      {isExistingPlayer && <IdentityLockHint>Stats are locked after creation.</IdentityLockHint>}
+      {isExistingPlayer && (
+        <IdentityLockHint>
+          Core stats are locked after creation. Stamina can still be adjusted.
+        </IdentityLockHint>
+      )}
       <StaminaSectionDivider />
       <StaminaSectionLabel>Durability</StaminaSectionLabel>
       {isPitcher

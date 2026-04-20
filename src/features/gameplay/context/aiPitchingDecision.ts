@@ -16,9 +16,9 @@ import { computeFatigueFactor } from "./pitchSimulation";
  * display references without duplicating the constants.
  *
  * ⚠️  These are the aggressiveness=50 anchor values only.
- * The effective thresholds during gameplay are computed by `derivePitchCountThresholds`
- * and will differ when `aiPitchingChangeAggressiveness ≠ 50`.
- * Do NOT use these as fixed thresholds — always call `derivePitchCountThresholds`.
+ * The effective thresholds during gameplay are derived internally from
+ * `aiPitchingChangeAggressiveness` and will differ when that value ≠ 50.
+ * Treat these exports as display/reference anchors, not fixed in-game thresholds.
  */
 export const AI_FATIGUE_THRESHOLD_HIGH = 100;
 export const AI_FATIGUE_THRESHOLD_MEDIUM = 85;

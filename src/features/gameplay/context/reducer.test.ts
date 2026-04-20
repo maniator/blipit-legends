@@ -487,16 +487,16 @@ describe("detectDecision", () => {
       detectDecision(makeState({ gameOver: true, baseLayout: [1, 0, 0] }), "balanced", true),
     ).toBeNull();
   });
-  it("does NOT offer steal with balanced (pct=70 not > 70 default threshold)", () => {
+  it(`does NOT offer steal with balanced (pct=70 not > ${DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct} default threshold)`, () => {
     const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "balanced", true);
     expect(d?.kind).not.toBe("steal");
   });
-  it("offers steal from 1st with aggressive (pct=91 > 70 default threshold)", () => {
+  it(`offers steal from 1st with aggressive (pct=91 > ${DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct} default threshold)`, () => {
     const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "aggressive", true);
     expect(d?.kind).toBe("steal");
     if (d?.kind === "steal") {
       expect(d.base).toBe(0);
-      expect(d.successPct).toBeGreaterThan(70);
+      expect(d.successPct).toBeGreaterThan(DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct);
     }
   });
   it("does NOT offer steal from 2nd if 3rd is occupied (the reported bug)", () => {
