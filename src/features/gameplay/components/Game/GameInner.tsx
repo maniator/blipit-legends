@@ -11,6 +11,7 @@ import PlayerStatsPanel from "@feat/gameplay/components/PlayerStatsPanel";
 import TeamTabBar from "@feat/gameplay/components/TeamTabBar";
 import type { GameAction, Strategy } from "@feat/gameplay/context/index";
 import { useGameContext } from "@feat/gameplay/context/index";
+import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
 import {
   DEFAULT_MANAGER_DECISION_VALUES,
   sanitizeManagerDecisionValues,
@@ -80,7 +81,7 @@ const GameInner: React.FunctionComponent<Props> = ({
   const [, setManagerMode] = useLocalStorage("managerMode", false);
   const [, setManagedTeam] = useLocalStorage<0 | 1>("managedTeam", 0);
   const [strategy, setStrategy] = useLocalStorage<Strategy>("strategy", "balanced");
-  const [currentDecisionValues, setDecisionValues] = useLocalStorage(
+  const [currentDecisionValues, setDecisionValues] = useLocalStorage<ManagerDecisionValues>(
     "managerDecisionValues",
     DEFAULT_MANAGER_DECISION_VALUES,
   );
