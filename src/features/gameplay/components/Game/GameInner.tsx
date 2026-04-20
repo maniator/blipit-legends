@@ -299,6 +299,9 @@ const GameInner: React.FunctionComponent<Props> = ({
     restoredRef.current = true;
     // For league games, use the canonical deterministic seed derived from the
     // season + scheduled game IDs instead of a user-provided or random seed.
+    // leagueGameContext is captured once from location state on mount (via a
+    // useRef in GamePage) and will not change for the lifetime of this component,
+    // so this effect only runs when pendingGameSetup arrives the first time.
     if (leagueGameContext) {
       reinitSeed(
         deriveScheduledGameSeed(
