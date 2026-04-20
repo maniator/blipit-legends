@@ -111,16 +111,22 @@ const LeagueSetupPage: React.FunctionComponent = () => {
           status: "active",
         });
 
-        // 2. Generate a preliminary schedule to compute totalGameDays
-        //    We'll re-generate with the real season ID once we have it.
-        //    First, create the season so we have its ID.
-        const prelimGames = generateSchedule({
-          leagueSeasonId: "placeholder",
-          teamIds: selectedTeamIds,
-          gamesPerTeam,
-        });
-        const totalGameDays =
-          prelimGames.length > 0 ? Math.max(...prelimGames.map((g) => g.gameDay)) : 0;
+        // 2. Compute totalGameDays analytically (avoids generating schedule twice).
+        //    Mirrors the round-robin math in scheduleGeneration.ts:
+        //      paddedN     = even team count (pad with bye if needed)
+        //      roundsPerPass = paddedN - 1
+        //      seriesLength  = 3 (default, matches generateSchedule default)
+        //      totalPasses   = ceil(gamesPerTeam / gamesPerPassPerTeam)
+        //      totalGameDays = totalPasses * roundsPerPass * seriesLength
+        const seriesLength = 3;
+        const paddedN =
+          selectedTeamIds.length % 2 === 0 ? selectedTeamIds.length : selectedTeamIds.length + 1;
+        const roundsPerPass = paddedN - 1;
+        const hasOddTeams = selectedTeamIds.length % 2 !== 0;
+        const nonByeRoundsPerPass = hasOddTeams ? roundsPerPass - 1 : roundsPerPass;
+        const gamesPerPassPerTeam = nonByeRoundsPerPass * seriesLength;
+        const totalPasses = Math.ceil(gamesPerTeam / gamesPerPassPerTeam);
+        const totalGameDays = totalPasses * roundsPerPass * seriesLength;
 
         // 3. Create league season (auto-generates its own ID)
         const season = await leagueSeasonStore.createLeagueSeason({
@@ -133,7 +139,7 @@ const LeagueSetupPage: React.FunctionComponent = () => {
           seed: generateSeed(),
         });
 
-        // 4. Generate final schedule with the actual season ID
+        // 4. Generate schedule with the actual season ID
         const games = generateSchedule({
           leagueSeasonId: season.id,
           teamIds: selectedTeamIds,

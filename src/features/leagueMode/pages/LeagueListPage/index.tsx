@@ -66,7 +66,11 @@ const LeagueListPage: React.FunctionComponent = () => {
           {leagues.map((league) => (
             <LeagueItem key={league.id}>
               <LeagueName>{league.name}</LeagueName>
-              <ViewLink href={`/league/${league.id}`} data-testid={`league-view-link-${league.id}`}>
+              <ViewLink
+                href={`/league/${league.id}`}
+                aria-label={`View ${league.name}`}
+                data-testid={`league-view-link-${league.id}`}
+              >
                 View
               </ViewLink>
             </LeagueItem>
