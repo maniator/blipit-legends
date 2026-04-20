@@ -251,6 +251,8 @@ describe("customTeamToPlayerOverrides", () => {
             // No role field — simulates a legacy export saved before schema hardening
             position: "C",
             handedness: "L" as const,
+            // stamina: 80 is intentionally non-default (DEFAULT_BATTING_STAMINA=50) so
+            // staminaMod = clampMod(80-60) = 20 is a distinct, verifiable expected value.
             batting: { contact: 70, power: 65, speed: 60, stamina: 80 },
           } as unknown as TeamWithRoster["roster"]["lineup"][number],
         ],
