@@ -6,7 +6,7 @@ on:
     branches:
       # Repository default branch is master.
       - master
-      - 'feat/**'
+      - "feat/**"
 
 jobs:
   pr-description-check:
@@ -22,7 +22,7 @@ jobs:
         # Using setup-node ensures a consistent Node version regardless of runner-image drift.
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: "24"
 
       - name: Validate PR description template usage
         # Requires non-empty Summary/Changes/Testing/Risks sections and rejects
