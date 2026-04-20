@@ -1,27 +1,66 @@
-import type { CustomTeamDraft } from "@feat/customTeams/generation/generateDefaultTeam";
+import type {
+  CustomTeamDraft,
+  GeneratedPlayer,
+} from "@feat/customTeams/generation/generateDefaultTeam";
 
-import type { CreateCustomTeamInput, TeamPlayer, TeamWithRoster } from "@storage/types";
+import type {
+  CreateCustomTeamInput,
+  TeamBatterPlayer,
+  TeamPitcherPlayer,
+  TeamPlayer,
+  TeamWithRoster,
+} from "@storage/types";
 
 import { DEFAULT_LINEUP_POSITIONS, REQUIRED_FIELD_POSITIONS } from "./playerConstants";
 import { HITTER_STAT_CAP, hitterStatTotal, PITCHER_STAT_CAP, pitcherStatTotal } from "./statBudget";
 
-/** A single player row as edited in the form (stats as numbers 0–100). */
-export interface EditorPlayer {
+/** A batter row as edited in the form. */
+export interface EditorBatterPlayer {
   id: string;
   name: string;
-  /** Position code (e.g. "C", "1B", "SS", "SP"). Empty string while unset. */
+  role: "batter";
+  /** Position code (e.g. "C", "1B", "SS"). Empty string while unset. */
   position: string;
-  /** Batting handedness. Defaults to "R" for new players. */
   handedness: "R" | "L" | "S";
   contact: number;
   power: number;
   speed: number;
-  velocity?: number;
-  control?: number;
-  movement?: number;
-  /** Pitcher role eligibility. Only meaningful for pitchers. */
-  pitchingRole?: "SP" | "RP" | "SP/RP";
+  /**
+   * Round-tripped from the persisted doc — not shown in the editor UI.
+   * Preserved so a save/reload cycle does not silently reset the value.
+   * Defaults to 50 when absent.
+   */
+  stamina?: number;
 }
+
+/** A pitcher row as edited in the form. */
+export interface EditorPitcherPlayer {
+  id: string;
+  name: string;
+  role: "pitcher";
+  /** Position code (e.g. "SP", "RP"). Empty string while unset. */
+  position: string;
+  handedness: "R" | "L" | "S";
+  velocity: number;
+  control: number;
+  movement: number;
+  pitchingRole?: "SP" | "RP" | "SP/RP";
+  /**
+   * Round-tripped from the persisted doc — not shown in the editor UI.
+   * Preserved so a save/reload cycle does not silently reset the value.
+   * Defaults to 60 when absent.
+   */
+  stamina?: number;
+}
+
+export type EditorPlayer = EditorBatterPlayer | EditorPitcherPlayer;
+
+/**
+ * Patch shape for UPDATE_PLAYER actions and `onChange` callbacks.
+ * A partial of either variant — callers patch only the fields relevant to
+ * the player's role.
+ */
+export type EditorPlayerPatch = Partial<EditorBatterPlayer> | Partial<EditorPitcherPlayer>;
 
 export interface EditorState {
   name: string;
@@ -29,9 +68,9 @@ export interface EditorState {
   abbreviation: string;
   city: string;
   nickname: string;
-  lineup: EditorPlayer[];
-  bench: EditorPlayer[];
-  pitchers: EditorPlayer[];
+  lineup: EditorBatterPlayer[];
+  bench: EditorBatterPlayer[];
+  pitchers: EditorPitcherPlayer[];
   error: string;
 }
 
@@ -41,7 +80,7 @@ export type EditorAction =
       type: "UPDATE_PLAYER";
       section: "lineup" | "bench" | "pitchers";
       index: number;
-      player: Partial<EditorPlayer>;
+      player: EditorPlayerPatch;
     }
   | { type: "ADD_PLAYER"; section: "lineup" | "bench" | "pitchers"; player: EditorPlayer }
   | { type: "REMOVE_PLAYER"; section: "lineup" | "bench" | "pitchers"; index: number }
@@ -76,18 +115,19 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case "SET_FIELD":
       return { ...state, [action.field]: action.value, error: "" };
     case "UPDATE_PLAYER": {
-      const list = [...state[action.section]];
-      list[action.index] = { ...list[action.index], ...action.player };
+      // Use EditorPlayer[] cast so the spread works uniformly across all sections.
+      const list = [...(state[action.section] as EditorPlayer[])];
+      list[action.index] = { ...list[action.index], ...action.player } as EditorPlayer;
       return { ...state, [action.section]: list, error: "" };
     }
     case "ADD_PLAYER":
       return { ...state, [action.section]: [...state[action.section], action.player], error: "" };
     case "REMOVE_PLAYER": {
-      const list = state[action.section].filter((_, i) => i !== action.index);
+      const list = (state[action.section] as EditorPlayer[]).filter((_, i) => i !== action.index);
       return { ...state, [action.section]: list, error: "" };
     }
     case "REORDER": {
-      const lookup = new Map(state[action.section].map((p) => [p.id, p]));
+      const lookup = new Map((state[action.section] as EditorPlayer[]).map((p) => [p.id, p]));
       const reordered = action.orderedIds.flatMap((id) => {
         const p = lookup.get(id);
         return p ? [p] : [];
@@ -106,12 +146,20 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case "MOVE_UP":
       return {
         ...state,
-        [action.section]: moveItem(state[action.section], action.index, action.index - 1),
+        [action.section]: moveItem(
+          state[action.section] as EditorPlayer[],
+          action.index,
+          action.index - 1,
+        ),
       };
     case "MOVE_DOWN":
       return {
         ...state,
-        [action.section]: moveItem(state[action.section], action.index, action.index + 1),
+        [action.section]: moveItem(
+          state[action.section] as EditorPlayer[],
+          action.index,
+          action.index + 1,
+        ),
       };
     case "APPLY_DRAFT":
       return {
@@ -120,9 +168,9 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         abbreviation: action.draft.abbreviation ?? "",
         city: action.draft.city,
         nickname: action.draft.nickname,
-        lineup: action.draft.roster.lineup.map(draftPlayerToEditor),
-        bench: action.draft.roster.bench.map(draftPlayerToEditor),
-        pitchers: action.draft.roster.pitchers.map(draftPlayerToEditor),
+        lineup: action.draft.roster.lineup.map(draftBatterToEditor),
+        bench: (action.draft.roster.bench ?? []).map(draftBatterToEditor),
+        pitchers: action.draft.roster.pitchers.map(draftPitcherToEditor),
         error: "",
       };
     case "SET_ERROR":
@@ -132,46 +180,73 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
   }
 }
 
-const draftPlayerToEditor = (p: CustomTeamDraft["roster"]["lineup"][number]): EditorPlayer => ({
+const draftBatterToEditor = (p: GeneratedPlayer): EditorBatterPlayer => ({
   id: p.id,
   name: p.name,
+  role: "batter",
   position: p.position ?? "",
   handedness: p.handedness ?? "R",
   contact: p.batting.contact,
   power: p.batting.power,
   speed: p.batting.speed,
-  ...(p.pitching && {
-    velocity: p.pitching.velocity,
-    control: p.pitching.control,
-    movement: p.pitching.movement,
-  }),
-  ...(p.pitchingRole !== undefined && { pitchingRole: p.pitchingRole }),
+  stamina: p.batting.stamina,
 });
 
-const docPlayerToEditor = (p: TeamPlayer): EditorPlayer => ({
+const draftPitcherToEditor = (p: GeneratedPlayer): EditorPitcherPlayer => {
+  const pitching = p.pitching ?? { velocity: 60, control: 60, movement: 60, stamina: 60 };
+  return {
+    id: p.id,
+    name: p.name,
+    role: "pitcher",
+    position: p.position ?? "",
+    handedness: p.handedness ?? "R",
+    velocity: pitching.velocity,
+    control: pitching.control,
+    movement: pitching.movement,
+    stamina: pitching.stamina,
+    ...(p.pitchingRole !== undefined && { pitchingRole: p.pitchingRole }),
+  };
+};
+
+const docBatterToEditor = (p: TeamBatterPlayer): EditorBatterPlayer => ({
   id: p.id,
   name: p.name,
+  role: "batter",
   position: p.position ?? "",
   handedness: p.handedness ?? "R",
   contact: p.batting.contact,
   power: p.batting.power,
   speed: p.batting.speed,
-  ...(p.pitching && {
-    velocity: p.pitching.velocity,
-    control: p.pitching.control,
-    movement: p.pitching.movement,
-  }),
-  ...(p.pitchingRole !== undefined && { pitchingRole: p.pitchingRole }),
+  stamina: p.batting.stamina,
 });
+
+const docPitcherToEditor = (p: TeamPitcherPlayer): EditorPitcherPlayer => {
+  const pitching = p.pitching ?? { velocity: 60, control: 60, movement: 60, stamina: 60 };
+  return {
+    id: p.id,
+    name: p.name,
+    role: "pitcher",
+    position: p.position ?? "",
+    handedness: p.handedness ?? "R",
+    velocity: pitching.velocity,
+    control: pitching.control,
+    movement: pitching.movement,
+    stamina: pitching.stamina,
+    ...(p.pitchingRole !== undefined && { pitchingRole: p.pitchingRole }),
+  };
+};
+
+const docPlayerToEditor = (p: TeamPlayer): EditorPlayer =>
+  p.role === "pitcher" ? docPitcherToEditor(p) : docBatterToEditor(p);
 
 export const initEditorState = (team?: TeamWithRoster): EditorState => ({
   name: team?.name ?? "",
   abbreviation: team?.abbreviation ?? "",
   city: team?.city ?? "",
   nickname: team?.nickname ?? "",
-  lineup: team?.roster.lineup.map(docPlayerToEditor) ?? [],
-  bench: team?.roster.bench.map(docPlayerToEditor) ?? [],
-  pitchers: team?.roster.pitchers.map(docPlayerToEditor) ?? [],
+  lineup: (team?.roster.lineup ?? []).map(docPlayerToEditor) as EditorBatterPlayer[],
+  bench: (team?.roster.bench ?? []).map(docPlayerToEditor) as EditorBatterPlayer[],
+  pitchers: (team?.roster.pitchers ?? []).map(docPlayerToEditor) as EditorPitcherPlayer[],
   error: "",
 });
 
@@ -239,7 +314,14 @@ export function validateEditorState(state: EditorState): string {
 
   // Check pitcher stat cap (velocity + control + movement ≤ PITCHER_STAT_CAP).
   for (const player of state.pitchers) {
-    const total = pitcherStatTotal(player.velocity ?? 0, player.control ?? 0, player.movement ?? 0);
+    if (
+      player.velocity === undefined ||
+      player.control === undefined ||
+      player.movement === undefined
+    ) {
+      return `${player.name || "A pitcher"} is missing pitching stats.`;
+    }
+    const total = pitcherStatTotal(player.velocity, player.control, player.movement);
     if (total > PITCHER_STAT_CAP) {
       return `${player.name || "A pitcher"} is over the stat cap (${total} / ${PITCHER_STAT_CAP}).`;
     }
@@ -256,33 +338,62 @@ export function editorStateToCreateInput(state: EditorState): CreateCustomTeamIn
     city: state.city.trim() || undefined,
     nickname: state.nickname.trim() || undefined,
     roster: {
-      lineup: state.lineup.map(editorToTeamPlayer("batter")),
-      bench: state.bench.map(editorToTeamPlayer("batter")),
-      pitchers: state.pitchers.map(editorToTeamPlayer("pitcher")),
+      lineup: state.lineup.map(editorToTeamPlayer),
+      bench: state.bench.map(editorToTeamPlayer),
+      pitchers: state.pitchers.map(editorToTeamPlayer),
     },
   };
 }
 
-const editorToTeamPlayer =
-  (role: "batter" | "pitcher") =>
-  (p: EditorPlayer): TeamPlayer => ({
+const editorToTeamPlayer = (p: EditorPlayer): TeamPlayer => {
+  const trimmedPosition = p.position.trim();
+
+  if (p.role === "pitcher") {
+    const pitcherRoleFromPosition =
+      trimmedPosition === "SP" || trimmedPosition === "RP" || trimmedPosition === "SP/RP"
+        ? trimmedPosition
+        : undefined;
+    const normalizedPitchingRole = p.pitchingRole ?? pitcherRoleFromPosition ?? "SP/RP";
+
+    if (p.velocity === undefined || p.control === undefined || p.movement === undefined) {
+      throw new Error("Pitcher is missing pitching stats.");
+    }
+
+    // `position` must be "SP" or "RP" (the only values in PITCHER_POSITION_OPTIONS).
+    // `pitchingRole` is the eligibility field and may additionally be "SP/RP".
+    const normalizedPosition =
+      trimmedPosition === "SP" || trimmedPosition === "RP" ? trimmedPosition : "SP";
+
+    return {
+      id: p.id,
+      name: p.name.trim(),
+      role: "pitcher",
+      position: normalizedPosition,
+      handedness: p.handedness,
+      pitching: {
+        velocity: p.velocity,
+        control: p.control,
+        movement: p.movement,
+        stamina: p.stamina ?? 60,
+      },
+      pitchingRole: normalizedPitchingRole,
+    };
+  }
+
+  return {
     id: p.id,
     name: p.name.trim(),
-    role,
-    position: p.position || undefined,
-    handedness: p.handedness || undefined,
-    batting: { contact: p.contact, power: p.power, speed: p.speed },
-    ...(role === "pitcher" &&
-      p.velocity !== undefined && {
-        pitching: { velocity: p.velocity, control: p.control ?? 60, movement: p.movement ?? 60 },
-      }),
-    ...(role === "pitcher" && p.pitchingRole !== undefined && { pitchingRole: p.pitchingRole }),
-  });
+    role: "batter",
+    position: trimmedPosition || "DH",
+    handedness: p.handedness,
+    batting: { contact: p.contact, power: p.power, speed: p.speed, stamina: p.stamina ?? 50 },
+  };
+};
 
 /**
- * Converts a single `EditorPlayer` to a `TeamPlayer` with the given role.
+ * Converts a single `EditorPlayer` to a `TeamPlayer`.
  * Exported for use in the player-export flow (where we need the role to
  * correctly populate the pitching fields and compute the player sig).
+ * The player's role is determined by `p.role`.
  */
-export const editorPlayerToTeamPlayer = (p: EditorPlayer, role: "batter" | "pitcher"): TeamPlayer =>
-  editorToTeamPlayer(role)(p);
+export const editorPlayerToTeamPlayer = (p: EditorPlayer): TeamPlayer => editorToTeamPlayer(p);

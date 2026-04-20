@@ -31,14 +31,17 @@ const makeTeam = (overrides: Partial<TeamWithRoster> = {}): TeamWithRoster => ({
         id: "p1",
         name: "Tom Adams",
         role: "batter",
+        position: "C",
         handedness: "L",
-        batting: { contact: 70, power: 65, speed: 60 },
+        batting: { contact: 70, power: 65, speed: 60, stamina: 50 },
       },
       {
         id: "p2",
         name: "Jake Baker",
         role: "batter",
-        batting: { contact: 55, power: 80, speed: 50 },
+        position: "C",
+        handedness: "R" as const,
+        batting: { contact: 55, power: 80, speed: 50, stamina: 50 },
       },
     ],
     bench: [
@@ -46,7 +49,9 @@ const makeTeam = (overrides: Partial<TeamWithRoster> = {}): TeamWithRoster => ({
         id: "p3",
         name: "Sam Cole",
         role: "batter",
-        batting: { contact: 50, power: 50, speed: 50 },
+        position: "C",
+        handedness: "R" as const,
+        batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
       },
     ],
     pitchers: [
@@ -54,9 +59,9 @@ const makeTeam = (overrides: Partial<TeamWithRoster> = {}): TeamWithRoster => ({
         id: "p4",
         name: "Ray Davis",
         role: "pitcher",
+        position: "P",
         handedness: "R",
-        batting: { contact: 30, power: 25, speed: 30 },
-        pitching: { velocity: 75, control: 65, movement: 70 },
+        pitching: { velocity: 75, control: 65, movement: 70, stamina: 60 },
       },
     ],
   },
@@ -151,13 +156,40 @@ describe("customTeamToPlayerOverrides", () => {
     expect(overrides["p4"].movementMod).toBe(10);
   });
 
+  it("includes pitching mods for legacy pitcher roles in pitcher slots", () => {
+    const team = makeTeam({
+      roster: {
+        ...makeTeam().roster,
+        pitchers: [
+          {
+            id: "p4",
+            name: "Ray Davis",
+            role: "SP",
+            position: "SP",
+            handedness: "R",
+            pitching: { velocity: 75, control: 65, movement: 70, stamina: 80 },
+          } as unknown as TeamWithRoster["roster"]["pitchers"][number],
+        ],
+      },
+    });
+    const overrides = customTeamToPlayerOverrides(team);
+    expect(overrides["p4"].velocityMod).toBe(10);
+    expect(overrides["p4"].controlMod).toBe(5);
+    expect(overrides["p4"].movementMod).toBe(10);
+    expect(overrides["p4"].staminaMod).toBe(20);
+  });
+
   it("includes staminaMod for pitchers with non-default stamina", () => {
     const team = makeTeam({
       roster: {
         ...makeTeam().roster,
         pitchers: [
           {
-            ...makeTeam().roster.pitchers[0],
+            id: "p4",
+            name: "Ray Davis",
+            role: "pitcher",
+            position: "P",
+            handedness: "R",
             pitching: { velocity: 75, control: 65, movement: 70, stamina: 80 },
           },
         ],
@@ -173,7 +205,11 @@ describe("customTeamToPlayerOverrides", () => {
         ...makeTeam().roster,
         lineup: [
           {
-            ...makeTeam().roster.lineup[0],
+            id: "p1",
+            name: "Tom Adams",
+            role: "batter",
+            position: "C",
+            handedness: "L",
             batting: { contact: 70, power: 65, speed: 60, stamina: 80 },
           },
           makeTeam().roster.lineup[1],
@@ -190,8 +226,11 @@ describe("customTeamToPlayerOverrides", () => {
         ...makeTeam().roster,
         pitchers: [
           {
-            ...makeTeam().roster.pitchers[0],
-            batting: { contact: 30, power: 25, speed: 30, stamina: 20 },
+            id: "p4",
+            name: "Ray Davis",
+            role: "pitcher",
+            position: "P",
+            handedness: "R",
             pitching: { velocity: 75, control: 65, movement: 70, stamina: 80 },
           },
         ],
@@ -199,6 +238,32 @@ describe("customTeamToPlayerOverrides", () => {
     });
     const overrides = customTeamToPlayerOverrides(team);
     expect(overrides["p4"].staminaMod).toBe(20);
+  });
+
+  it("includes batting overrides for legacy lineup players with role === undefined", () => {
+    const team = makeTeam({
+      roster: {
+        ...makeTeam().roster,
+        lineup: [
+          {
+            id: "p1",
+            name: "Tom Adams",
+            // No role field — simulates a legacy export saved before schema hardening
+            position: "C",
+            handedness: "L" as const,
+            // stamina: 80 is intentionally non-default (DEFAULT_BATTING_STAMINA=50) so
+            // staminaMod = clampMod(80-60) = 20 is a distinct, verifiable expected value.
+            batting: { contact: 70, power: 65, speed: 60, stamina: 80 },
+          } as unknown as TeamWithRoster["roster"]["lineup"][number],
+        ],
+      },
+    });
+    const overrides = customTeamToPlayerOverrides(team);
+    // Legacy players with no role should NOT be silently dropped — they should
+    // receive batting overrides just like explicit role="batter" players.
+    expect(overrides["p1"]).toBeDefined();
+    expect(overrides["p1"].contactMod).toBe(10);
+    expect(overrides["p1"].staminaMod).toBe(20);
   });
 
   it("does not include pitching mods for batters", () => {
@@ -215,8 +280,9 @@ describe("customTeamToPlayerOverrides", () => {
             id: "p1",
             name: "Tom Adams",
             role: "batter",
+            handedness: "R" as const,
             position: "C",
-            batting: { contact: 70, power: 65, speed: 60 },
+            batting: { contact: 70, power: 65, speed: 60, stamina: 50 },
           },
         ],
         bench: [],
@@ -228,21 +294,47 @@ describe("customTeamToPlayerOverrides", () => {
   });
 
   it("omits position in override when player has no position set", () => {
-    const overrides = customTeamToPlayerOverrides(makeTeam());
+    const team = makeTeam({
+      roster: {
+        ...makeTeam().roster,
+        lineup: [
+          {
+            ...makeTeam().roster.lineup[0],
+            position: "",
+          },
+        ],
+      },
+    });
+    const overrides = customTeamToPlayerOverrides(team);
     expect(overrides["p1"].position).toBeUndefined();
   });
 });
 
 describe("customTeamToHandednessMap", () => {
-  it("returns a playerId->handedness lookup for rostered players", () => {
+  it("returns a playerId->handedness lookup for rostered players with explicit handedness", () => {
     const map = customTeamToHandednessMap(makeTeam());
     expect(map["p1"]).toBe("L");
     expect(map["p4"]).toBe("R");
+    expect(map["p2"]).toBe("R");
   });
 
-  it("omits players that do not have explicit handedness", () => {
-    const map = customTeamToHandednessMap(makeTeam());
-    expect(map["p2"]).toBeUndefined();
+  it("omits players without explicit handedness so gameplay uses the deterministic fallback", () => {
+    const team = makeTeam({
+      roster: {
+        ...makeTeam().roster,
+        lineup: [
+          {
+            ...makeTeam().roster.lineup[0],
+            id: "p_no_hand",
+            handedness: undefined as unknown as "R",
+          },
+        ],
+        bench: [],
+        pitchers: [],
+      },
+    });
+    const map = customTeamToHandednessMap(team);
+    expect("p_no_hand" in map).toBe(false);
   });
 });
 
@@ -336,7 +428,8 @@ const makeFullLineup = () =>
     id: `pl_${i}`,
     name: `Player ${i + 1}`,
     role: "batter" as const,
-    batting: { contact: 50, power: 50, speed: 50 },
+    handedness: "R" as const,
+    batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
     position: pos,
   }));
 
@@ -351,8 +444,9 @@ const makeValidTeam = (overrides: Partial<TeamWithRoster> = {}): TeamWithRoster 
         id: "sp1",
         name: "Ace Pitcher",
         role: "pitcher",
-        batting: { contact: 30, power: 25, speed: 30 },
-        pitching: { velocity: 75, control: 65, movement: 70 },
+        position: "P",
+        handedness: "R" as const,
+        pitching: { velocity: 75, control: 65, movement: 70, stamina: 60 },
       },
     ],
   },
@@ -407,14 +501,16 @@ describe("validateCustomTeamForGame", () => {
         id: "p_a",
         name: "Player A",
         role: "batter" as const,
-        batting: { contact: 50, power: 50, speed: 50 },
+        handedness: "R" as const,
+        batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
         position: "C",
       },
       {
         id: "p_b",
         name: "Player B",
         role: "batter" as const,
-        batting: { contact: 50, power: 50, speed: 50 },
+        handedness: "R" as const,
+        batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
         position: "1B",
       },
     ];
@@ -447,8 +543,9 @@ describe("validateCustomTeamForGame", () => {
             id: "sp_bad",
             name: "",
             role: "pitcher",
-            batting: { contact: 30, power: 25, speed: 30 },
-            pitching: { velocity: 70, control: 65, movement: 60 },
+            position: "P",
+            handedness: "R" as const,
+            pitching: { velocity: 70, control: 65, movement: 60, stamina: 60 },
           },
         ],
       },
@@ -467,15 +564,17 @@ describe("validateCustomTeamForGame", () => {
             id: "sp1",
             name: "Good Ace",
             role: "pitcher",
-            batting: { contact: 30, power: 25, speed: 30 },
-            pitching: { velocity: 70, control: 65, movement: 60 },
+            position: "P",
+            handedness: "R" as const,
+            pitching: { velocity: 70, control: 65, movement: 60, stamina: 60 },
           },
           {
             id: "sp2",
             name: "   ",
             role: "pitcher",
-            batting: { contact: 30, power: 25, speed: 30 },
-            pitching: { velocity: 65, control: 60, movement: 55 },
+            position: "P",
+            handedness: "R" as const,
+            pitching: { velocity: 65, control: 60, movement: 55, stamina: 60 },
           },
         ],
       },
@@ -494,20 +593,64 @@ describe("validateCustomTeamForGame", () => {
             id: "sp1",
             name: "Ace Starter",
             role: "pitcher",
-            batting: { contact: 30, power: 25, speed: 30 },
-            pitching: { velocity: 80, control: 70, movement: 65 },
+            position: "P",
+            handedness: "R" as const,
+            pitching: { velocity: 80, control: 70, movement: 65, stamina: 60 },
           },
           {
             id: "rp1",
             name: "Relief Guy",
             role: "pitcher",
-            batting: { contact: 25, power: 20, speed: 25 },
-            pitching: { velocity: 75, control: 65, movement: 60 },
+            position: "P",
+            handedness: "R" as const,
+            pitching: { velocity: 75, control: 65, movement: 60, stamina: 60 },
           },
         ],
       },
     });
     expect(validateCustomTeamForGame(team)).toBeNull();
+  });
+
+  it("returns error when lineup contains an unsupported role", () => {
+    const lineup = makeFullLineup();
+    lineup[0] = { ...lineup[0], role: "two-way" as never };
+    const team = makeValidTeam({ roster: { ...makeValidTeam().roster, lineup } });
+    const err = validateCustomTeamForGame(team);
+    expect(err).toBeTruthy();
+    expect(err).toContain("lineup player with unsupported role");
+  });
+
+  it("returns error when bench contains an unsupported role", () => {
+    const team = makeValidTeam({
+      roster: {
+        ...makeValidTeam().roster,
+        bench: [
+          {
+            id: "bench_tw",
+            name: "Legacy Bench Two-Way",
+            role: "two-way" as never,
+            position: "LF",
+            handedness: "R",
+            batting: { contact: 55, power: 55, speed: 55, stamina: 50 },
+          },
+        ],
+      },
+    });
+    const err = validateCustomTeamForGame(team);
+    expect(err).toBeTruthy();
+    expect(err).toContain("bench player with unsupported role");
+  });
+
+  it("returns error when pitchers list contains a non-pitcher role", () => {
+    const team = makeValidTeam({
+      roster: {
+        ...makeValidTeam().roster,
+        pitchers: [{ ...makeValidTeam().roster.pitchers[0], role: "batter" as never }],
+      },
+    });
+    const err = validateCustomTeamForGame(team);
+    expect(err).toBeTruthy();
+    expect(err).toContain("pitcher entry with unsupported role");
   });
 
   it("returns error when team name is empty", () => {

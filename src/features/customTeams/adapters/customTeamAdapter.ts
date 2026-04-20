@@ -100,12 +100,16 @@ export function resolveRestoreLabels(
 }
 
 type ModPreset = -20 | -10 | -5 | 0 | 5 | 10 | 20;
+type PitcherRoleLike = "pitcher" | "SP" | "RP" | "SP/RP" | undefined;
 
 /** Rounds a raw offset to the nearest valid ModPreset value. */
 function clampMod(offset: number): ModPreset {
   const presets: ModPreset[] = [-20, -10, -5, 0, 5, 10, 20];
   return presets.reduce((best, p) => (Math.abs(p - offset) < Math.abs(best - offset) ? p : best));
 }
+
+const isSupportedPitcherRole = (role: unknown): role is PitcherRoleLike =>
+  role === undefined || role === "pitcher" || role === "SP" || role === "RP" || role === "SP/RP";
 
 /**
  * Maps a TeamWithRoster's batting stats into the `TeamCustomPlayerOverrides`
@@ -118,11 +122,12 @@ function clampMod(offset: number): ModPreset {
  */
 export function customTeamToPlayerOverrides(team: TeamWithRoster): TeamCustomPlayerOverrides {
   const overrides: TeamCustomPlayerOverrides = {};
-  const allPlayers = [...team.roster.lineup, ...team.roster.bench, ...team.roster.pitchers];
-  for (const player of allPlayers) {
-    const staminaBase = player.pitching
-      ? (player.pitching.stamina ?? 60)
-      : (player.batting.stamina ?? 60);
+  for (const player of [...team.roster.lineup, ...(team.roster.bench ?? [])]) {
+    // Allow role === undefined (legacy DB entries saved before schema v1 when
+    // role was optional) as well as role === "batter". Mirrors the guard in
+    // validateCustomTeamForGame so a player that passes validation is never
+    // silently skipped here.
+    if (player.role !== undefined && player.role !== "batter") continue;
     overrides[player.id] = {
       nickname: player.name,
       ...(player.position ? { position: player.position } : {}),
@@ -130,27 +135,45 @@ export function customTeamToPlayerOverrides(team: TeamWithRoster): TeamCustomPla
       contactMod: clampMod(player.batting.contact - 60),
       powerMod: clampMod(player.batting.power - 60),
       speedMod: clampMod(player.batting.speed - 60),
-      staminaMod: clampMod(staminaBase - 60),
-      ...(player.pitching && {
-        velocityMod: clampMod((player.pitching.velocity ?? 60) - 60),
-        controlMod: clampMod((player.pitching.control ?? 60) - 60),
-        movementMod: clampMod((player.pitching.movement ?? 60) - 60),
-      }),
+      staminaMod: clampMod((player.batting.stamina ?? 60) - 60),
     };
   }
+
+  for (const player of team.roster.pitchers) {
+    if (!isSupportedPitcherRole(player.role)) continue;
+    const pitching = player.pitching;
+    if (!pitching) continue;
+    const existing = overrides[player.id] ?? {
+      nickname: player.name,
+      ...(player.position ? { position: player.position } : {}),
+      ...(player.handedness ? { handedness: player.handedness } : {}),
+    };
+    overrides[player.id] = {
+      ...existing,
+      velocityMod: clampMod((pitching.velocity ?? 60) - 60),
+      controlMod: clampMod((pitching.control ?? 60) - 60),
+      movementMod: clampMod((pitching.movement ?? 60) - 60),
+      staminaMod: clampMod((pitching.stamina ?? 60) - 60),
+    };
+  }
+
   return overrides;
 }
 
 /**
  * Returns a lookup of playerId -> handedness for every rostered player.
- * Players missing explicit handedness are omitted and resolved later via
- * deterministic fallback in gameplay.
+ * Only players with an explicit handedness field are included; players without
+ * one are intentionally omitted so that the gameplay layer's deterministic
+ * fallback (`deterministicHandednessForPlayerId`) is reached and produces a
+ * stable hash-distributed R/L/S variety for any legacy DB entries.
  */
 export function customTeamToHandednessMap(team: TeamWithRoster): Record<string, Handedness> {
   const handednessByPlayer: Record<string, Handedness> = {};
-  const allPlayers = [...team.roster.lineup, ...team.roster.bench, ...team.roster.pitchers];
+  const allPlayers = [...team.roster.lineup, ...(team.roster.bench ?? []), ...team.roster.pitchers];
   for (const player of allPlayers) {
-    if (player.handedness) handednessByPlayer[player.id] = player.handedness;
+    if (player.handedness) {
+      handednessByPlayer[player.id] = player.handedness;
+    }
   }
   return handednessByPlayer;
 }
@@ -160,7 +183,7 @@ export function customTeamToHandednessMap(team: TeamWithRoster): Record<string, 
  * Used to populate `rosterBench` when a custom team game is started.
  */
 export function customTeamToBenchRoster(team: TeamWithRoster): string[] {
-  return team.roster.bench.map((p) => p.id);
+  return (team.roster.bench ?? []).map((p) => p.id);
 }
 
 /**
@@ -178,6 +201,14 @@ export function customTeamToPitcherRoster(team: TeamWithRoster): string[] {
  * Used by NewGameDialog to block game start with invalid (including legacy) teams.
  */
 export function validateCustomTeamForGame(team: TeamWithRoster): string | null {
+  const unsupportedRoleMessage = (
+    context: "a lineup player" | "a bench player" | "a pitcher entry",
+    role: string,
+    expectedRole: "batter" | "pitcher",
+  ) =>
+    `"${team.name}" has ${context} with unsupported role "${role}". ` +
+    `Edit the team and set these entries to role "${expectedRole}".`;
+
   if (!team.name || !team.name.trim()) {
     return `Team has no name. Please edit it before starting a game.`;
   }
@@ -191,12 +222,24 @@ export function validateCustomTeamForGame(team: TeamWithRoster): string | null {
   }
   // Validate each lineup player has a non-empty name.
   for (const player of lineup) {
+    if (player.role !== undefined && player.role !== "batter") {
+      return unsupportedRoleMessage("a lineup player", player.role, "batter");
+    }
     if (!player.name || !player.name.trim()) {
       return `"${team.name}" has a lineup player with no name. Edit the team to fix it before starting.`;
     }
   }
+  // Validate each bench player uses the supported batter role.
+  for (const player of team.roster?.bench ?? []) {
+    if (player.role !== undefined && player.role !== "batter") {
+      return unsupportedRoleMessage("a bench player", player.role, "batter");
+    }
+  }
   // Validate each pitcher has a non-empty name.
   for (const pitcher of pitchers) {
+    if (!isSupportedPitcherRole(pitcher.role)) {
+      return unsupportedRoleMessage("a pitcher entry", pitcher.role, "pitcher");
+    }
     if (!pitcher.name || !pitcher.name.trim()) {
       return `"${team.name}" has a pitcher with no name. Edit the team to fix it before starting.`;
     }

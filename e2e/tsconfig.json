@@ -15,14 +15,15 @@
   //   - node types              → `fs`, `path`, `__dirname`, `Buffer`, etc.
   //   - allowSyntheticDefaultImports → matches how `import path from 'path'`
   //     is already used throughout the E2E helpers
-  //   - paths: {}               → clears the src/ path aliases; E2E files use
-  //     relative imports only
+  //   - inherits path aliases from root tsconfig  → E2E test files use
+  //     relative imports for their own helpers; src files imported transitively
+  //     (e.g. buildPlayerSig, TEAMS_EXPORT_KEY from customTeamExportImport)
+  //     resolve @storage/*, @feat/*, @shared/* via the inherited aliases
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "types": ["@playwright/test", "node"],
     "noEmit": true,
-    "allowSyntheticDefaultImports": true,
-    "paths": {}
+    "allowSyntheticDefaultImports": true
   },
   "include": ["**/*.ts", "../playwright.config.ts"]
 }

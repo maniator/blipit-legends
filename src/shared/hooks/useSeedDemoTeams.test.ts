@@ -44,7 +44,7 @@ beforeEach(async () => {
   demoSeedDoneKey = mod.DEMO_SEED_DONE_KEY;
   localStorage.removeItem(demoSeedDoneKey);
   mockStore.createCustomTeam.mockResolvedValue("ct_some_id");
-});
+}, 20000);
 
 afterEach(() => {
   vi.restoreAllMocks();

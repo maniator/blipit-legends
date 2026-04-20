@@ -1,11 +1,21 @@
 import * as React from "react";
 
 import { exportCustomPlayer } from "@feat/customTeams/storage/customTeamExportImport";
+import {
+  buildPlayerSig,
+  PLAYER_EXPORT_KEY,
+} from "@feat/customTeams/storage/customTeamExportImport";
 import { CustomTeamStore } from "@feat/customTeams/storage/customTeamStore";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { TeamPlayer, TeamWithRoster } from "@storage/types";
+import { fnv1a } from "@storage/hash";
+import type {
+  TeamBatterPlayer,
+  TeamPitcherPlayer,
+  TeamPlayer,
+  TeamWithRoster,
+} from "@storage/types";
 
 import type { EditorAction, EditorPlayer } from "./editorState";
 import type { PendingPlayerImport } from "./useImportPlayerFile";
@@ -38,16 +48,31 @@ afterAll(() => vi.unstubAllGlobals());
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const makePlayerJson = (overrides: Partial<TeamPlayer> = {}): string => {
-  const player: TeamPlayer = {
-    id: "p_src",
-    name: "Imported Batter",
-    role: "batter",
-    batting: { contact: 70, power: 60, speed: 55 },
-    ...overrides,
-  };
+function makePlayerJson(overrides?: Partial<TeamBatterPlayer> & { role?: "batter" }): string;
+function makePlayerJson(overrides: Partial<TeamPitcherPlayer> & { role: "pitcher" }): string;
+function makePlayerJson(overrides: Partial<TeamPlayer> = {}): string {
+  const player: TeamPlayer =
+    overrides.role === "pitcher"
+      ? {
+          id: "p_src",
+          name: "Imported Pitcher",
+          role: "pitcher",
+          position: "P",
+          handedness: "R" as const,
+          pitching: { velocity: 70, control: 60, movement: 55, stamina: 60 },
+          ...(overrides as Partial<TeamPitcherPlayer>),
+        }
+      : {
+          id: "p_src",
+          name: "Imported Batter",
+          role: "batter",
+          position: "C",
+          handedness: "R" as const,
+          batting: { contact: 70, power: 60, speed: 55, stamina: 50 },
+          ...(overrides as Partial<TeamBatterPlayer>),
+        };
   return exportCustomPlayer(player);
-};
+}
 
 const makeTeamDoc = (id: string, name: string, players: TeamPlayer[] = []): TeamWithRoster => ({
   id,
@@ -63,6 +88,27 @@ const makeTeamDoc = (id: string, name: string, players: TeamPlayer[] = []): Team
 
 const makeFile = (content: string) =>
   new File([content], "player.json", { type: "application/json" });
+
+const makeLegacyMissingStaminaPlayerJson = (
+  playerJson: string,
+  role: "batter" | "pitcher",
+): string => {
+  const bundle = JSON.parse(playerJson) as {
+    payload: { player: Record<string, unknown> };
+    sig: string;
+  };
+  const player = bundle.payload.player;
+  if (role === "batter") {
+    const batting = player["batting"] as Record<string, unknown>;
+    delete batting["stamina"];
+  } else {
+    const pitching = player["pitching"] as Record<string, unknown>;
+    delete pitching["stamina"];
+  }
+  player["sig"] = buildPlayerSig(player as Parameters<typeof buildPlayerSig>[0]);
+  bundle.sig = fnv1a(PLAYER_EXPORT_KEY + JSON.stringify(bundle.payload));
+  return JSON.stringify(bundle);
+};
 
 const makeChangeEvent = (content: string): React.ChangeEvent<HTMLInputElement> => {
   const file = makeFile(content);
@@ -203,7 +249,9 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
       id: "p_nogid",
       name: "No GID Player",
       role: "batter",
-      batting: { contact: 60, power: 50, speed: 40 },
+      position: "C",
+      handedness: "R" as const,
+      batting: { contact: 60, power: 50, speed: 40, stamina: 50 },
     };
     const playerJson = exportCustomPlayer(playerWithoutGid);
     _fileContent = playerJson;
@@ -214,7 +262,9 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
         id: "p_dup",
         name: "No GID Player",
         role: "batter",
-        batting: { contact: 60, power: 50, speed: 40 },
+        position: "C",
+        handedness: "R" as const,
+        batting: { contact: 60, power: 50, speed: 40, stamina: 50 },
         // same stats, so buildPlayerSig will produce the same fingerprint
       },
     ]);
@@ -241,7 +291,9 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
       id: "p_confirm",
       name: "Confirm Player",
       role: "batter",
-      batting: { contact: 65, power: 45, speed: 55 },
+      position: "C",
+      handedness: "R" as const,
+      batting: { contact: 65, power: 45, speed: 55, stamina: 50 },
     };
     const playerJson = exportCustomPlayer(playerWithoutGid);
     _fileContent = playerJson;
@@ -251,7 +303,9 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
         id: "p_c2",
         name: "Confirm Player",
         role: "batter",
-        batting: { contact: 65, power: 45, speed: 55 },
+        position: "C",
+        handedness: "R" as const,
+        batting: { contact: 65, power: 45, speed: 55, stamina: 50 },
       },
     ]);
 
@@ -294,13 +348,147 @@ describe("useImportPlayerFile — create mode (no teamId)", () => {
     );
   });
 
+  it("shows soft fingerprint warning when imported pitcher fingerprint matches existing pitcher (no batting block)", async () => {
+    // The imported pitcher has no batting block — its fingerprint is computed from
+    // {name, role, pitching} only, matching how the DB stores pitcher fingerprints.
+    const importedPitcher: TeamPitcherPlayer = {
+      id: "p_pitch_import",
+      name: "Ace Pitcher",
+      role: "pitcher",
+      position: "P",
+      handedness: "R" as const,
+      pitching: { velocity: 85, control: 70, movement: 65, stamina: 60 },
+    };
+    const pitcherJson = exportCustomPlayer(importedPitcher);
+    _fileContent = pitcherJson;
+
+    // Existing team has a pitcher with the exact same name + pitching stats
+    // (stored with no batting block, as sanitizePlayer enforces for pitchers).
+    const existingPitcher: TeamPitcherPlayer = {
+      id: "p_pitch_existing",
+      name: "Ace Pitcher",
+      role: "pitcher",
+      position: "P",
+      handedness: "R" as const,
+      pitching: { velocity: 85, control: 70, movement: 65, stamina: 60 },
+    };
+    const teamWithDuplicate: TeamWithRoster = {
+      id: "ct_dup_pitcher",
+      schemaVersion: 1,
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+      name: "Rival Squad",
+      nameLowercase: "rival squad",
+      abbreviation: "RIV",
+      roster: { schemaVersion: 1, lineup: [], bench: [], pitchers: [existingPitcher] },
+      metadata: { archived: false },
+    };
+
+    const { result, setPendingPlayerImport } = renderImportHook({
+      allTeams: [teamWithDuplicate],
+    });
+    act(() => {
+      result.current("pitchers")(makeChangeEvent(pitcherJson));
+    });
+
+    await waitFor(() => {
+      expect(setPendingPlayerImport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          section: "pitchers",
+          warning: expect.stringContaining("Rival Squad"),
+        }),
+      );
+    });
+  });
+
+  it("shows soft fingerprint warning for legacy batter import missing stamina when defaulted to 50", async () => {
+    const playerJson = makeLegacyMissingStaminaPlayerJson(
+      makePlayerJson({
+        name: "Legacy Batter",
+        role: "batter",
+        batting: { contact: 60, power: 50, speed: 40, stamina: 50 },
+      }),
+      "batter",
+    );
+    _fileContent = playerJson;
+
+    const teamWithDuplicate = makeTeamDoc("ct_dup_legacy_batter", "Legacy Dup Team", [
+      {
+        id: "p_dup_legacy_batter",
+        name: "Legacy Batter",
+        role: "batter",
+        position: "C",
+        handedness: "R" as const,
+        batting: { contact: 60, power: 50, speed: 40, stamina: 50 },
+      },
+    ]);
+
+    const { result, setPendingPlayerImport } = renderImportHook({
+      allTeams: [teamWithDuplicate],
+    });
+    act(() => {
+      result.current("lineup")(makeChangeEvent(playerJson));
+    });
+
+    await waitFor(() => {
+      expect(setPendingPlayerImport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          section: "lineup",
+          warning: expect.stringContaining("Legacy Dup Team"),
+        }),
+      );
+    });
+  });
+
+  it("shows soft fingerprint warning for legacy pitcher import missing stamina when defaulted to 60", async () => {
+    const playerJson = makeLegacyMissingStaminaPlayerJson(
+      makePlayerJson({
+        role: "pitcher",
+        name: "Legacy Pitcher",
+        pitching: { velocity: 85, control: 70, movement: 65, stamina: 60 },
+      }),
+      "pitcher",
+    );
+    _fileContent = playerJson;
+
+    const teamWithDuplicate = makeTeamDoc("ct_dup_legacy_pitcher", "Legacy Pitch Dup", []);
+    teamWithDuplicate.roster.pitchers = [
+      {
+        id: "p_dup_legacy_pitcher",
+        name: "Legacy Pitcher",
+        role: "pitcher",
+        position: "P",
+        handedness: "R" as const,
+        pitching: { velocity: 85, control: 70, movement: 65, stamina: 60 },
+      },
+    ];
+
+    const { result, setPendingPlayerImport } = renderImportHook({
+      allTeams: [teamWithDuplicate],
+    });
+    act(() => {
+      result.current("pitchers")(makeChangeEvent(playerJson));
+    });
+
+    await waitFor(() => {
+      expect(setPendingPlayerImport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          section: "pitchers",
+          warning: expect.stringContaining("Legacy Pitch Dup"),
+        }),
+      );
+    });
+  });
+
   it("dispatches ADD_PLAYER directly when no fingerprint match found", async () => {
     // No duplicates anywhere → straight to ADD_PLAYER without showing duplicate warning.
     const playerWithoutGid: TeamPlayer = {
       id: "p_unique",
       name: "Unique Player",
       role: "batter",
-      batting: { contact: 55, power: 45, speed: 35 },
+      position: "C",
+      handedness: "R" as const,
+      batting: { contact: 55, power: 45, speed: 35, stamina: 50 },
     };
     const playerJson = exportCustomPlayer(playerWithoutGid);
     _fileContent = playerJson;
@@ -379,5 +567,143 @@ describe("useImportPlayerFile — error paths", () => {
       } as React.ChangeEvent<HTMLInputElement>);
     });
     expect(dispatch).not.toHaveBeenCalled();
+  });
+});
+
+describe("useImportPlayerFile — role/section mismatch", () => {
+  it("rejects a pitcher exported into the lineup section", async () => {
+    const pitcherJson = makePlayerJson({ role: "pitcher", name: "Ace Pitcher" });
+    _fileContent = pitcherJson;
+
+    const { result, dispatch } = renderImportHook();
+    act(() => {
+      result.current("lineup")(makeChangeEvent(pitcherJson));
+    });
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "SET_ERROR",
+          error: expect.stringContaining('"Ace Pitcher" is a pitcher'),
+        }),
+      );
+    });
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ error: expect.stringContaining("Lineup/Bench") }),
+    );
+  });
+
+  it("rejects a pitcher exported into the bench section", async () => {
+    const pitcherJson = makePlayerJson({ role: "pitcher", name: "Relief Pitcher" });
+    _fileContent = pitcherJson;
+
+    const { result, dispatch } = renderImportHook();
+    act(() => {
+      result.current("bench")(makeChangeEvent(pitcherJson));
+    });
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "SET_ERROR",
+          error: expect.stringContaining('"Relief Pitcher" is a pitcher'),
+        }),
+      );
+    });
+  });
+
+  it("rejects a batter exported into the pitchers section", async () => {
+    const batterJson = makePlayerJson({ role: "batter", name: "Slugger" });
+    _fileContent = batterJson;
+
+    const { result, dispatch } = renderImportHook();
+    act(() => {
+      result.current("pitchers")(makeChangeEvent(batterJson));
+    });
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "SET_ERROR",
+          error: expect.stringContaining('"Slugger" is a batter'),
+        }),
+      );
+    });
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ error: expect.stringContaining("Pitchers") }),
+    );
+  });
+
+  it("allows a pitcher into the pitchers section (no rejection)", async () => {
+    const pitcherJson = makePlayerJson({ role: "pitcher", name: "Valid Pitcher" });
+    _fileContent = pitcherJson;
+
+    const { result, dispatch } = renderImportHook();
+    act(() => {
+      result.current("pitchers")(makeChangeEvent(pitcherJson));
+    });
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "ADD_PLAYER", section: "pitchers" }),
+      );
+    });
+    expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: "SET_ERROR" }));
+  });
+
+  it("normalizes legacy pitcher position 'P' to 'SP' on import", async () => {
+    // A legacy export with position:"P" must not reach the EditorPlayer as-is,
+    // because the pitcher position <select> only supports "SP" and "RP".
+    const pitcherJson = makePlayerJson({
+      role: "pitcher",
+      name: "Legacy Pos Pitcher",
+      position: "P",
+    });
+    _fileContent = pitcherJson;
+
+    const { result, dispatch } = renderImportHook();
+    act(() => {
+      result.current("pitchers")(makeChangeEvent(pitcherJson));
+    });
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "ADD_PLAYER", section: "pitchers" }),
+      );
+    });
+    // position must be "SP" or "RP" — never the legacy "P"
+    const addPlayerAction = (dispatch as ReturnType<typeof vi.fn>).mock.calls
+      .map((args: unknown[]) => args[0] as EditorAction)
+      .find((a) => a.type === "ADD_PLAYER") as
+      | Extract<EditorAction, { type: "ADD_PLAYER" }>
+      | undefined;
+    expect(addPlayerAction?.player?.position).toBe("SP");
+  });
+
+  it("normalizes legacy pitcher position 'P' to 'RP' when pitchingRole is RP", async () => {
+    const pitcherJson = makePlayerJson({
+      role: "pitcher",
+      name: "Legacy RP Pitcher",
+      position: "P",
+      pitchingRole: "RP",
+    });
+    _fileContent = pitcherJson;
+
+    const { result, dispatch } = renderImportHook();
+    act(() => {
+      result.current("pitchers")(makeChangeEvent(pitcherJson));
+    });
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "ADD_PLAYER", section: "pitchers" }),
+      );
+    });
+    const addPlayerAction = (dispatch as ReturnType<typeof vi.fn>).mock.calls
+      .map((args: unknown[]) => args[0] as EditorAction)
+      .find((a) => a.type === "ADD_PLAYER") as
+      | Extract<EditorAction, { type: "ADD_PLAYER" }>
+      | undefined;
+    expect(addPlayerAction?.player?.position).toBe("RP");
   });
 });

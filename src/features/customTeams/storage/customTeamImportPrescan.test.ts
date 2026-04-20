@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { TeamPlayer } from "@storage/types";
 import { makePlayer, makeTeam } from "@test/helpers/customTeams";
 
 import { preScanForDuplicatePlayers } from "./customTeamImportPrescan";
@@ -120,5 +121,38 @@ describe("preScanForDuplicatePlayers", () => {
 
     const result = preScanForDuplicatePlayers([team], new Map(), existingPlayerSigs);
     expect(result.warnings).toHaveLength(3);
+  });
+
+  it("uses import-compat stamina defaults for legacy players missing stamina", () => {
+    const legacyBatter = {
+      ...makePlayer({ name: "Legacy Batter" }),
+      batting: { contact: 50, power: 50, speed: 50 },
+    };
+    const legacyPitcher = {
+      ...makePlayer({ name: "Legacy Pitcher", role: "pitcher" }),
+      pitching: { velocity: 50, control: 50, movement: 50 },
+    };
+    const team = makeTeam({
+      name: "Legacy Team",
+      roster: {
+        schemaVersion: 1,
+        lineup: [legacyBatter as unknown as TeamPlayer],
+        bench: [],
+        pitchers: [legacyPitcher as unknown as TeamPlayer],
+      },
+    });
+    const existingPlayerSigs = new Set([
+      buildPlayerSig({
+        ...legacyBatter,
+        batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+      }),
+      buildPlayerSig({
+        ...legacyPitcher,
+        pitching: { velocity: 50, control: 50, movement: 50, stamina: 60 },
+      }),
+    ]);
+
+    const result = preScanForDuplicatePlayers([team], new Map(), existingPlayerSigs);
+    expect(result.warnings).toHaveLength(2);
   });
 });

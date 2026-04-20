@@ -24,7 +24,7 @@ const TeamListItem: React.FunctionComponent<Props> = ({
   const displayName = customTeamToDisplayName(team);
   const lineupCount = team.roster.lineup.length;
   const pitcherCount = team.roster.pitchers.length;
-  const benchCount = team.roster.bench.length;
+  const benchCount = team.roster.bench?.length ?? 0;
 
   const handleDelete = () => {
     if (window.confirm(`Delete "${displayName}"? This cannot be undone.`)) {

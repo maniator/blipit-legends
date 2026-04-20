@@ -36,7 +36,7 @@ const CustomTeamEditor: React.FunctionComponent<Props> = ({ team, onSave, onCanc
     () =>
       new Set([
         ...(team?.roster.lineup.map((p) => p.id) ?? []),
-        ...(team?.roster.bench.map((p) => p.id) ?? []),
+        ...(team?.roster.bench?.map((p) => p.id) ?? []),
         ...(team?.roster.pitchers.map((p) => p.id) ?? []),
       ]),
     [team],

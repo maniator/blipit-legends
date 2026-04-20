@@ -7,8 +7,73 @@ import type { TeamPlayer, TeamWithRoster, UpdateCustomTeamInput } from "@storage
 import { type ImportPlayerResult } from "./customTeamExportBundles";
 import { resolvePlayerConflict } from "./customTeamIdentity";
 import { removeTeamPlayerRecords, writePlayerRecords } from "./customTeamPlayerDocs";
-import { clampPlayerStats, validatePlayerStatCaps } from "./customTeamSanitizers";
-import { buildPlayerSig } from "./customTeamSignatures";
+import {
+  DEFAULT_BATTING_STAMINA,
+  DEFAULT_PITCHING_STAMINA,
+  sanitizePlayer,
+} from "./customTeamSanitizers";
+
+const DEFAULT_BATTER_POSITION = "DH";
+const DEFAULT_PITCHER_POSITION = "RP";
+const DEFAULT_HANDEDNESS = "R" as const;
+
+function normalizeImportedPlayer(
+  player: TeamPlayer,
+  section: "lineup" | "bench" | "pitchers",
+): TeamPlayer {
+  const isPitcher = player.role === "pitcher";
+  const rawPosition = typeof player.position === "string" ? player.position.trim() : "";
+  const normalizedPitcherPosition =
+    rawPosition.length === 0 || rawPosition === "P"
+      ? player.role === "pitcher" && player.pitchingRole === "SP"
+        ? "SP"
+        : DEFAULT_PITCHER_POSITION
+      : rawPosition;
+  const normalizedPosition =
+    rawPosition.length === 0
+      ? isPitcher || section === "pitchers"
+        ? normalizedPitcherPosition
+        : DEFAULT_BATTER_POSITION
+      : rawPosition === "P" && (isPitcher || section === "pitchers")
+        ? normalizedPitcherPosition
+        : player.position;
+  const normalizedHandedness =
+    player.handedness === undefined ? DEFAULT_HANDEDNESS : player.handedness;
+
+  if (isPitcher) {
+    const pitching =
+      typeof player.pitching === "object" && player.pitching !== null ? player.pitching : undefined;
+    return {
+      ...player,
+      position: normalizedPosition,
+      handedness: normalizedHandedness,
+      // Only backfill stamina when the pitching block exists; otherwise leave it
+      // untouched so sanitizePlayer produces the correct descriptive error.
+      ...(pitching !== undefined && {
+        pitching: {
+          ...pitching,
+          stamina: pitching.stamina === undefined ? DEFAULT_PITCHING_STAMINA : pitching.stamina,
+        },
+      }),
+    };
+  }
+
+  const batting =
+    typeof player.batting === "object" && player.batting !== null ? player.batting : undefined;
+  return {
+    ...player,
+    position: normalizedPosition,
+    handedness: normalizedHandedness,
+    // Only backfill stamina when the batting block exists; otherwise leave it
+    // untouched so sanitizePlayer produces the correct descriptive error.
+    ...(batting !== undefined && {
+      batting: {
+        ...batting,
+        stamina: batting.stamina === undefined ? DEFAULT_BATTING_STAMINA : batting.stamina,
+      },
+    }),
+  };
+}
 
 /**
  * Orchestrates the upsert of a single team and its player docs during an import.
@@ -27,31 +92,19 @@ export async function orchestrateTeamImport(
   };
   await db.teams.upsert(teamDoc);
   try {
-    // Clamp per-stat values to [0, 100] first, then enforce total caps.
-    // This mirrors what sanitizePlayer does on create/update, preventing crafted
-    // bundles from storing per-stat values outside the valid range.
-    // After clamping, recompute each player's fingerprint so that identity invariants
-    // (duplicate detection, sig verification) remain valid for the stored stat values.
-    const recomputeFingerprint = (p: TeamPlayer): TeamPlayer => ({
-      ...p,
-      fingerprint: buildPlayerSig(p),
-    });
-    const clampAndRefp = (p: TeamPlayer): TeamPlayer => recomputeFingerprint(clampPlayerStats(p));
+    // Run the same strict sanitizer used by create/update so imported players
+    // must include required identity/stat fields and valid role-specific stats.
+    const sanitizeImported = (
+      p: TeamPlayer,
+      section: "lineup" | "bench" | "pitchers",
+      index: number,
+    ): TeamPlayer => sanitizePlayer(normalizeImportedPlayer(p, section), { section, index });
     const clampedRoster = {
       ...team.roster,
-      lineup: team.roster.lineup.map(clampAndRefp),
-      bench: team.roster.bench.map(clampAndRefp),
-      pitchers: team.roster.pitchers.map(clampAndRefp),
+      lineup: team.roster.lineup.map((p, i) => sanitizeImported(p, "lineup", i)),
+      bench: (team.roster.bench ?? []).map((p, i) => sanitizeImported(p, "bench", i)),
+      pitchers: team.roster.pitchers.map((p, i) => sanitizeImported(p, "pitchers", i)),
     };
-    clampedRoster.lineup.forEach((p, i) =>
-      validatePlayerStatCaps(p, { section: "lineup", index: i }),
-    );
-    clampedRoster.bench.forEach((p, i) =>
-      validatePlayerStatCaps(p, { section: "bench", index: i }),
-    );
-    clampedRoster.pitchers.forEach((p, i) =>
-      validatePlayerStatCaps(p, { section: "pitchers", index: i }),
-    );
     const newDocIds = await writePlayerRecords(db, team.id, clampedRoster);
     await removeTeamPlayerRecords(db, team.id, newDocIds);
   } catch (err) {
@@ -119,17 +172,23 @@ export async function importPlayerIntoTeam(
   // Append to the target section and persist.
   const allTargetIds = new Set([
     ...targetTeam.roster.lineup.map((p) => p.id),
-    ...targetTeam.roster.bench.map((p) => p.id),
+    ...(targetTeam.roster.bench ?? []).map((p) => p.id),
     ...targetTeam.roster.pitchers.map((p) => p.id),
   ]);
   const playerToInsert: TeamPlayer = allTargetIds.has(player.id)
     ? { ...player, id: generatePlayerId() }
     : player;
-  const updatedSection = [...targetTeam.roster[section], playerToInsert];
+  const currentSection =
+    section === "lineup"
+      ? targetTeam.roster.lineup
+      : section === "bench"
+        ? (targetTeam.roster.bench ?? [])
+        : targetTeam.roster.pitchers;
+  const updatedSection = [...currentSection, playerToInsert];
   await updateFn(targetTeamId, {
     roster: {
       lineup: section === "lineup" ? updatedSection : targetTeam.roster.lineup,
-      bench: section === "bench" ? updatedSection : targetTeam.roster.bench,
+      bench: section === "bench" ? updatedSection : (targetTeam.roster.bench ?? []),
       pitchers: section === "pitchers" ? updatedSection : targetTeam.roster.pitchers,
     },
   });

@@ -7,7 +7,12 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { downloadJson } from "@storage/saveIO";
-import type { TeamPlayer, TeamWithRoster } from "@storage/types";
+import type {
+  TeamBatterPlayer,
+  TeamPitcherPlayer,
+  TeamPlayer,
+  TeamWithRoster,
+} from "@storage/types";
 
 import CustomTeamEditor from "./index";
 
@@ -255,7 +260,7 @@ describe("CustomTeamEditor — edit mode", () => {
     id,
     name,
     role: "batter" as const,
-    batting: { contact: 45, power: 45, speed: 45 },
+    batting: { contact: 45, power: 45, speed: 45, stamina: 50 },
     position,
     handedness: "R" as const,
   });
@@ -333,7 +338,7 @@ describe("CustomTeamEditor — edit mode identity immutability", () => {
     id,
     name,
     role: "batter" as const,
-    batting: { contact: 45, power: 45, speed: 45 },
+    batting: { contact: 45, power: 45, speed: 45, stamina: 50 },
     position,
     handedness: "R" as const,
   });
@@ -602,7 +607,9 @@ describe("CustomTeamEditor — importPlayer cross-team conflict (edit mode)", ()
           id: "p_existing",
           name: "Existing Player",
           role: "batter",
-          batting: { contact: 60, power: 55, speed: 50 },
+          position: "C",
+          handedness: "R" as const,
+          batting: { contact: 60, power: 55, speed: 50, stamina: 50 },
         },
       ],
       bench: [],
@@ -612,16 +619,31 @@ describe("CustomTeamEditor — importPlayer cross-team conflict (edit mode)", ()
   };
 
   /** Build a minimal signed player JSON for import tests. */
-  const makePlayerJson = (overrides: Partial<TeamPlayer> = {}): string => {
-    const player: TeamPlayer = {
-      id: "p_import_src",
-      name: "Imported Batter",
-      role: "batter",
-      batting: { contact: 70, power: 60, speed: 55 },
-      ...overrides,
-    };
+  function makePlayerJson(overrides?: Partial<TeamBatterPlayer> & { role?: "batter" }): string;
+  function makePlayerJson(overrides: Partial<TeamPitcherPlayer> & { role: "pitcher" }): string;
+  function makePlayerJson(overrides: Partial<TeamPlayer> = {}): string {
+    const player: TeamPlayer =
+      overrides.role === "pitcher"
+        ? {
+            id: "p_import_src",
+            name: "Imported Pitcher",
+            role: "pitcher",
+            position: "P",
+            handedness: "R" as const,
+            pitching: { velocity: 70, control: 60, movement: 55, stamina: 60 },
+            ...(overrides as Partial<TeamPitcherPlayer>),
+          }
+        : {
+            id: "p_import_src",
+            name: "Imported Batter",
+            role: "batter",
+            position: "C",
+            handedness: "R" as const,
+            batting: { contact: 70, power: 60, speed: 55, stamina: 50 },
+            ...(overrides as Partial<TeamBatterPlayer>),
+          };
     return exportCustomPlayer(player);
-  };
+  }
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -698,15 +720,17 @@ describe("CustomTeamEditor — importPlayer cross-team conflict (edit mode)", ()
 // ─── Soft fingerprint duplicate-warning banner (create mode) ─────────────────
 
 describe("CustomTeamEditor — soft fingerprint duplicate banner (create mode)", () => {
-  const dupPlayerStats = { contact: 60, power: 50, speed: 40 };
+  const dupPlayerStats = { contact: 60, power: 50, speed: 40, stamina: 50 };
 
   /** A player JSON without fingerprint override so the soft-fingerprint check fires. */
-  const makeNogidJson = (overrides: Partial<TeamPlayer> = {}) => {
-    const player: TeamPlayer = {
+  const makeNogidJson = (overrides: Partial<TeamBatterPlayer> & { role?: "batter" } = {}) => {
+    const player: TeamBatterPlayer = {
       id: "p_nogid_src",
       name: "Fingerprint Player",
       role: "batter",
-      batting: dupPlayerStats,
+      position: "C",
+      handedness: "R" as const,
+      batting: { ...dupPlayerStats, stamina: 50 },
       ...overrides,
     };
     return exportCustomPlayer(player);
@@ -733,6 +757,8 @@ describe("CustomTeamEditor — soft fingerprint duplicate banner (create mode)",
                 id: "p_dup_existing",
                 name: "Fingerprint Player",
                 role: "batter",
+                position: "C",
+                handedness: "R" as const,
                 batting: dupPlayerStats,
               },
             ],

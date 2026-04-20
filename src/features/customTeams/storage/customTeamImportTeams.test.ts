@@ -238,13 +238,13 @@ describe("importCustomTeams", () => {
     const t = result.teams[0];
     const allIds = [
       ...t.roster.lineup.map((p) => p.id),
-      ...t.roster.bench.map((p) => p.id),
+      ...(t.roster.bench ?? []).map((p) => p.id),
       ...t.roster.pitchers.map((p) => p.id),
     ];
     // All IDs within the roster must be unique
     expect(new Set(allIds).size).toBe(allIds.length);
     // The bench player (second occurrence of the shared ID) must have been remapped
-    expect(t.roster.bench[0].id).not.toBe(sharedId);
+    expect(t.roster.bench?.[0]?.id).not.toBe(sharedId);
     // The lineup player (first occurrence) keeps the original ID
     expect(t.roster.lineup[0].id).toBe(sharedId);
   });
@@ -285,12 +285,12 @@ describe("exportCustomTeams / importCustomTeams — full player and team field r
   it("round-trips pitchingRole for pitchers through exportCustomTeams → importCustomTeams", () => {
     const spPitcher = makePlayer({
       role: "pitcher",
-      pitching: { velocity: 90, control: 82, movement: 75 },
+      pitching: { velocity: 90, control: 82, movement: 75, stamina: 60 },
       pitchingRole: "SP",
     });
     const rpPitcher = makePlayer({
       role: "pitcher",
-      pitching: { velocity: 87, control: 78, movement: 70 },
+      pitching: { velocity: 87, control: 78, movement: 70, stamina: 60 },
       pitchingRole: "RP",
     });
     const team = makeTeam({
@@ -313,7 +313,7 @@ describe("exportCustomTeams / importCustomTeams — full player and team field r
     const pitcher = makePlayer({
       role: "pitcher",
       handedness: "R",
-      pitching: { velocity: 88, control: 80, movement: 70 },
+      pitching: { velocity: 88, control: 80, movement: 70, stamina: 60 },
     });
     const team = makeTeam({
       roster: {
@@ -326,7 +326,7 @@ describe("exportCustomTeams / importCustomTeams — full player and team field r
     const json = exportCustomTeams([team]);
     const result = importCustomTeams(json, []);
     expect(result.teams[0].roster.lineup[0].handedness).toBe("L");
-    expect(result.teams[0].roster.bench[0].handedness).toBe("S");
+    expect(result.teams[0].roster.bench?.[0]?.handedness).toBe("S");
     expect(result.teams[0].roster.pitchers[0].handedness).toBe("R");
   });
 
@@ -336,7 +336,7 @@ describe("exportCustomTeams / importCustomTeams — full player and team field r
     const pitcher = makePlayer({
       role: "pitcher",
       position: "P",
-      pitching: { velocity: 88, control: 80, movement: 70 },
+      pitching: { velocity: 88, control: 80, movement: 70, stamina: 60 },
     });
     const team = makeTeam({
       roster: {
@@ -349,30 +349,40 @@ describe("exportCustomTeams / importCustomTeams — full player and team field r
     const json = exportCustomTeams([team]);
     const result = importCustomTeams(json, []);
     expect(result.teams[0].roster.lineup[0].position).toBe("SS");
-    expect(result.teams[0].roster.bench[0].position).toBe("C");
+    expect(result.teams[0].roster.bench?.[0]?.position).toBe("C");
     expect(result.teams[0].roster.pitchers[0].position).toBe("P");
   });
 
   it("round-trips complete batting stats for all lineup players", () => {
     const p1 = makePlayer({
-      batting: { contact: 85, power: 70, speed: 90 },
+      batting: { contact: 85, power: 70, speed: 90, stamina: 50 },
     });
     const p2 = makePlayer({
-      batting: { contact: 55, power: 90, speed: 40 },
+      batting: { contact: 55, power: 90, speed: 40, stamina: 50 },
     });
     const team = makeTeam({
       roster: { schemaVersion: 1, lineup: [p1, p2], bench: [], pitchers: [] },
     });
     const json = exportCustomTeams([team]);
     const result = importCustomTeams(json, []);
-    expect(result.teams[0].roster.lineup[0].batting).toEqual({ contact: 85, power: 70, speed: 90 });
-    expect(result.teams[0].roster.lineup[1].batting).toEqual({ contact: 55, power: 90, speed: 40 });
+    expect(result.teams[0].roster.lineup[0].batting).toEqual({
+      contact: 85,
+      power: 70,
+      speed: 90,
+      stamina: 50,
+    });
+    expect(result.teams[0].roster.lineup[1].batting).toEqual({
+      contact: 55,
+      power: 90,
+      speed: 40,
+      stamina: 50,
+    });
   });
 
   it("round-trips complete pitching stats (velocity, control, movement)", () => {
     const pitcher = makePlayer({
       role: "pitcher",
-      pitching: { velocity: 95, control: 88, movement: 80 },
+      pitching: { velocity: 95, control: 88, movement: 80, stamina: 60 },
     });
     const team = makeTeam({
       roster: { schemaVersion: 1, lineup: [makePlayer()], bench: [], pitchers: [pitcher] },
@@ -383,6 +393,7 @@ describe("exportCustomTeams / importCustomTeams — full player and team field r
       velocity: 95,
       control: 88,
       movement: 80,
+      stamina: 60,
     });
   });
 
@@ -406,14 +417,14 @@ describe("exportCustomTeams / importCustomTeams — full player and team field r
       isBenchEligible: true,
       isPitcherEligible: false,
     });
-    const twoWay = makePlayer({
-      role: "two-way",
+    const extraBatter = makePlayer({
+      role: "batter",
       isBenchEligible: true,
       isPitcherEligible: true,
-      pitching: { velocity: 80, control: 75, movement: 70 },
+      batting: { contact: 80, power: 75, speed: 70, stamina: 50 },
     });
     const team = makeTeam({
-      roster: { schemaVersion: 1, lineup: [bench, twoWay], bench: [], pitchers: [] },
+      roster: { schemaVersion: 1, lineup: [bench, extraBatter], bench: [], pitchers: [] },
     });
     const json = exportCustomTeams([team]);
     const result = importCustomTeams(json, []);
@@ -437,7 +448,7 @@ describe("exportCustomTeams / importCustomTeams — full player and team field r
     // Simulates a player from a pre-pitchingRole bundle (no pitchingRole field at all).
     const legacyPlayer = makePlayer({
       role: "pitcher",
-      pitching: { velocity: 88, control: 80, movement: 72 },
+      pitching: { velocity: 88, control: 80, movement: 72, stamina: 60 },
     });
     // Explicitly ensure no pitchingRole field
     const { pitchingRole: _removed, ...legacyNoRole } = legacyPlayer as TeamPlayer & {

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import type { EditorPlayer } from "./editorState";
+import type { EditorPlayer, EditorPlayerPatch } from "./editorState";
 import {
   HITTER_STAT_CAP,
   hitterRemaining,
@@ -21,27 +21,37 @@ import {
 
 type Props = {
   player: EditorPlayer;
-  isPitcher: boolean;
   /** When true, stat sliders are disabled — stats are immutable after player creation. */
   isExistingPlayer?: boolean;
-  onChange: (patch: Partial<EditorPlayer>) => void;
+  onChange: (patch: EditorPlayerPatch) => void;
 };
 
 const PlayerStatFields: React.FunctionComponent<Props> = ({
   player,
-  isPitcher,
   isExistingPlayer = false,
   onChange,
 }) => {
-  const vel = player.velocity ?? 0;
-  const ctrl = player.control ?? 0;
-  const mov = player.movement ?? 0;
+  const isPitcher = player.role === "pitcher";
+  const asPitcher = player.role === "pitcher" ? player : null;
+  const asBatter = player.role === "batter" ? player : null;
+
+  const vel = asPitcher?.velocity ?? 0;
+  const ctrl = asPitcher?.control ?? 0;
+  const mov = asPitcher?.movement ?? 0;
   const pitcherTotal = pitcherStatTotal(vel, ctrl, mov);
   const pitcherRem = pitcherRemaining(vel, ctrl, mov);
   const pitcherOverCap = pitcherRem < 0;
 
-  const hitterTotal = hitterStatTotal(player.contact, player.power, player.speed);
-  const hitterRem = hitterRemaining(player.contact, player.power, player.speed);
+  const hitterTotal = hitterStatTotal(
+    asBatter?.contact ?? 0,
+    asBatter?.power ?? 0,
+    asBatter?.speed ?? 0,
+  );
+  const hitterRem = hitterRemaining(
+    asBatter?.contact ?? 0,
+    asBatter?.power ?? 0,
+    asBatter?.speed ?? 0,
+  );
   const hitterOverCap = hitterRem < 0;
 
   const overCap = isPitcher ? pitcherOverCap : hitterOverCap;
@@ -50,43 +60,47 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
   const cap = isPitcher ? PITCHER_STAT_CAP : HITTER_STAT_CAP;
   const shouldShowOverCapWarning = !isExistingPlayer && overCap;
 
-  const stat = (label: string, key: keyof EditorPlayer, htmlFor: string) => {
-    const val = (player[key] as number | undefined) ?? 0;
-    return (
-      <StatRow key={`stat-${key}`} $locked={isExistingPlayer}>
-        <StatLabel htmlFor={htmlFor}>{label}</StatLabel>
-        <StatInput
-          id={htmlFor}
-          type="range"
-          min={0}
-          max={100}
-          value={val}
-          disabled={isExistingPlayer}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            // Guard in addition to `disabled` — jsdom fires change events on disabled
-            // elements via fireEvent, so the explicit check keeps tests meaningful.
-            if (!isExistingPlayer) onChange({ [key]: Number(e.target.value) });
-          }}
-        />
-        <StatValue>{val}</StatValue>
-      </StatRow>
-    );
-  };
+  const statRow = (
+    label: string,
+    val: number,
+    htmlFor: string,
+    toPatch: (n: number) => EditorPlayerPatch,
+  ) => (
+    <StatRow key={`stat-${htmlFor}`} $locked={isExistingPlayer}>
+      <StatLabel htmlFor={htmlFor}>{label}</StatLabel>
+      <StatInput
+        id={htmlFor}
+        type="range"
+        min={0}
+        max={100}
+        value={val}
+        disabled={isExistingPlayer}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          // Guard in addition to `disabled` — jsdom fires change events on disabled
+          // elements via fireEvent, so the explicit check keeps tests meaningful.
+          if (!isExistingPlayer) onChange(toPatch(Number(e.target.value)));
+        }}
+      />
+      <StatValue>{val}</StatValue>
+    </StatRow>
+  );
 
   return (
     <>
       <StatsGrid>
         {isPitcher ? (
           <>
-            {stat("Velocity", "velocity", `velocity-${player.id}`)}
-            {stat("Control", "control", `control-${player.id}`)}
-            {stat("Movement", "movement", `movement-${player.id}`)}
+            {statRow("Velocity", vel, `velocity-${player.id}`, (n) => ({ velocity: n }))}
+            {statRow("Control", ctrl, `control-${player.id}`, (n) => ({ control: n }))}
+            {statRow("Movement", mov, `movement-${player.id}`, (n) => ({ movement: n }))}
           </>
         ) : (
           <>
-            {stat("Contact", "contact", `contact-${player.id}`)}
-            {stat("Power", "power", `power-${player.id}`)}
-            {stat("Speed", "speed", `speed-${player.id}`)}
+            {statRow("Contact", asBatter?.contact ?? 0, `contact-${player.id}`, (n) => ({
+              contact: n,
+            }))}
+            {statRow("Power", asBatter?.power ?? 0, `power-${player.id}`, (n) => ({ power: n }))}
+            {statRow("Speed", asBatter?.speed ?? 0, `speed-${player.id}`, (n) => ({ speed: n }))}
           </>
         )}
       </StatsGrid>

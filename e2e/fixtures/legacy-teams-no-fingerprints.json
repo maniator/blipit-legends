@@ -24,7 +24,8 @@
               "batting": {
                 "contact": 56,
                 "power": 50,
-                "speed": 44
+                "speed": 44,
+                "stamina": 50
               }
             },
             {
@@ -36,7 +37,8 @@
               "batting": {
                 "contact": 53,
                 "power": 61,
-                "speed": 36
+                "speed": 36,
+                "stamina": 50
               }
             },
             {
@@ -48,7 +50,8 @@
               "batting": {
                 "contact": 55,
                 "power": 42,
-                "speed": 53
+                "speed": 53,
+                "stamina": 50
               }
             },
             {
@@ -60,7 +63,8 @@
               "batting": {
                 "contact": 51,
                 "power": 53,
-                "speed": 46
+                "speed": 46,
+                "stamina": 50
               }
             },
             {
@@ -72,7 +76,8 @@
               "batting": {
                 "contact": 55,
                 "power": 41,
-                "speed": 54
+                "speed": 54,
+                "stamina": 50
               }
             },
             {
@@ -84,7 +89,8 @@
               "batting": {
                 "contact": 48,
                 "power": 59,
-                "speed": 43
+                "speed": 43,
+                "stamina": 50
               }
             },
             {
@@ -96,7 +102,8 @@
               "batting": {
                 "contact": 51,
                 "power": 43,
-                "speed": 56
+                "speed": 56,
+                "stamina": 50
               }
             },
             {
@@ -108,7 +115,8 @@
               "batting": {
                 "contact": 50,
                 "power": 54,
-                "speed": 46
+                "speed": 46,
+                "stamina": 50
               }
             },
             {
@@ -120,7 +128,8 @@
               "batting": {
                 "contact": 50,
                 "power": 62,
-                "speed": 38
+                "speed": 38,
+                "stamina": 50
               }
             }
           ],
@@ -134,7 +143,8 @@
               "batting": {
                 "contact": 50,
                 "power": 54,
-                "speed": 46
+                "speed": 46,
+                "stamina": 50
               }
             }
           ],
@@ -147,12 +157,14 @@
               "batting": {
                 "contact": 25,
                 "power": 15,
-                "speed": 30
+                "speed": 30,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 60,
                 "control": 51,
-                "movement": 49
+                "movement": 49,
+                "stamina": 60
               },
               "pitchingRole": "SP"
             },
@@ -164,12 +176,14 @@
               "batting": {
                 "contact": 20,
                 "power": 12,
-                "speed": 28
+                "speed": 28,
+                "stamina": 50
               },
               "pitching": {
                 "velocity": 55,
                 "control": 53,
-                "movement": 52
+                "movement": 52,
+                "stamina": 60
               },
               "pitchingRole": "RP"
             }
@@ -181,5 +195,5 @@
       }
     ]
   },
-  "sig": "c1d29ed5"
+  "sig": "1aaee523"
 }

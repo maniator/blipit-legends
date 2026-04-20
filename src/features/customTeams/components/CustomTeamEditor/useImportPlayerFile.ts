@@ -4,6 +4,10 @@ import {
   buildPlayerSig,
   parseExportedCustomPlayer,
 } from "@feat/customTeams/storage/customTeamExportImport";
+import {
+  DEFAULT_BATTING_STAMINA,
+  DEFAULT_PITCHING_STAMINA,
+} from "@feat/customTeams/storage/customTeamSanitizers";
 import { CustomTeamStore } from "@feat/customTeams/storage/customTeamStore";
 
 import type { TeamPlayer, TeamWithRoster } from "@storage/types";
@@ -64,25 +68,50 @@ export function useImportPlayerFile({
           const playerJson = reader.result as string;
           const importedPlayer = parseExportedCustomPlayer(playerJson);
 
+          // Reject mismatched role → section imports early with a clear error.
+          const expectedRole: "batter" | "pitcher" = section === "pitchers" ? "pitcher" : "batter";
+          if (importedPlayer.role !== expectedRole) {
+            const sectionLabel = section === "pitchers" ? "Pitchers" : "Lineup/Bench";
+            dispatch({
+              type: "SET_ERROR",
+              error: `"${importedPlayer.name}" is a ${importedPlayer.role} and cannot be imported into the ${sectionLabel} section.`,
+            });
+            return;
+          }
+
           // Remap the ID to avoid local roster collisions.
-          const editorPlayer: EditorPlayer = {
-            id: makePlayerId(),
-            name: importedPlayer.name,
-            position: importedPlayer.position ?? "",
-            handedness: importedPlayer.handedness ?? "R",
-            contact: importedPlayer.batting.contact,
-            power: importedPlayer.batting.power,
-            speed: importedPlayer.batting.speed,
-            // Only carry pitching stats when importing into the pitchers section.
-            ...(section === "pitchers" &&
-              importedPlayer.pitching && {
-                velocity: importedPlayer.pitching.velocity,
-                control: importedPlayer.pitching.control,
-                movement: importedPlayer.pitching.movement,
-              }),
-            ...(section === "pitchers" &&
-              importedPlayer.pitchingRole && { pitchingRole: importedPlayer.pitchingRole }),
-          };
+          const editorPlayer: EditorPlayer =
+            expectedRole === "pitcher"
+              ? {
+                  id: makePlayerId(),
+                  name: importedPlayer.name,
+                  role: "pitcher",
+                  // Normalize legacy "P" position (and empty) to "SP"/"RP" so the
+                  // editor position <select> (which only has "SP"/"RP" options) is valid.
+                  position:
+                    !importedPlayer.position || importedPlayer.position === "P"
+                      ? importedPlayer.pitchingRole === "RP"
+                        ? "RP"
+                        : "SP"
+                      : importedPlayer.position,
+                  handedness: importedPlayer.handedness ?? "R",
+                  velocity: importedPlayer.pitching?.velocity ?? 60,
+                  control: importedPlayer.pitching?.control ?? 60,
+                  movement: importedPlayer.pitching?.movement ?? 60,
+                  stamina: importedPlayer.pitching?.stamina,
+                  ...(importedPlayer.pitchingRole && { pitchingRole: importedPlayer.pitchingRole }),
+                }
+              : {
+                  id: makePlayerId(),
+                  name: importedPlayer.name,
+                  role: "batter",
+                  position: importedPlayer.position ?? "",
+                  handedness: importedPlayer.handedness ?? "R",
+                  contact: importedPlayer.batting?.contact ?? 40,
+                  power: importedPlayer.batting?.power ?? 40,
+                  speed: importedPlayer.batting?.speed ?? 40,
+                  stamina: importedPlayer.batting?.stamina,
+                };
 
           /**
            * Core import action — called immediately (globalPlayerId present) or
@@ -117,7 +146,7 @@ export function useImportPlayerFile({
             } else {
               // Create mode: manual cross-team check using stable player id.
               const owningTeam = allTeams.find((t: TeamWithRoster) =>
-                [...t.roster.lineup, ...t.roster.bench, ...t.roster.pitchers].some(
+                [...t.roster.lineup, ...(t.roster.bench ?? []), ...t.roster.pitchers].some(
                   (p: TeamPlayer) => p.id === importedPlayer.id,
                 ),
               );
@@ -133,30 +162,58 @@ export function useImportPlayerFile({
           };
 
           // Soft fingerprint duplicate check.
+          // Build the sig from the same normalized stats used for the editorPlayer.
           const sectionRole: "batter" | "pitcher" = section === "pitchers" ? "pitcher" : "batter";
-          const incomingFp = buildPlayerSig({
-            name: importedPlayer.name,
-            role: sectionRole,
-            batting: importedPlayer.batting,
-            pitching:
-              sectionRole === "pitcher" && importedPlayer.pitching
-                ? importedPlayer.pitching
-                : undefined,
-          });
+          const incomingFp =
+            sectionRole === "pitcher"
+              ? buildPlayerSig({
+                  name: importedPlayer.name,
+                  role: "pitcher",
+                  pitching: {
+                    velocity: importedPlayer.pitching?.velocity ?? 60,
+                    control: importedPlayer.pitching?.control ?? 60,
+                    movement: importedPlayer.pitching?.movement ?? 60,
+                    stamina: importedPlayer.pitching?.stamina ?? DEFAULT_PITCHING_STAMINA,
+                  },
+                })
+              : buildPlayerSig({
+                  name: importedPlayer.name,
+                  role: "batter",
+                  batting: {
+                    contact: importedPlayer.batting?.contact ?? 40,
+                    power: importedPlayer.batting?.power ?? 40,
+                    speed: importedPlayer.batting?.speed ?? 40,
+                    stamina: importedPlayer.batting?.stamina ?? DEFAULT_BATTING_STAMINA,
+                  },
+                });
 
-          const editorPlayerFp = (p: EditorPlayer): string =>
-            buildPlayerSig({
+          const editorPlayerFp = (p: EditorPlayer): string => {
+            if (p.role === "pitcher") {
+              return buildPlayerSig({
+                name: p.name,
+                role: "pitcher",
+                pitching: {
+                  velocity: p.velocity ?? 60,
+                  control: p.control ?? 60,
+                  movement: p.movement ?? 60,
+                  stamina: p.stamina ?? DEFAULT_PITCHING_STAMINA,
+                },
+              });
+            }
+            return buildPlayerSig({
               name: p.name,
-              role: p.velocity !== undefined ? "pitcher" : "batter",
-              batting: { contact: p.contact, power: p.power, speed: p.speed },
-              pitching:
-                p.velocity !== undefined
-                  ? { velocity: p.velocity, control: p.control ?? 60, movement: p.movement ?? 60 }
-                  : undefined,
+              role: "batter",
+              batting: {
+                contact: p.contact,
+                power: p.power,
+                speed: p.speed,
+                stamina: p.stamina ?? DEFAULT_BATTING_STAMINA,
+              },
             });
+          };
 
           const existingTeamWithPlayer = allTeams.find((t: TeamWithRoster) =>
-            [...t.roster.lineup, ...t.roster.bench, ...t.roster.pitchers].some(
+            [...t.roster.lineup, ...(t.roster.bench ?? []), ...t.roster.pitchers].some(
               (p: TeamPlayer) => (p.fingerprint ?? buildPlayerSig(p)) === incomingFp,
             ),
           );

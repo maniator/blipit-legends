@@ -11,8 +11,8 @@ import {
 } from "./customTeamSignatures";
 
 /** Attaches a `sig` to every player in the array. */
-function signPlayers(players: TeamPlayer[]): TeamPlayer[] {
-  return players.map((p) => ({ ...stripPlayerSig(p), sig: buildPlayerSig(p) }));
+function signPlayers(players: TeamPlayer[] | undefined): TeamPlayer[] {
+  return (players ?? []).map((p) => ({ ...stripPlayerSig(p), sig: buildPlayerSig(p) }));
 }
 
 /**
@@ -128,12 +128,14 @@ export function parseExportedCustomTeams(json: string): ExportedCustomTeams {
           throw new Error(`Team[${ti}] ${slot}[${pi}] missing required field: id`);
         if (typeof p["name"] !== "string" || !p["name"])
           throw new Error(`Team[${ti}] ${slot}[${pi}] missing required field: name`);
-        if (typeof p["role"] !== "string" || !["batter", "pitcher", "two-way"].includes(p["role"]))
+        if (typeof p["role"] !== "string" || !["batter", "pitcher"].includes(p["role"]))
           throw new Error(
-            `Team[${ti}] ${slot}[${pi}] invalid role "${p["role"]}" — must be "batter", "pitcher", or "two-way"`,
+            `Team[${ti}] ${slot}[${pi}] invalid role "${p["role"]}" — must be "batter" or "pitcher"`,
           );
-        if (!p["batting"] || typeof p["batting"] !== "object")
+        if (p["role"] === "batter" && (!p["batting"] || typeof p["batting"] !== "object"))
           throw new Error(`Team[${ti}] ${slot}[${pi}] missing required field: batting`);
+        if (p["role"] === "pitcher" && (!p["pitching"] || typeof p["pitching"] !== "object"))
+          throw new Error(`Team[${ti}] ${slot}[${pi}] missing required field: pitching`);
 
         const player = rawPlayer as TeamPlayerWithSig;
         const expectedPlayerSig = buildPlayerSig(player);
