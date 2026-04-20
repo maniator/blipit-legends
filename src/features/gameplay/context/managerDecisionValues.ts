@@ -95,21 +95,26 @@ const clampInt = (value: number, min: number, max: number): number =>
  * Returns a sanitized copy of the provided decision values.
  * All fields are clamped/coerced to safe values so corrupt localStorage data
  * does not reach gameplay logic.
+ *
+ * `Number.isFinite` is used instead of `typeof === "number"` to reject NaN and
+ * ±Infinity — both pass the typeof check but produce NaN/broken values after
+ * clamp/round math, causing threshold comparisons (e.g. `pct > NaN`) to always
+ * return false.
  */
 export const sanitizeManagerDecisionValues = (
   raw: Partial<ManagerDecisionValues>,
 ): ManagerDecisionValues => {
   const stealMinOfferPct = clampInt(
-    typeof raw.stealMinOfferPct === "number"
-      ? raw.stealMinOfferPct
+    Number.isFinite(raw.stealMinOfferPct)
+      ? (raw.stealMinOfferPct as number)
       : DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct,
     STEAL_PCT_MIN,
     STEAL_PCT_MAX,
   );
 
   const aiStealThreshold = clampInt(
-    typeof raw.aiStealThreshold === "number"
-      ? raw.aiStealThreshold
+    Number.isFinite(raw.aiStealThreshold)
+      ? (raw.aiStealThreshold as number)
       : DEFAULT_MANAGER_DECISION_VALUES.aiStealThreshold,
     STEAL_PCT_MIN,
     // AI threshold must be ≤ the manager offer threshold.
@@ -117,8 +122,8 @@ export const sanitizeManagerDecisionValues = (
   );
 
   const aggressiveness = clampInt(
-    typeof raw.aiPitchingChangeAggressiveness === "number"
-      ? raw.aiPitchingChangeAggressiveness
+    Number.isFinite(raw.aiPitchingChangeAggressiveness)
+      ? (raw.aiPitchingChangeAggressiveness as number)
       : DEFAULT_MANAGER_DECISION_VALUES.aiPitchingChangeAggressiveness,
     AGGRESSIVENESS_MIN,
     AGGRESSIVENESS_MAX,
