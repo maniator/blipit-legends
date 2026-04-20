@@ -222,6 +222,7 @@ After issuing a verdict, always recommend the correct execution agent if not alr
 | Behavior-preserving refactor                         | `@safe-refactor`          |
 | UI / layout / visual snapshot change                 | `@ui-visual-snapshot`     |
 | Simulation bug or determinism fix                    | `@simulation-correctness` |
+| Gameplay realism review or probability tuning        | `@baseball-manager`       |
 | RxDB schema / save / export change                   | `@rxdb-save-integrity`    |
 | CI workflow change                                   | `@ci-workflow`            |
 | E2E test authoring, fixture creation, snapshot regen | `@e2e-test-runner`        |

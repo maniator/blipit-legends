@@ -68,6 +68,11 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 
 **When to use:** Reviewing completed game-run logs to identify what should be tuned for more realistic baseball outcomes. Also use after any gameplay-probability change to validate the result feels like real baseball.
 
+> **Decision rule — realism vs correctness:**
+>
+> - Use `@baseball-manager` when the question is _"does this feel like baseball?"_ — the engine runs without errors but outcomes look implausible (e.g., walk rate 3× MLB average).
+> - Use `@simulation-correctness` when the question is _"is this broken?"_ — the behavior is objectively wrong, reproducible with a seed, and fixable with a code change.
+
 **Key guardrails:**
 
 - Grounds recommendations in log evidence, not assumptions
@@ -111,7 +116,12 @@ This directory contains **GitHub Copilot custom agents** tailored for `maniator/
 
 ### `simulation-correctness`
 
-**When to use:** Deterministic simulation bugs, stat inconsistencies (e.g., hits vs AB), impossible game states, lineup/team mapping errors.
+**When to use:** Something in the simulation is **definitively broken** — a deterministic bug, an impossible game state (e.g., 3 hits in 1 AB), a stat inconsistency, a lineup/team mapping error, or a PRNG/seed replay mismatch.
+
+> **Decision rule — correctness vs realism:**
+>
+> - Use `@simulation-correctness` when the question is _"is this broken?"_ — the behavior is objectively wrong, reproducible, and fixable.
+> - Use `@baseball-manager` when the question is _"does this feel like baseball?"_ — the engine is technically correct but outcomes look unrealistic in game logs.
 
 **Key guardrails:**
 
