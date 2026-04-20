@@ -11,6 +11,7 @@ import { RxDatabaseProvider } from "rxdb/plugins/react";
 import type { BallgameDb } from "@storage/db";
 import { getDb, wasDbReset } from "@storage/db";
 import type { ExhibitionGameSetup } from "@storage/types";
+import type { LeagueGameContext } from "@storage/types";
 import type { SaveRecord } from "@storage/types";
 
 import GameInner from "./GameInner";
@@ -34,6 +35,8 @@ type Props = {
   onSavingStateChange?: (saving: boolean) => void;
   /** Called when the game reaches FINAL so AppShell can clear hasActiveSession. */
   onGameOver?: () => void;
+  /** League context — present when this game was launched from league mode. */
+  leagueGameContext?: LeagueGameContext | null;
 };
 
 const Game: React.FunctionComponent<Props> = ({
@@ -46,6 +49,7 @@ const Game: React.FunctionComponent<Props> = ({
   onConsumePendingLoad,
   onSavingStateChange,
   onGameOver,
+  leagueGameContext,
 }) => {
   const actionBufferRef = React.useRef<GameAction[]>([]);
   const [db, setDb] = React.useState<BallgameDb | null>(null);
@@ -124,6 +128,7 @@ const Game: React.FunctionComponent<Props> = ({
           onConsumePendingLoad={onConsumePendingLoad}
           onSavingStateChange={onSavingStateChange}
           onGameOver={onGameOver}
+          leagueGameContext={leagueGameContext}
         />
       </GameProviderWrapper>
     </RxDatabaseProvider>

@@ -1,5 +1,14 @@
 import * as React from "react";
 
+import {
+  customTeamToBenchRoster,
+  customTeamToDisplayName,
+  customTeamToGameId,
+  customTeamToHandednessMap,
+  customTeamToLineupOrder,
+  customTeamToPitcherRoster,
+  customTeamToPlayerOverrides,
+} from "@feat/customTeams/adapters/customTeamAdapter";
 import { CustomTeamStore } from "@feat/customTeams/storage/customTeamStore";
 import { useLeague } from "@feat/leagueMode/hooks/useLeague";
 import { useLeagueSeason } from "@feat/leagueMode/hooks/useLeagueSeason";
@@ -7,6 +16,8 @@ import { useScheduledGames } from "@feat/leagueMode/hooks/useScheduledGames";
 import { leagueSeasonStore } from "@feat/leagueMode/storage/leagueSeasonStore";
 import type { ScheduledGameRecord } from "@feat/leagueMode/storage/types";
 import { useNavigate, useParams } from "react-router";
+
+import type { ExhibitionGameSetup, LeagueGameLocationState } from "@storage/types";
 
 import {
   BackLink,
@@ -20,6 +31,7 @@ import {
   PageContainer,
   PageHeader,
   PageTitle,
+  PlayButton,
   ScheduleTable,
   SeasonInfo,
   SeasonNotStarted,
@@ -84,6 +96,57 @@ const LeagueDetailPage: React.FunctionComponent = () => {
       setStartingSeason(false);
     }
   }, [season, navigate]);
+
+  // Tracks which game is currently launching (prevents double-click).
+  const [launchingGameId, setLaunchingGameId] = React.useState<string | null>(null);
+
+  const handlePlayGame = React.useCallback(
+    async (game: ScheduledGameRecord) => {
+      if (!league || !season) return;
+      setLaunchingGameId(game.id);
+      try {
+        const allTeams = await CustomTeamStore.listCustomTeams();
+        const awayDoc = allTeams.find((t) => t.id === game.awayTeamId);
+        const homeDoc = allTeams.find((t) => t.id === game.homeTeamId);
+        if (!awayDoc || !homeDoc) {
+          setLaunchingGameId(null);
+          return;
+        }
+        const setup: ExhibitionGameSetup = {
+          homeTeam: customTeamToGameId(homeDoc),
+          awayTeam: customTeamToGameId(awayDoc),
+          homeTeamLabel: customTeamToDisplayName(homeDoc),
+          awayTeamLabel: customTeamToDisplayName(awayDoc),
+          managedTeam: null,
+          playerOverrides: {
+            away: customTeamToPlayerOverrides(awayDoc),
+            home: customTeamToPlayerOverrides(homeDoc),
+            awayOrder: customTeamToLineupOrder(awayDoc),
+            homeOrder: customTeamToLineupOrder(homeDoc),
+            awayBench: customTeamToBenchRoster(awayDoc),
+            homeBench: customTeamToBenchRoster(homeDoc),
+            awayPitchers: customTeamToPitcherRoster(awayDoc),
+            homePitchers: customTeamToPitcherRoster(homeDoc),
+            awayHandedness: customTeamToHandednessMap(awayDoc),
+            homeHandedness: customTeamToHandednessMap(homeDoc),
+          },
+        };
+        const state: LeagueGameLocationState = {
+          leagueGameContext: {
+            leagueId: league.id,
+            leagueSeasonId: season.id,
+            scheduledGameId: game.id,
+          },
+          pendingGameSetup: setup,
+          pendingLoadSave: null,
+        };
+        navigate("/game", { state });
+      } catch {
+        setLaunchingGameId(null);
+      }
+    },
+    [league, season, navigate],
+  );
 
   // Group games by gameDay — always called (no conditional return before hooks)
   const gameDayMap = React.useMemo<Map<number, ScheduledGameRecord[]>>(() => {
@@ -230,6 +293,19 @@ const LeagueDetailPage: React.FunctionComponent = () => {
                         </>
                       )}
                       <StatusBadge $status={game.status}>{getStatusLabel(game.status)}</StatusBadge>
+                      {game.status === "scheduled" && (
+                        <PlayButton
+                          type="button"
+                          data-testid={`play-game-button-${game.id}`}
+                          aria-label="Play game"
+                          disabled={launchingGameId === game.id}
+                          onClick={() => {
+                            void handlePlayGame(game);
+                          }}
+                        >
+                          {launchingGameId === game.id ? "Loading…" : "▶ Play"}
+                        </PlayButton>
+                      )}
                     </GameRow>
                   ))}
                 </GameDaySection>

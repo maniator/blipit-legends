@@ -198,6 +198,39 @@ export const StatusBadge = styled.span<StatusBadgeProps>`
   }}
 `;
 
+export const PlayButton = styled.button`
+  background: ${({ theme }) => theme.colors.accentPrimary};
+  color: ${({ theme }) => theme.colors.btnPrimaryText};
+  border: none;
+  border-radius: ${({ theme }) => theme.radii.pill};
+  padding: 2px ${({ theme }) => theme.spacing.sm};
+  font-family: inherit;
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  min-height: ${({ theme }) => theme.sizes.btnMd};
+
+  &:hover {
+    opacity: 0.88;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 2px;
+  }
+
+  ${mq.mobile} {
+    font-size: ${({ theme }) => theme.fontSizes.xs};
+    padding: 1px ${({ theme }) => theme.spacing.xs};
+  }
+`;
+
 export const BackLink = styled(Link)`
   color: ${({ theme }) => theme.colors.textHint};
   border: none;

@@ -11,6 +11,8 @@ import PlayerStatsPanel from "@feat/gameplay/components/PlayerStatsPanel";
 import TeamTabBar from "@feat/gameplay/components/TeamTabBar";
 import type { GameAction, Strategy } from "@feat/gameplay/context/index";
 import { useGameContext } from "@feat/gameplay/context/index";
+import { useLeagueGameReconciliation } from "@feat/leagueMode/hooks/useLeagueGameReconciliation";
+import { deriveScheduledGameSeed } from "@feat/leagueMode/utils/deriveScheduledGameSeed";
 import { useRxdbGameSync } from "@feat/saves/hooks/useRxdbGameSync";
 import { useSaveStore } from "@feat/saves/hooks/useSaveStore";
 import { useCustomTeams } from "@shared/hooks/useCustomTeams";
@@ -20,6 +22,7 @@ import { currentSeedStr } from "@shared/utils/saves";
 import { useLocalStorage } from "usehooks-ts";
 
 import type { ExhibitionGameSetup } from "@storage/types";
+import type { LeagueGameContext } from "@storage/types";
 import type { PlayerOverrides } from "@storage/types";
 import type { GameSaveSetup, SaveRecord } from "@storage/types";
 
@@ -58,6 +61,8 @@ interface Props {
   onSavingStateChange?: (saving: boolean) => void;
   /** Called when the game reaches FINAL so AppShell can clear hasActiveSession. */
   onGameOver?: () => void;
+  /** League context — present when this game was launched from league mode. */
+  leagueGameContext?: LeagueGameContext | null;
 }
 
 const GameInner: React.FunctionComponent<Props> = ({
@@ -71,6 +76,7 @@ const GameInner: React.FunctionComponent<Props> = ({
   onConsumePendingLoad,
   onSavingStateChange,
   onGameOver,
+  leagueGameContext,
 }) => {
   const { dispatch, dispatchLog, teams, gameOver } = useGameContext();
   const [, setManagerMode] = useLocalStorage("managerMode", false);
@@ -92,6 +98,9 @@ const GameInner: React.FunctionComponent<Props> = ({
 
   // Tracks the RxDB save ID for the current game session.
   const rxSaveIdRef = React.useRef<string | null>(null);
+
+  // Tracks the save ID once the game reaches FINAL — used for league reconciliation.
+  const [completedGameSaveId, setCompletedGameSaveId] = React.useState<string | null>(null);
 
   // True when the currently-loaded save was already in FINAL state on load.
   // Prevents useGameHistorySync from re-committing stats for a completed game.
@@ -117,10 +126,17 @@ const GameInner: React.FunctionComponent<Props> = ({
     if (gameOverFiredRef.current) return;
     gameOverFiredRef.current = true;
     onGameOver?.();
+    // Capture the save ID for league post-game reconciliation.
+    if (rxSaveIdRef.current) {
+      setCompletedGameSaveId(rxSaveIdRef.current);
+    }
   }, [gameOver, onGameOver]);
 
   // Reactive saves list — used for auto-resume detection on initial load.
   const { saves, createSave } = useSaveStore();
+
+  // Mark the scheduled league game as completed once the game ends and the save ID is available.
+  useLeagueGameReconciliation(leagueGameContext, completedGameSaveId);
 
   // Set rxAutoSave once when the first seed-matched save appears in the reactive list.
   // Skip auto-restore when navigating via "Load Saved Game" — the user explicitly chose a save.
@@ -227,6 +243,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       managerMode: managedTeam !== null,
       homeTeam,
       awayTeam,
+      ...(leagueGameContext != null && { leagueContext: leagueGameContext }),
     };
     createSave(
       {
@@ -280,6 +297,16 @@ const GameInner: React.FunctionComponent<Props> = ({
     // Prevent auto-resume from overwriting this fresh session even if RxDB saves
     // load asynchronously after this effect fires.
     restoredRef.current = true;
+    // For league games, use the canonical deterministic seed derived from the
+    // season + scheduled game IDs instead of a user-provided or random seed.
+    if (leagueGameContext) {
+      reinitSeed(
+        deriveScheduledGameSeed(
+          leagueGameContext.leagueSeasonId,
+          leagueGameContext.scheduledGameId,
+        ),
+      );
+    }
     handleStartRef.current(
       pendingGameSetup.homeTeam,
       pendingGameSetup.awayTeam,
@@ -289,7 +316,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       pendingGameSetup.playerOverrides,
     );
     onConsumeGameSetup?.();
-  }, [pendingGameSetup, onConsumeGameSetup]);
+  }, [pendingGameSetup, onConsumeGameSetup, leagueGameContext]);
 
   // Restore game state when AppShell delivers a save loaded from the /saves page.
   const prevPendingLoad = React.useRef<SaveRecord | null>(null);

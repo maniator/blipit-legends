@@ -115,7 +115,7 @@ export type AppShellOutletContext = {
 /** Shape of the React Router location state used when navigating to /game from league mode. */
 export type LeagueGameLocationState = {
   leagueGameContext: LeagueGameContext;
-  pendingGameSetup: null;
+  pendingGameSetup: ExhibitionGameSetup | null;
   pendingLoadSave: null;
 } | null;
 

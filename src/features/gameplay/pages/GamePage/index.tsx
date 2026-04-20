@@ -13,6 +13,8 @@ import type {
   AppShellOutletContext,
   ExhibitionGameSetup,
   GameLocationState,
+  LeagueGameContext,
+  LeagueGameLocationState,
   SaveRecord,
 } from "@storage/types";
 
@@ -29,6 +31,11 @@ const GamePage: React.FunctionComponent = () => {
     gameState?.pendingGameSetup ?? null,
   );
   const pendingLoadRef = React.useRef<SaveRecord | null>(gameState?.pendingLoadSave ?? null);
+  const leagueGameContextRef = React.useRef<LeagueGameContext | null>(
+    gameState != null && "leagueGameContext" in gameState
+      ? ((gameState as LeagueGameLocationState)?.leagueGameContext ?? null)
+      : null,
+  );
 
   // Guard prevents re-clearing on subsequent renders if location.state changes.
   const hasClearedStateRef = React.useRef(false);
@@ -92,6 +99,7 @@ const GamePage: React.FunctionComponent = () => {
         onConsumePendingLoad={handleConsumeLoad}
         onSavingStateChange={setIsCommitting}
         onGameOver={ctx.onGameOver}
+        leagueGameContext={leagueGameContextRef.current}
       />
       {blocker.state === "blocked" && (
         <SavingBanner role="status" aria-live="polite" data-testid="saving-stats-banner">
