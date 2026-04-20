@@ -48,7 +48,7 @@ const LeagueDetailPage: React.FunctionComponent = () => {
   } = useScheduledGames(season?.id ?? null);
 
   const [teamNameMap, setTeamNameMap] = React.useState<Record<string, string>>({});
-  const [startingseason, setStartingSeason] = React.useState(false);
+  const [startingSeason, setStartingSeason] = React.useState(false);
 
   // Load team names for schedule display
   React.useEffect(() => {
@@ -194,9 +194,9 @@ const LeagueDetailPage: React.FunctionComponent = () => {
             type="button"
             data-testid="start-season-button"
             onClick={handleStartSeason}
-            disabled={startingseason}
+            disabled={startingSeason}
           >
-            {startingseason ? "Starting…" : "Start Season"}
+            {startingSeason ? "Starting…" : "Start Season"}
           </StartSeasonButton>
           <SeasonNotStarted data-testid="season-not-started">
             Season has not started yet.
