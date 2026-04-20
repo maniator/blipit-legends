@@ -25,6 +25,10 @@ export interface CompletedGameRecord {
   innings: number;
   /** The save ID (`SaveRecord.id`) that triggered the commit — for debug/traceability only. */
   committedBySaveId?: string;
+  /** League season this game belongs to. Only present for league games. */
+  leagueSeasonId?: string;
+  /** Scheduled game record this result fulfills. Only present for league games. */
+  scheduledGameId?: string;
   schemaVersion: number;
 }
 

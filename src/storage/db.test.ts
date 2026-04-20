@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestDb } from "@test/helpers/db";
 
 import {
+  _resetDbSingletonForTesting,
   type BallgameDb,
   eventsCollection,
   getDb,
@@ -131,6 +132,20 @@ describe("getDb schema recovery behavior", () => {
 });
 
 describe("savesCollection / eventsCollection helpers (singleton)", () => {
+  // These tests use the getDb() singleton which opens a separate DB.
+  // Close the beforeEach test db first to stay under the 16-collection limit.
+  beforeEach(async () => {
+    await db.close();
+  });
+  afterEach(async () => {
+    // Close and reset the singleton so it doesn't stay open for subsequent tests
+    const singletonDb = await getDb().catch(() => null);
+    if (singletonDb) await singletonDb.close().catch(() => undefined);
+    _resetDbSingletonForTesting();
+    // Re-create the test db so the global afterEach and subsequent tests still have `db`
+    db = await createTestDb(getRxStorageMemory());
+  });
+
   it("savesCollection() resolves to the RxDB saves collection", async () => {
     // getDb() uses getRxStorageDexie() — fake-indexeddb polyfills IndexedDB for the test.
     const singletonDb = await getDb();
@@ -344,16 +359,16 @@ describe("schema version and reset flag", () => {
     expect(db.saves.schema.version).toBe(0);
   });
 
-  it("teams collection has schema version 0", () => {
-    expect(db.teams.schema.version).toBe(0);
+  it("teams collection has schema version 1", () => {
+    expect(db.teams.schema.version).toBe(1);
   });
 
   it("players collection has schema version 0", () => {
     expect(db.players.schema.version).toBe(0);
   });
 
-  it("completedGames collection has schema version 0", () => {
-    expect(db.completedGames.schema.version).toBe(0);
+  it("completedGames collection has schema version 1", () => {
+    expect(db.completedGames.schema.version).toBe(1);
   });
 
   it("batterGameStats collection has schema version 0", () => {

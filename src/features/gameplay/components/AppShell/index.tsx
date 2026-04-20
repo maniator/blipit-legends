@@ -129,6 +129,8 @@ const AppShell: React.FunctionComponent = () => {
       onBackToHome: handleBackToHome,
       hasActiveSession,
       onGameOver: handleGameOver,
+      onLeague: () => undefined,
+      hasLeague: false,
     }),
     [
       handleStartFromExhibition,

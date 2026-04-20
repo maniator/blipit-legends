@@ -65,6 +65,8 @@ const mockCtx: AppShellOutletContext = {
   onGameOver: vi.fn(),
   hasActiveSession: false,
   hasCareerStats: false,
+  onLeague: vi.fn(),
+  hasLeague: false,
 };
 
 /** Renders GamePage inside a minimal router with outlet context. */

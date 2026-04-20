@@ -143,6 +143,8 @@ describe("GameHistoryStore export/import", () => {
 
     const json = await store.exportGameHistory();
 
+    // Close db to stay under the 16-collection limit, then open a fresh db2 for import.
+    await db.close();
     const db2 = await createTestDb(getRxStorageMemory());
     const store2 = makeGameHistoryStore(() => Promise.resolve(db2));
     await store2.importGameHistory(json, new Set(["Yankees", "Mets"]));
@@ -153,6 +155,8 @@ describe("GameHistoryStore export/import", () => {
     expect(stats[0].batting.rbi).toBe(3);
 
     await db2.close();
+    // Restore db so the global afterEach can close it cleanly
+    db = await createTestDb(getRxStorageMemory());
   });
 
   it("exports and re-imports history (idempotent)", async () => {
@@ -583,7 +587,8 @@ describe("exportGameHistory / importGameHistory — pitcher stats", () => {
 
     const json = await store.exportGameHistory();
 
-    // Fresh DB for import.
+    // Close db to stay under the 16-collection limit, then open a fresh db2 for import.
+    await db.close();
     const db2 = await createTestDb(getRxStorageMemory());
     const store2 = makeGameHistoryStore(() => Promise.resolve(db2));
 
@@ -595,6 +600,8 @@ describe("exportGameHistory / importGameHistory — pitcher stats", () => {
     expect(pitchers).toHaveLength(1);
 
     await db2.close();
+    // Restore db so the global afterEach can close it cleanly
+    db = await createTestDb(getRxStorageMemory());
   });
 
   it("import is idempotent for pitcher rows", async () => {
@@ -602,6 +609,8 @@ describe("exportGameHistory / importGameHistory — pitcher stats", () => {
     await store.commitCompletedGame(gameId, { ...gameMeta }, [], [makePitcherRow(gameId, "p1")]);
     const json = await store.exportGameHistory();
 
+    // Close db to stay under the 16-collection limit, then open a fresh db2 for import.
+    await db.close();
     const db2 = await createTestDb(getRxStorageMemory());
     const store2 = makeGameHistoryStore(() => Promise.resolve(db2));
 
@@ -617,6 +626,8 @@ describe("exportGameHistory / importGameHistory — pitcher stats", () => {
     expect(pitchers).toHaveLength(1); // no duplicates
 
     await db2.close();
+    // Restore db so the global afterEach can close it cleanly
+    db = await createTestDb(getRxStorageMemory());
   });
 });
 

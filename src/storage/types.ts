@@ -31,6 +31,12 @@ export type {
   UpdateCustomTeamInput,
 } from "@feat/customTeams/storage/types";
 export type {
+  LeagueGameContext,
+  LeagueRecord,
+  LeagueSeasonRecord,
+  ScheduledGameRecord,
+} from "@feat/leagueMode/storage/types";
+export type {
   EventRecord,
   GameEvent,
   GameSaveSetup,
@@ -45,6 +51,7 @@ export type {
 
 // Cross-feature / app-shell types (genuinely shared)
 import type { Handedness, TeamCustomPlayerOverrides } from "@feat/gameplay/context/index";
+import type { LeagueGameContext } from "@feat/leagueMode/storage/types";
 import type { SaveRecord } from "@feat/saves/storage/types";
 
 export type PlayerOverrides = {
@@ -100,10 +107,22 @@ export type AppShellOutletContext = {
   hasActiveSession: boolean;
   /** Called by GameInner (via GamePage/Game) when a game reaches FINAL, so AppShell clears hasActiveSession. */
   onGameOver: () => void;
+  onLeague: () => void;
+  hasLeague: boolean;
+  activeLeagueId?: string;
 };
 
-/** Shape of the React Router location state used when navigating to /game. */
-export type GameLocationState = {
-  pendingGameSetup: ExhibitionGameSetup | null;
-  pendingLoadSave: SaveRecord | null;
+/** Shape of the React Router location state used when navigating to /game from league mode. */
+export type LeagueGameLocationState = {
+  leagueGameContext: LeagueGameContext;
+  pendingGameSetup: null;
+  pendingLoadSave: null;
 } | null;
+
+/** Shape of the React Router location state used when navigating to /game. */
+export type GameLocationState =
+  | {
+      pendingGameSetup: ExhibitionGameSetup | null;
+      pendingLoadSave: SaveRecord | null;
+    }
+  | LeagueGameLocationState;

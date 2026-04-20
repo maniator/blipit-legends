@@ -14,7 +14,7 @@ import type { PlayerRecord, TeamRecord } from "./types";
 export const FREE_AGENT_TEAM_ID = "team_free_agents";
 
 const teamsSchemaV1: RxJsonSchema<TeamRecord> = {
-  version: 0,
+  version: 1,
   primaryKey: "id",
   type: "object",
   properties: {
@@ -36,14 +36,21 @@ const teamsSchemaV1: RxJsonSchema<TeamRecord> = {
      * NOT the primary identity key; `id` remains the primary key.
      */
     fingerprint: { type: "string", maxLength: 16 },
+    activeLeagueId: { type: "string", maxLength: 128 },
   },
   required: ["id", "schemaVersion", "createdAt", "updatedAt", "name", "nameLowercase", "metadata"],
   indexes: ["updatedAt", "nameLowercase"],
 };
 
-/** v1 collection config for the `teams` collection. No migration strategies. */
+/** v1 collection config for the `teams` collection. Includes v0→v1 migration. */
 export const teamsV1CollectionConfig = {
   schema: teamsSchemaV1,
+  migrationStrategies: {
+    1: (oldDoc: Record<string, unknown>) => ({
+      ...oldDoc,
+      activeLeagueId: undefined,
+    }),
+  },
 };
 
 const playersSchemaV1: RxJsonSchema<PlayerRecord> = {

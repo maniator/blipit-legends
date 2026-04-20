@@ -263,7 +263,9 @@ describe("importCustomTeams", () => {
 
     const json = exportFn([withNL(teamWithIdentity) as TeamWithRoster]);
 
-    // Import into a fresh in-memory DB (simulates a different install)
+    // Import into a fresh in-memory DB (simulates a different install).
+    // Close db first to stay under the 16-collection limit.
+    await db.close();
     const freshDb = await createTestDb(getRxStorageMemory());
     const freshStore = makeCustomTeamStore(() => Promise.resolve(freshDb));
 
@@ -278,6 +280,8 @@ describe("importCustomTeams", () => {
       expect(importedPlayer.fingerprint).not.toBe(staleFingerprint);
     } finally {
       await freshDb.close();
+      // Restore db so the global afterEach can close it cleanly
+      db = await createTestDb(getRxStorageMemory());
     }
   });
 

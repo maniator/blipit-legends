@@ -1,4 +1,5 @@
 import type { State, Strategy } from "@feat/gameplay/context/index";
+import type { LeagueGameContext } from "@feat/leagueMode/storage/types";
 
 /** Typed setup stored on the save header for deterministic game restore. */
 export interface GameSaveSetup {
@@ -8,6 +9,8 @@ export interface GameSaveSetup {
   managerMode: boolean;
   homeTeam: string;
   awayTeam: string;
+  /** League context — present when this game was launched from league mode. Survives hard-refresh via additionalProperties: true on saves schema. */
+  leagueContext?: LeagueGameContext;
 }
 
 /** Scored snapshot stored on the save header for quick display. */

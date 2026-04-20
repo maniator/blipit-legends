@@ -320,7 +320,8 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
     const saveId = await store.createSave(makeCustomFormatSetup({ seed: "roundtrip" }));
     await store.appendEvents(saveId, [{ type: "hit", at: 0, payload: {} }]);
     const json = await store.exportRxdbSave(saveId);
-    // Import into a fresh db
+    // Import into a fresh db — close db first to stay under the 16-collection limit
+    await db.close();
     const db2 = await createTestDb(getRxStorageMemory());
     // Insert the teams so importRxdbSave does not reject them as missing.
     await insertMinimalTeam(db2, "ct_rt_home");
@@ -336,6 +337,8 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
     const events = await db2.events.find({ selector: { saveId } }).exec();
     expect(events).toHaveLength(1);
     await db2.close();
+    // Restore db so global afterEach can close it cleanly
+    db = await createTestDb(getRxStorageMemory());
   });
 
   it("importRxdbSave throws on invalid JSON", async () => {
@@ -373,6 +376,8 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
   it("importRxdbSave handles saves with no events", async () => {
     const saveId = await store.createSave(makeCustomFormatSetup());
     const json = await store.exportRxdbSave(saveId);
+    // Close db first to stay under the 16-collection limit
+    await db.close();
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
     await insertMinimalTeam(db2, "ct_rt_away");
@@ -382,6 +387,8 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
     const restoredSave = await store2.importRxdbSave(json);
     expect(restoredSave.id).toBe(saveId);
     await db2.close();
+    // Restore db so global afterEach can close it cleanly
+    db = await createTestDb(getRxStorageMemory());
   });
 
   it("importRxdbSave preserves ct_* team IDs unchanged (v1 canonical format)", async () => {
@@ -409,6 +416,8 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
     const sig = fnv1a(RXDB_EXPORT_KEY_LOCAL + JSON.stringify({ header, events }));
     const bundle = JSON.stringify({ version: 1, header, events, sig });
 
+    // Close db first to stay under the 16-collection limit
+    await db.close();
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_norm_home");
     await insertMinimalTeam(db2, "ct_norm_away");
@@ -423,6 +432,8 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
     expect(restored.setup.homeTeam).toBe("ct_norm_home");
     expect(restored.setup.awayTeam).toBe("ct_norm_away");
     await db2.close();
+    // Restore db so global afterEach can close it cleanly
+    db = await createTestDb(getRxStorageMemory());
   });
 
   it("importRxdbSave preserves v1 ct_* team IDs on round-trip", async () => {
@@ -432,6 +443,8 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
     await insertMinimalTeam(db, "ct_rt_away");
     const json = await store.exportRxdbSave(saveId);
 
+    // Close db first to stay under the 16-collection limit
+    await db.close();
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
     await insertMinimalTeam(db2, "ct_rt_away");
@@ -442,6 +455,8 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
     expect(restored.homeTeamId).toBe("ct_rt_home");
     expect(restored.awayTeamId).toBe("ct_rt_away");
     await db2.close();
+    // Restore db so global afterEach can close it cleanly
+    db = await createTestDb(getRxStorageMemory());
   });
 });
 
@@ -482,15 +497,27 @@ describe("SaveStore.appendEvents — counter initialisation from existing events
 });
 
 describe("SaveStore — sac-fly outLog entries in stateSnapshot export/import", () => {
+  // Close the global test db before each test in this describe to stay under the
+  // 16-collection limit when creating db2 for import testing.
+  beforeEach(async () => {
+    await db.close();
+  });
+  afterEach(async () => {
+    db = await createTestDb(getRxStorageMemory());
+  });
+
   it("round-trips outLog entries with isSacFly and rbi through export/import", async () => {
-    const saveId = await store.createSave(makeCustomFormatSetup({ seed: "sacflysave" }));
+    const localDb = await createTestDb(getRxStorageMemory());
+    const localStore = makeSaveStore(() => Promise.resolve(localDb));
+    const saveId = await localStore.createSave(makeCustomFormatSetup({ seed: "sacflysave" }));
     const stateWithSacFly = makeState({
       outLog: [{ team: 0, batterNum: 2, playerId: "p2", isSacFly: true, rbi: 1 }],
     });
-    await store.updateProgress(saveId, 6, {
+    await localStore.updateProgress(saveId, 6, {
       stateSnapshot: { state: stateWithSacFly, rngState: 42 },
     });
-    const json = await store.exportRxdbSave(saveId);
+    const json = await localStore.exportRxdbSave(saveId);
+    await localDb.close();
 
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
@@ -508,14 +535,17 @@ describe("SaveStore — sac-fly outLog entries in stateSnapshot export/import", 
   });
 
   it("round-trips outLog entries without isSacFly (legacy saves)", async () => {
-    const saveId = await store.createSave(makeCustomFormatSetup({ seed: "legacyout" }));
+    const localDb = await createTestDb(getRxStorageMemory());
+    const localStore = makeSaveStore(() => Promise.resolve(localDb));
+    const saveId = await localStore.createSave(makeCustomFormatSetup({ seed: "legacyout" }));
     const legacyState = makeState({
       outLog: [{ team: 0, batterNum: 1, playerId: "p1" }],
     });
-    await store.updateProgress(saveId, 2, {
+    await localStore.updateProgress(saveId, 2, {
       stateSnapshot: { state: legacyState, rngState: null },
     });
-    const json = await store.exportRxdbSave(saveId);
+    const json = await localStore.exportRxdbSave(saveId);
+    await localDb.close();
 
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
@@ -531,8 +561,19 @@ describe("SaveStore — sac-fly outLog entries in stateSnapshot export/import", 
 });
 
 describe("SaveStore — RBI in stateSnapshot export/import compatibility", () => {
+  // Close the global test db before each test in this describe to stay under the
+  // 16-collection limit when creating db2 for import testing.
+  beforeEach(async () => {
+    await db.close();
+  });
+  afterEach(async () => {
+    db = await createTestDb(getRxStorageMemory());
+  });
+
   it("round-trips a stateSnapshot containing playLog entries with rbi", async () => {
-    const saveId = await store.createSave(makeCustomFormatSetup({ seed: "rbisave" }));
+    const localDb = await createTestDb(getRxStorageMemory());
+    const localStore = makeSaveStore(() => Promise.resolve(localDb));
+    const saveId = await localStore.createSave(makeCustomFormatSetup({ seed: "rbisave" }));
     const stateWithRbi = makeState({
       playLog: [
         {
@@ -547,10 +588,11 @@ describe("SaveStore — RBI in stateSnapshot export/import compatibility", () =>
         },
       ],
     });
-    await store.updateProgress(saveId, 5, {
+    await localStore.updateProgress(saveId, 5, {
       stateSnapshot: { state: stateWithRbi, rngState: 42 },
     });
-    const json = await store.exportRxdbSave(saveId);
+    const json = await localStore.exportRxdbSave(saveId);
+    await localDb.close();
 
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
@@ -565,17 +607,20 @@ describe("SaveStore — RBI in stateSnapshot export/import compatibility", () =>
   });
 
   it("round-trips a stateSnapshot containing playLog entries without rbi (older save)", async () => {
-    const saveId = await store.createSave(makeCustomFormatSetup({ seed: "oldsave" }));
+    const localDb = await createTestDb(getRxStorageMemory());
+    const localStore = makeSaveStore(() => Promise.resolve(localDb));
+    const saveId = await localStore.createSave(makeCustomFormatSetup({ seed: "oldsave" }));
     const oldState = makeState({
       playLog: [
         // Simulate old data: no rbi field
         { inning: 1, half: 0, batterNum: 1, playerId: "p1", team: 0, event: Hit.Single, runs: 1 },
       ],
     });
-    await store.updateProgress(saveId, 3, {
+    await localStore.updateProgress(saveId, 3, {
       stateSnapshot: { state: oldState, rngState: null },
     });
-    const json = await store.exportRxdbSave(saveId);
+    const json = await localStore.exportRxdbSave(saveId);
+    await localDb.close();
 
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
@@ -594,16 +639,28 @@ describe("SaveStore — RBI in stateSnapshot export/import compatibility", () =>
 // ---------------------------------------------------------------------------
 
 describe("SaveStore — manager decision state in stateSnapshot export/import", () => {
+  // Close the global test db before each test in this describe to stay under the
+  // 16-collection limit when creating db2 for import testing.
+  beforeEach(async () => {
+    await db.close();
+  });
+  afterEach(async () => {
+    db = await createTestDb(getRxStorageMemory());
+  });
+
   it("round-trips pendingDecision defensive_shift through export/import", async () => {
-    const saveId = await store.createSave(makeCustomFormatSetup({ seed: "decshift" }));
+    const localDb = await createTestDb(getRxStorageMemory());
+    const localStore = makeSaveStore(() => Promise.resolve(localDb));
+    const saveId = await localStore.createSave(makeCustomFormatSetup({ seed: "decshift" }));
     const stateWithDecision = makeState({
       pendingDecision: { kind: "defensive_shift" },
       managerMode: true,
     } as Parameters<typeof makeState>[0]);
-    await store.updateProgress(saveId, 7, {
+    await localStore.updateProgress(saveId, 7, {
       stateSnapshot: { state: stateWithDecision, rngState: 10 },
     });
-    const json = await store.exportRxdbSave(saveId);
+    const json = await localStore.exportRxdbSave(saveId);
+    await localDb.close();
 
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
@@ -616,12 +673,15 @@ describe("SaveStore — manager decision state in stateSnapshot export/import", 
   });
 
   it("round-trips onePitchModifier through export/import", async () => {
-    const saveId = await store.createSave(makeCustomFormatSetup({ seed: "onemod" }));
+    const localDb = await createTestDb(getRxStorageMemory());
+    const localStore = makeSaveStore(() => Promise.resolve(localDb));
+    const saveId = await localStore.createSave(makeCustomFormatSetup({ seed: "onemod" }));
     const stateWithMod = makeState({ onePitchModifier: "swing" });
-    await store.updateProgress(saveId, 3, {
+    await localStore.updateProgress(saveId, 3, {
       stateSnapshot: { state: stateWithMod, rngState: 5 },
     });
-    const json = await store.exportRxdbSave(saveId);
+    const json = await localStore.exportRxdbSave(saveId);
+    await localDb.close();
 
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
@@ -634,12 +694,15 @@ describe("SaveStore — manager decision state in stateSnapshot export/import", 
   });
 
   it("round-trips pitcherBattersFaced (fatigue progress) through export/import", async () => {
-    const saveId = await store.createSave(makeCustomFormatSetup({ seed: "fatigue" }));
+    const localDb = await createTestDb(getRxStorageMemory());
+    const localStore = makeSaveStore(() => Promise.resolve(localDb));
+    const saveId = await localStore.createSave(makeCustomFormatSetup({ seed: "fatigue" }));
     const stateWithFatigue = makeState({ pitcherBattersFaced: [15, 6] });
-    await store.updateProgress(saveId, 9, {
+    await localStore.updateProgress(saveId, 9, {
       stateSnapshot: { state: stateWithFatigue, rngState: 20 },
     });
-    const json = await store.exportRxdbSave(saveId);
+    const json = await localStore.exportRxdbSave(saveId);
+    await localDb.close();
 
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
@@ -652,12 +715,15 @@ describe("SaveStore — manager decision state in stateSnapshot export/import", 
   });
 
   it("round-trips decisionLog through export/import", async () => {
-    const saveId = await store.createSave(makeCustomFormatSetup({ seed: "declog" }));
+    const localDb = await createTestDb(getRxStorageMemory());
+    const localStore = makeSaveStore(() => Promise.resolve(localDb));
+    const saveId = await localStore.createSave(makeCustomFormatSetup({ seed: "declog" }));
     const stateWithLog = makeState({ decisionLog: ["AI: steal 2nd", "AI: bunt"] });
-    await store.updateProgress(saveId, 4, {
+    await localStore.updateProgress(saveId, 4, {
       stateSnapshot: { state: stateWithLog, rngState: 1 },
     });
-    const json = await store.exportRxdbSave(saveId);
+    const json = await localStore.exportRxdbSave(saveId);
+    await localDb.close();
 
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
@@ -670,12 +736,15 @@ describe("SaveStore — manager decision state in stateSnapshot export/import", 
   });
 
   it("round-trips defensiveShift flag through export/import", async () => {
-    const saveId = await store.createSave(makeCustomFormatSetup({ seed: "defshift" }));
+    const localDb = await createTestDb(getRxStorageMemory());
+    const localStore = makeSaveStore(() => Promise.resolve(localDb));
+    const saveId = await localStore.createSave(makeCustomFormatSetup({ seed: "defshift" }));
     const stateWithShift = makeState({ defensiveShift: true, defensiveShiftOffered: true });
-    await store.updateProgress(saveId, 5, {
+    await localStore.updateProgress(saveId, 5, {
       stateSnapshot: { state: stateWithShift, rngState: 3 },
     });
-    const json = await store.exportRxdbSave(saveId);
+    const json = await localStore.exportRxdbSave(saveId);
+    await localDb.close();
 
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");

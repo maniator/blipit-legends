@@ -14,7 +14,7 @@ import type { RxJsonSchema } from "rxdb";
 import type { BatterGameStatRecord, CompletedGameRecord, PitcherGameStatRecord } from "./types";
 
 const completedGamesSchemaV1: RxJsonSchema<CompletedGameRecord> = {
-  version: 0,
+  version: 1,
   primaryKey: "id",
   type: "object",
   properties: {
@@ -28,6 +28,8 @@ const completedGamesSchemaV1: RxJsonSchema<CompletedGameRecord> = {
     awayScore: { type: "number", minimum: 0, maximum: 9999, multipleOf: 1 },
     innings: { type: "number", minimum: 1, maximum: 999, multipleOf: 1 },
     committedBySaveId: { type: "string" },
+    leagueSeasonId: { type: "string", maxLength: 128 },
+    scheduledGameId: { type: "string", maxLength: 128 },
     schemaVersion: { type: "number", minimum: 0, maximum: 999, multipleOf: 1 },
   },
   required: [
@@ -45,9 +47,16 @@ const completedGamesSchemaV1: RxJsonSchema<CompletedGameRecord> = {
   indexes: ["playedAt", ["homeTeamId", "playedAt"], ["awayTeamId", "playedAt"]],
 };
 
-/** v1 collection config for the `completedGames` collection. No migration strategies. */
+/** v1 collection config for the `completedGames` collection. Includes v0→v1 migration. */
 export const completedGamesV1CollectionConfig = {
   schema: completedGamesSchemaV1,
+  migrationStrategies: {
+    1: (oldDoc: Record<string, unknown>) => ({
+      ...oldDoc,
+      leagueSeasonId: undefined,
+      scheduledGameId: undefined,
+    }),
+  },
 };
 
 const batterGameStatsSchemaV1: RxJsonSchema<BatterGameStatRecord> = {

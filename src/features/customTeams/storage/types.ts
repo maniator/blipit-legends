@@ -105,6 +105,8 @@ export interface TeamRecord {
   statsProfile?: string;
   /** FNV-1a fingerprint of name+abbreviation+id — used for duplicate detection on import. */
   fingerprint?: string;
+  /** League ID this team is currently participating in. Only present when team is in an active league. */
+  activeLeagueId?: string;
 }
 
 /**

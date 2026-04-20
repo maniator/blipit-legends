@@ -7,10 +7,18 @@ import {
   playersV1CollectionConfig,
   teamsV1CollectionConfig,
 } from "@feat/customTeams/storage/schemaV1";
+import {
+  leagueSeasonsV1CollectionConfig,
+  leaguesV1CollectionConfig,
+  scheduledGamesV1CollectionConfig,
+} from "@feat/leagueMode/storage/schemaV1";
 import { eventsV1CollectionConfig, savesV1CollectionConfig } from "@feat/saves/storage/schemaV1";
-import { createRxDatabase, type RxStorage } from "rxdb";
+import { addRxPlugin, createRxDatabase, type RxStorage } from "rxdb";
+import { RxDBMigrationSchemaPlugin } from "rxdb/plugins/migration-schema";
 
 import type { BallgameDb, DbCollections } from "@storage/db";
+
+addRxPlugin(RxDBMigrationSchemaPlugin);
 
 export const createTestDb = async (
   storage: RxStorage<unknown, unknown>,
@@ -30,6 +38,9 @@ export const createTestDb = async (
     completedGames: completedGamesV1CollectionConfig,
     batterGameStats: batterGameStatsV1CollectionConfig,
     pitcherGameStats: pitcherGameStatsV1CollectionConfig,
+    leagues: leaguesV1CollectionConfig,
+    leagueSeasons: leagueSeasonsV1CollectionConfig,
+    scheduledGames: scheduledGamesV1CollectionConfig,
   });
 
   return db;

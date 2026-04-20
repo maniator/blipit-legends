@@ -8,16 +8,31 @@ import {
   playersV1CollectionConfig,
   teamsV1CollectionConfig,
 } from "@feat/customTeams/storage/schemaV1";
+import {
+  leagueSeasonsV1CollectionConfig,
+  leaguesV1CollectionConfig,
+  scheduledGamesV1CollectionConfig,
+} from "@feat/leagueMode/storage/schemaV1";
 import { eventsV1CollectionConfig, savesV1CollectionConfig } from "@feat/saves/storage/schemaV1";
 import { appLog } from "@shared/utils/logger";
 import {
+  addRxPlugin,
   createRxDatabase,
   removeRxDatabase,
   type RxCollection,
   type RxDatabase,
   type RxStorage,
 } from "rxdb";
+import { RxDBMigrationSchemaPlugin } from "rxdb/plugins/migration-schema";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
+
+addRxPlugin(RxDBMigrationSchemaPlugin);
+
+import type {
+  LeagueRecord,
+  LeagueSeasonRecord,
+  ScheduledGameRecord,
+} from "@feat/leagueMode/storage/types";
 
 import type {
   BatterGameStatRecord,
@@ -44,6 +59,9 @@ export type DbCollections = {
   completedGames: RxCollection<CompletedGameRecord>;
   batterGameStats: RxCollection<BatterGameStatRecord>;
   pitcherGameStats: RxCollection<PitcherGameStatRecord>;
+  leagues: RxCollection<LeagueRecord>;
+  leagueSeasons: RxCollection<LeagueSeasonRecord>;
+  scheduledGames: RxCollection<ScheduledGameRecord>;
 };
 
 export type BallgameDb = RxDatabase<DbCollections>;
@@ -122,6 +140,9 @@ async function initDb(
       completedGames: completedGamesV1CollectionConfig,
       batterGameStats: batterGameStatsV1CollectionConfig,
       pitcherGameStats: pitcherGameStatsV1CollectionConfig,
+      leagues: leaguesV1CollectionConfig,
+      leagueSeasons: leagueSeasonsV1CollectionConfig,
+      scheduledGames: scheduledGamesV1CollectionConfig,
     });
     return db;
   } catch (err) {
@@ -138,6 +159,16 @@ let dbPromise: Promise<BallgameDb> | null = null;
 let dbWasReset = false;
 /** Returns true if the database was reset during this session. */
 export const wasDbReset = (): boolean => dbWasReset;
+
+/**
+ * Resets the singleton DB promise — intended for use in tests only.
+ * Allows the singleton to be closed and re-created between test cases
+ * without leaking open database handles.
+ */
+export const _resetDbSingletonForTesting = (): void => {
+  dbPromise = null;
+  dbWasReset = false;
+};
 
 /**
  * Returns true when an error represents a schema failure that warrants a last-resort
@@ -211,3 +242,12 @@ export const batterGameStatsCollection = async (): Promise<RxCollection<BatterGa
 
 export const pitcherGameStatsCollection = async (): Promise<RxCollection<PitcherGameStatRecord>> =>
   (await getDb()).pitcherGameStats;
+
+export const leaguesCollection = async (): Promise<RxCollection<LeagueRecord>> =>
+  (await getDb()).leagues;
+
+export const leagueSeasonsCollection = async (): Promise<RxCollection<LeagueSeasonRecord>> =>
+  (await getDb()).leagueSeasons;
+
+export const scheduledGamesCollection = async (): Promise<RxCollection<ScheduledGameRecord>> =>
+  (await getDb()).scheduledGames;
