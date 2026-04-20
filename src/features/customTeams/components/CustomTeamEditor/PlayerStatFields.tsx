@@ -16,6 +16,8 @@ import {
 } from "./statBudget";
 import {
   IdentityLockHint,
+  StaminaSectionDivider,
+  StaminaSectionLabel,
   StatBudgetRow,
   StatInput,
   StatLabel,
@@ -115,6 +117,8 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
           : `Total: ${total} / ${cap}`}
       </StatBudgetRow>
       {isExistingPlayer && <IdentityLockHint>Stats are locked after creation.</IdentityLockHint>}
+      <StaminaSectionDivider />
+      <StaminaSectionLabel>Durability</StaminaSectionLabel>
       {isPitcher
         ? statRow(
             "Pitching Stamina",

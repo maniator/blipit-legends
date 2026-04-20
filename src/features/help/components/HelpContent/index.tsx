@@ -78,6 +78,64 @@ const HelpContent: React.FunctionComponent = () => (
       </List>
     </Section>
 
+    <Section title="Player Stats">
+      <List>
+        <Li>
+          <strong>Hitter stats</strong> (total capped at 150):
+          <List>
+            <Li>
+              <strong>Contact</strong> — how often the batter puts the ball in play; higher contact
+              reduces pop-outs and strikeouts.
+            </Li>
+            <Li>
+              <strong>Power</strong> — home run potential and extra-base hit probability.
+            </Li>
+            <Li>
+              <strong>Speed</strong> — stolen-base success rate, extra-base advancement, and beating
+              double-play balls.
+            </Li>
+          </List>
+        </Li>
+        <Li>
+          <strong>Pitcher stats</strong> (total capped at 160):
+          <List>
+            <Li>
+              <strong>Velocity</strong> — harder to make solid contact; raises the strike
+              probability on called pitches.
+            </Li>
+            <Li>
+              <strong>Control</strong> — strike-to-ball ratio; reduces walks.
+            </Li>
+            <Li>
+              <strong>Movement</strong> — increases pop-out / soft-contact rate; makes the ball
+              harder to square up.
+            </Li>
+          </List>
+        </Li>
+        <Li>
+          <strong>Durability (Stamina)</strong> — shown separately and{" "}
+          <em>does not count toward the stat cap</em>. Controls how quickly a player tires within a
+          game:
+          <List>
+            <Li>
+              <strong>Batting Stamina</strong> — high-stamina batters stay sharp through their 4th+
+              plate appearance of the game; low-stamina batters start to lose contact and power
+              earlier.
+            </Li>
+            <Li>
+              <strong>Pitching Stamina</strong> — high-stamina starters can work deep into games
+              before their velocity and movement fade; low-stamina pitchers need to be pulled
+              earlier.
+            </Li>
+            <Li>
+              Stamina is a fixed attribute — it resets to full at the start of every game and does{" "}
+              <em>not</em> accumulate across games.
+            </Li>
+          </List>
+        </Li>
+      </List>
+    </Section>
+
     <Section title="Game Flow">
       <List>
         <Li>The game runs automatically once started — sit back and watch.</Li>
