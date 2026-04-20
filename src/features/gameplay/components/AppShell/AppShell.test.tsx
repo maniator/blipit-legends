@@ -93,6 +93,7 @@ function renderAppShell(initialPath = "/") {
           <Route path="help" element={<div data-testid="help-page-mock" />} />
           <Route path="contact" element={<div data-testid="contact-page-mock" />} />
           <Route path="stats" element={<div data-testid="stats-page-mock" />} />
+          <Route path="league" element={<div data-testid="league-page-mock" />} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -270,5 +271,29 @@ describe("AppShell", () => {
     renderAppShell("/");
     expect(screen.getByRole("slider", { name: /announcement volume/i })).toBeInTheDocument();
     expect(screen.getByRole("slider", { name: /music volume/i })).toBeInTheDocument();
+  });
+
+  // Nav bar — Leagues link tests
+  it("renders the Leagues nav link on the home route", () => {
+    renderAppShell("/");
+    expect(screen.getByTestId("nav-league-link")).toBeInTheDocument();
+  });
+
+  it("renders the Leagues nav link on non-game routes", () => {
+    renderAppShell("/saves");
+    expect(screen.getByTestId("nav-league-link")).toBeInTheDocument();
+  });
+
+  it("does NOT render the Leagues nav link on the /game route", () => {
+    renderAppShell("/game");
+    expect(screen.queryByTestId("nav-league-link")).not.toBeInTheDocument();
+  });
+
+  it("clicking the Leagues nav link navigates to /league", async () => {
+    const user = userEvent.setup();
+    renderAppShell("/");
+    await user.click(screen.getByTestId("nav-league-link"));
+    expect(screen.getByTestId("league-page-mock")).toBeInTheDocument();
+    expect(screen.queryByTestId("home-screen-mock")).not.toBeInTheDocument();
   });
 });

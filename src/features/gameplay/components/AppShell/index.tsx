@@ -8,7 +8,7 @@ import { Outlet, useLocation, useNavigate } from "react-router";
 import { getDb } from "@storage/db";
 import type { AppShellOutletContext, ExhibitionGameSetup, SaveRecord } from "@storage/types";
 
-import { AppVolumeBar } from "./styles";
+import { AppNavBar, AppVolumeBar, NavLinkItem } from "./styles";
 
 export type { AppShellOutletContext, ExhibitionGameSetup, GameLocationState } from "@storage/types";
 
@@ -157,6 +157,13 @@ const AppShell: React.FunctionComponent = () => {
 
   return (
     <>
+      {!isGameRoute && (
+        <AppNavBar>
+          <NavLinkItem to="/league" data-testid="nav-league-link">
+            🏆 Leagues
+          </NavLinkItem>
+        </AppNavBar>
+      )}
       <Outlet context={outletContext} />
       {!isGameRoute && (
         <AppVolumeBar data-testid="app-volume-bar">
