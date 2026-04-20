@@ -68,6 +68,8 @@ test.describe("Team Summary and Leaders", () => {
     // summary-wl shows "2-1", saves-leader-card is also rendered.  Using a specific
     // text check makes this guard immune to the early-resolution race condition.
     const summaryWL = page.getByTestId("summary-wl");
+    // WebKit CI runners are slower at reflecting imported fixture rows in the
+    // stats query path, so we give this first data-ready assertion extra budget.
     const loaded = await summaryWL
       .filter({ hasText: "2-1" })
       .isVisible({ timeout: browserName === "webkit" ? 20_000 : 10_000 })
