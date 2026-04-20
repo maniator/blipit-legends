@@ -77,6 +77,14 @@ export const useGameControls = ({
       setAnnouncementVolumeState(1);
     if (typeof alertVolume !== "number" || alertVolume < 0 || alertVolume > 1)
       setAlertVolumeState(1);
+    // Evict corrupt/partial decisionValues so localStorage stays consistent with
+    // the sanitized object — same self-heal pattern as the other settings above.
+    if (
+      rawDecisionValues == null ||
+      JSON.stringify(rawDecisionValues) !== JSON.stringify(decisionValues)
+    ) {
+      setRawDecisionValues(decisionValues);
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset pause when the game ends so the next game always starts playing.
