@@ -142,7 +142,7 @@ export function parseExportedCustomTeams(json: string): ExportedCustomTeams {
         if (slot === "pitchers" && p["role"] !== "pitcher") {
           throw new Error(
             `Team[${ti}] pitchers[${pi}] must have role "pitcher" — ` +
-              `got "${p["role"] as string}"`,
+              `got "${String(p["role"])}"`,
           );
         }
         if ((slot === "lineup" || slot === "bench") && p["role"] === "pitcher") {
