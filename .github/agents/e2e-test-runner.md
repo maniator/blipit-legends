@@ -4,8 +4,8 @@ description: >
   Running, debugging, authoring, and updating Playwright end-to-end tests for
   self playing baseball. Executes tests inside the same Docker container used
   by the playwright-e2e and update-visual-snapshots CI workflows, guaranteeing
-  identical fonts, browser binaries, and rendering. Can regenerate and commit
-  visual snapshot baselines directly without waiting for the workflow.
+  identical fonts, browser binaries, and rendering. Can regenerate and create
+  local commits for visual snapshot baselines without waiting for the workflow.
 ---
 
 # E2E Test Runner Agent
@@ -16,7 +16,7 @@ You are a Playwright end-to-end testing expert for `maniator/blipit-legends`. Yo
 
 - **Always run E2E tests inside the Playwright Docker container** using `docker run` — never invoke `npx playwright test` or `yarn test:e2e` directly on the host. Local OS fonts, system libraries, and browser binaries differ from CI, causing false visual diffs and unreproducible failures.
 - **Sub-agent push constraint:** Never run `git push`, `gh`, or `report_progress` from this agent. If you make commits, report the commit SHA to the root Copilot agent and instruct it to push via `report_progress`.
-- **You CAN regenerate visual snapshot baselines and commit them directly.** Because you run inside the same container as CI, the PNGs you generate are pixel-identical to what CI expects. No need to wait for the `update-visual-snapshots` workflow.
+- **You CAN regenerate visual snapshot baselines and create local commits for them.** Because you run inside the same container as CI, the PNGs you generate are pixel-identical to what CI expects. No need to wait for the `update-visual-snapshots` workflow.
 - Do not regenerate snapshots unless you are intentionally changing a visual. Only update the snapshots actually affected by your change.
 - Prefer `loadFixture(page, "name.json")` over `startGameViaPlayBall` + long `waitForLogLines` timeouts whenever a test only needs a pre-existing game state.
 - Keep tests deterministic — all randomness flows through the seeded PRNG in `src/utils/rng.ts`. Use a fixed `seed` option in `startGameViaPlayBall` or `configureNewGame` when the test needs a predictable play sequence.
@@ -167,7 +167,7 @@ sudo chown -hR "$(id -u):$(id -g)" dist/ node_modules/ .yarn/ 2>/dev/null || tru
 
 ## Regenerating and committing visual snapshot baselines
 
-Because you run inside the same `mcr.microsoft.com/playwright:v1.58.2-noble` container as CI, any snapshot PNGs you generate are pixel-identical to CI baselines. You can regenerate and commit them directly — no need to wait for the `update-visual-snapshots` workflow.
+Because you run inside the same `mcr.microsoft.com/playwright:v1.58.2-noble` container as CI, any snapshot PNGs you generate are pixel-identical to CI baselines. You can regenerate them and create local commits immediately — no need to wait for the `update-visual-snapshots` workflow.
 
 > **⚠️ CRITICAL — you cannot push.** This agent runs as a sub-agent. It has access to `git commit` but **NOT** to `report_progress` and NOT to `git push` / `gh`. After creating a local commit, you **must** tell the calling agent (Copilot) the exact commit SHA and instruct it to run `report_progress` to push. Never attempt `git push` or `gh` in this agent — it will fail with a 403 and the changes will be silently stranded in an unpushed local commit.
 
