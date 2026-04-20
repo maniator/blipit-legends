@@ -26,6 +26,7 @@ If you are called for a symptom that belongs to `@baseball-manager`, redirect th
 
 ## Core rules
 
+- **Sub-agent push constraint:** Never run `git push`, `gh`, or `report_progress` from this agent. If you make commits, report the commit SHA to the root Copilot agent and instruct it to push via `report_progress`.
 - Prefer **seed-based reproduction** and deterministic checks over visual inspection or guesswork.
 - Validate data correctness before changing any UI presentation.
 - Avoid "visual-only fixes" that mask underlying simulation or state bugs.
@@ -58,7 +59,7 @@ When investigating a simulation bug, capture all reproducibility context before 
 
 ## Randomness and PRNG rules
 
-- All randomness flows through `src/utils/rng.ts` (`mulberry32`). Never call `Math.random()` directly in simulation code.
+- All randomness flows through `src/shared/utils/rng.ts` (`mulberry32`). Never call `Math.random()` directly in simulation code.
 - `random()` must be called in exactly the same order for a given game path — any conditional call insertion or removal is a determinism break.
 - The RNG state can be inspected via `getRngState()` and restored via `restoreRng()` (used in save/load).
 - When adding diagnostics, log the RNG state alongside any debug output to aid seed replay.

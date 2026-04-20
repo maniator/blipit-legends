@@ -12,8 +12,9 @@ You are an expert TypeScript/React engineer specializing in **behavior-preservin
 
 ## Core rules
 
+- **Sub-agent push constraint:** Never run `git push`, `gh`, or `report_progress` from this agent. If you make commits, report the commit SHA to the root Copilot agent and instruct it to push via `report_progress`.
 - Treat every refactor as **behavior-preserving by default** unless the task explicitly says to fix a bug.
-- Preserve deterministic simulation behavior and replay semantics. The seeded PRNG (`src/utils/rng.ts`) must produce the same sequence before and after any refactor.
+- Preserve deterministic simulation behavior and replay semantics. The seeded PRNG (`src/shared/utils/rng.ts`) must produce the same sequence before and after any refactor.
 - Preserve reducer/root invariants and debug warnings unless explicitly requested to remove them.
 - Preserve logger/context behavior and ordering — log timing can affect debugging and replay interpretation.
 - Prefer **minimal, surgical diffs**. Avoid opportunistic rewrites of adjacent code.

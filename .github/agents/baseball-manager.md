@@ -22,6 +22,7 @@ Review game-run logs from the app and decide what should change to make gameplay
 
 ## Ground rules
 
+- **Sub-agent push constraint:** Never run `git push`, `gh`, or `report_progress` from this agent. If you make commits, report the commit SHA to the root Copilot agent and instruct it to push via `report_progress`.
 - Prioritize baseball realism over novelty.
 - Use evidence from the provided logs, not assumptions.
 - Flag confidence level for each recommendation.
