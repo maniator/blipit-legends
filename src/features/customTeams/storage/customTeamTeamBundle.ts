@@ -137,6 +137,20 @@ export function parseExportedCustomTeams(json: string): ExportedCustomTeams {
         if (p["role"] === "pitcher" && (!p["pitching"] || typeof p["pitching"] !== "object"))
           throw new Error(`Team[${ti}] ${slot}[${pi}] missing required field: pitching`);
 
+        // Slot invariant: pitchers section must only hold pitcher-role players; lineup
+        // and bench must not contain pitchers.
+        if (slot === "pitchers" && p["role"] !== "pitcher") {
+          throw new Error(
+            `Team[${ti}] pitchers[${pi}] must have role "pitcher" — ` +
+              `got "${String(p["role"])}"`,
+          );
+        }
+        if ((slot === "lineup" || slot === "bench") && p["role"] === "pitcher") {
+          throw new Error(
+            `Team[${ti}] ${slot}[${pi}] pitcher-role player cannot be placed in the ${slot} section`,
+          );
+        }
+
         const player = rawPlayer as TeamPlayerWithSig;
         const expectedPlayerSig = buildPlayerSig(player);
         if (player.sig !== expectedPlayerSig) {
