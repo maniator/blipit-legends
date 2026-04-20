@@ -11,7 +11,10 @@ import PlayerStatsPanel from "@feat/gameplay/components/PlayerStatsPanel";
 import TeamTabBar from "@feat/gameplay/components/TeamTabBar";
 import type { GameAction, Strategy } from "@feat/gameplay/context/index";
 import { useGameContext } from "@feat/gameplay/context/index";
-import { DEFAULT_MANAGER_DECISION_VALUES } from "@feat/gameplay/context/managerDecisionValues";
+import {
+  DEFAULT_MANAGER_DECISION_VALUES,
+  sanitizeManagerDecisionValues,
+} from "@feat/gameplay/context/managerDecisionValues";
 import { useRxdbGameSync } from "@feat/saves/hooks/useRxdbGameSync";
 import { useSaveStore } from "@feat/saves/hooks/useSaveStore";
 import { useCustomTeams } from "@shared/hooks/useCustomTeams";
@@ -77,7 +80,7 @@ const GameInner: React.FunctionComponent<Props> = ({
   const [, setManagerMode] = useLocalStorage("managerMode", false);
   const [, setManagedTeam] = useLocalStorage<0 | 1>("managedTeam", 0);
   const [strategy, setStrategy] = useLocalStorage<Strategy>("strategy", "balanced");
-  const [, setDecisionValues] = useLocalStorage(
+  const [currentDecisionValues, setDecisionValues] = useLocalStorage(
     "managerDecisionValues",
     DEFAULT_MANAGER_DECISION_VALUES,
   );
@@ -234,6 +237,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       managerMode: managedTeam !== null,
       homeTeam,
       awayTeam,
+      decisionValues: sanitizeManagerDecisionValues(currentDecisionValues ?? {}),
     };
     createSave(
       {
