@@ -297,7 +297,7 @@ export const ChampionBanner = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
-  background: rgba(242, 193, 78, 0.14);
+  background: ${({ theme }) => theme.colors.bgWarnSurface};
   border: 1px solid ${({ theme }) => theme.colors.accentBright};
   border-radius: ${({ theme }) => theme.radii.card};
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
@@ -317,7 +317,7 @@ export const SeasonCompleteBadge = styled.span`
   display: inline-flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
-  background: rgba(242, 193, 78, 0.12);
+  background: ${({ theme }) => theme.colors.bgWarnSurface};
   border: 1px solid ${({ theme }) => theme.colors.accentBright};
   border-radius: ${({ theme }) => theme.radii.pill};
   color: ${({ theme }) => theme.colors.accentBright};
