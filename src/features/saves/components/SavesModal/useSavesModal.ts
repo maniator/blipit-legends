@@ -7,6 +7,7 @@ import {
 } from "@feat/customTeams/adapters/customTeamAdapter";
 import type { State, Strategy } from "@feat/gameplay/context/index";
 import { useGameContext } from "@feat/gameplay/context/index";
+import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
 import { useImportSave } from "@feat/saves/hooks/useImportSave";
 import { useSaveSlotActions } from "@feat/saves/hooks/useSaveSlotActions";
 import { useSaveStore } from "@feat/saves/hooks/useSaveStore";
@@ -21,6 +22,7 @@ interface Params {
   strategy: Strategy;
   managedTeam: 0 | 1;
   managerMode: boolean;
+  decisionValues?: ManagerDecisionValues;
   currentSaveId: string | null;
   onSaveIdChange: (id: string | null) => void;
   /** Called when the user loads a save; GameInner owns the actual restore logic. */
@@ -59,6 +61,7 @@ export const useSavesModal = ({
   strategy,
   managedTeam,
   managerMode,
+  decisionValues,
   currentSaveId,
   onSaveIdChange,
   onLoadSave,
@@ -99,6 +102,7 @@ export const useSavesModal = ({
       managerMode,
       homeTeam: teams[1],
       awayTeam: teams[0],
+      ...(decisionValues !== undefined && { decisionValues }),
     };
 
     if (currentSaveId) {

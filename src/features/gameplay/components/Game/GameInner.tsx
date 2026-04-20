@@ -11,6 +11,11 @@ import PlayerStatsPanel from "@feat/gameplay/components/PlayerStatsPanel";
 import TeamTabBar from "@feat/gameplay/components/TeamTabBar";
 import type { GameAction, Strategy } from "@feat/gameplay/context/index";
 import { useGameContext } from "@feat/gameplay/context/index";
+import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
+import {
+  DEFAULT_MANAGER_DECISION_VALUES,
+  sanitizeManagerDecisionValues,
+} from "@feat/gameplay/context/managerDecisionValues";
 import { useLeagueGameReconciliation } from "@feat/leagueMode/hooks/useLeagueGameReconciliation";
 import { deriveScheduledGameSeed } from "@feat/leagueMode/utils/deriveScheduledGameSeed";
 import { useRxdbGameSync } from "@feat/saves/hooks/useRxdbGameSync";
@@ -82,6 +87,10 @@ const GameInner: React.FunctionComponent<Props> = ({
   const [, setManagerMode] = useLocalStorage("managerMode", false);
   const [, setManagedTeam] = useLocalStorage<0 | 1>("managedTeam", 0);
   const [strategy, setStrategy] = useLocalStorage<Strategy>("strategy", "balanced");
+  const [currentDecisionValues, setDecisionValues] = useLocalStorage<ManagerDecisionValues>(
+    "managerDecisionValues",
+    DEFAULT_MANAGER_DECISION_VALUES,
+  );
 
   // Custom team docs for resolving display names when restoring legacy saves.
   // Used directly in restore callbacks and effects; no ref needed since
@@ -177,6 +186,11 @@ const GameInner: React.FunctionComponent<Props> = ({
     setStrategy(setup.strategy);
     if (setup.managedTeam !== null) setManagedTeam(setup.managedTeam);
     setManagerMode(setup.managerMode);
+    setDecisionValues(
+      setup.decisionValues != null
+        ? sanitizeManagerDecisionValues(setup.decisionValues)
+        : DEFAULT_MANAGER_DECISION_VALUES,
+    );
     rxSaveIdRef.current = rxAutoSave.id;
     // If the restored save was already FINAL, mark it so history sync skips re-commit.
     setWasAlreadyFinalOnLoad(snap.state.gameOver === true);
@@ -190,6 +204,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     setStrategy,
     setManagedTeam,
     setManagerMode,
+    setDecisionValues,
     onGameSessionStarted,
   ]);
 
@@ -244,6 +259,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       homeTeam,
       awayTeam,
       ...(leagueGameContext != null && { leagueContext: leagueGameContext }),
+      decisionValues: sanitizeManagerDecisionValues(currentDecisionValues ?? {}),
     };
     createSave(
       {
@@ -353,6 +369,11 @@ const GameInner: React.FunctionComponent<Props> = ({
     setManagerMode(setup.managerMode);
     setManagedTeam(setup.managedTeam ?? 0);
     setStrategy(setup.strategy);
+    setDecisionValues(
+      setup.decisionValues != null
+        ? sanitizeManagerDecisionValues(setup.decisionValues)
+        : DEFAULT_MANAGER_DECISION_VALUES,
+    );
 
     rxSaveIdRef.current = pendingLoadSave.id;
     // If the loaded save was already FINAL, mark it so history sync skips re-commit.
@@ -370,6 +391,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     setManagerMode,
     setManagedTeam,
     setStrategy,
+    setDecisionValues,
     onGameSessionStarted,
     onConsumePendingLoad,
   ]);
@@ -406,6 +428,11 @@ const GameInner: React.FunctionComponent<Props> = ({
       setManagerMode(setup.managerMode);
       setManagedTeam(setup.managedTeam ?? 0);
       setStrategy(setup.strategy);
+      setDecisionValues(
+        setup.decisionValues != null
+          ? sanitizeManagerDecisionValues(setup.decisionValues)
+          : DEFAULT_MANAGER_DECISION_VALUES,
+      );
 
       rxSaveIdRef.current = slot.id;
       // If the loaded save was already FINAL, mark it so history sync skips re-commit.
@@ -413,7 +440,15 @@ const GameInner: React.FunctionComponent<Props> = ({
       setGameActive(true); // no-op if already active; triggers scheduler if game was over
       onGameSessionStarted?.();
     },
-    [dispatch, customTeams, setManagerMode, setManagedTeam, setStrategy, onGameSessionStarted],
+    [
+      dispatch,
+      customTeams,
+      setManagerMode,
+      setManagedTeam,
+      setStrategy,
+      setDecisionValues,
+      onGameSessionStarted,
+    ],
   );
 
   return (

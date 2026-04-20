@@ -1,4 +1,5 @@
 import type { State, Strategy } from "@feat/gameplay/context/index";
+import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
 import type { LeagueGameContext } from "@feat/leagueMode/storage/types";
 
 /** Typed setup stored on the save header for deterministic game restore. */
@@ -11,6 +12,8 @@ export interface GameSaveSetup {
   awayTeam: string;
   /** League context — present when this game was launched from league mode. Survives hard-refresh via additionalProperties: true on saves schema. */
   leagueContext?: LeagueGameContext;
+  /** Manager/AI decision tuning values at the time of save. Optional for backward compat. */
+  decisionValues?: ManagerDecisionValues;
 }
 
 /** Scored snapshot stored on the save header for quick display. */

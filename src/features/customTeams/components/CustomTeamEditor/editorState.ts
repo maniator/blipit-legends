@@ -2,6 +2,10 @@ import type {
   CustomTeamDraft,
   GeneratedPlayer,
 } from "@feat/customTeams/generation/generateDefaultTeam";
+import {
+  DEFAULT_BATTING_STAMINA,
+  DEFAULT_PITCHING_STAMINA,
+} from "@feat/customTeams/storage/customTeamSanitizers";
 
 import type {
   CreateCustomTeamInput,
@@ -25,11 +29,7 @@ export interface EditorBatterPlayer {
   contact: number;
   power: number;
   speed: number;
-  /**
-   * Round-tripped from the persisted doc — not shown in the editor UI.
-   * Preserved so a save/reload cycle does not silently reset the value.
-   * Defaults to 50 when absent.
-   */
+  /** Batting stamina (0–100). Shown in the editor UI. Defaults to DEFAULT_BATTING_STAMINA when absent. */
   stamina?: number;
 }
 
@@ -45,11 +45,7 @@ export interface EditorPitcherPlayer {
   control: number;
   movement: number;
   pitchingRole?: "SP" | "RP" | "SP/RP";
-  /**
-   * Round-tripped from the persisted doc — not shown in the editor UI.
-   * Preserved so a save/reload cycle does not silently reset the value.
-   * Defaults to 60 when absent.
-   */
+  /** Pitching stamina (0–100). Shown in the editor UI. Defaults to DEFAULT_PITCHING_STAMINA when absent. */
   stamina?: number;
 }
 
@@ -189,11 +185,16 @@ const draftBatterToEditor = (p: GeneratedPlayer): EditorBatterPlayer => ({
   contact: p.batting.contact,
   power: p.batting.power,
   speed: p.batting.speed,
-  stamina: p.batting.stamina,
+  stamina: p.batting.stamina ?? DEFAULT_BATTING_STAMINA,
 });
 
 const draftPitcherToEditor = (p: GeneratedPlayer): EditorPitcherPlayer => {
-  const pitching = p.pitching ?? { velocity: 60, control: 60, movement: 60, stamina: 60 };
+  const pitching = p.pitching ?? {
+    velocity: 60,
+    control: 60,
+    movement: 60,
+    stamina: DEFAULT_PITCHING_STAMINA,
+  };
   return {
     id: p.id,
     name: p.name,
@@ -203,7 +204,7 @@ const draftPitcherToEditor = (p: GeneratedPlayer): EditorPitcherPlayer => {
     velocity: pitching.velocity,
     control: pitching.control,
     movement: pitching.movement,
-    stamina: pitching.stamina,
+    stamina: pitching.stamina ?? DEFAULT_PITCHING_STAMINA,
     ...(p.pitchingRole !== undefined && { pitchingRole: p.pitchingRole }),
   };
 };
@@ -217,11 +218,16 @@ const docBatterToEditor = (p: TeamBatterPlayer): EditorBatterPlayer => ({
   contact: p.batting.contact,
   power: p.batting.power,
   speed: p.batting.speed,
-  stamina: p.batting.stamina,
+  stamina: p.batting.stamina ?? DEFAULT_BATTING_STAMINA,
 });
 
 const docPitcherToEditor = (p: TeamPitcherPlayer): EditorPitcherPlayer => {
-  const pitching = p.pitching ?? { velocity: 60, control: 60, movement: 60, stamina: 60 };
+  const pitching = p.pitching ?? {
+    velocity: 60,
+    control: 60,
+    movement: 60,
+    stamina: DEFAULT_PITCHING_STAMINA,
+  };
   return {
     id: p.id,
     name: p.name,
@@ -231,7 +237,7 @@ const docPitcherToEditor = (p: TeamPitcherPlayer): EditorPitcherPlayer => {
     velocity: pitching.velocity,
     control: pitching.control,
     movement: pitching.movement,
-    stamina: pitching.stamina,
+    stamina: pitching.stamina ?? DEFAULT_PITCHING_STAMINA,
     ...(p.pitchingRole !== undefined && { pitchingRole: p.pitchingRole }),
   };
 };
@@ -374,7 +380,7 @@ const editorToTeamPlayer = (p: EditorPlayer): TeamPlayer => {
         velocity: p.velocity,
         control: p.control,
         movement: p.movement,
-        stamina: p.stamina ?? 60,
+        stamina: p.stamina ?? DEFAULT_PITCHING_STAMINA,
       },
       pitchingRole: normalizedPitchingRole,
     };
@@ -386,7 +392,12 @@ const editorToTeamPlayer = (p: EditorPlayer): TeamPlayer => {
     role: "batter",
     position: trimmedPosition || "DH",
     handedness: p.handedness,
-    batting: { contact: p.contact, power: p.power, speed: p.speed, stamina: p.stamina ?? 50 },
+    batting: {
+      contact: p.contact,
+      power: p.power,
+      speed: p.speed,
+      stamina: p.stamina ?? DEFAULT_BATTING_STAMINA,
+    },
   };
 };
 

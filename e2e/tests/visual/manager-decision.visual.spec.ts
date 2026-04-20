@@ -82,3 +82,48 @@ test.describe(
     });
   },
 );
+
+// ─── Manager Mode Controls — Decision Tuning panel ───────────────────────────
+//
+// Captures the expanded "⚙️ Decision Tuning" panel inside the Manager Mode
+// Controls sidebar.  The panel is collapsed by default; this test clicks the
+// toggle to expand it and screenshots the resulting panel.
+// Uses the pending-decision.json fixture which already carries managerMode=true,
+// so the toggle is visible without any extra interaction.
+// Restricted to desktop only.
+test.describe(
+  "Visual — Decision Tuning panel in Manager Mode Controls",
+  { tag: "@desktop-only" },
+  () => {
+    test.beforeEach(async ({ page }) => {
+      await resetAppState(page);
+      await disableAnimations(page);
+    });
+
+    /**
+     * Loads the pending-decision fixture (managerMode=true) and expands the
+     * "⚙️ Decision Tuning ▼" collapsible panel inside the Manager Mode Controls.
+     * Screenshots the expanded panel element for visual regression coverage.
+     */
+    test("decision tuning panel expands and shows controls", async ({ page }) => {
+      await loadFixture(page, "pending-decision.json");
+
+      // The fixture has managerMode=true, so the Decision Tuning toggle is
+      // present inside the Manager Mode Controls area immediately after load.
+      const tuningToggle = page.getByTestId("manager-decision-tuning-toggle");
+      await expect(tuningToggle).toBeVisible({ timeout: 10_000 });
+
+      // Click the toggle to expand the Decision Tuning panel.
+      await tuningToggle.click();
+
+      // The expanded panel should now be visible.
+      const tuningPanel = page.getByTestId("manager-decision-tuning-panel");
+      await expect(tuningPanel).toBeVisible({ timeout: 5_000 });
+
+      // Snapshot just the expanded panel element for a stable, focused screenshot.
+      await expect(tuningPanel).toHaveScreenshot("manager-decision-tuning-panel.png", {
+        maxDiffPixelRatio: 0.05,
+      });
+    });
+  },
+);

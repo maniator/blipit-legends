@@ -7,6 +7,8 @@ import {
   makeAiTacticalDecision,
 } from "@feat/gameplay/context/aiManager";
 import { GameAction, LogAction, State, Strategy } from "@feat/gameplay/context/index";
+import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
+import { DEFAULT_MANAGER_DECISION_VALUES } from "@feat/gameplay/context/managerDecisionValues";
 import { resolvePitch } from "@feat/gameplay/context/pitchResolutionPipeline";
 import { detectDecision } from "@feat/gameplay/context/reducer";
 
@@ -23,6 +25,7 @@ export const usePitchDispatch = ({
   skipDecision,
   dispatchLog,
   allTeamPitcherRoles,
+  decisionValues = DEFAULT_MANAGER_DECISION_VALUES,
 }: {
   dispatch: (action: GameAction) => void;
   currentState: State;
@@ -32,13 +35,21 @@ export const usePitchDispatch = ({
   skipDecision: boolean;
   dispatchLog?: (action: LogAction) => void;
   allTeamPitcherRoles?: [Record<string, PitchingRole>, Record<string, PitchingRole>];
+  /** Runtime manager/AI decision tuning values. Defaults to DEFAULT_MANAGER_DECISION_VALUES. */
+  decisionValues?: ManagerDecisionValues;
 }): (() => void) => {
   const handlePitch = React.useCallback(() => {
     if (currentState.gameOver) return;
     if (managerMode && currentState.pendingDecision) return;
 
-    // Defensive shift: offered once per half-inning when the managed team is FIELDING
-    if (managerMode && !skipDecision && currentState.atBat !== managedTeam) {
+    // Defensive shift: offered once per half-inning when the managed team is FIELDING.
+    // Respects the defensiveShiftEnabled knob.
+    if (
+      managerMode &&
+      !skipDecision &&
+      currentState.atBat !== managedTeam &&
+      decisionValues.defensiveShiftEnabled
+    ) {
       if (
         !currentState.defensiveShiftOffered &&
         currentState.balls === 0 &&
@@ -55,7 +66,7 @@ export const usePitchDispatch = ({
         // Suppression only disables decision evaluation for a single pitch.
         dispatch({ type: "clear_suppress_decision" });
       } else {
-        const decision = detectDecision(currentState as State, strategy, true);
+        const decision = detectDecision(currentState as State, strategy, true, decisionValues);
         if (decision) {
           dispatch({ type: "set_pending_decision", payload: decision });
           return;
@@ -79,7 +90,12 @@ export const usePitchDispatch = ({
       const pitchingTeamIdx = (1 - currentState.atBat) as 0 | 1;
       if (isFieldingUnmanaged) {
         const roles = allTeamPitcherRoles?.[pitchingTeamIdx] ?? {};
-        const aiDecision = makeAiPitchingDecision(currentState as State, pitchingTeamIdx, roles);
+        const aiDecision = makeAiPitchingDecision(
+          currentState as State,
+          pitchingTeamIdx,
+          roles,
+          decisionValues.aiPitchingChangeAggressiveness,
+        );
         if (aiDecision.kind === "pitching_change") {
           dispatch({
             type: "make_substitution",
@@ -96,15 +112,19 @@ export const usePitchDispatch = ({
     }
 
     // Fielding-team AI: defensive shift (unmanaged fielding team).
+    // Respects the defensiveShiftEnabled knob.
     if (
       isFieldingUnmanaged &&
+      decisionValues.defensiveShiftEnabled &&
       !currentState.defensiveShiftOffered &&
       currentState.balls === 0 &&
       currentState.strikes === 0
     ) {
-      const shiftDecision = makeAiTacticalDecision(currentState as State, {
-        kind: "defensive_shift",
-      });
+      const shiftDecision = makeAiTacticalDecision(
+        currentState as State,
+        { kind: "defensive_shift" },
+        decisionValues,
+      );
       if (shiftDecision.kind === "tactical") {
         dispatch({
           type: shiftDecision.actionType as GameAction["type"],
@@ -125,10 +145,24 @@ export const usePitchDispatch = ({
         dispatch({ type: "clear_suppress_decision" });
         // Fall through to normal pitch after clearing the suppress flag.
       } else {
-        // AI picks a context-aware strategy (same choices a human manager has).
-        const battingDecision = detectDecision(currentState as State, aiStrategy, true);
+        // AI batting path: use aiStealThreshold as the steal gate so the AI
+        // can steal more aggressively than the human offer threshold.
+        const aiDecisionValues: ManagerDecisionValues = {
+          ...decisionValues,
+          stealMinOfferPct: decisionValues.aiStealThreshold,
+        };
+        const battingDecision = detectDecision(
+          currentState as State,
+          aiStrategy,
+          true,
+          aiDecisionValues,
+        );
         if (battingDecision) {
-          const aiAction = makeAiTacticalDecision(currentState as State, battingDecision);
+          const aiAction = makeAiTacticalDecision(
+            currentState as State,
+            battingDecision,
+            decisionValues,
+          );
           if (aiAction.kind === "tactical") {
             dispatch({
               type: aiAction.actionType as GameAction["type"],
@@ -198,6 +232,7 @@ export const usePitchDispatch = ({
     allTeamPitcherRoles,
     skipDecision,
     strategy,
+    decisionValues,
   ]);
 
   return handlePitch;

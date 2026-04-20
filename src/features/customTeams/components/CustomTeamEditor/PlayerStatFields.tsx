@@ -1,5 +1,10 @@
 import * as React from "react";
 
+import {
+  DEFAULT_BATTING_STAMINA,
+  DEFAULT_PITCHING_STAMINA,
+} from "@feat/customTeams/storage/customTeamSanitizers";
+
 import type { EditorPlayer, EditorPlayerPatch } from "./editorState";
 import {
   HITTER_STAT_CAP,
@@ -11,6 +16,8 @@ import {
 } from "./statBudget";
 import {
   IdentityLockHint,
+  StaminaSectionDivider,
+  StaminaSectionLabel,
   StatBudgetRow,
   StatInput,
   StatLabel,
@@ -85,6 +92,29 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
     </StatRow>
   );
 
+  // Stamina is conditioning, not innate talent — editable even after player creation.
+  const staminaRow = (
+    label: string,
+    val: number,
+    htmlFor: string,
+    toPatch: (n: number) => EditorPlayerPatch,
+  ) => (
+    <StatRow key={`stat-${htmlFor}`} $locked={false}>
+      <StatLabel htmlFor={htmlFor}>{label}</StatLabel>
+      <StatInput
+        id={htmlFor}
+        type="range"
+        min={0}
+        max={100}
+        value={val}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          onChange(toPatch(Number(e.target.value)));
+        }}
+      />
+      <StatValue>{val}</StatValue>
+    </StatRow>
+  );
+
   return (
     <>
       <StatsGrid>
@@ -109,7 +139,26 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
           ? `⚠ ${total} / ${cap} — ${Math.abs(rem)} over cap`
           : `Total: ${total} / ${cap}`}
       </StatBudgetRow>
-      {isExistingPlayer && <IdentityLockHint>Stats are locked after creation.</IdentityLockHint>}
+      {isExistingPlayer && (
+        <IdentityLockHint>
+          Core stats are locked after creation. Stamina can still be adjusted.
+        </IdentityLockHint>
+      )}
+      <StaminaSectionDivider />
+      <StaminaSectionLabel>Durability</StaminaSectionLabel>
+      {isPitcher
+        ? staminaRow(
+            "Stamina",
+            asPitcher?.stamina ?? DEFAULT_PITCHING_STAMINA,
+            `pitching-stamina-${player.id}`,
+            (n) => ({ stamina: n }),
+          )
+        : staminaRow(
+            "Stamina",
+            asBatter?.stamina ?? DEFAULT_BATTING_STAMINA,
+            `batting-stamina-${player.id}`,
+            (n) => ({ stamina: n }),
+          )}
     </>
   );
 };

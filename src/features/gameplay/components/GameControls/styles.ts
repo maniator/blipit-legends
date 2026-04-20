@@ -256,3 +256,151 @@ export const SubButton = styled.button`
     outline-offset: 2px;
   }
 `;
+
+export const DecisionTuningToggle = styled.button`
+  background: transparent;
+  color: ${({ theme }) => theme.colors.textSecondaryLink};
+  border: 1px solid ${({ theme }) => theme.colors.borderForm};
+  border-radius: ${({ theme }) => theme.radii.md};
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.s10};
+  font-size: ${({ theme }) => theme.fontSizes.label};
+  font-family: inherit;
+  cursor: pointer;
+  min-height: ${({ theme }) => theme.sizes.inputSm};
+  white-space: nowrap;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.bgSurface};
+    border-color: ${({ theme }) => theme.colors.textSecondaryLink};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 2px;
+  }
+`;
+
+export const DecisionTuningPanel = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm};
+  background: ${({ theme }) => theme.colors.navGroupBg};
+  border: 1px solid ${({ theme }) => theme.colors.borderForm};
+  border-radius: ${({ theme }) => theme.radii.card};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  min-width: 260px;
+  max-width: 340px;
+
+  ${mq.mobile} {
+    min-width: 0;
+    max-width: 100%;
+    padding: ${({ theme }) => theme.spacing.s6} ${({ theme }) => theme.spacing.sm};
+  }
+`;
+
+export const DecisionPanelTitle = styled.div`
+  font-size: ${({ theme }) => theme.fontSizes.base};
+  font-weight: bold;
+  color: ${({ theme }) => theme.colors.textPrimary};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.borderForm};
+  padding-bottom: ${({ theme }) => theme.spacing.xs};
+`;
+
+export const DecisionPanelSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+`;
+
+export const DecisionRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.s6};
+
+  input[type="range"] {
+    accent-color: ${({ theme }) => theme.colors.accentPrimary};
+    cursor: pointer;
+    width: 80px;
+
+    ${mq.mobile} {
+      width: 60px;
+    }
+  }
+`;
+
+export const DecisionRowLabel = styled.label`
+  font-size: ${({ theme }) => theme.fontSizes.label};
+  color: ${({ theme }) => theme.colors.textBodyAlt};
+  cursor: default;
+  user-select: none;
+
+  span {
+    color: ${({ theme }) => theme.colors.textMuted};
+    cursor: help;
+    font-size: ${({ theme }) => theme.fontSizes.sm};
+  }
+`;
+
+export const DecisionRowValue = styled.span`
+  font-size: ${({ theme }) => theme.fontSizes.label};
+  color: ${({ theme }) => theme.colors.textBodyAlt};
+  min-width: 52px;
+  text-align: right;
+  user-select: none;
+
+  ${mq.mobile} {
+    min-width: 40px;
+  }
+`;
+
+export const DecisionToggleRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.s6};
+
+  label {
+    font-size: ${({ theme }) => theme.fontSizes.label};
+    color: ${({ theme }) => theme.colors.textBodyAlt};
+    cursor: pointer;
+    user-select: none;
+
+    span {
+      color: ${({ theme }) => theme.colors.textMuted};
+      cursor: help;
+      font-size: ${({ theme }) => theme.fontSizes.sm};
+    }
+  }
+
+  input[type="checkbox"] {
+    accent-color: ${({ theme }) => theme.colors.accentPrimary};
+    cursor: pointer;
+    width: ${({ theme }) => theme.sizes.iconSm};
+    height: ${({ theme }) => theme.sizes.iconSm};
+    flex-shrink: 0;
+  }
+`;
+
+export const DecisionResetButton = styled.button`
+  align-self: flex-start;
+  background: transparent;
+  color: ${({ theme }) => theme.colors.textMuted};
+  border: 1px solid ${({ theme }) => theme.colors.borderMid};
+  border-radius: ${({ theme }) => theme.radii.md};
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-family: inherit;
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.bgSurface};
+    color: ${({ theme }) => theme.colors.textPrimary};
+    border-color: ${({ theme }) => theme.colors.borderAccent};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 2px;
+  }
+`;

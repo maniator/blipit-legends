@@ -15,6 +15,7 @@ import {
   makeAiStrategyDecision,
   makeAiTacticalDecision,
 } from "./aiManager";
+import { DEFAULT_MANAGER_DECISION_VALUES } from "./managerDecisionValues";
 
 describe("isPitcherEligibleForChange", () => {
   it("returns false when pitcherIdx === activePitcherIdx", () => {
@@ -228,15 +229,44 @@ describe("makeAiPitchingDecision", () => {
       expect(decision.pitcherIdx).toBe(1);
     }
   });
+  it("aggressiveness=100 (bullpen-first): pulls pitcher at lower pitch count", () => {
+    alwaysPull();
+    // At aggressiveness=100, highCount = round(100 + (50-100)*0.5) = round(75) = 75
+    // So 80 pitches should trigger a high-fatigue change.
+    const state = makeState({
+      pitcherPitchCount: [0, 80],
+      pitcherBattersFaced: [0, 0],
+      rosterPitchers: [[], ["sp1", "rp1"]],
+      activePitcherIdx: [0, 0],
+      substitutedOut: [[], []],
+    });
+    const decision = makeAiPitchingDecision(state, 1, { sp1: "SP", rp1: "RP" }, 100);
+    expect(decision.kind).toBe("pitching_change");
+  });
+
+  it("aggressiveness=0 (old-school): does not pull at default high pitch count", () => {
+    alwaysPull();
+    // At aggressiveness=0, highCount = round(100 + 50*0.5) = 125
+    // So AI_FATIGUE_THRESHOLD_HIGH (100) pitches should NOT trigger a change.
+    const state = makeState({
+      pitcherPitchCount: [0, AI_FATIGUE_THRESHOLD_HIGH],
+      pitcherBattersFaced: [0, 0],
+      rosterPitchers: [[], ["sp1", "rp1"]],
+      activePitcherIdx: [0, 0],
+      substitutedOut: [[], []],
+    });
+    const decision = makeAiPitchingDecision(state, 1, { sp1: "SP", rp1: "RP" }, 0);
+    expect(decision.kind).toBe("none");
+  });
 });
 
 describe("makeAiTacticalDecision", () => {
-  it("steal: sends runner when successPct is high", () => {
+  it("steal: sends runner when successPct meets AI threshold (default 65)", () => {
     const state = makeState({ atBat: 0, score: [0, 0], inning: 5 });
     const result = makeAiTacticalDecision(state, {
       kind: "steal",
       base: 0,
-      successPct: 0.7,
+      successPct: 70, // 70 >= 65 → steal
     });
     expect(result.kind).toBe("tactical");
     if (result.kind === "tactical") {
@@ -250,13 +280,31 @@ describe("makeAiTacticalDecision", () => {
     const result = makeAiTacticalDecision(state, {
       kind: "steal",
       base: 0,
-      successPct: 0.5,
+      successPct: 60, // 60 < 65 → no steal
     });
     expect(result.kind).toBe("none");
   });
 
+  it("steal: respects custom aiStealThreshold from decisionValues", () => {
+    const state = makeState({ atBat: 0 });
+    // threshold 75: successPct 70 < 75 → no steal
+    const resultLow = makeAiTacticalDecision(
+      state,
+      { kind: "steal", base: 0, successPct: 70 },
+      { ...DEFAULT_MANAGER_DECISION_VALUES, aiStealThreshold: 75 },
+    );
+    expect(resultLow.kind).toBe("none");
+    // threshold 60: successPct 61 > 60 → steal (strict > matches detectDecision semantics)
+    const resultHigh = makeAiTacticalDecision(
+      state,
+      { kind: "steal", base: 0, successPct: 61 },
+      { ...DEFAULT_MANAGER_DECISION_VALUES, aiStealThreshold: 60 },
+    );
+    expect(resultHigh.kind).toBe("tactical");
+  });
+
   it("bunt: sacrifices in close late game when behind", () => {
-    // atBat=0 means away batting; score[0]-score[1] = 1-2 = -1 (away behind)
+    // atBat=0 means away batting; scoreDiffForTeam = score[0]-score[1] = 1-2 = -1 (trailing)
     const result = makeAiTacticalDecision(
       makeState({ atBat: 0, score: [1, 2], inning: 8, outs: 0 }),
       { kind: "bunt" },
@@ -267,8 +315,27 @@ describe("makeAiTacticalDecision", () => {
     }
   });
 
+  it("bunt: sacrifices in a tied late game", () => {
+    // Tied game is the canonical sac-bunt situation — AI must bunt here.
+    const result = makeAiTacticalDecision(
+      makeState({ atBat: 0, score: [2, 2], inning: 8, outs: 0 }),
+      { kind: "bunt" },
+    );
+    expect(result.kind).toBe("tactical");
+    if (result.kind === "tactical") {
+      expect(result.actionType).toBe("bunt_attempt");
+    }
+  });
+
   it("bunt: does not bunt when team is winning", () => {
     const state = makeState({ atBat: 0, score: [3, 1], inning: 8, outs: 0 });
+    const result = makeAiTacticalDecision(state, { kind: "bunt" });
+    expect(result.kind).toBe("none");
+  });
+
+  it("bunt: does not bunt when team is winning by exactly 1", () => {
+    // Ahead by 1 should also NOT bunt — only tied or trailing
+    const state = makeState({ atBat: 0, score: [3, 2], inning: 8, outs: 0 });
     const result = makeAiTacticalDecision(state, { kind: "bunt" });
     expect(result.kind).toBe("none");
   });
