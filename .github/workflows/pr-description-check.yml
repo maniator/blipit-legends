@@ -1,0 +1,137 @@
+name: PR Description Check
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, ready_for_review]
+    branches:
+      # Repository default branch is master.
+      - master
+      - "feat/**"
+
+jobs:
+  pr-description-check:
+    # This job validates PR metadata from the PR_BODY environment variable injected
+    # via GitHub context. A lightweight checkout is still needed so setup-node can
+    # read the centralized Node version from .nvmrc.
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Node.js
+        # Read the canonical Node version from .nvmrc so this workflow stays aligned
+        # with the rest of the repository when the Node version is upgraded.
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Validate PR description template usage
+        # Requires non-empty Summary/Changes/Testing/Risks sections and rejects
+        # checklist-only bodies. All logic is inlined in the run: step below.
+        run: |
+          node - <<'EOF'
+          // Security note: the heredoc delimiter is single-quoted (<<'EOF'), which prevents
+          // the shell from expanding any variables or backticks inside the heredoc. PR_BODY
+          // is read only via process.env.PR_BODY inside the script, never interpolated into
+          // the shell command itself, so there is no injection risk.
+          //
+          // PR_BODY is defined in the env block at the end of this step.
+          const body = (process.env.PR_BODY ?? '').replace(/\r\n/g, '\n').trim();
+
+          // Matches GitHub task list items with optional indentation, unordered markers
+          // ("-", "*", "+"), or ordered markers (for example "1."), and checkbox states
+          // of unchecked (space character), lowercase 'x', or uppercase 'X'. Intentionally
+          // does not match non-standard variants such as "- [✓]" or "- [-]" as GitHub only
+          // renders those three states as task list checkboxes. A space or end-of-line is
+          // required immediately after the closing bracket: "- [x]" and "- [x] item" both
+          // match, while "- [x]item" (no space) does not.
+          const checklistItemPattern = /^\s*(?:[-*+]|\d+\.)\s+\[(?: |x|X)\](?:\s+|$)/;
+
+          if (!body) {
+            console.error('PR description is required and must follow the pull request template.');
+            process.exit(1);
+          }
+
+          /** Removes HTML comment blocks from a markdown string and returns the trimmed result. */
+          function stripHtmlComments(input) {
+            return input.replace(/<!--[\s\S]*?-->/g, '').trim();
+          }
+
+          /** Splits input on newlines, trims each line, and filters out empty lines. */
+          function toNonEmptyTrimmedLines(input) {
+            return input.split('\n').map((line) => line.trim()).filter((line) => line.length > 0);
+          }
+
+          /**
+           * Extracts the content of a markdown H2 section from the PR body.
+           * @param {string} title - The H2 section title to find, matched case-insensitively.
+           * @returns {string} Trimmed content (HTML comments stripped) between the matched
+           *   heading and the next H2 heading, or an empty string if the section is not found.
+           */
+          function getSectionContent(title) {
+            // Extract header positions to determine section boundaries.
+            const headers = Array.from(body.matchAll(/^##\s+(.+)$/gm)).map((m) => ({
+              index: m.index,
+              raw: m[0],
+              title: m[1].trim(),
+            }));
+            const idx = headers.findIndex((h) => h.title.toLowerCase() === title.toLowerCase());
+            if (idx === -1) return '';
+            const start = headers[idx].index + headers[idx].raw.length;
+            const end = idx + 1 < headers.length ? headers[idx + 1].index : body.length;
+            return stripHtmlComments(body.slice(start, end)).trim();
+          }
+
+          const requiredSections = ['Summary', 'Changes', 'Testing', 'Risks'];
+          const sectionContentMap = new Map(
+            requiredSections.map((s) => [s, getSectionContent(s)])
+          );
+
+          const missingOrEmpty = requiredSections.filter(
+            (s) => (sectionContentMap.get(s) ?? '').length === 0
+          );
+          if (missingOrEmpty.length > 0) {
+            console.error(
+              `PR description must include non-empty sections: ${requiredSections.join(', ')}. Missing/empty: ${missingOrEmpty.join(', ')}.`
+            );
+            process.exit(1);
+          }
+
+          // Exclude ATX headings (H1–H6, e.g. "## Summary") and setext heading underlines /
+          // thematic breaks (lines of only '=' or '-' characters) so only prose/checklist
+          // content is evaluated. CommonMark requires a space after # for a valid ATX heading.
+          // Lines of only '-' match both setext H2 underlines and thematic breaks (---); both
+          // are excluded since neither constitutes prose content. Setext heading title lines
+          // are not excluded and would count as prose if present.
+          const nonHeadingLines = toNonEmptyTrimmedLines(stripHtmlComments(body)).filter(
+            (line) => !/^(?:#{1,6}\s|=+$|-+$)/.test(line)
+          );
+          const taskListItemCount = nonHeadingLines.filter(
+            (line) => checklistItemPattern.test(line)
+          ).length;
+          if (taskListItemCount > 0 && taskListItemCount === nonHeadingLines.length) {
+            console.error('PR description cannot be checklist-only. Use prose content in the template sections.');
+            process.exit(1);
+          }
+
+          // This check is distinct from the body-wide check above. The body-wide check
+          // catches the case where the entire body is task-list items. This check catches
+          // the case where prose exists somewhere in the body (e.g. outside any section)
+          // but every required section still contains only task-list items.
+          const anyRequiredSectionHasProse = requiredSections.some((s) => {
+            const lines = toNonEmptyTrimmedLines(sectionContentMap.get(s) ?? '');
+            return lines.some((line) => !checklistItemPattern.test(line));
+          });
+          if (!anyRequiredSectionHasProse) {
+            console.error('At least one required section must include prose content, not only checklist items.');
+            process.exit(1);
+          }
+
+          console.log('PR description matches required template sections.');
+          EOF
+        env:
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
