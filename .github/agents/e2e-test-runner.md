@@ -144,7 +144,7 @@ docker run --rm \
 sudo chown -hR "$(id -u):$(id -g)" dist/ node_modules/ .yarn/ 2>/dev/null || true
 ```
 
-> **Tip:** The Docker image is pre-pulled in the Copilot session setup steps, so `docker run` starts immediately without a download delay.
+> **Tip:** On a fresh runner, the first `docker run` may pull `mcr.microsoft.com/playwright:v1.58.2-noble` automatically. If you want to warm it up first, run `docker pull mcr.microsoft.com/playwright:v1.58.2-noble`.
 
 ## Playwright projects reference
 

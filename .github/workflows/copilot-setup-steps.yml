@@ -31,13 +31,3 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --immutable
-
-      # Pre-pull the Playwright container image so the e2e-test-runner agent
-      # can run `docker run` commands immediately without a download delay.
-      # Docker is pre-installed on GitHub-hosted ubuntu-latest runners.
-      # NOTE: This is a plain `docker pull` step on the host — NOT a `container:`
-      # block.  The `container:` key must never be added to this job because
-      # Copilot's bootstrap steps may fail inside containers due to /bin/sh vs
-      # bash shell compatibility issues (e.g. pipefail).
-      - name: Pre-pull Playwright Docker image
-        run: docker pull mcr.microsoft.com/playwright:v1.58.2-noble
