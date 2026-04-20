@@ -10,23 +10,28 @@ on:
 
 jobs:
   pr-description-check:
-    # No checkout needed — the script only reads PR metadata from the PR_BODY
-    # environment variable injected via GitHub context, not from repository files.
-    # This makes the job faster and avoids unnecessary write access to the repo.
+    # This job validates PR metadata from the PR_BODY environment variable injected
+    # via GitHub context. A lightweight checkout is still needed so setup-node can
+    # read the centralized Node version from .nvmrc.
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Set up Node.js
-        # No checkout needed — node-version is hardcoded to match .nvmrc (Node 24).
-        # Using setup-node ensures a consistent Node version regardless of runner-image drift.
+        # Read the canonical Node version from .nvmrc so this workflow stays aligned
+        # with the rest of the repository when the Node version is upgraded.
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version-file: .nvmrc
 
       - name: Validate PR description template usage
         # Requires non-empty Summary/Changes/Testing/Risks sections and rejects
-        # checklist-only bodies. All logic is inlined so no checkout is needed.
+        # checklist-only bodies. All logic is inlined in the run: step below.
         run: |
           node - <<'EOF'
           // Security note: the heredoc delimiter is single-quoted (<<'EOF'), which prevents
