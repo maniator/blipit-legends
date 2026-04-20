@@ -138,6 +138,24 @@ describe("PlayerStatFields", () => {
       fireEvent.change(contactSlider, { target: { value: "99" } });
       expect(onChange).not.toHaveBeenCalled();
     });
+
+    it("stamina slider stays enabled while core stats are locked (two-tier model)", () => {
+      const onChange = vi.fn();
+      render(
+        <PlayerStatFields
+          player={makeHitter(40, 40, 40)}
+          isExistingPlayer={true}
+          onChange={onChange}
+        />,
+      );
+      expect(screen.getByLabelText(/contact/i)).toBeDisabled();
+      expect(screen.getByLabelText(/power/i)).toBeDisabled();
+      expect(screen.getByLabelText(/speed/i)).toBeDisabled();
+      const staminaSlider = screen.getByLabelText(/batting stamina/i);
+      expect(staminaSlider).not.toBeDisabled();
+      fireEvent.change(staminaSlider, { target: { value: "70" } });
+      expect(onChange).toHaveBeenCalledWith({ stamina: 70 });
+    });
   });
 });
 
@@ -190,21 +208,21 @@ describe("PlayerStatFields — stamina sliders", () => {
     expect(onChange).toHaveBeenCalledWith({ stamina: 85 });
   });
 
-  it("stamina slider is disabled for existing hitter and does not call onChange", () => {
+  it("stamina slider is enabled for existing hitter and calls onChange", () => {
     const onChange = vi.fn();
     render(<PlayerStatFields player={makeHitter()} isExistingPlayer={true} onChange={onChange} />);
     const slider = screen.getByLabelText(/batting stamina/i);
-    expect(slider).toBeDisabled();
-    fireEvent.change(slider, { target: { value: "99" } });
-    expect(onChange).not.toHaveBeenCalled();
+    expect(slider).not.toBeDisabled();
+    fireEvent.change(slider, { target: { value: "75" } });
+    expect(onChange).toHaveBeenCalledWith({ stamina: 75 });
   });
 
-  it("stamina slider is disabled for existing pitcher and does not call onChange", () => {
+  it("stamina slider is enabled for existing pitcher and calls onChange", () => {
     const onChange = vi.fn();
     render(<PlayerStatFields player={makePitcher()} isExistingPlayer={true} onChange={onChange} />);
     const slider = screen.getByLabelText(/pitching stamina/i);
-    expect(slider).toBeDisabled();
-    fireEvent.change(slider, { target: { value: "99" } });
-    expect(onChange).not.toHaveBeenCalled();
+    expect(slider).not.toBeDisabled();
+    fireEvent.change(slider, { target: { value: "85" } });
+    expect(onChange).toHaveBeenCalledWith({ stamina: 85 });
   });
 });

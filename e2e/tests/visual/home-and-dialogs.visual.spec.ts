@@ -80,7 +80,9 @@ test.describe("Visual", () => {
         await closedSummaries.first().click();
       }
       // Wait until all 10 sections are structurally open before snapshotting.
-      await expect(page.locator('[data-testid="instructions-modal"] details[open]')).toHaveCount(10);
+      await expect(page.locator('[data-testid="instructions-modal"] details[open]')).toHaveCount(
+        10,
+      );
       await expect(page.getByTestId("instructions-modal")).toHaveScreenshot(
         "instructions-modal-all-sections.png",
         { maxDiffPixelRatio: 0.05 },

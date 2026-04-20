@@ -65,7 +65,9 @@ const HelpContent: React.FunctionComponent = () => (
         <Li>
           Use <strong>✨ Generate Random</strong> to create a randomized team as a starting point.
           Edit player positions and batting handedness to customize it. <strong>Note:</strong>{" "}
-          player names and stat values are fixed at creation and cannot be changed afterward.
+          player names and core stat values (Contact, Power, Speed, Velocity, Control, Movement) are
+          fixed at creation and cannot be changed afterward. Stamina (Durability) is the exception —
+          it can be adjusted at any time on the team edit page.
         </Li>
         <Li>
           Each team needs at least one lineup player and one pitcher before it can be used in a
@@ -128,7 +130,8 @@ const HelpContent: React.FunctionComponent = () => (
               earlier.
             </Li>
             <Li>
-              Stamina is a fixed attribute — it resets to full at the start of every game and does{" "}
+              Unlike core stats, stamina can be adjusted after creation via the team edit page. It
+              resets to the player&apos;s configured value at the start of every game and does{" "}
               <em>not</em> accumulate across games.
             </Li>
           </List>

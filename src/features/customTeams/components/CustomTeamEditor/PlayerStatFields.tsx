@@ -92,6 +92,29 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
     </StatRow>
   );
 
+  // Stamina is conditioning, not innate talent — editable even after player creation.
+  const staminaRow = (
+    label: string,
+    val: number,
+    htmlFor: string,
+    toPatch: (n: number) => EditorPlayerPatch,
+  ) => (
+    <StatRow key={`stat-${htmlFor}`} $locked={false}>
+      <StatLabel htmlFor={htmlFor}>{label}</StatLabel>
+      <StatInput
+        id={htmlFor}
+        type="range"
+        min={0}
+        max={100}
+        value={val}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          onChange(toPatch(Number(e.target.value)));
+        }}
+      />
+      <StatValue>{val}</StatValue>
+    </StatRow>
+  );
+
   return (
     <>
       <StatsGrid>
@@ -120,13 +143,13 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
       <StaminaSectionDivider />
       <StaminaSectionLabel>Durability</StaminaSectionLabel>
       {isPitcher
-        ? statRow(
+        ? staminaRow(
             "Pitching Stamina",
             asPitcher?.stamina ?? DEFAULT_PITCHING_STAMINA,
             `pitching-stamina-${player.id}`,
             (n) => ({ stamina: n }),
           )
-        : statRow(
+        : staminaRow(
             "Batting Stamina",
             asBatter?.stamina ?? DEFAULT_BATTING_STAMINA,
             `batting-stamina-${player.id}`,
