@@ -6,6 +6,10 @@ import { expect, test } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
 
+import {
+  buildPlayerSig,
+  TEAMS_EXPORT_KEY,
+} from "../../src/features/customTeams/storage/customTeamExportImport";
 import { fnv1a } from "../../src/storage/hash";
 import { computeTeamsSignature, resetAppState } from "../utils/helpers";
 
@@ -24,18 +28,12 @@ function resignTeamsBundle(bundle: TeamsExportBundle) {
   for (const team of bundle.payload.teams) {
     for (const slot of [team.roster.lineup, team.roster.bench ?? [], team.roster.pitchers]) {
       for (const rawPlayer of slot as Array<Record<string, unknown>>) {
-        const signatureInput = {
-          name: rawPlayer.name,
-          role: rawPlayer.role,
-          batting: rawPlayer.batting,
-          pitching: rawPlayer.pitching,
-        };
-        rawPlayer.sig = fnv1a(JSON.stringify(signatureInput));
+        rawPlayer.sig = buildPlayerSig(rawPlayer as Parameters<typeof buildPlayerSig>[0]);
       }
     }
   }
 
-  bundle.sig = fnv1a(`ballgame:teams:v1${JSON.stringify(bundle.payload)}`);
+  bundle.sig = fnv1a(TEAMS_EXPORT_KEY + JSON.stringify(bundle.payload));
   return bundle;
 }
 
