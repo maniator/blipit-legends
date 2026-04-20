@@ -64,8 +64,8 @@ Before starting any task, check whether it belongs to a specialist agent. The ta
 | Any request mentioning: inning, batter, runner, pitch, steal, bunt, walk, extra innings, tiebreak runner, IBB, manager mode, defensive shift, pinch hitter, PRNG replay, save compatibility | `@pm-agent`               |
 | Behavior-preserving refactor, rename, extract, modularization                                                                                                                               | `@safe-refactor`          |
 | UI / layout / typography / styled-components / responsive change                                                                                                                            | `@ui-visual-snapshot`     |
-| Deterministic simulation bug, impossible game state, stat inconsistency, lineup mapping error — **something is broken** (wrong counts, wrong logic, PRNG/replay mismatch)                  | `@simulation-correctness` |
-| Gameplay realism review — **something feels wrong** (outcomes look unrealistic in logs, hit/walk/HR rates are off, probability parameters need tuning, post-change realism validation)       | `@baseball-manager`       |
+| Deterministic simulation bug, impossible game state, stat inconsistency, lineup mapping error — **something is broken** (wrong counts, wrong logic, PRNG/replay mismatch)                   | `@simulation-correctness` |
+| Gameplay realism review — **something feels wrong** (outcomes look unrealistic in logs, hit/walk/HR rates are off, probability parameters need tuning, post-change realism validation)      | `@baseball-manager`       |
 | RxDB schema change, save/load, export/import, `SaveStore` API, `stateSnapshot` format                                                                                                       | `@rxdb-save-integrity`    |
 | GitHub Actions workflow change — CI, Playwright, sharding, artifact uploads                                                                                                                 | `@ci-workflow`            |
 | E2E test authoring, fixture creation, visual snapshot regeneration                                                                                                                          | `@e2e-test-runner`        |
@@ -111,6 +111,7 @@ Before starting any task, check whether it belongs to a specialist agent. The ta
   Exported options interfaces live alongside the function they describe in the same file. Existing functions with positional params are not required to be refactored unless they are being modified as part of the current task.
 
 - **ESLint enforces import order** — run `yarn lint:fix` after adding imports to auto-sort them.
+- **Prettier runs on all file types including `.md`** — run `yarn format` before every `report_progress` commit. Husky pre-commit hooks are bypassed in the agent sandbox, so formatting is never automatic. CI runs `yarn format:check` and will fail if any file (including Markdown) is not formatted.
 - **`@storage/*` alias** — always import from `@storage/db`, `@storage/types`, `@storage/hash`, `@storage/generateId`, `@storage/saveIO`; never use relative paths across directories. Note: `saveStore` has moved to `@feat/saves/storage/saveStore`; `customTeamStore` to `@feat/customTeams/storage/customTeamStore`; `gameHistoryStore` to `@feat/careerStats/storage/gameHistoryStore`.
 - **`SaveStore` is a singleton** backed by `getDb()`. For tests, use `makeSaveStore(_createTestDb(getRxStorageMemory()))` — each call to `_createTestDb()` appends a random suffix to avoid RxDB registry collisions.
 - **`_createTestDb` requires `fake-indexeddb/auto`** — import it at the top of any test file that calls `_createTestDb`. It is a dev-only dependency.
