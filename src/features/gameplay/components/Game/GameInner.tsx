@@ -16,6 +16,8 @@ import {
   DEFAULT_MANAGER_DECISION_VALUES,
   sanitizeManagerDecisionValues,
 } from "@feat/gameplay/context/managerDecisionValues";
+import { useGameSaveRestore } from "@feat/gameplay/hooks/useGameSaveRestore";
+import { useLeagueAwareContext } from "@feat/gameplay/hooks/useLeagueAwareContext";
 import { useLeagueGameReconciliation } from "@feat/leagueMode/hooks/useLeagueGameReconciliation";
 import { deriveScheduledGameSeed } from "@feat/leagueMode/utils/deriveScheduledGameSeed";
 import { useRxdbGameSync } from "@feat/saves/hooks/useRxdbGameSync";
@@ -114,13 +116,23 @@ const GameInner: React.FunctionComponent<Props> = ({
   // Tracks the save ID once the game reaches FINAL — used for league reconciliation.
   const [completedGameSaveId, setCompletedGameSaveId] = React.useState<string | null>(null);
 
-  // True when the currently-loaded save was already in FINAL state on load.
-  // Prevents useGameHistorySync from re-committing stats for a completed game.
-  const [wasAlreadyFinalOnLoad, setWasAlreadyFinalOnLoad] = React.useState(false);
+  const { backToLeagueId, isLeagueSave, setLoadedSaveLeagueId } =
+    useLeagueAwareContext(leagueGameContext);
 
-  // League ID from a loaded save — used to show "← Back to League" for saves
-  // loaded after the initial game launch (pendingLoadSave or handleModalLoad).
-  const [loadedSaveLeagueId, setLoadedSaveLeagueId] = React.useState<string | null>(null);
+  const { wasAlreadyFinalOnLoad, setWasAlreadyFinalOnLoad } = useGameSaveRestore({
+    pendingLoadSave,
+    dispatch,
+    customTeams,
+    rxSaveIdRef,
+    setManagerMode,
+    setManagedTeam,
+    setStrategy,
+    setDecisionValues,
+    setLoadedSaveLeagueId,
+    setGameActive,
+    onGameSessionStarted,
+    onConsumePendingLoad,
+  });
 
   useRxdbGameSync(rxSaveIdRef, actionBufferRef, { wasAlreadyFinalOnLoad });
   const { isCommitting } = useGameHistorySync(rxSaveIdRef, wasAlreadyFinalOnLoad);
@@ -213,6 +225,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     setManagedTeam,
     setManagerMode,
     setDecisionValues,
+    setWasAlreadyFinalOnLoad,
     setLoadedSaveLeagueId,
     onGameSessionStarted,
   ]);
@@ -348,67 +361,6 @@ const GameInner: React.FunctionComponent<Props> = ({
     onConsumeGameSetup?.();
   }, [pendingGameSetup, onConsumeGameSetup, leagueGameContext]);
 
-  // Restore game state when AppShell delivers a save loaded from the /saves page.
-  const prevPendingLoad = React.useRef<SaveRecord | null>(null);
-  React.useEffect(() => {
-    if (!pendingLoadSave) return;
-    if (pendingLoadSave === prevPendingLoad.current) return;
-    prevPendingLoad.current = pendingLoadSave;
-
-    const snap = pendingLoadSave.stateSnapshot;
-    if (!snap) {
-      // No snapshot available — clear the pending state but don't restore.
-      onConsumePendingLoad?.();
-      return;
-    }
-
-    if (snap.rngState !== null) {
-      restoreSeed(pendingLoadSave.seed);
-      restoreRng(snap.rngState);
-    } else {
-      reinitSeed(pendingLoadSave.seed);
-    }
-    dispatch({
-      type: "restore_game",
-      payload: {
-        ...snap.state,
-        teamLabels: resolveRestoreLabels(snap.state, customTeams),
-      },
-    });
-
-    const setup = pendingLoadSave.setup;
-    setManagerMode(setup.managerMode);
-    setManagedTeam(setup.managedTeam ?? 0);
-    setStrategy(setup.strategy);
-    setDecisionValues(
-      setup.decisionValues != null
-        ? sanitizeManagerDecisionValues(setup.decisionValues)
-        : DEFAULT_MANAGER_DECISION_VALUES,
-    );
-
-    rxSaveIdRef.current = pendingLoadSave.id;
-    // If the loaded save was already FINAL, mark it so history sync skips re-commit.
-    setWasAlreadyFinalOnLoad(snap.state.gameOver === true);
-    setLoadedSaveLeagueId(setup.leagueContext?.leagueId ?? null);
-    setGameActive(true);
-    onGameSessionStarted?.();
-    onConsumePendingLoad?.();
-    return () => {
-      prevPendingLoad.current = null;
-    };
-  }, [
-    pendingLoadSave,
-    dispatch,
-    customTeams,
-    setManagerMode,
-    setManagedTeam,
-    setStrategy,
-    setDecisionValues,
-    setLoadedSaveLeagueId,
-    onGameSessionStarted,
-    onConsumePendingLoad,
-  ]);
-
   // ── Modal-triggered save load ─────────────────────────────────────────────
   // Directly restores game state when the user loads a save from within the
   // running game via the SavesModal. The scheduler's effect-level gameOver guard
@@ -461,12 +413,11 @@ const GameInner: React.FunctionComponent<Props> = ({
       setManagedTeam,
       setStrategy,
       setDecisionValues,
+      setWasAlreadyFinalOnLoad,
       setLoadedSaveLeagueId,
       onGameSessionStarted,
     ],
   );
-
-  const backToLeagueId = leagueGameContext?.leagueId ?? loadedSaveLeagueId;
 
   const handleBackToLeague = React.useCallback(() => {
     if (backToLeagueId) {
@@ -485,7 +436,7 @@ const GameInner: React.FunctionComponent<Props> = ({
         onBackToHome={onBackToHome}
         isCommitting={isCommitting}
         onBackToLeague={backToLeagueId ? handleBackToLeague : undefined}
-        isLeagueSave={!!loadedSaveLeagueId}
+        isLeagueSave={isLeagueSave}
       />
       <GameBody>
         <FieldPanel>
