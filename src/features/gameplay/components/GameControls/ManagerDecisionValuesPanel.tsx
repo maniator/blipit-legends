@@ -67,7 +67,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
               <input
                 id="steal-min-offer-pct"
                 type="range"
-                min={55}
+                min={62}
                 max={85}
                 step={1}
                 value={values.stealMinOfferPct}
@@ -91,7 +91,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
               <input
                 id="ai-steal-threshold"
                 type="range"
-                min={55}
+                min={62}
                 max={values.stealMinOfferPct}
                 step={1}
                 value={values.aiStealThreshold}
@@ -124,7 +124,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             <DecisionToggleRow>
               <label htmlFor="ibb-enabled">
                 Intentional walk (IBB)
-                <span title="Offer / attempt intentional walk with 2 outs, late inning, close game.">
+                <span title="Offer / attempt intentional walk: 1st base open, 2 outs, late inning, close game.">
                   {" "}
                   ⓘ
                 </span>
@@ -195,7 +195,8 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                 data-testid="ai-pitching-aggressiveness-slider"
               />
               <DecisionRowValue data-testid="ai-pitching-aggressiveness-value">
-                {values.aiPitchingChangeAggressiveness === DEFAULT_MANAGER_DECISION_VALUES.aiPitchingChangeAggressiveness
+                {values.aiPitchingChangeAggressiveness ===
+                DEFAULT_MANAGER_DECISION_VALUES.aiPitchingChangeAggressiveness
                   ? "Modern"
                   : values.aiPitchingChangeAggressiveness < 50
                     ? `Old-school (${values.aiPitchingChangeAggressiveness})`

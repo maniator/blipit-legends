@@ -14,6 +14,11 @@ import { computeFatigueFactor } from "./pitchSimulation";
  * Reference pitch-count thresholds at default aggressiveness (50 / modern MLB average).
  * These are exported so other modules (e.g. SubstitutionPanel) can use them as
  * display references without duplicating the constants.
+ *
+ * ⚠️  These are the aggressiveness=50 anchor values only.
+ * The effective thresholds during gameplay are computed by `derivePitchCountThresholds`
+ * and will differ when `aiPitchingChangeAggressiveness ≠ 50`.
+ * Do NOT use these as fixed thresholds — always call `derivePitchCountThresholds`.
  */
 export const AI_FATIGUE_THRESHOLD_HIGH = 100;
 export const AI_FATIGUE_THRESHOLD_MEDIUM = 85;

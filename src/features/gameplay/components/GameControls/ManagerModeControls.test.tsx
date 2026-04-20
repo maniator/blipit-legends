@@ -190,11 +190,7 @@ describe("ManagerModeControls", () => {
   it("calls onDecisionValuesReset when reset button is clicked", async () => {
     const onReset = vi.fn();
     render(
-      <ManagerModeControls
-        {...defaultProps}
-        managerMode={true}
-        onDecisionValuesReset={onReset}
-      />,
+      <ManagerModeControls {...defaultProps} managerMode={true} onDecisionValuesReset={onReset} />,
     );
     await userEvent.click(screen.getByTestId("manager-decision-tuning-toggle"));
     await userEvent.click(screen.getByTestId("manager-decision-tuning-reset"));

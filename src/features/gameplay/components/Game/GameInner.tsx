@@ -393,7 +393,15 @@ const GameInner: React.FunctionComponent<Props> = ({
       setGameActive(true); // no-op if already active; triggers scheduler if game was over
       onGameSessionStarted?.();
     },
-    [dispatch, customTeams, setManagerMode, setManagedTeam, setStrategy, setDecisionValues, onGameSessionStarted],
+    [
+      dispatch,
+      customTeams,
+      setManagerMode,
+      setManagedTeam,
+      setStrategy,
+      setDecisionValues,
+      onGameSessionStarted,
+    ],
   );
 
   return (

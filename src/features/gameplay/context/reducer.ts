@@ -209,15 +209,19 @@ export const detectDecision = (
   // Sacrifice bunt: requires situational context to avoid offering in clearly
   // non-bunt situations (e.g. inning 1 up by 4 runs).
   // The AI bunt path (makeAiTacticalDecision) uses tighter criteria (inning >= 7,
-  // trailing, exactly 0 outs); the human prompt is offered one inning earlier and
-  // without requiring the team to be trailing, to give the manager flexibility.
+  // tied-or-trailing, exactly 0 outs); the human prompt is offered one inning
+  // earlier and without requiring the team to be trailing, to give flexibility.
+  // With 1 out the bunt is only offered when there is already a runner in
+  // scoring position (2nd base), where the advance has clearest run value.
   if (
     decisionValues.buntEnabled &&
-    outs === 0 &&
+    outs < 2 &&
+    (outs === 0 || baseLayout[1]) &&
     (baseLayout[0] || baseLayout[1]) &&
+    strikes < 2 &&
+    balls <= 1 &&
     state.inning >= 6 &&
-    scoreDiff <= 2 &&
-    balls <= 1
+    scoreDiff <= 2
   ) {
     return { kind: "bunt" };
   }

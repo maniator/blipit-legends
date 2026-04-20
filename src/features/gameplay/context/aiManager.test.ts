@@ -304,7 +304,7 @@ describe("makeAiTacticalDecision", () => {
   });
 
   it("bunt: sacrifices in close late game when behind", () => {
-    // atBat=0 means away batting; score[0]-score[1] = 1-2 = -1 (away behind)
+    // atBat=0 means away batting; scoreDiffForTeam = score[0]-score[1] = 1-2 = -1 (trailing)
     const result = makeAiTacticalDecision(
       makeState({ atBat: 0, score: [1, 2], inning: 8, outs: 0 }),
       { kind: "bunt" },
@@ -315,8 +315,27 @@ describe("makeAiTacticalDecision", () => {
     }
   });
 
+  it("bunt: sacrifices in a tied late game", () => {
+    // Tied game is the canonical sac-bunt situation — AI must bunt here.
+    const result = makeAiTacticalDecision(
+      makeState({ atBat: 0, score: [2, 2], inning: 8, outs: 0 }),
+      { kind: "bunt" },
+    );
+    expect(result.kind).toBe("tactical");
+    if (result.kind === "tactical") {
+      expect(result.actionType).toBe("bunt_attempt");
+    }
+  });
+
   it("bunt: does not bunt when team is winning", () => {
     const state = makeState({ atBat: 0, score: [3, 1], inning: 8, outs: 0 });
+    const result = makeAiTacticalDecision(state, { kind: "bunt" });
+    expect(result.kind).toBe("none");
+  });
+
+  it("bunt: does not bunt when team is winning by exactly 1", () => {
+    // Ahead by 1 should also NOT bunt — only tied or trailing
+    const state = makeState({ atBat: 0, score: [3, 2], inning: 8, outs: 0 });
     const result = makeAiTacticalDecision(state, { kind: "bunt" });
     expect(result.kind).toBe("none");
   });

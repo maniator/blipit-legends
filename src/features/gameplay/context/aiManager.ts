@@ -65,9 +65,11 @@ export function makeAiTacticalDecision(
     }
 
     case "bunt": {
-      // Sacrifice bunt when trailing by 1 in innings 7+, 0 outs, runner on first
-      const isBehind = atBat === 0 ? scoreDiff < 0 : scoreDiff > 0;
-      const isLateCloseGame = inning >= 7 && Math.abs(scoreDiff) <= 1 && outs === 0 && isBehind;
+      // Sacrifice bunt when tied or trailing by 1 in innings 7+, 0 outs.
+      // A positive scoreDiffForTeam means the batting team is ahead — no bunt.
+      const scoreDiffForTeam = atBat === 0 ? scoreDiff : -scoreDiff;
+      const isLateCloseGame =
+        inning >= 7 && scoreDiffForTeam >= -1 && scoreDiffForTeam <= 0 && outs === 0;
       if (isLateCloseGame) {
         return {
           kind: "tactical",
@@ -109,7 +111,7 @@ export function makeAiTacticalDecision(
         kind: "tactical",
         actionType: "intentional_walk",
         payload: {},
-        reasonText: "intentional walk — set up the double play",
+        reasonText: "intentional walk — set up the force out",
       };
     }
 

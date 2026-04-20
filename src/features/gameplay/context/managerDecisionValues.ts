@@ -18,19 +18,20 @@
 export interface ManagerDecisionValues {
   /**
    * Minimum steal success % at which the human manager is offered a steal
-   * decision prompt. Range: 55–85 (integer %). Default: 70.
+   * decision prompt. Range: 62–85 (integer %). Default: 70.
    *
    * Higher = only offer steals with a very high success chance.
    * Lower  = offer steals more aggressively (higher risk).
+   * ~70% is the MLB run-expectancy break-even for stealing 2nd.
    */
   stealMinOfferPct: number;
 
   /**
    * Minimum steal success % at which the AI auto-commits to a steal attempt.
-   * Range: 55–85 (integer %). Default: 65.
+   * Range: 62–stealMinOfferPct (integer %). Default: 65.
    *
-   * Must be ≤ stealMinOfferPct; enforced in sanitize. If equal, the AI acts
-   * whenever the human would be offered a steal.
+   * Being below stealMinOfferPct means the AI steals more aggressively than
+   * the human is prompted. Must be ≤ stealMinOfferPct; enforced in sanitize.
    */
   aiStealThreshold: number;
 
@@ -82,7 +83,7 @@ export const DEFAULT_MANAGER_DECISION_VALUES: ManagerDecisionValues = {
   aiPitchingChangeAggressiveness: 50,
 };
 
-const STEAL_PCT_MIN = 55;
+const STEAL_PCT_MIN = 62;
 const STEAL_PCT_MAX = 85;
 const AGGRESSIVENESS_MIN = 0;
 const AGGRESSIVENESS_MAX = 100;

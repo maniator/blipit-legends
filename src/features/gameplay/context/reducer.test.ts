@@ -566,22 +566,20 @@ describe("detectDecision", () => {
   });
   it("offers steal with lower stealMinOfferPct", () => {
     // balanced pct=70; with threshold 69, 70 > 69 is true → steal offered
-    const d = detectDecision(
-      makeState({ baseLayout: [1, 0, 0], outs: 0 }),
-      "balanced",
-      true,
-      { ...DEFAULT_MANAGER_DECISION_VALUES, stealMinOfferPct: 69, aiStealThreshold: 65 },
-    );
+    const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "balanced", true, {
+      ...DEFAULT_MANAGER_DECISION_VALUES,
+      stealMinOfferPct: 69,
+      aiStealThreshold: 65,
+    });
     expect(d?.kind).toBe("steal");
   });
   it("does NOT offer steal with higher stealMinOfferPct", () => {
     // aggressive pct=91; with threshold 95, 91 > 95 is false → no steal
-    const d = detectDecision(
-      makeState({ baseLayout: [1, 0, 0], outs: 0 }),
-      "aggressive",
-      true,
-      { ...DEFAULT_MANAGER_DECISION_VALUES, stealMinOfferPct: 95, aiStealThreshold: 90 },
-    );
+    const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "aggressive", true, {
+      ...DEFAULT_MANAGER_DECISION_VALUES,
+      stealMinOfferPct: 95,
+      aiStealThreshold: 90,
+    });
     expect(d?.kind).not.toBe("steal");
   });
   it("offers bunt when runner on 1st, 0 outs, inning 6+, close game, steal unavailable", () => {
@@ -591,6 +589,40 @@ describe("detectDecision", () => {
       true,
     );
     expect(d?.kind).toBe("bunt");
+  });
+  it("offers bunt with 1 out when runner on 2nd (scoring position)", () => {
+    // At 1-0 count, pinch_hitter (requires 0-0) does not fire — bunt is offered.
+    const d = detectDecision(
+      makeState({ baseLayout: [0, 1, 0], outs: 1, inning: 7, score: [0, 1], balls: 1 }),
+      "patient",
+      true,
+    );
+    expect(d?.kind).toBe("bunt");
+  });
+  it("does NOT offer bunt with 1 out and runner on 1st only (less run value)", () => {
+    const d = detectDecision(
+      makeState({ baseLayout: [1, 0, 0], outs: 1, inning: 7, score: [0, 1] }),
+      "patient",
+      true,
+    );
+    expect(d?.kind).not.toBe("bunt");
+  });
+  it("does NOT offer bunt on 0-2 count — count02 takes priority", () => {
+    const d = detectDecision(
+      makeState({ baseLayout: [1, 0, 0], outs: 0, inning: 7, score: [0, 1], balls: 0, strikes: 2 }),
+      "patient",
+      true,
+    );
+    expect(d?.kind).toBe("count02");
+    expect(d?.kind).not.toBe("bunt");
+  });
+  it("does NOT offer bunt on 1-2 count", () => {
+    const d = detectDecision(
+      makeState({ baseLayout: [1, 0, 0], outs: 0, inning: 7, score: [0, 1], balls: 1, strikes: 2 }),
+      "patient",
+      true,
+    );
+    expect(d?.kind).not.toBe("bunt");
   });
   it("does NOT offer bunt in early innings (inning < 6)", () => {
     const d = detectDecision(

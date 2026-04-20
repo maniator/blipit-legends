@@ -1,10 +1,9 @@
+import { DEFAULT_MANAGER_DECISION_VALUES } from "@feat/gameplay/context/managerDecisionValues";
 import * as rngModule from "@shared/utils/rng";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { makeState } from "@test/testHelpers";
-
-import { DEFAULT_MANAGER_DECISION_VALUES } from "@feat/gameplay/context/managerDecisionValues";
 
 import { usePitchDispatch } from "./usePitchDispatch";
 

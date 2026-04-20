@@ -145,12 +145,17 @@ export const usePitchDispatch = ({
         dispatch({ type: "clear_suppress_decision" });
         // Fall through to normal pitch after clearing the suppress flag.
       } else {
-        // AI picks a context-aware strategy (same choices a human manager has).
+        // AI batting path: use aiStealThreshold as the steal gate so the AI
+        // can steal more aggressively than the human offer threshold.
+        const aiDecisionValues: ManagerDecisionValues = {
+          ...decisionValues,
+          stealMinOfferPct: decisionValues.aiStealThreshold,
+        };
         const battingDecision = detectDecision(
           currentState as State,
           aiStrategy,
           true,
-          decisionValues,
+          aiDecisionValues,
         );
         if (battingDecision) {
           const aiAction = makeAiTacticalDecision(

@@ -11,28 +11,49 @@ describe("sanitizeManagerDecisionValues", () => {
     expect(result).toEqual(DEFAULT_MANAGER_DECISION_VALUES);
   });
 
-  it("clamps stealMinOfferPct to [55, 85]", () => {
-    expect(sanitizeManagerDecisionValues({ stealMinOfferPct: 10 }).stealMinOfferPct).toBe(55);
+  it("clamps stealMinOfferPct to [62, 85]", () => {
+    expect(sanitizeManagerDecisionValues({ stealMinOfferPct: 10 }).stealMinOfferPct).toBe(62);
     expect(sanitizeManagerDecisionValues({ stealMinOfferPct: 999 }).stealMinOfferPct).toBe(85);
     expect(sanitizeManagerDecisionValues({ stealMinOfferPct: 72 }).stealMinOfferPct).toBe(72);
   });
 
-  it("clamps aiStealThreshold to [55, stealMinOfferPct]", () => {
-    expect(sanitizeManagerDecisionValues({ stealMinOfferPct: 70, aiStealThreshold: 40 }).aiStealThreshold).toBe(55);
+  it("clamps aiStealThreshold to [62, stealMinOfferPct]", () => {
+    expect(
+      sanitizeManagerDecisionValues({ stealMinOfferPct: 70, aiStealThreshold: 40 })
+        .aiStealThreshold,
+    ).toBe(62);
     // aiStealThreshold can't exceed stealMinOfferPct
-    expect(sanitizeManagerDecisionValues({ stealMinOfferPct: 65, aiStealThreshold: 80 }).aiStealThreshold).toBe(65);
-    expect(sanitizeManagerDecisionValues({ stealMinOfferPct: 75, aiStealThreshold: 70 }).aiStealThreshold).toBe(70);
+    expect(
+      sanitizeManagerDecisionValues({ stealMinOfferPct: 65, aiStealThreshold: 80 })
+        .aiStealThreshold,
+    ).toBe(65);
+    expect(
+      sanitizeManagerDecisionValues({ stealMinOfferPct: 75, aiStealThreshold: 70 })
+        .aiStealThreshold,
+    ).toBe(70);
   });
 
   it("clamps aiPitchingChangeAggressiveness to [0, 100]", () => {
-    expect(sanitizeManagerDecisionValues({ aiPitchingChangeAggressiveness: -5 }).aiPitchingChangeAggressiveness).toBe(0);
-    expect(sanitizeManagerDecisionValues({ aiPitchingChangeAggressiveness: 150 }).aiPitchingChangeAggressiveness).toBe(100);
-    expect(sanitizeManagerDecisionValues({ aiPitchingChangeAggressiveness: 75 }).aiPitchingChangeAggressiveness).toBe(75);
+    expect(
+      sanitizeManagerDecisionValues({ aiPitchingChangeAggressiveness: -5 })
+        .aiPitchingChangeAggressiveness,
+    ).toBe(0);
+    expect(
+      sanitizeManagerDecisionValues({ aiPitchingChangeAggressiveness: 150 })
+        .aiPitchingChangeAggressiveness,
+    ).toBe(100);
+    expect(
+      sanitizeManagerDecisionValues({ aiPitchingChangeAggressiveness: 75 })
+        .aiPitchingChangeAggressiveness,
+    ).toBe(75);
   });
 
   it("rounds fractional values to integers", () => {
     expect(sanitizeManagerDecisionValues({ stealMinOfferPct: 72.7 }).stealMinOfferPct).toBe(73);
-    expect(sanitizeManagerDecisionValues({ aiPitchingChangeAggressiveness: 49.4 }).aiPitchingChangeAggressiveness).toBe(49);
+    expect(
+      sanitizeManagerDecisionValues({ aiPitchingChangeAggressiveness: 49.4 })
+        .aiPitchingChangeAggressiveness,
+    ).toBe(49);
   });
 
   it("coerces non-boolean booleans to defaults", () => {
