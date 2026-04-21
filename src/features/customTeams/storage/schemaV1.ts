@@ -71,7 +71,10 @@ const playersSchemaV1: RxJsonSchema<PlayerRecord> = {
     pitchingRole: { type: "string" },
     /**
      * Persistent FNV-1a content fingerprint stored in the DB.
-     * Covers the player's immutable identity fields: name, role, batting, pitching.
+     * Covers the player's identity fields: name, role, and the full
+     * batting/pitching blocks. Note: stamina is part of batting/pitching
+     * and so is included in the fingerprint, even though stamina is
+     * mutable after creation. Used only for duplicate detection on import.
      */
     fingerprint: { type: "string", maxLength: 16 },
     createdAt: { type: "string", maxLength: 32 },

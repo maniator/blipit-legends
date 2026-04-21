@@ -67,6 +67,15 @@ const computeStealSuccessPct = (base: 0 | 1, strategy: Strategy, state: State): 
  *
  * @param decisionValues - Optional runtime tuning values. Defaults to
  *   DEFAULT_MANAGER_DECISION_VALUES so existing callers are unaffected.
+ *
+ * @internal-ai-caller
+ *   The default `stealMinOfferPct` (and the `stealMinOfferPct` field in
+ *   general) is the threshold at which the **human manager** is prompted —
+ *   it is intentionally higher than the AI's own steal gate. AI callers
+ *   (e.g. usePitchDispatch on the unmanaged team) must override
+ *   `stealMinOfferPct` with `decisionValues.aiStealThreshold` before
+ *   calling `detectDecision`; relying on the default would gate AI steals
+ *   at the human-prompt threshold and silently change AI behavior.
  */
 export const detectDecision = (
   state: State,
