@@ -55,7 +55,7 @@ const makeGame = (
   awayTeamId: "team_away",
   homeTeamId: "team_home",
   status,
-  schemaVersion: 1,
+  schemaVersion: 0,
 });
 
 describe("advanceGameDayIfComplete", () => {

@@ -11,7 +11,7 @@ const makeGame = (
   awayTeamId: "team_away",
   homeTeamId: "team_home",
   status: "completed",
-  schemaVersion: 1,
+  schemaVersion: 0,
   ...overrides,
 });
 

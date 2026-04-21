@@ -33,7 +33,7 @@ const makeScheduledGame = (gameDay = 0): ScheduledGameRecord => ({
   awayTeamId: "team_away",
   homeTeamId: "team_home",
   status: "completed",
-  schemaVersion: 1,
+  schemaVersion: 0,
 });
 
 describe("useLeagueGameReconciliation", () => {

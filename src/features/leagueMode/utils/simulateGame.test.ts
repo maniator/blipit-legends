@@ -9,7 +9,7 @@ const makeGame = (id = "sgame_1") => ({
   awayTeamId: "Away",
   homeTeamId: "Home",
   status: "scheduled" as const,
-  schemaVersion: 1,
+  schemaVersion: 0,
 });
 
 describe("simulateGame", () => {

@@ -1,7 +1,5 @@
 /**
- * v1 schemas for the `leagues`, `leagueSeasons`, and `scheduledGames` collections.
- *
- * All collections start at version: 0 (no migration strategies needed).
+ * Schemas for the `leagues`, `leagueSeasons`, and `scheduledGames` collections.
  */
 import type { RxJsonSchema } from "rxdb";
 
@@ -36,7 +34,7 @@ const leaguesSchemaV1: RxJsonSchema<LeagueRecord> = {
   indexes: ["status"],
 };
 
-/** v1 collection config for the `leagues` collection. No migration strategies. */
+/** Collection config for the `leagues` collection. */
 export const leaguesV1CollectionConfig = {
   schema: leaguesSchemaV1,
 };
@@ -75,13 +73,13 @@ const leagueSeasonsSchemaV1: RxJsonSchema<LeagueSeasonRecord> = {
   indexes: ["leagueId", ["leagueId", "seasonNumber"]],
 };
 
-/** v1 collection config for the `leagueSeasons` collection. No migration strategies. */
+/** Collection config for the `leagueSeasons` collection. */
 export const leagueSeasonsV1CollectionConfig = {
   schema: leagueSeasonsSchemaV1,
 };
 
 const scheduledGamesSchemaV1: RxJsonSchema<ScheduledGameRecord> = {
-  version: 1,
+  version: 0,
   primaryKey: "id",
   type: "object",
   properties: {
@@ -109,15 +107,7 @@ const scheduledGamesSchemaV1: RxJsonSchema<ScheduledGameRecord> = {
   indexes: ["leagueSeasonId", ["leagueSeasonId", "gameDay"], ["leagueSeasonId", "status"]],
 };
 
-/** v1 collection config for the `scheduledGames` collection. Includes migration from v0. */
+/** Collection config for the `scheduledGames` collection. */
 export const scheduledGamesV1CollectionConfig = {
   schema: scheduledGamesSchemaV1,
-  migrationStrategies: {
-    1: (oldDoc: Record<string, unknown>) => ({
-      ...oldDoc,
-      winnerId: undefined,
-      homeScore: undefined,
-      awayScore: undefined,
-    }),
-  },
 };

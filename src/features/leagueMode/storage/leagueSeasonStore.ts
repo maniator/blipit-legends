@@ -78,6 +78,8 @@ export function buildLeagueSeasonStore(getDbFn: GetDb) {
       const db = await getDbFn();
       const doc = await db.leagueSeasons.findOne(leagueSeasonId).exec();
       if (!doc) throw new Error(`LeagueSeason not found: ${leagueSeasonId}`);
+      // Monotonicity guard: never move currentGameDay backwards (idempotent-safe).
+      if (newGameDay <= doc.currentGameDay) return;
       await doc.patch({ currentGameDay: newGameDay, updatedAt: Date.now() });
     },
   };
