@@ -62,7 +62,18 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
 
       {open && (
         <>
-          <DecisionTuningBackdrop onClick={() => setOpen(false)} />
+          <DecisionTuningBackdrop
+            role="button"
+            tabIndex={0}
+            aria-label="Close Decision Tuning panel"
+            onClick={() => setOpen(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setOpen(false);
+              }
+            }}
+          />
           <DecisionTuningPanel data-testid="manager-decision-tuning-panel">
             <DecisionPanelTitle>Manager &amp; AI Decision Values</DecisionPanelTitle>
 

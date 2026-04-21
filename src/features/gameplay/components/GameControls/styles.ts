@@ -281,15 +281,15 @@ export const DecisionTuningToggle = styled.button`
 `;
 
 export const DecisionTuningBackdrop = styled.div`
-  ${mq.notMobile} {
-    display: none;
-  }
-
   ${mq.mobile} {
     position: fixed;
     inset: 0;
     z-index: 200;
     background: rgba(0, 0, 0, 0.4);
+  }
+
+  ${mq.notMobile} {
+    display: none;
   }
 `;
 
