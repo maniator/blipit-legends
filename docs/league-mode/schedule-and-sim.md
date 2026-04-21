@@ -23,7 +23,7 @@ Inputs (frozen at season creation, persisted on the `seasons` doc for reproducib
 - `interleague?: boolean` — v2+; whether leagues cross-play.
 - `seed: string` — `seasons.masterSeed`.
 
-**Sub-PRNG isolation:** schedule generation uses an isolated sub-PRNG seeded from `mulberry32(fnv1a(\`${masterSeed}:schedule\`))`, never the master PRNG directly. This way a future change to autogen (or any other master-PRNG consumer) does not shift schedule output for replays.
+**Sub-PRNG isolation:** schedule generation uses an isolated sub-PRNG seeded from `mulberry32(parseInt(fnv1a(\`${masterSeed}:schedule\`), 16) >>> 0)`, never the master PRNG directly. The `parseInt(..., 16) >>> 0`step converts`fnv1a`'s hex-string output to the uint32 that `mulberry32` requires. This way a future change to autogen (or any other master-PRNG consumer) does not shift schedule output for replays.
 
 Algorithm:
 

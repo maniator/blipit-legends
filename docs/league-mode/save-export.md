@@ -26,41 +26,46 @@ Rationale: a user who exports during an active season expects the season to come
 
 ## Bundle envelope
 
+The v1 `SaveStore` bundle envelope shape is `{ version, header, events, sig }` (see `src/features/saves/storage/types.ts`). v2 **keeps the same top-level field names** so the existing import path can sniff `version` and `sig` consistently across versions; the league payload moves into `header.collections`:
+
 ```
 {
-  "format": 2,                  // bumped from 1
-  "exportedAt": <epoch ms>,
-  "appVersion": "<package.json version>",
-  "rulesetVersion": <CURRENT_RULESET_VERSION at export time>,
-  "collections": {
-    "saves":              [...],
-    "events":             [...],
-    "customTeams":        [...],
-    "seasons":            [...],
-    "seasonTeams":        [...],
-    "seasonGames":        [...],
-    "seasonPlayerState":  [...],
-    "seasonTransactions": [...],   // v2+
-    "seasonAwards":       [...],   // v4+
-    "gameHistory":        [...]
+  "version": 2,                   // bumped from 1; same field name as v1 envelope
+  "header": {
+    "exportedAt": <epoch ms>,
+    "appVersion": "<package.json version>",
+    "rulesetVersion": <CURRENT_RULESET_VERSION at export time>,
+    "collections": {
+      "saves":              [...],
+      "events":             [...],
+      "customTeams":        [...],
+      "seasons":            [...],
+      "seasonTeams":        [...],
+      "seasonGames":        [...],
+      "seasonPlayerState":  [...],
+      "seasonTransactions": [...],   // v2+
+      "seasonAwards":       [...],   // v4+
+      "gameHistory":        [...]
+    }
   },
-  "checksum": "<fnv1a hex of canonical-JSON of `collections` field>"
+  "sig": "<fnv1a hex over RXDB_EXPORT_KEY + canonical-JSON of `header`>"
 }
 ```
 
-- **Checksum scope:** the FNV-1a checksum covers the **entire `collections` field**, not just `saves`+`events` as in v1. This is the contract — any partial coverage leaves league state unverified.
-- **Canonical JSON:** keys sorted lex at every level, no whitespace, before hashing. Reuses the same canonicalization helper added in v1 `SaveStore` (extract if currently inlined).
+- **Field-name alignment with v1.** `version` (not `format`) and `sig` (not `checksum`) match the existing `SaveStore` envelope; v1 importers can still read `version` to decide accept/reject. The v1 envelope's `events` array is preserved at the top level **only on v1 bundles**; in v2 envelopes the equivalent data lives under `header.collections.events`.
+- **Signature scope.** The `sig` is computed as `fnv1a(RXDB_EXPORT_KEY + JSON.stringify(header))` (same helper + key as v1). Because `header` now contains every league collection, league state is part of the signed payload — partial coverage would leave league data unverified.
+- **Canonical JSON.** Keys sorted lex at every level, no whitespace, before signing. Reuse the v1 `SaveStore` canonicalization helper (extract if currently inlined).
 
 ## Import behavior
 
-| Scenario                                  | Bundle format | Behavior                                                                                                                           |
-| ----------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| v1 import path / v1 bundle                | `1`           | Existing behavior — exhibition saves only.                                                                                         |
-| v1 import path / v2 bundle                | `2`           | Reject with: _"This save was created with a newer version of the app. Update first to import."_                                    |
-| v2+ import path / v1 bundle               | `1`           | Accept. League collections default to empty.                                                                                       |
-| v2+ import path / v2 bundle               | `2`           | Verify checksum → import every collection. Apply `id` collision policy below.                                                      |
-| Checksum mismatch                         | any           | Reject with: _"This save file appears corrupted. Try re-exporting from the source."_                                               |
-| `rulesetVersion` newer than current build | any           | Reject with: _"This save was created with a newer ruleset. Update the app first."_ (Prevents replaying with mismatched constants.) |
+| Scenario                                  | Bundle version | Behavior                                                                                                                           |
+| ----------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| v1 import path / v1 bundle                | `1`            | Existing behavior — exhibition saves only.                                                                                         |
+| v1 import path / v2 bundle                | `2`            | Reject with: _"This save was created with a newer version of the app. Update first to import."_                                    |
+| v2+ import path / v1 bundle               | `1`            | Accept. League collections default to empty.                                                                                       |
+| v2+ import path / v2 bundle               | `2`            | Verify `sig` → import every collection. Apply `id` collision policy below.                                                         |
+| Signature mismatch                        | any            | Reject with: _"This save file appears corrupted. Try re-exporting from the source."_                                               |
+| `rulesetVersion` newer than current build | any            | Reject with: _"This save was created with a newer ruleset. Update the app first."_ (Prevents replaying with mismatched constants.) |
 
 ## ID collision policy (per collection)
 
@@ -80,7 +85,7 @@ The bundle's per-collection docs include the schema version they were exported u
 1. If the importing build's collection version is **>=** the exported version → run normal RxDB migration on insert.
 2. If the importing build is **<** the exported version → reject (the build can't run forward migrations from the future).
 
-This pairs with the `format: 2` envelope check above; `format` blocks gross version mismatch, the per-collection schema check blocks subtle ones.
+This pairs with the `version: 2` envelope check above; `version` blocks gross version mismatch, the per-collection schema check blocks subtle ones.
 
 ## Service-worker note
 
@@ -90,7 +95,7 @@ The `SaveStore` export/import lives in the main thread. The service worker remai
 
 Import-time writes to `customTeams` happen **before** any `seasons` doc is restored, so no team is "in an active season" yet at write time — the storage-layer lock check naturally permits these writes without needing the sanctioned-write capability. Document the order in the implementation:
 
-1. Verify checksum + format + ruleset.
+1. Verify `sig` + `version` + `rulesetVersion`.
 2. Resolve `seasons` collisions (suffix or reject per policy above).
 3. Import `customTeams` first.
 4. Import `seasons` (now lock could activate for any imported active season).
@@ -99,7 +104,7 @@ Import-time writes to `customTeams` happen **before** any `seasons` doc is resto
 ## Testing surface
 
 - **Unit:** canonical-JSON helper produces stable byte output regardless of source key order.
-- **Unit:** checksum verification rejects single-byte mutation.
+- **Unit:** `sig` verification rejects single-byte mutation.
 - **Integration:** export a mid-season league → wipe DB → import → assert `seasonGames.derivedSeed[]`, `seasonTransactions[]`, and standings round-trip identically.
 - **Integration:** import a v1 bundle in a v2+ build → league collections empty; existing exhibition save accessible.
 - **Integration:** import a v2 bundle whose `seasons` doc collides with an active in-DB season → import rejected with the documented copy.
