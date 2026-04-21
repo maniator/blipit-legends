@@ -67,7 +67,7 @@ reinitSeed(cachedDerivedSeed: string):
 - **Never** pass the raw `${seasonId}:${seasonGameId}` string into `reinitSeed`. The colon separator is not base-36-safe and would break determinism guarantees in `mulberry32`.
 - The derived seed is **cached on the `seasonGames` doc** at schedule generation time (`derivedSeed` field). All sim code reads the cached value rather than recomputing — this keeps the seed stable even if the helper's implementation changes later.
 - **Schema migrations on `seasonGames` MUST NOT recompute or rewrite `derivedSeed`.** Any migration is required to preserve the field verbatim.
-- **Only the per-game flow may call `reinitSeed`.** Animations, UI tooltips, autogen previews, and any non-simulation code must never call into `mulberry32` between `reinitSeed(derivedSeed)` and the final pitch of that game. This will be enforced by an ESLint rule (filed as a v1 follow-up; see [`follow-ups.md`](follow-ups.md)) restricting `reinitSeed` imports to the simulation entry point and the league sim loop.
+- **Only the per-game flow may call `reinitSeed`.** Animations, UI tooltips, autogen previews, and any non-simulation code must never call into `mulberry32` between `reinitSeed(derivedSeed)` and the final pitch of that game. This will be enforced by an ESLint rule (a v1 implementation acceptance item — see [`agent-prompts/v1.md`](agent-prompts/v1.md)) restricting `reinitSeed` imports to the simulation entry point and the league sim loop.
 
 ## Simulation modes
 

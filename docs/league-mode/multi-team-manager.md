@@ -23,7 +23,7 @@ When N>1 teams have simultaneous Manager Mode decisions during the same game-day
 1. **Queue per game.** Within a single watch-mode game, prompts surface in **batting-event order** (the order they would naturally arise during play-by-play). The user resolves one at a time; the sim pauses only on the active prompt.
 2. **Cross-game queueing.** When two of the user-managed teams play on the same `gameDay` in different games, games are simulated **sequentially** (per the global PRNG concurrency contract in `schedule-and-sim.md`). The user resolves prompts for game 1 to completion before game 2 starts.
 3. **Opposing managers** (the user manages both teams in the same game): allowed in v4. Prompts surface as normal; the side currently at bat / on the mound owns the prompt context. The UI labels which team's decision is being made.
-4. **No primary-team priority knob in v4.** Adding one (e.g., "auto-resolve other teams' prompts to AI policy") is a v4-stretch follow-up tracked in [`follow-ups.md`](follow-ups.md).
+4. **No primary-team priority knob in v4.** Adding one (e.g., "auto-resolve other teams' prompts to AI policy") is a v4-stretch tracked in [`agent-prompts/v4.md`](agent-prompts/v4.md) acceptance criteria.
 5. **Quick Sim ignores multi-team prompts.** When the user runs Quick Sim, every team — including all user-managed teams — auto-resolves to the AI policy (per `fatigue-and-injuries.md` v1 AI rotation/lineup policy section). This is consistent with single-team manager mode and avoids prompt floods on quick-sim.
 
 ## UI labelling
@@ -60,5 +60,5 @@ When N>1 teams have simultaneous Manager Mode decisions during the same game-day
 ## Out of scope for v4
 
 - Per-team opt-in / opt-out (all-or-nothing in v4).
-- "Auto-resolve all but one team" knob — tracked in `follow-ups.md` as a v4-stretch.
+- "Auto-resolve all but one team" knob — tracked as a v4-stretch in [`agent-prompts/v4.md`](agent-prompts/v4.md) acceptance criteria.
 - Networked / multi-user manager mode — out of all v1–v4 (local-only app, see `decisions.md` "won't ship" register).

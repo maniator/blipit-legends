@@ -216,7 +216,7 @@ Implementation: a single `playoffMode: boolean` flag on `seasons` flips the mult
 
 ## Ruleset versioning (`seasons.rulesetVersion`)
 
-All tuning constants for fatigue and injuries — pitcher recovery curves, eligibility thresholds, max fatigue penalty (`12%`), wear formula, wear penalty cap (`5%`), AI rest probability formula, injury rate (`1.5%` regular / `0.375%` playoff), injury duration distribution — are pinned to a single integer constant exported from `src/features/league/ruleset/index.ts`:
+All tuning constants for fatigue and injuries — pitcher recovery curves, eligibility thresholds, max fatigue penalty (`12%`), wear formula, wear penalty cap (`5%`), AI rest probability formula, injury rate (`1.5%` regular / `0.75%` playoff), injury duration distribution — are pinned to a single integer constant exported from `src/features/league/ruleset/index.ts`:
 
 ```
 export const CURRENT_RULESET_VERSION = 1;

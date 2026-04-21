@@ -114,7 +114,7 @@
   - Tiebreakers per decision #18 (head-to-head → run differential → seeded coin flip).
 - **Playoff fatigue/injury rules**: full pitcher fatigue (more important here, not less); injury rate scaled to **×0.5** of regular season (0.75% per active-lineup player-game). Position-player wear unchanged.
 - **Bracket UI**: vertical accordion on mobile, horizontal tree on desktop.
-- **Tiebreaker chain (decision #18):** head-to-head record → run differential → seeded-PRNG coin flip (deterministic from the season master seed; never `Math.random()`).
+- **Tiebreaker chain (decision #18, full operationalization):** head-to-head record → intra-division record (v2+) → run differential vs the tied group → full-season run differential → seeded-PRNG coin flip from the `:tiebreak:${tieKey}` sub-stream. Three-way+ ties resolve highest-seed-first then recurse. Deterministic, never `Math.random()`.
 
 **Defers:** awards screen, minor leagues, multi-team manager mode, replay/seed-sharing UI.
 

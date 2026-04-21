@@ -114,5 +114,5 @@ Import-time writes to `customTeams` happen **before** any `seasons` doc is resto
 ## Out of scope
 
 - Networked sync / multi-device save merging — local-only per `routing.md`.
-- Selective import (pick which seasons to bring in) — all-or-nothing in v1; future v4-stretch tracked in [`follow-ups.md`](follow-ups.md).
+- Selective import (pick which seasons to bring in) — all-or-nothing in v1; future post-v4 stretch (see "Future scope" register in [`decisions.md`](decisions.md), FS-1).
 - Cross-app migration (e.g., from a future Ballgame v2) — not a v1–v4 concern.
