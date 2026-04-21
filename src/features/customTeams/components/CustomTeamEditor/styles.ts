@@ -373,6 +373,22 @@ export const FieldHint = styled.p`
   line-height: 1.3;
 `;
 
+/** Thin rule that separates the stat-budget section from the Durability section. */
+export const StaminaSectionDivider = styled.hr`
+  border: none;
+  border-top: 1px solid ${({ theme }) => theme.colors.borderPanel};
+  margin: ${({ theme }) => theme.spacing.sm} 0 ${({ theme }) => theme.spacing.xs};
+`;
+
+/** Small label above the stamina slider ("DURABILITY"). */
+export const StaminaSectionLabel = styled.p`
+  font-size: ${({ theme }) => theme.fontSizes.label};
+  color: ${({ theme }) => theme.colors.textHint};
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 ${({ theme }) => theme.spacing.xxs};
+`;
+
 /** Import-player button — ghost blue style, mirrors AddPlayerBtn. */
 export const ImportPlayerBtn = styled(AddPlayerBtn)`
   color: ${({ theme }) => theme.colors.textSecondaryLink};

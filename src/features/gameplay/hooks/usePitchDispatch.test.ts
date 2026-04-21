@@ -1,3 +1,4 @@
+import { DEFAULT_MANAGER_DECISION_VALUES } from "@feat/gameplay/context/managerDecisionValues";
 import * as rngModule from "@shared/utils/rng";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -11,7 +12,8 @@ afterEach(() => vi.restoreAllMocks());
 describe("usePitchDispatch", () => {
   it("dispatches set_pending_decision when manager mode and decision available", () => {
     const dispatch = vi.fn();
-    const state = makeState({ baseLayout: [1, 0, 0], outs: 1, atBat: 0 });
+    // Bunt conditions: inning >= 6, runner on 1st, outs < 2, close game, balls <= 1
+    const state = makeState({ baseLayout: [1, 0, 0], outs: 0, atBat: 0, inning: 6, score: [0, 1] });
     vi.spyOn(rngModule, "random").mockReturnValue(0.5);
 
     const { result } = renderHook(() =>
@@ -476,6 +478,7 @@ describe("usePitchDispatch — AI defensive shift (no dead tick)", () => {
         skipDecision: false,
         dispatchLog: undefined,
         allTeamPitcherRoles: [{}, {}],
+        decisionValues: { ...DEFAULT_MANAGER_DECISION_VALUES, defensiveShiftEnabled: true },
       }),
     );
     act(() => {
@@ -498,6 +501,8 @@ describe("usePitchDispatch — skip decision", () => {
       outs: 0,
       balls: 0,
       strikes: 0,
+      inning: 6,
+      score: [0, 1], // close game (bunt conditions)
     });
 
     // First call with skipDecision=false should offer bunt
@@ -543,6 +548,91 @@ describe("usePitchDispatch — skip decision", () => {
         type: "set_pending_decision",
         payload: expect.objectContaining({ kind: "bunt" }),
       }),
+    );
+  });
+});
+
+describe("usePitchDispatch — AI steal threshold gate (aiStealThreshold)", () => {
+  // computeStealSuccessPct for stealing 2nd with balanced strategy and no speed mod:
+  //   Math.round(70 * stratMod("balanced","steal")=1.0 * speedFactor=1.0) = 70
+  // Human gate (stealMinOfferPct=70): 70 > 70 → false — steal NOT offered to human
+  // AI gate   (aiStealThreshold=65): 70 > 65 → true  — AI DOES attempt steal
+  it("AI attempts steal when successPct (70) > aiStealThreshold (65) but NOT > stealMinOfferPct (70)", () => {
+    const dispatch = vi.fn();
+    // Runner on 1st, no runner on 2nd — steal 2nd candidate.
+    // defensiveShiftOffered=true so the shift check is skipped cleanly.
+    const state = makeState({
+      baseLayout: [1, 0, 0],
+      outs: 0,
+      balls: 0,
+      strikes: 0,
+      inning: 4,
+      score: [0, 0],
+      suppressNextDecision: false,
+      defensiveShiftOffered: true,
+    });
+
+    const { result } = renderHook(() =>
+      usePitchDispatch({
+        dispatch,
+        currentState: state,
+        managerMode: false, // both teams AI-managed
+        strategy: "balanced",
+        managedTeam: 0,
+        skipDecision: false,
+        dispatchLog: undefined,
+        allTeamPitcherRoles: [{}, {}],
+        decisionValues: {
+          ...DEFAULT_MANAGER_DECISION_VALUES,
+          stealMinOfferPct: 70, // human gate: 70 > 70 = false → no human steal offer
+          aiStealThreshold: 65, // AI gate:   70 > 65 = true  → AI steals
+        },
+      }),
+    );
+    act(() => {
+      result.current();
+    });
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: "steal_attempt" }));
+  });
+
+  it("AI does NOT attempt steal when successPct (70) is NOT > aiStealThreshold (70)", () => {
+    const dispatch = vi.fn();
+    vi.spyOn(rngModule, "random").mockReturnValue(0.5); // ensure pitch resolves
+    const state = makeState({
+      baseLayout: [1, 0, 0],
+      outs: 0,
+      balls: 0,
+      strikes: 0,
+      inning: 4,
+      score: [0, 0],
+      suppressNextDecision: false,
+      defensiveShiftOffered: true,
+    });
+
+    const { result } = renderHook(() =>
+      usePitchDispatch({
+        dispatch,
+        currentState: state,
+        managerMode: false,
+        strategy: "balanced",
+        managedTeam: 0,
+        skipDecision: false,
+        dispatchLog: undefined,
+        allTeamPitcherRoles: [{}, {}],
+        decisionValues: {
+          ...DEFAULT_MANAGER_DECISION_VALUES,
+          stealMinOfferPct: 70,
+          aiStealThreshold: 70, // AI gate equals successPct: 70 > 70 = false → no steal
+        },
+      }),
+    );
+    act(() => {
+      result.current();
+    });
+    expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: "steal_attempt" }));
+    // A normal pitch should still be dispatched.
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: expect.stringMatching(/^(strike|foul|hit|wait)$/) }),
     );
   });
 });

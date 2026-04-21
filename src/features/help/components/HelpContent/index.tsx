@@ -65,7 +65,9 @@ const HelpContent: React.FunctionComponent = () => (
         <Li>
           Use <strong>✨ Generate Random</strong> to create a randomized team as a starting point.
           Edit player positions and batting handedness to customize it. <strong>Note:</strong>{" "}
-          player names and stat values are fixed at creation and cannot be changed afterward.
+          player names and core stat values (Contact, Power, Speed, Velocity, Control, Movement) are
+          fixed at creation and cannot be changed afterward. Stamina (Durability) is the exception —
+          it can be adjusted at any time on the team edit page.
         </Li>
         <Li>
           Each team needs at least one lineup player and one pitcher before it can be used in a
@@ -74,6 +76,65 @@ const HelpContent: React.FunctionComponent = () => (
         <Li>
           Pitchers are marked SP (starter), RP (reliever), or SP/RP (swingman). Only RP-eligible
           pitchers can be used for in-game pitching changes.
+        </Li>
+      </List>
+    </Section>
+
+    <Section title="Player Stats">
+      <List>
+        <Li>
+          <strong>Hitter stats</strong> (total capped at 150):
+          <List>
+            <Li>
+              <strong>Contact</strong> — how often the batter puts the ball in play; higher contact
+              reduces pop-outs and strikeouts.
+            </Li>
+            <Li>
+              <strong>Power</strong> — home run potential and extra-base hit probability.
+            </Li>
+            <Li>
+              <strong>Speed</strong> — stolen-base success rate, extra-base advancement, and beating
+              double-play balls.
+            </Li>
+          </List>
+        </Li>
+        <Li>
+          <strong>Pitcher stats</strong> (total capped at 160):
+          <List>
+            <Li>
+              <strong>Velocity</strong> — harder to make solid contact; raises the strike
+              probability on called pitches.
+            </Li>
+            <Li>
+              <strong>Control</strong> — strike-to-ball ratio; reduces walks.
+            </Li>
+            <Li>
+              <strong>Movement</strong> — increases pop-out / soft-contact rate; makes the ball
+              harder to square up.
+            </Li>
+          </List>
+        </Li>
+        <Li>
+          <strong>Durability (Stamina)</strong> — shown separately and{" "}
+          <em>does not count toward the stat cap</em>. Controls how quickly a player tires within a
+          game:
+          <List>
+            <Li>
+              <strong>Batting Stamina</strong> — high-stamina batters stay sharp through their 4th+
+              plate appearance of the game; low-stamina batters start to lose contact and power
+              earlier.
+            </Li>
+            <Li>
+              <strong>Pitching Stamina</strong> — high-stamina starters can work deep into games
+              before their velocity and movement fade; low-stamina pitchers need to be pulled
+              earlier.
+            </Li>
+            <Li>
+              Unlike core stats, stamina can be adjusted after creation via the team edit page. It
+              resets to the player&apos;s configured value at the start of every game and does{" "}
+              <em>not</em> accumulate across games.
+            </Li>
+          </List>
         </Li>
       </List>
     </Section>

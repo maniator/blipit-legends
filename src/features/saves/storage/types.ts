@@ -1,4 +1,5 @@
 import type { State, Strategy } from "@feat/gameplay/context/index";
+import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
 
 /** Typed setup stored on the save header for deterministic game restore. */
 export interface GameSaveSetup {
@@ -8,6 +9,8 @@ export interface GameSaveSetup {
   managerMode: boolean;
   homeTeam: string;
   awayTeam: string;
+  /** Manager/AI decision tuning values at the time of save. Optional for backward compat. */
+  decisionValues?: ManagerDecisionValues;
 }
 
 /** Scored snapshot stored on the save header for quick display. */

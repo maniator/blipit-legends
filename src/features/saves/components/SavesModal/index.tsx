@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import type { Strategy } from "@feat/gameplay/context/index";
+import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
 import SaveSlotList from "@feat/saves/components/SaveSlotList";
 
 import type { SaveRecord } from "@storage/types";
@@ -24,6 +25,7 @@ interface Props {
   strategy: Strategy;
   managedTeam: 0 | 1;
   managerMode: boolean;
+  decisionValues?: ManagerDecisionValues;
   currentSaveId: string | null;
   onSaveIdChange: (id: string | null) => void;
   onLoadSave?: (slot: SaveRecord) => void;

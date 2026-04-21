@@ -55,6 +55,9 @@ const GameControls: React.FunctionComponent<Props> = ({
     setStrategy,
     managedTeam,
     setManagedTeam,
+    decisionValues,
+    setDecisionValues,
+    resetDecisionValues,
     teams,
     gameOver,
     notifPermission,
@@ -111,6 +114,7 @@ const GameControls: React.FunctionComponent<Props> = ({
             strategy={strategy}
             managedTeam={managedTeam}
             managerMode={managerMode}
+            decisionValues={decisionValues}
             currentSaveId={currentSaveId}
             onSaveIdChange={setCurrentSaveId}
             onLoadSave={onLoadSave}
@@ -176,10 +180,13 @@ const GameControls: React.FunctionComponent<Props> = ({
               notifPermission={notifPermission}
               gameStarted={gameStarted}
               gameOver={gameOver}
+              decisionValues={decisionValues}
               onManagerModeChange={handleManagerModeChange}
               onStrategyChange={(e) => setStrategy(e.target.value as Strategy)}
               onManagedTeamChange={(e) => setManagedTeam(Number(e.target.value) === 1 ? 1 : 0)}
               onRequestNotifPermission={handleRequestNotifPermission}
+              onDecisionValuesChange={setDecisionValues}
+              onDecisionValuesReset={resetDecisionValues}
             />
           )}
         </AutoPlayGroup>

@@ -11,6 +11,7 @@ import { makeReducer, makeState } from "@test/testHelpers";
 import { advanceRunners } from "./advanceRunners";
 import type { DecisionType } from "./decisionTypes";
 import type { State } from "./gameStateTypes";
+import { DEFAULT_MANAGER_DECISION_VALUES } from "./managerDecisionValues";
 import type { ModPreset, TeamCustomPlayerOverrides } from "./playerTypes";
 import { canProcessActionAfterGameOver, detectDecision } from "./reducer";
 
@@ -486,16 +487,16 @@ describe("detectDecision", () => {
       detectDecision(makeState({ gameOver: true, baseLayout: [1, 0, 0] }), "balanced", true),
     ).toBeNull();
   });
-  it("does NOT offer steal with balanced (pct=70 not > 72)", () => {
+  it(`does NOT offer steal with balanced (pct=70 not > ${DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct} default threshold)`, () => {
     const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "balanced", true);
     expect(d?.kind).not.toBe("steal");
   });
-  it("offers steal from 1st with aggressive (pct=91 > 72)", () => {
+  it(`offers steal from 1st with aggressive (pct=91 > ${DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct} default threshold)`, () => {
     const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "aggressive", true);
     expect(d?.kind).toBe("steal");
     if (d?.kind === "steal") {
       expect(d.base).toBe(0);
-      expect(d.successPct).toBeGreaterThan(72);
+      expect(d.successPct).toBeGreaterThan(DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct);
     }
   });
   it("does NOT offer steal from 2nd if 3rd is occupied (the reported bug)", () => {
@@ -553,13 +554,116 @@ describe("detectDecision", () => {
       )?.kind,
     ).not.toBe("ibb");
   });
-  it("offers bunt when runner on 1st, <2 outs, steal unavailable", () => {
-    const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "patient", true);
+  it("does NOT offer IBB with ibbEnabled=false in decisionValues", () => {
+    expect(
+      detectDecision(
+        makeState({ baseLayout: [0, 1, 0], outs: 2, inning: 7, score: [3, 2] }),
+        "balanced",
+        true,
+        { ...DEFAULT_MANAGER_DECISION_VALUES, ibbEnabled: false },
+      )?.kind,
+    ).not.toBe("ibb");
+  });
+  it("offers steal with lower stealMinOfferPct", () => {
+    // balanced pct=70; with threshold 69, 70 > 69 is true → steal offered
+    const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "balanced", true, {
+      ...DEFAULT_MANAGER_DECISION_VALUES,
+      stealMinOfferPct: 69,
+      aiStealThreshold: 65,
+    });
+    expect(d?.kind).toBe("steal");
+  });
+  it("does NOT offer steal with higher stealMinOfferPct", () => {
+    // aggressive pct=91; with threshold 95, 91 > 95 is false → no steal
+    const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "aggressive", true, {
+      ...DEFAULT_MANAGER_DECISION_VALUES,
+      stealMinOfferPct: 95,
+      aiStealThreshold: 90,
+    });
+    expect(d?.kind).not.toBe("steal");
+  });
+  it("offers bunt when runner on 1st, 0 outs, inning 6+, close game, steal unavailable", () => {
+    const d = detectDecision(
+      makeState({ baseLayout: [1, 0, 0], outs: 0, inning: 6, score: [0, 1] }),
+      "patient",
+      true,
+    );
     expect(d?.kind).toBe("bunt");
+  });
+  it("offers bunt with 1 out when runner on 2nd (scoring position)", () => {
+    // At 1-0 count, pinch_hitter (requires 0-0) does not fire — bunt is offered.
+    const d = detectDecision(
+      makeState({ baseLayout: [0, 1, 0], outs: 1, inning: 7, score: [0, 1], balls: 1 }),
+      "patient",
+      true,
+    );
+    expect(d?.kind).toBe("bunt");
+  });
+  it("does NOT offer bunt with 1 out and runner on 1st only (less run value)", () => {
+    const d = detectDecision(
+      makeState({ baseLayout: [1, 0, 0], outs: 1, inning: 7, score: [0, 1] }),
+      "patient",
+      true,
+    );
+    expect(d?.kind).not.toBe("bunt");
+  });
+  it("does NOT offer bunt on 0-2 count — count02 takes priority", () => {
+    const d = detectDecision(
+      makeState({ baseLayout: [1, 0, 0], outs: 0, inning: 7, score: [0, 1], balls: 0, strikes: 2 }),
+      "patient",
+      true,
+    );
+    expect(d?.kind).toBe("count02");
+    expect(d?.kind).not.toBe("bunt");
+  });
+  it("does NOT offer bunt on 1-2 count", () => {
+    const d = detectDecision(
+      makeState({ baseLayout: [1, 0, 0], outs: 0, inning: 7, score: [0, 1], balls: 1, strikes: 2 }),
+      "patient",
+      true,
+    );
+    expect(d?.kind).not.toBe("bunt");
+  });
+  it("does NOT offer bunt in early innings (inning < 6)", () => {
+    const d = detectDecision(
+      makeState({ baseLayout: [1, 0, 0], outs: 0, inning: 5, score: [0, 0] }),
+      "patient",
+      true,
+    );
+    expect(d?.kind).not.toBe("bunt");
+  });
+  it("does NOT offer bunt when score gap > 2", () => {
+    const d = detectDecision(
+      makeState({ baseLayout: [1, 0, 0], outs: 0, inning: 7, score: [0, 5] }),
+      "patient",
+      true,
+    );
+    expect(d?.kind).not.toBe("bunt");
+  });
+  it("does NOT offer bunt on 2-ball count or higher", () => {
+    const d = detectDecision(
+      makeState({ baseLayout: [1, 0, 0], outs: 0, inning: 7, score: [0, 1], balls: 2 }),
+      "patient",
+      true,
+    );
+    expect(d?.kind).not.toBe("bunt");
+  });
+  it("does NOT offer bunt with buntEnabled=false", () => {
+    const d = detectDecision(
+      makeState({ baseLayout: [1, 0, 0], outs: 0, inning: 7, score: [0, 1] }),
+      "patient",
+      true,
+      { ...DEFAULT_MANAGER_DECISION_VALUES, buntEnabled: false },
+    );
+    expect(d?.kind).not.toBe("bunt");
   });
   it("does NOT offer bunt with 2 outs", () => {
     expect(
-      detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 2 }), "patient", true)?.kind,
+      detectDecision(
+        makeState({ baseLayout: [1, 0, 0], outs: 2, inning: 7, score: [0, 0] }),
+        "patient",
+        true,
+      )?.kind,
     ).not.toBe("bunt");
   });
   it("offers count30 on 3-0 count", () => {
