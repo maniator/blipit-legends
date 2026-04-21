@@ -15,8 +15,9 @@ import { loadFixture, resetAppState } from "../utils/helpers";
  * All selectors are `data-testid` / `aria-label` based so the test is robust
  * to copy edits.
  *
- * Uses the `pending-decision.json` fixture which already has `managerMode=true`,
- * so the Decision Tuning toggle is mounted immediately — no autoplay required.
+ * Uses the `pending-decision.json` fixture which has `managerMode=true`.
+ * Note: the Decision Tuning toggle is always visible regardless of Manager Mode
+ * (it controls AI behavior too), so no autoplay is required.
  */
 test.describe("Manager Mode — Decision Tuning panel", () => {
   test.beforeEach(async ({ page }) => {
