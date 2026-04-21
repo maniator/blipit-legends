@@ -47,14 +47,17 @@ test.describe("Manager Mode — Decision Tuning panel", () => {
     await expect(stealTooltip).toBeVisible();
     await expect(buntTooltip).toBeVisible();
 
-    // Helper: park the cursor at the top-left so the desktop `:hover`
-    // CSS rule on the Bubble does not keep a popover visible after we
-    // click-to-toggle on a hover-capable device. The mobile projects are
-    // unaffected (no hover state); calling this is a no-op there.
-    const clearHover = () => page.mouse.move(0, 0);
+    /**
+     * Park the mouse cursor at (0, 0) so the desktop `:hover` CSS rule on the
+     * tooltip Bubble (see `src/shared/components/TouchTooltip/styles.ts`) does
+     * not keep a popover visible after we click-to-toggle the trigger on a
+     * hover-capable device. Required only for desktop / tablet projects;
+     * mobile projects have no hover state, so this is a no-op there.
+     */
+    const moveCursorAwayToClearHover = () => page.mouse.move(0, 0);
 
     // ── Initial state ──────────────────────────────────────────────────────
-    await clearHover();
+    await moveCursorAwayToClearHover();
     await expect(stealTooltip).toHaveAttribute("aria-expanded", "false");
     await expect(buntTooltip).toHaveAttribute("aria-expanded", "false");
 
@@ -78,7 +81,7 @@ test.describe("Manager Mode — Decision Tuning panel", () => {
 
     // ── Tap again to close ─────────────────────────────────────────────────
     await stealTooltip.click();
-    await clearHover();
+    await moveCursorAwayToClearHover();
     await expect(stealTooltip).toHaveAttribute("aria-expanded", "false");
     await expect(page.getByRole("tooltip").filter({ visible: true })).toHaveCount(0);
 
@@ -87,7 +90,7 @@ test.describe("Manager Mode — Decision Tuning panel", () => {
     await expect(stealTooltip).toHaveAttribute("aria-expanded", "true");
 
     await buntTooltip.click();
-    await clearHover();
+    await moveCursorAwayToClearHover();
     await expect(buntTooltip).toHaveAttribute("aria-expanded", "true");
     await expect(stealTooltip).toHaveAttribute("aria-expanded", "false");
 

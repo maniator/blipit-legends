@@ -22,6 +22,14 @@ interface Props {
   onReset: () => void;
 }
 
+/**
+ * Half-width of the "Modern" label deadband around the default
+ * AI-pitching-aggressiveness value (50). Anything within ±MODERN_DEADBAND of
+ * the default reads as "Modern" so small slider nudges don't flip the label
+ * between Old-school / Modern / Bullpen.
+ */
+const MODERN_DEADBAND = 4;
+
 const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
   values,
   onChange,
@@ -193,14 +201,15 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
               />
               <DecisionRowValue data-testid="ai-pitching-aggressiveness-value">
                 {/*
-                  Modern label deadband: anything within ±4 of the default 50 reads as
-                  "Modern" so small slider nudges don't flip the label. Below the band =
+                  Modern label deadband (see MODERN_DEADBAND constant): anything
+                  within ±MODERN_DEADBAND of the default 50 reads as "Modern" so
+                  small slider nudges don't flip the label. Below the band =
                   Old-school; above the band = Bullpen.
                 */}
                 {Math.abs(
                   values.aiPitchingChangeAggressiveness -
                     DEFAULT_MANAGER_DECISION_VALUES.aiPitchingChangeAggressiveness,
-                ) <= 4
+                ) <= MODERN_DEADBAND
                   ? `Modern (${values.aiPitchingChangeAggressiveness})`
                   : values.aiPitchingChangeAggressiveness <
                       DEFAULT_MANAGER_DECISION_VALUES.aiPitchingChangeAggressiveness

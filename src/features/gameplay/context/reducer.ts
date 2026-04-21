@@ -93,6 +93,8 @@ export const detectDecision = (
   // negative = batting team trailing, 0 = tied, positive = batting team leading.
   // Used to gate tactics that only make sense when the batting team is not
   // ahead (sacrifice bunt) or when the defense is not far behind (IBB).
+  // atBat=0 → away batting (score[0] is the batter's team), so diff = away − home;
+  // atBat=1 → home batting, so diff = home − away.
   const scoreDiffForBattingTeam =
     state.atBat === 0 ? state.score[0] - state.score[1] : state.score[1] - state.score[0];
 
