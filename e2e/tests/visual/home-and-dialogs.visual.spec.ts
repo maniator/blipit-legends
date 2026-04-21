@@ -151,7 +151,7 @@ test.describe("Visual — Help page", () => {
       while ((await closedSummaries.count()) > 0) {
         await closedSummaries.first().click();
       }
-      await expect(page.locator('[data-testid="help-page"] details[open]')).toHaveCount(10);
+      await expect(page.locator('[data-testid="help-page"] details[open]')).toHaveCount(11);
 
       // Snapshot at the initial scroll position (top of page).
       await expect(page.getByTestId("help-page")).toHaveScreenshot(

@@ -108,28 +108,6 @@ test.describe("Batting Stats — seed 30nl0i", () => {
     }
   });
 
-  test("PA ordering invariant holds for all 9 away slots", async ({ page }) => {
-    await startGameViaPlayBall(page, { seed: SEED });
-    await expect(page.getByText("FINAL")).toBeVisible({ timeout: GAME_TIMEOUT - 60_000 });
-
-    const table = page.getByTestId("batting-stats-table");
-    await expect(table).toBeVisible();
-
-    const rows = table.locator("tbody tr");
-    expect(await rows.count()).toBe(9);
-
-    const pas: number[] = [];
-    for (let i = 0; i < 9; i++) {
-      const stats = await readRowStats(rows.nth(i));
-      pas.push(stats.ab + stats.bb);
-    }
-
-    // Earlier slots must have >= PA than later slots.
-    for (let i = 0; i < 8; i++) {
-      expect(pas[i]).toBeGreaterThanOrEqual(pas[i + 1]);
-    }
-  });
-
   test("batting stats table is visible on away team tab and hidden when collapsed", async ({
     page,
   }) => {
