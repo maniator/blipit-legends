@@ -95,14 +95,13 @@ const LeagueDetailPage: React.FunctionComponent = () => {
     setStartingSeason(true);
     try {
       await leagueSeasonStore.markSeasonActive(season.id);
-      // Force season reload by navigating to same page
-      navigate(0);
+      setRefreshKey((k) => k + 1);
     } catch {
       // Ignore — season state will remain pending
     } finally {
       setStartingSeason(false);
     }
-  }, [season, navigate]);
+  }, [season]);
 
   // Tracks which game is currently launching (prevents double-click).
   const [launchingGameId, setLaunchingGameId] = React.useState<string | null>(null);
