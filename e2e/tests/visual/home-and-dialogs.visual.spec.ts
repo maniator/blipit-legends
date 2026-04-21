@@ -208,18 +208,18 @@ test.describe("Visual — Saves page", () => {
   );
 });
 
-// ─── Home page — League play teaser ──────────────────────────────────────────
+// ─── Home page — League Mode button ──────────────────────────────────────────
 /**
- * Desktop-only snapshot that captures the "League play coming soon" teaser
- * that appears on the Home screen below the main menu.
+ * Desktop-only snapshot that captures the home screen with the League Mode
+ * button, confirming it appears in the main menu.
  */
-test.describe("Visual — Home League teaser", { tag: "@desktop-only" }, () => {
-  test("home screen with league teaser (desktop)", async ({ page }) => {
+test.describe("Visual — Home League Mode button", { tag: "@desktop-only" }, () => {
+  test("home screen with league mode button (desktop)", async ({ page }) => {
     await resetAppState(page);
     await disableAnimations(page);
     await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId("league-play-teaser")).toBeVisible();
-    await expect(page.getByTestId("home-screen")).toHaveScreenshot("home-league-teaser.png", {
+    await expect(page.getByTestId("home-league-button")).toBeVisible();
+    await expect(page.getByTestId("home-screen")).toHaveScreenshot("home-league-button.png", {
       maxDiffPixelRatio: 0.05,
     });
   });

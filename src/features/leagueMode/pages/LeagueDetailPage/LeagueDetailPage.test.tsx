@@ -308,8 +308,8 @@ describe("LeagueDetailPage", () => {
   });
 
   /**
-   * Regression: clicking Box Score for a headless-simulated game must display
-   * the inline final score instead of "Box score unavailable".
+   * Clicking Box Score for a headless-simulated game must display
+   * the inning-by-inning score from the game record.
    */
   it("shows inline score instead of 'Box score unavailable' for a headless-simulated game (no save record)", () => {
     vi.mocked(useLeagueSeason).mockReturnValue({
@@ -330,6 +330,8 @@ describe("LeagueDetailPage", () => {
           homeScore: 6,
           awayScore: 3,
           winnerId: "team_b",
+          awayInningRuns: [1, 0, 2, 0, 0, 0, 0, 0, 0],
+          homeInningRuns: [0, 2, 0, 1, 0, 0, 1, 1, 1],
           schemaVersion: 0,
         },
       ],

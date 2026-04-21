@@ -184,6 +184,9 @@ export async function simulateGameDay(
 
     // Persist inning-by-inning scores on the ScheduledGameRecord so the
     // box score panel can show a full inning breakdown without a save record.
+    // completedGameId is the game instance UUID (used for career stats tracking).
+    // For headless-simulated games there is no save record in db.saves — the box
+    // score is rendered directly from the awayInningRuns / homeInningRuns fields.
     await scheduledGameStore.markScheduledGameCompleted(game.id, gameInstanceId, {
       winnerId: result.winnerId,
       homeScore: result.homeScore,

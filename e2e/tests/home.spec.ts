@@ -188,23 +188,22 @@ test.describe("Home Screen", () => {
   });
 });
 
-test.describe("Home page League teaser", () => {
+test.describe("Home page League Mode", () => {
   test.beforeEach(async ({ page }) => {
     await resetAppState(page);
   });
 
-  test("Home page shows 'League play coming soon' teaser", async ({ page }) => {
+  test("Home page shows a League Mode button", async ({ page }) => {
     await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId("league-play-teaser")).toBeVisible();
-    await expect(page.getByTestId("league-play-teaser")).toContainText(/league play coming soon/i);
+    await expect(page.getByTestId("home-league-button")).toBeVisible();
+    await expect(page.getByTestId("home-league-button")).toContainText(/league mode/i);
   });
 
-  test("League teaser is not a clickable link", async ({ page }) => {
+  test("League Mode button is a clickable button", async ({ page }) => {
     await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
-    const teaser = page.getByTestId("league-play-teaser");
-    await expect(teaser).toBeVisible();
-    // The teaser box is not a button or anchor — it's a non-interactive element
-    const tagName = await teaser.evaluate((el) => el.tagName.toLowerCase());
-    expect(["div", "section", "aside", "p", "span"]).toContain(tagName);
+    const leagueBtn = page.getByTestId("home-league-button");
+    await expect(leagueBtn).toBeVisible();
+    const tagName = await leagueBtn.evaluate((el) => el.tagName.toLowerCase());
+    expect(tagName).toBe("button");
   });
 });

@@ -44,7 +44,7 @@ export function buildScheduledGameStore(getDbFn: GetDb) {
 
     async markScheduledGameCompleted(
       scheduledGameId: string,
-      completedGameId: string,
+      completedGameId: string | null | undefined,
       result?: {
         winnerId: string;
         homeScore: number;
@@ -65,7 +65,7 @@ export function buildScheduledGameStore(getDbFn: GetDb) {
       if (result) {
         await doc.patch({
           status: "completed",
-          completedGameId,
+          ...(completedGameId != null && { completedGameId }),
           winnerId: result.winnerId,
           homeScore: result.homeScore,
           awayScore: result.awayScore,
@@ -73,7 +73,10 @@ export function buildScheduledGameStore(getDbFn: GetDb) {
           ...(result.homeInningRuns !== undefined && { homeInningRuns: result.homeInningRuns }),
         });
       } else {
-        await doc.patch({ status: "completed", completedGameId });
+        await doc.patch({
+          status: "completed",
+          ...(completedGameId != null && { completedGameId }),
+        });
       }
     },
   };

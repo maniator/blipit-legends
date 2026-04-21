@@ -418,40 +418,6 @@ export const BoxScorePanel = styled.div`
   }
 `;
 
-export const BoxScoreTable = styled.table`
-  border-collapse: collapse;
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  min-width: max-content;
-
-  th,
-  td {
-    padding: 2px ${({ theme }) => theme.spacing.xs};
-    text-align: center;
-    color: ${({ theme }) => theme.colors.textBody};
-    border-bottom: 1px solid ${({ theme }) => theme.colors.borderSubtle};
-    white-space: nowrap;
-  }
-
-  th {
-    color: ${({ theme }) => theme.colors.textHint};
-    font-weight: 600;
-    font-size: ${({ theme }) => theme.fontSizes.xs};
-  }
-
-  td:first-child,
-  th:first-child {
-    text-align: left;
-    min-width: 80px;
-  }
-
-  td:last-child,
-  th:last-child {
-    font-weight: 700;
-    padding-left: ${({ theme }) => theme.spacing.sm};
-    border-left: 1px solid ${({ theme }) => theme.colors.borderPanel};
-  }
-`;
-
 export const BoxScoreStatusText = styled.p`
   color: ${({ theme }) => theme.colors.textHint};
   font-size: ${({ theme }) => theme.fontSizes.sm};
