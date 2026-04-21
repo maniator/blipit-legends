@@ -280,6 +280,19 @@ export const DecisionTuningToggle = styled.button`
   }
 `;
 
+export const DecisionTuningBackdrop = styled.div`
+  ${mq.notMobile} {
+    display: none;
+  }
+
+  ${mq.mobile} {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.4);
+  }
+`;
+
 export const DecisionTuningPanel = styled.div`
   display: flex;
   flex-direction: column;
@@ -292,9 +305,17 @@ export const DecisionTuningPanel = styled.div`
   max-width: 340px;
 
   ${mq.mobile} {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 201;
     min-width: 0;
     max-width: 100%;
-    padding: ${({ theme }) => theme.spacing.s6} ${({ theme }) => theme.spacing.sm};
+    max-height: 75dvh;
+    overflow-y: auto;
+    border-radius: 12px 12px 0 0;
+    padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.md};
   }
 `;
 
