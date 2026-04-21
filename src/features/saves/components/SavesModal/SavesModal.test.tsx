@@ -482,6 +482,39 @@ describe("SavesModal", () => {
     expect(hasFunction(storedState)).toBe(false);
   });
 
+  it("forwards setup (incl. decisionValues) to updateProgress on overwrite so user changes are not lost", async () => {
+    const { useSaveStore } = await import("@feat/saves/hooks/useSaveStore");
+    const { DEFAULT_MANAGER_DECISION_VALUES } =
+      await import("@feat/gameplay/context/managerDecisionValues");
+    const mockUpdateProgress = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useSaveStore).mockReturnValue(makeMockStore({ updateProgress: mockUpdateProgress }));
+    const customDecisionValues = {
+      ...DEFAULT_MANAGER_DECISION_VALUES,
+      stealMinOfferPct: 80,
+      aiStealThreshold: 70,
+      buntEnabled: false,
+      aiPitchingChangeAggressiveness: 90,
+    };
+    renderModal({
+      currentSaveId: "save_1",
+      gameStarted: true,
+      managerMode: true,
+      strategy: "aggressive",
+      decisionValues: customDecisionValues,
+    });
+    await openPanel();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /update save/i }));
+      await vi.waitFor(() => expect(mockUpdateProgress).toHaveBeenCalled());
+    });
+    const [, , summary] = mockUpdateProgress.mock.calls[0];
+    const setup = (summary as { setup?: GameSaveSetup }).setup;
+    expect(setup).toBeDefined();
+    expect(setup?.decisionValues).toEqual(customDecisionValues);
+    expect(setup?.strategy).toBe("aggressive");
+    expect(setup?.managerMode).toBe(true);
+  });
+
   it("preserves custom team IDs in snapshot state when onLoadSave is called (resolved only at presentation time)", async () => {
     const { useSaveStore } = await import("@feat/saves/hooks/useSaveStore");
     const snapState = makeState({ teams: ["custom:ct_abc", "Home"] as [string, string] });

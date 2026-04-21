@@ -67,6 +67,15 @@ const computeStealSuccessPct = (base: 0 | 1, strategy: Strategy, state: State): 
  *
  * @param decisionValues - Optional runtime tuning values. Defaults to
  *   DEFAULT_MANAGER_DECISION_VALUES so existing callers are unaffected.
+ *
+ * @internal-ai-caller
+ *   The default `stealMinOfferPct` (and the `stealMinOfferPct` field in
+ *   general) is the threshold at which the **human manager** is prompted —
+ *   it is intentionally higher than the AI's own steal gate. AI callers
+ *   (e.g. usePitchDispatch on the unmanaged team) must override
+ *   `stealMinOfferPct` with `decisionValues.aiStealThreshold` before
+ *   calling `detectDecision`; relying on the default would gate AI steals
+ *   at the human-prompt threshold and silently change AI behavior.
  */
 export const detectDecision = (
   state: State,
@@ -80,6 +89,14 @@ export const detectDecision = (
 
   const { baseLayout, outs, balls, strikes } = state;
   const scoreDiff = Math.abs(state.score[0] - state.score[1]);
+  // Signed run differential from the *batting* team's perspective:
+  // negative = batting team trailing, 0 = tied, positive = batting team leading.
+  // Used to gate tactics that only make sense when the batting team is not
+  // ahead (sacrifice bunt) or when the defense is not far behind (IBB).
+  // atBat=0 → away batting (score[0] is the batter's team), so diff = away − home;
+  // atBat=1 → home batting, so diff = home − away.
+  const scoreDiffForBattingTeam =
+    state.atBat === 0 ? state.score[0] - state.score[1] : state.score[1] - state.score[0];
 
   const ibbAvailable =
     decisionValues.ibbEnabled &&
@@ -87,10 +104,13 @@ export const detectDecision = (
     (baseLayout[1] || baseLayout[2]) &&
     outs === 2 &&
     state.inning >= 7 &&
-    scoreDiff <= 2;
+    scoreDiff <= 2 &&
+    // Defense should not be down by more than 1 — issuing a free baserunner
+    // when already trailing by 2+ stacks bad outcomes against you.
+    scoreDiffForBattingTeam <= 1;
 
   let stealDecision: { kind: "steal"; base: 0 | 1; successPct: number } | null = null;
-  if (outs < 2) {
+  if (decisionValues.stealEnabled && outs < 2) {
     if (baseLayout[0] && !baseLayout[1]) {
       const pct = computeStealSuccessPct(0, strategy, state);
       if (pct > decisionValues.stealMinOfferPct)
@@ -207,10 +227,11 @@ export const detectDecision = (
   }
 
   // Sacrifice bunt: requires situational context to avoid offering in clearly
-  // non-bunt situations (e.g. inning 1 up by 4 runs).
-  // The AI bunt path (makeAiTacticalDecision) uses tighter criteria (inning >= 7,
-  // tied-or-trailing, exactly 0 outs); the human prompt is offered one inning
-  // earlier and without requiring the team to be trailing, to give flexibility.
+  // non-bunt situations (e.g. inning 1 up by 4 runs, or any inning when leading).
+  // The human prompt is offered when tied or trailing by 1–2 runs in inning ≥ 6
+  // (one inning earlier than the AI's inning ≥ 7 trigger, for managerial
+  // flexibility). Bunting while leading is omitted because giving up an out
+  // for a one-base advance reduces win expectancy when already ahead.
   // With 1 out the bunt is only offered when there is already a runner in
   // scoring position (2nd base), where the advance has clearest run value.
   if (
@@ -221,7 +242,8 @@ export const detectDecision = (
     strikes < 2 &&
     balls <= 1 &&
     state.inning >= 6 &&
-    scoreDiff <= 2
+    scoreDiffForBattingTeam <= 0 &&
+    scoreDiffForBattingTeam >= -2
   ) {
     return { kind: "bunt" };
   }

@@ -67,13 +67,17 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
   const cap = isPitcher ? PITCHER_STAT_CAP : HITTER_STAT_CAP;
   const shouldShowOverCapWarning = !isExistingPlayer && overCap;
 
-  const statRow = (
+  // Shared row renderer for all stat sliders. The only difference between a
+  // core-stat row and a stamina row is the `locked` flag: core stats are
+  // identity-locked after player creation; stamina (conditioning) stays editable.
+  const renderRow = (
     label: string,
     val: number,
     htmlFor: string,
     toPatch: (n: number) => EditorPlayerPatch,
+    locked: boolean,
   ) => (
-    <StatRow key={`stat-${htmlFor}`} $locked={isExistingPlayer}>
+    <StatRow key={`stat-${htmlFor}`} $locked={locked}>
       <StatLabel htmlFor={htmlFor}>{label}</StatLabel>
       <StatInput
         id={htmlFor}
@@ -81,16 +85,23 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
         min={0}
         max={100}
         value={val}
-        disabled={isExistingPlayer}
+        disabled={locked}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           // Guard in addition to `disabled` — jsdom fires change events on disabled
           // elements via fireEvent, so the explicit check keeps tests meaningful.
-          if (!isExistingPlayer) onChange(toPatch(Number(e.target.value)));
+          if (!locked) onChange(toPatch(Number(e.target.value)));
         }}
       />
       <StatValue>{val}</StatValue>
     </StatRow>
   );
+
+  const statRow = (
+    label: string,
+    val: number,
+    htmlFor: string,
+    toPatch: (n: number) => EditorPlayerPatch,
+  ) => renderRow(label, val, htmlFor, toPatch, isExistingPlayer);
 
   // Stamina is conditioning, not innate talent — editable even after player creation.
   const staminaRow = (
@@ -98,22 +109,7 @@ const PlayerStatFields: React.FunctionComponent<Props> = ({
     val: number,
     htmlFor: string,
     toPatch: (n: number) => EditorPlayerPatch,
-  ) => (
-    <StatRow key={`stat-${htmlFor}`} $locked={false}>
-      <StatLabel htmlFor={htmlFor}>{label}</StatLabel>
-      <StatInput
-        id={htmlFor}
-        type="range"
-        min={0}
-        max={100}
-        value={val}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          onChange(toPatch(Number(e.target.value)));
-        }}
-      />
-      <StatValue>{val}</StatValue>
-    </StatRow>
-  );
+  ) => renderRow(label, val, htmlFor, toPatch, false);
 
   return (
     <>

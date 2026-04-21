@@ -426,7 +426,7 @@ describe("usePitchDispatch — AI intentional walk (pitch-replacing)", () => {
       baseLayout: [0, 1, 0],
       outs: 2,
       inning: 7,
-      score: [3, 1], // diff = 2, within threshold
+      score: [1, 2], // batting team (away) trailing by 1: defense is not down, so IBB is allowed
       balls: 0,
       strikes: 0,
       suppressNextDecision: false,

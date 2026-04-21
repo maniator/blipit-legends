@@ -79,6 +79,32 @@ const GameControls: React.FunctionComponent<Props> = ({
   ];
   const speedIndex = Math.max(0, (SPEED_STEPS as readonly number[]).indexOf(speed));
 
+  // Auto-pause the simulation while the Decision Tuning bottom-sheet is open
+  // on mobile (where it covers the field and the pause button), then restore
+  // the prior pause state on close. On desktop the panel is small and inline,
+  // so we leave the sim running.
+  const pausedBeforePanelRef = React.useRef<boolean | null>(null);
+  const handleDecisionPanelOpenChange = React.useCallback(
+    (open: boolean) => {
+      const isMobile =
+        typeof window !== "undefined" &&
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(max-width: 768px)").matches;
+      if (!isMobile) return;
+      if (open) {
+        if (pausedBeforePanelRef.current === null) {
+          pausedBeforePanelRef.current = paused;
+          if (!paused) setPaused(true);
+        }
+      } else if (pausedBeforePanelRef.current !== null) {
+        const prior = pausedBeforePanelRef.current;
+        pausedBeforePanelRef.current = null;
+        if (paused !== prior) setPaused(prior);
+      }
+    },
+    [paused, setPaused],
+  );
+
   return (
     <>
       <Controls>
@@ -187,6 +213,7 @@ const GameControls: React.FunctionComponent<Props> = ({
               onRequestNotifPermission={handleRequestNotifPermission}
               onDecisionValuesChange={setDecisionValues}
               onDecisionValuesReset={resetDecisionValues}
+              onDecisionPanelOpenChange={handleDecisionPanelOpenChange}
             />
           )}
         </AutoPlayGroup>

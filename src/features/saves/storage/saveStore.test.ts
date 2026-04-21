@@ -233,6 +233,31 @@ describe("SaveStore.updateProgress", () => {
     expect(doc?.stateSnapshot?.rngState).toBe(99);
   });
 
+  it("stores refreshed setup when provided (overwrite path persists decisionValues / strategy / managerMode)", async () => {
+    const saveId = await store.createSave(makeSetup());
+    const refreshedSetup = {
+      strategy: "aggressive" as const,
+      managedTeam: 0 as const,
+      managerMode: true,
+      homeTeam: "Yankees",
+      awayTeam: "Mets",
+      decisionValues: {
+        stealMinOfferPct: 80,
+        aiStealThreshold: 70,
+        stealEnabled: true,
+        buntEnabled: false,
+        ibbEnabled: true,
+        pinchHitterEnabled: true,
+        defensiveShiftEnabled: true,
+        aiPitchingChangeAggressiveness: 90,
+      },
+    };
+    await store.updateProgress(saveId, 7, { setup: refreshedSetup });
+    const doc = await db.saves.findOne(saveId).exec();
+    expect(doc?.setup).toEqual(refreshedSetup);
+    expect(doc?.progressIdx).toBe(7);
+  });
+
   it("silently resolves for an unknown saveId (save deleted between game start and game over)", async () => {
     await expect(store.updateProgress("nonexistent", 0)).resolves.toBeUndefined();
   });

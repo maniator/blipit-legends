@@ -109,11 +109,15 @@ export const useSavesModal = ({
     };
 
     if (currentSaveId) {
-      // Update the existing save with a fresh state snapshot.
+      // Update the existing save with a fresh state snapshot.  Also forward the
+      // freshly-built `setup` so any changes the user made to decisionValues,
+      // strategy, managerMode, or team selection since the original save are
+      // persisted on overwrite (otherwise they would be silently lost).
       updateProgress(currentSaveId, pitchKey, {
         scoreSnapshot: { away: fullState.score[0], home: fullState.score[1] },
         inningSnapshot: { inning: fullState.inning, atBat: fullState.atBat },
         stateSnapshot: { state: fullState, rngState: getRngState() },
+        setup,
       })
         .then(() => {
           log("Game saved!");

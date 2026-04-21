@@ -280,6 +280,29 @@ export const DecisionTuningToggle = styled.button`
   }
 `;
 
+export const DecisionTuningBackdrop = styled.div`
+  /* When rendered as a button via the styled-components 'as' prop, reset
+     native button styles so the visual remains a plain backdrop. */
+  appearance: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+
+  ${mq.mobile} {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+  }
+
+  ${mq.notMobile} {
+    display: none;
+  }
+`;
+
 export const DecisionTuningPanel = styled.div`
   display: flex;
   flex-direction: column;
@@ -292,18 +315,60 @@ export const DecisionTuningPanel = styled.div`
   max-width: 340px;
 
   ${mq.mobile} {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 201;
     min-width: 0;
     max-width: 100%;
-    padding: ${({ theme }) => theme.spacing.s6} ${({ theme }) => theme.spacing.sm};
+    max-height: 75dvh;
+    overflow-y: auto;
+    border-radius: 12px 12px 0 0;
+    padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.md};
   }
+`;
+
+export const DecisionPanelTitleRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.xs};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.borderForm};
+  padding-bottom: ${({ theme }) => theme.spacing.xs};
 `;
 
 export const DecisionPanelTitle = styled.div`
   font-size: ${({ theme }) => theme.fontSizes.base};
   font-weight: bold;
   color: ${({ theme }) => theme.colors.textPrimary};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.borderForm};
-  padding-bottom: ${({ theme }) => theme.spacing.xs};
+`;
+
+export const DecisionPanelClose = styled.button`
+  background: transparent;
+  border: 1px solid transparent;
+  color: ${({ theme }) => theme.colors.textSecondaryLink};
+  font-size: ${({ theme }) => theme.fontSizes.base};
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: ${({ theme }) => theme.radii.sm};
+  flex-shrink: 0;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.bgSurface};
+    border-color: ${({ theme }) => theme.colors.borderForm};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 2px;
+  }
 `;
 
 export const DecisionPanelSection = styled.div`
@@ -312,11 +377,12 @@ export const DecisionPanelSection = styled.div`
   gap: ${({ theme }) => theme.spacing.xs};
 `;
 
-export const DecisionRow = styled.div`
+export const DecisionRow = styled.div<{ $disabled?: boolean }>`
   display: grid;
   grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.s6};
+  opacity: ${({ $disabled }) => ($disabled ? 0.45 : 1)};
 
   input[type="range"] {
     accent-color: ${({ theme }) => theme.colors.accentPrimary};
@@ -325,6 +391,10 @@ export const DecisionRow = styled.div`
 
     ${mq.mobile} {
       width: 60px;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
     }
   }
 `;

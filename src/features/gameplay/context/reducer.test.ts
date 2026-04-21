@@ -582,6 +582,15 @@ describe("detectDecision", () => {
     });
     expect(d?.kind).not.toBe("steal");
   });
+  it("does NOT offer steal with stealEnabled=false in decisionValues (master switch)", () => {
+    // aggressive pct=91 normally clears the default 72 threshold and offers steal.
+    // With stealEnabled=false, the entire steal block is skipped.
+    const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "aggressive", true, {
+      ...DEFAULT_MANAGER_DECISION_VALUES,
+      stealEnabled: false,
+    });
+    expect(d?.kind).not.toBe("steal");
+  });
   it("offers bunt when runner on 1st, 0 outs, inning 6+, close game, steal unavailable", () => {
     const d = detectDecision(
       makeState({ baseLayout: [1, 0, 0], outs: 0, inning: 6, score: [0, 1] }),
@@ -665,6 +674,36 @@ describe("detectDecision", () => {
         true,
       )?.kind,
     ).not.toBe("bunt");
+  });
+  it("does NOT offer bunt when batting team is leading by 1 (tied-or-trailing only)", () => {
+    // Batting team (away, atBat=0) leads by 1 — bunting reduces win expectancy
+    // when already ahead, so no bunt is offered even though the situational
+    // criteria (inning, base layout, count) are otherwise met.
+    const d = detectDecision(
+      makeState({ baseLayout: [1, 0, 0], outs: 0, inning: 7, score: [1, 0] }),
+      "patient",
+      true,
+    );
+    expect(d?.kind).not.toBe("bunt");
+  });
+  it("offers bunt when batting team is tied late in a close game", () => {
+    const d = detectDecision(
+      makeState({ baseLayout: [1, 0, 0], outs: 0, inning: 7, score: [0, 0] }),
+      "patient",
+      true,
+    );
+    expect(d?.kind).toBe("bunt");
+  });
+  it("does NOT offer IBB when defense (home, fielding) is trailing by 2+", () => {
+    // atBat=0 → away batting, home fielding. Score [3,1] → batting team leads
+    // by 2, so defense trails by 2. Issuing a free baserunner while already
+    // trailing by 2+ stacks bad outcomes; no IBB is offered.
+    const d = detectDecision(
+      makeState({ baseLayout: [0, 1, 0], outs: 2, inning: 7, score: [3, 1] }),
+      "balanced",
+      true,
+    );
+    expect(d?.kind).not.toBe("ibb");
   });
   it("offers count30 on 3-0 count", () => {
     expect(detectDecision(makeState({ balls: 3, strikes: 0 }), "balanced", true)?.kind).toBe(

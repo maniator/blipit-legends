@@ -25,6 +25,7 @@ type Props = {
   onRequestNotifPermission: () => void;
   onDecisionValuesChange: (values: ManagerDecisionValues) => void;
   onDecisionValuesReset: () => void;
+  onDecisionPanelOpenChange?: (open: boolean) => void;
 };
 
 /** Inner sub-component that accesses game context for the substitution button. */
@@ -100,6 +101,7 @@ const ManagerModeControls: React.FunctionComponent<Props> = ({
   onRequestNotifPermission,
   onDecisionValuesChange,
   onDecisionValuesReset,
+  onDecisionPanelOpenChange,
 }) => (
   <>
     <ToggleLabel>
@@ -131,11 +133,6 @@ const ManagerModeControls: React.FunctionComponent<Props> = ({
           </Select>
         </ToggleLabel>
         {gameStarted && !gameOver && <SubstitutionButton managedTeam={managedTeam} teams={teams} />}
-        <ManagerDecisionValuesPanel
-          values={decisionValues}
-          onChange={onDecisionValuesChange}
-          onReset={onDecisionValuesReset}
-        />
         {notifPermission === "granted" && (
           <NotifBadge $ok={true} data-testid="notif-permission-badge">
             🔔 on
@@ -162,6 +159,12 @@ const ManagerModeControls: React.FunctionComponent<Props> = ({
         )}
       </>
     )}
+    <ManagerDecisionValuesPanel
+      values={decisionValues}
+      onChange={onDecisionValuesChange}
+      onReset={onDecisionValuesReset}
+      onOpenChange={onDecisionPanelOpenChange}
+    />
   </>
 );
 

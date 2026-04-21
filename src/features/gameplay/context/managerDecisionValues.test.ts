@@ -11,17 +11,17 @@ describe("sanitizeManagerDecisionValues", () => {
     expect(result).toEqual(DEFAULT_MANAGER_DECISION_VALUES);
   });
 
-  it("clamps stealMinOfferPct to [62, 85]", () => {
-    expect(sanitizeManagerDecisionValues({ stealMinOfferPct: 10 }).stealMinOfferPct).toBe(62);
+  it("clamps stealMinOfferPct to [65, 85]", () => {
+    expect(sanitizeManagerDecisionValues({ stealMinOfferPct: 10 }).stealMinOfferPct).toBe(65);
     expect(sanitizeManagerDecisionValues({ stealMinOfferPct: 999 }).stealMinOfferPct).toBe(85);
     expect(sanitizeManagerDecisionValues({ stealMinOfferPct: 72 }).stealMinOfferPct).toBe(72);
   });
 
-  it("clamps aiStealThreshold to [62, stealMinOfferPct]", () => {
+  it("clamps aiStealThreshold to [65, stealMinOfferPct]", () => {
     expect(
       sanitizeManagerDecisionValues({ stealMinOfferPct: 70, aiStealThreshold: 40 })
         .aiStealThreshold,
-    ).toBe(62);
+    ).toBe(65);
     // aiStealThreshold can't exceed stealMinOfferPct
     expect(
       sanitizeManagerDecisionValues({ stealMinOfferPct: 65, aiStealThreshold: 80 })
@@ -79,11 +79,13 @@ describe("sanitizeManagerDecisionValues", () => {
 
   it("accepts valid boolean false for toggles", () => {
     const result = sanitizeManagerDecisionValues({
+      stealEnabled: false,
       buntEnabled: false,
       ibbEnabled: false,
       pinchHitterEnabled: false,
       defensiveShiftEnabled: false,
     });
+    expect(result.stealEnabled).toBe(false);
     expect(result.buntEnabled).toBe(false);
     expect(result.ibbEnabled).toBe(false);
     expect(result.pinchHitterEnabled).toBe(false);
@@ -93,7 +95,8 @@ describe("sanitizeManagerDecisionValues", () => {
   it("preserves all valid fields from a complete object", () => {
     const input = {
       stealMinOfferPct: 73,
-      aiStealThreshold: 65,
+      aiStealThreshold: 67,
+      stealEnabled: true,
       buntEnabled: true,
       ibbEnabled: false,
       pinchHitterEnabled: true,
@@ -103,6 +106,12 @@ describe("sanitizeManagerDecisionValues", () => {
     const result = sanitizeManagerDecisionValues(input);
     expect(result).toEqual(input);
   });
+
+  it("coerces non-boolean stealEnabled to default (true)", () => {
+    // @ts-expect-error testing runtime resilience
+    const result = sanitizeManagerDecisionValues({ stealEnabled: "no" });
+    expect(result.stealEnabled).toBe(DEFAULT_MANAGER_DECISION_VALUES.stealEnabled);
+  });
 });
 
 describe("DEFAULT_MANAGER_DECISION_VALUES", () => {
@@ -110,6 +119,10 @@ describe("DEFAULT_MANAGER_DECISION_VALUES", () => {
     expect(DEFAULT_MANAGER_DECISION_VALUES.aiStealThreshold).toBeLessThanOrEqual(
       DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct,
     );
+  });
+
+  it("has stealEnabled = true (steals are allowed by default)", () => {
+    expect(DEFAULT_MANAGER_DECISION_VALUES.stealEnabled).toBe(true);
   });
 
   it("has defensiveShiftEnabled = false (2023 MLB shift ban default)", () => {

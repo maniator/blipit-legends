@@ -17,9 +17,14 @@
  *     bunt logic is active; it does not restore the previous unconditional
  *     bunt-offer behavior.
  *   • `stealMinOfferPct` default of 72 matches the prior hard-coded `> 72`
- *     threshold, preserving the exact steal-offer boundary.
+ *     threshold, preserving the exact steal-offer boundary.  The clamp floor
+ *     is 65 (raised from 62) — sub-65 % steals are below the realistic MLB
+ *     break-even noise floor and are not surfaced even on the most aggressive
+ *     user settings.
  * - The AI steal threshold bug (0.62 fraction vs 65 integer %) is corrected
- *   here as the canonical fix; the new default 65 is the baseball-correct value.
+ *   here as the canonical fix; the new default 67 sits just above the realistic
+ *   MLB break-even noise floor (~65–70 %) so the AI runs decisively when the
+ *   numbers favor it without chasing high-variance attempts.
  * - defensiveShiftEnabled defaults to false to reflect the 2023 MLB shift ban
  *   (Rule 5.02(c)). Users can enable it for a pre-2023 / old-school experience.
  */
@@ -27,7 +32,7 @@
 export interface ManagerDecisionValues {
   /**
    * Minimum steal success % at which the human manager is offered a steal
-   * decision prompt. Range: 62–85 (integer %). Default: 72.
+   * decision prompt. Range: 65–85 (integer %). Default: 72.
    *
    * Higher = only offer steals with a very high success chance.
    * Lower  = offer steals more aggressively (higher risk).
@@ -37,12 +42,20 @@ export interface ManagerDecisionValues {
 
   /**
    * Minimum steal success % at which the AI auto-commits to a steal attempt.
-   * Range: 62–stealMinOfferPct (integer %). Default: 65.
+   * Range: 65–stealMinOfferPct (integer %). Default: 67.
    *
    * Being below stealMinOfferPct means the AI steals more aggressively than
    * the human is prompted. Must be ≤ stealMinOfferPct; enforced in sanitize.
    */
   aiStealThreshold: number;
+
+  /**
+   * Whether the steal option is offered to the human manager / attempted by
+   * the AI. Default: true. When false, no steal is ever offered or attempted —
+   * a team-wide "stop sign" managerial directive (mirrors how `defensiveShiftEnabled`
+   * and `ibbEnabled` work for those tactics).
+   */
+  stealEnabled: boolean;
 
   /**
    * Whether the sacrifice bunt option is offered to the human manager /
@@ -84,7 +97,8 @@ export interface ManagerDecisionValues {
 
 export const DEFAULT_MANAGER_DECISION_VALUES: ManagerDecisionValues = {
   stealMinOfferPct: 72,
-  aiStealThreshold: 65,
+  aiStealThreshold: 67,
+  stealEnabled: true,
   buntEnabled: true,
   ibbEnabled: true,
   pinchHitterEnabled: true,
@@ -92,10 +106,10 @@ export const DEFAULT_MANAGER_DECISION_VALUES: ManagerDecisionValues = {
   aiPitchingChangeAggressiveness: 50,
 };
 
-const STEAL_PCT_MIN = 62;
-const STEAL_PCT_MAX = 85;
-const AGGRESSIVENESS_MIN = 0;
-const AGGRESSIVENESS_MAX = 100;
+export const STEAL_PCT_MIN = 65;
+export const STEAL_PCT_MAX = 85;
+export const AGGRESSIVENESS_MIN = 0;
+export const AGGRESSIVENESS_MAX = 100;
 
 const clampInt = (value: number, min: number, max: number): number =>
   Math.round(Math.min(max, Math.max(min, value)));
@@ -141,6 +155,10 @@ export const sanitizeManagerDecisionValues = (
   return {
     stealMinOfferPct,
     aiStealThreshold,
+    stealEnabled:
+      typeof raw.stealEnabled === "boolean"
+        ? raw.stealEnabled
+        : DEFAULT_MANAGER_DECISION_VALUES.stealEnabled,
     buntEnabled:
       typeof raw.buntEnabled === "boolean"
         ? raw.buntEnabled

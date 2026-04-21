@@ -34,19 +34,24 @@ interface TeamPlayerBase {
   pitchingRole?: "SP" | "RP" | "SP/RP";
   /**
    * Persistent FNV-1a content fingerprint stored in the DB.
-   * Covers the player's immutable identity fields: `name`, `role`, `batting`, and `pitching`.
+   * Covers the player's identity fields: `name`, `role`, and the full
+   * `batting`/`pitching` blocks. Note: stamina lives inside batting/pitching
+   * and so is included in the fingerprint, even though stamina is mutable
+   * after player creation — editing stamina therefore re-keys the fingerprint.
    * Used for global duplicate detection across all teams in the local install.
-   * Computed by `buildPlayerSig` in `customTeamExportImport.ts` and stored by
-   * `sanitizePlayer` in `customTeamStore.ts`. Absent on documents created before
-   * schema v2 — backfilled by the v1→v2 migration strategy in `db.ts`.
+   * Computed by `buildPlayerSig` in `customTeamSignatures.ts` and stored by
+   * `sanitizePlayer` in `customTeamSanitizers.ts`. Absent on documents created
+   * before schema v2 — backfilled by the v1→v2 migration strategy in `db.ts`.
    */
   fingerprint?: string;
   /**
-   * FNV-1a integrity signature covering the player's immutable identity fields:
-   * `name`, `role`, `batting`, and `pitching`. Editable fields (`position`,
-   * `handedness`, `jerseyNumber`, `pitchingRole`) and local IDs are intentionally
-   * excluded so the sig remains valid after position edits, team moves, or ID remapping.
-   * Present only in export bundles; stripped before DB storage.
+   * FNV-1a integrity signature covering the player's identity fields:
+   * `name`, `role`, and the full `batting`/`pitching` blocks (stamina
+   * included). Editable fields outside those blocks (`position`,
+   * `handedness`, `jerseyNumber`, `pitchingRole`) and local IDs are
+   * intentionally excluded so the sig remains valid after position edits,
+   * team moves, or ID remapping. Present only in export bundles; stripped
+   * before DB storage.
    */
   sig?: string;
 }
