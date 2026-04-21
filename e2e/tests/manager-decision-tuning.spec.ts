@@ -34,16 +34,16 @@ test.describe("Manager Mode — Decision Tuning panel", () => {
   });
 
   test("TouchTooltip ⓘ buttons toggle on tap and only one is open at a time", async ({ page }) => {
-    // Each TouchTooltip renders a <button> whose aria-label is the tooltip body
-    // text.  We target two specific tooltips by aria-label prefix:
-    //   • "Minimum steal success % …"  →  next to "Steal offer threshold"
-    //   • "Offer / attempt sacrifice bunt …"  →  next to "Sacrifice bunt"
-    const stealTooltip = page.getByRole("button", {
-      name: /^Minimum steal success % for you to be prompted/,
-    });
-    const buntTooltip = page.getByRole("button", {
-      name: /^Offer \/ attempt sacrifice bunt/,
-    });
+    // TouchTooltip triggers now use a short generic aria-label ("More info"),
+    // so we scope each one within its corresponding setting row label and
+    // pick the adjacent ⓘ button.
+    const tuningPanel = page.getByTestId("manager-decision-tuning-panel");
+    const stealTooltip = tuningPanel
+      .locator("label", { hasText: "Steal offer threshold" })
+      .getByRole("button", { name: "More info" });
+    const buntTooltip = tuningPanel
+      .locator("label", { hasText: "Sacrifice bunt" })
+      .getByRole("button", { name: "More info" });
 
     await expect(stealTooltip).toBeVisible();
     await expect(buntTooltip).toBeVisible();

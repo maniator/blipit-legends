@@ -18,7 +18,7 @@ interface Props {
  * Accessible tooltip that works on **both desktop hover and mobile tap**.
  *
  * Why this exists: native `<span title="…">` tooltips do not display on touch
- * devices (no hover state), so the steel/bunt/IBB explanations in the Manager
+ * devices (no hover state), so the steal/bunt/IBB explanations in the Manager
  * Decision Tuning panel were invisible on phones. This component:
  *
  * - Tap on touch devices toggles a small popover; tap-outside or tap-again
@@ -63,7 +63,7 @@ const TouchTooltip: React.FunctionComponent<Props> = ({ label, children = "ⓘ",
       <Trigger
         type="button"
         aria-label="More info"
-        aria-describedby={bubbleId}
+        aria-describedby={open ? bubbleId : undefined}
         aria-expanded={open}
         // Native `title` retained as a fallback for assistive tech and
         // browser dev-tools surfaces — does NOT render on touch devices,

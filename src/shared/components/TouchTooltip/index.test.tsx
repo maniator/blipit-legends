@@ -7,18 +7,23 @@ import { describe, expect, it } from "vitest";
 import TouchTooltip from "./index";
 
 describe("TouchTooltip", () => {
-  it("renders the trigger glyph (defaults to ⓘ) with aria-label, aria-describedby and native title", () => {
+  it("renders the trigger glyph (defaults to ⓘ) with aria-label and native title; bubble describes when open", async () => {
     render(<TouchTooltip label="hello world" triggerTestId="tt" />);
     const trigger = screen.getByTestId("tt");
     expect(trigger.textContent).toContain("ⓘ");
     expect(trigger.getAttribute("aria-label")).toBe("More info");
     expect(trigger.getAttribute("title")).toBe("hello world");
-    const bubbleId = trigger.getAttribute("aria-describedby");
-    expect(bubbleId).toBeTruthy();
+    // While closed, the bubble is not referenced from the trigger so screen
+    // readers do not announce it as part of the button name/description.
+    expect(trigger.getAttribute("aria-describedby")).toBeNull();
     const bubble = screen.getByRole("tooltip", { hidden: true });
-    expect(bubble.getAttribute("id")).toBe(bubbleId);
     expect(bubble.textContent).toBe("hello world");
     expect(bubble.getAttribute("aria-hidden")).toBe("true");
+
+    // Opening the tooltip wires the trigger to the bubble via aria-describedby.
+    await userEvent.click(trigger);
+    expect(trigger.getAttribute("aria-describedby")).toBe(bubble.getAttribute("id"));
+    expect(bubble.getAttribute("aria-hidden")).toBe("false");
   });
 
   it("starts closed (aria-expanded=false) and opens on click (mobile-tap support)", async () => {
