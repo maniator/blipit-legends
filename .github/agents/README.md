@@ -104,9 +104,69 @@ Sub-agents **must never** run `git push`, `gh`, or `report_progress`. Sub-agents
 
 ---
 
+### `ux-design-lead`
+
+**When to use:** Any UX, user flow, wireframe, mockup, accessibility, microcopy, design-system, or "how should this feel / look" question — especially before handing work to `@ui-visual-snapshot`. This agent should be your **first stop** for any net-new screen, modal, copy string, or design-system addition.
+
+**Auto-routing triggers (no explicit `@ux-design-lead` needed):**
+
+- Any new user-facing screen, modal, dialog, panel, toast, empty state, or error state.
+- Any new copy string longer than ~5 words shown to the user.
+- Any new color, font size, spacing token, or component variant.
+- Any change to navigation, route hierarchy, or onboarding/first-run flow.
+- Any accessibility-relevant change (focus order, ARIA, keyboard shortcut, contrast).
+- Any request containing: UX, wireframe, mockup, sketch, prototype, accessibility, a11y, contrast, screen reader, keyboard nav, microcopy, empty state, onboarding, information architecture, design system, design token, typography, heuristic review, usability, "how should this feel", "what should this look like".
+
+**Key guardrails:**
+
+- Owns `docs/style-guide.md` — the only agent that proposes additions to the design system.
+- Produces specs, flows, copy, design tokens, and rudimentary mockups (ASCII wireframes, Mermaid diagrams, low-fi SVG). Never edits source code.
+- Can interview any user persona agent for research validation (see User Persona Agents below).
+- Hands implementation off to `@ui-visual-snapshot`; hands snapshot regen off to `@e2e-test-runner`.
+- Routes cross-cutting redesigns (≥ 5 routes or navigation overhaul) to `@senior-lead` for sign-off.
+
+**Supporting docs:**
+
+- Spec + system prompt: `.github/agents/ux-design-lead.md`
+- Knowledge map: `docs/agent/ux-design-lead-knowledge-map.md`
+- Design system source of truth: `docs/style-guide.md`
+
+---
+
+### User persona agents
+
+**When to use:** Any time a design decision, feature plan, copy review, or UX audit needs validation from a specific user perspective. These agents respond **in-persona** as their represented user. They can be invoked by **any agent** — not just `@ux-design-lead`.
+
+**Available persona agents:**
+
+| Agent                       | Persona                     | Best for                                                                            |
+| --------------------------- | --------------------------- | ----------------------------------------------------------------------------------- |
+| `@user-casual-watcher`      | The Casual Auto-Watcher     | Friction, mobile UX, first-run clarity, "is this too complicated?"                  |
+| `@user-manager-strategist`  | The Manager-Mode Strategist | Decision panel clarity, interruption timing, strategic choice presentation          |
+| `@user-custom-team-builder` | The Custom-Team Builder     | Team editor density, import/export ergonomics, validation feedback                  |
+| `@user-save-curator`        | The Save/Replay Curator     | Save list metadata, export/import UX, data-loss anxiety, conflict handling          |
+| `@user-stats-fan`           | The Stats-Curious Fan       | Stats readability, column labeling, table density, mobile usability of data screens |
+
+**Also available as user proxies:**
+
+| Agent                     | Proxy persona                   | Best for                                                            |
+| ------------------------- | ------------------------------- | ------------------------------------------------------------------- |
+| `@baseball-manager`       | The Baseball-Realism Enthusiast | Label authenticity, stat accuracy, "would a baseball fan get this?" |
+| `@simulation-correctness` | The Deterministic Power-User    | Seed/event visibility, edge-case representation, debug surfaces     |
+
+**Key guardrails for all persona agents:**
+
+- Respond in-persona only — never propose code changes.
+- Label all responses with `[proxy: @agent-name]` so they are clearly identified as persona simulations, not real user data.
+- Any finding that requires a code change must be routed back to the appropriate engineering agent.
+
+**Spec files:** `.github/agents/user-casual-watcher.md`, `.github/agents/user-manager-strategist.md`, `.github/agents/user-custom-team-builder.md`, `.github/agents/user-save-curator.md`, `.github/agents/user-stats-fan.md`
+
+---
+
 ### `ui-visual-snapshot`
 
-**When to use:** Any UI, layout, typography, styled-components, or responsive-design change — especially if Playwright visual snapshots may be affected.
+**When to use:** Any UI, layout, typography, styled-components, or responsive-design change — especially if Playwright visual snapshots may be affected. For **net-new screens or design-system additions**, route to `@ux-design-lead` first; `@ui-visual-snapshot` implements approved designs.
 
 **Key guardrails:**
 
@@ -202,15 +262,16 @@ Sub-agents **must never** run `git push`, `gh`, or `report_progress`. Sub-agents
 
 Use this table to determine when `@senior-lead` review is required and what evidence to bring.
 
-| Agent                     | When `@senior-lead` review is required                                            | Evidence to provide                                                | Expected verdict                                                           |
-| ------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| `@safe-refactor`          | Refactor spans ≥ 5 gameplay context files OR touches reducer cycle order          | Diff summary, test coverage before/after, seed replay confirmation | Risk class + APPROVE / REQUEST_CHANGES                                     |
-| `@simulation-correctness` | Fix alters PRNG call order OR touches `advanceRunners`, `gameOver`, or `hitBall`  | Seed + event index, before/after RNG call trace, regression test   | Determinism sign-off + technical verdict                                   |
-| `@rxdb-save-integrity`    | Any schema version bump OR save/export format change                              | Schema diff, migration strategy code, upgrade-path test result     | Data integrity sign-off + go/no-go                                         |
-| `@ci-workflow`            | Workflow permission change, container image bump, or new secret usage             | Workflow diff, permission scope, artifact impact summary           | Security sign-off + APPROVE / BLOCK                                        |
-| `@ui-visual-snapshot`     | Layout changes affecting all 6 viewport/device Playwright projects simultaneously | Before/after screenshots, responsive-smoke test results            | Risk assessment (hard-block only if mobile CTA or accessibility is broken) |
-| `@e2e-test-runner`        | Fixture format changes OR removal/skip of the determinism project test            | Fixture diff, test coverage impact, project list                   | APPROVE / REQUEST_CHANGES                                                  |
-| `@playwright-prod`        | Production QA reveals a regression introduced by a recent merge                   | QA report, reproduction steps, affected route or component         | Root cause assessment + fix recommendation                                 |
+| Agent                     | When `@senior-lead` review is required                                                                 | Evidence to provide                                                                           | Expected verdict                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `@safe-refactor`          | Refactor spans ≥ 5 gameplay context files OR touches reducer cycle order                               | Diff summary, test coverage before/after, seed replay confirmation                            | Risk class + APPROVE / REQUEST_CHANGES                                     |
+| `@simulation-correctness` | Fix alters PRNG call order OR touches `advanceRunners`, `gameOver`, or `hitBall`                       | Seed + event index, before/after RNG call trace, regression test                              | Determinism sign-off + technical verdict                                   |
+| `@rxdb-save-integrity`    | Any schema version bump OR save/export format change                                                   | Schema diff, migration strategy code, upgrade-path test result                                | Data integrity sign-off + go/no-go                                         |
+| `@ci-workflow`            | Workflow permission change, container image bump, or new secret usage                                  | Workflow diff, permission scope, artifact impact summary                                      | Security sign-off + APPROVE / BLOCK                                        |
+| `@ui-visual-snapshot`     | Layout changes affecting all 6 viewport/device Playwright projects simultaneously                      | Before/after screenshots, responsive-smoke test results                                       | Risk assessment (hard-block only if mobile CTA or accessibility is broken) |
+| `@e2e-test-runner`        | Fixture format changes OR removal/skip of the determinism project test                                 | Fixture diff, test coverage impact, project list                                              | APPROVE / REQUEST_CHANGES                                                  |
+| `@playwright-prod`        | Production QA reveals a regression introduced by a recent merge                                        | QA report, reproduction steps, affected route or component                                    | Root cause assessment + fix recommendation                                 |
+| `@ux-design-lead`         | Cross-cutting redesign spanning ≥ 5 routes, full navigation overhaul, or accessibility-critical change | UX spec with mockups, heuristic findings, persona interview digests, WCAG AA compliance notes | Design risk assessment + APPROVE / REQUEST_CHANGES                         |
 
 ---
 

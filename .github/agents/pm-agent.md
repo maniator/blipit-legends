@@ -145,18 +145,24 @@ Every response in this mode must follow this structure:
 
 After producing a plan, always recommend the correct execution agent:
 
-| Task type                                                         | Execution agent           |
-| ----------------------------------------------------------------- | ------------------------- |
-| Technical review of a high-value or risky change                  | `@senior-lead`            |
-| Behavior-preserving refactor                                      | `@safe-refactor`          |
-| UI / layout / visual snapshot change                              | `@ui-visual-snapshot`     |
-| Simulation bug or determinism issue                               | `@simulation-correctness` |
-| RxDB schema / save / export-import change                         | `@rxdb-save-integrity`    |
-| CI workflow change                                                | `@ci-workflow`            |
-| E2E test authoring, fixture creation, snapshot regen              | `@e2e-test-runner`        |
-| Live QA on production site                                        | `@playwright-prod`        |
-| Post-implementation realism check (does it feel like baseball?)   | `@baseball-manager`       |
-| Tuning probabilistic gameplay parameters (hit rates, walk%, etc.) | `@baseball-manager`       |
+| Task type                                                                           | Execution agent                                                   |
+| ----------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Technical review of a high-value or risky change                                    | `@senior-lead`                                                    |
+| Behavior-preserving refactor                                                        | `@safe-refactor`                                                  |
+| Net-new screen, modal, copy, accessibility audit, wireframe, design-system addition | `@ux-design-lead` (then `@ui-visual-snapshot` for implementation) |
+| UI / layout / visual snapshot change (implementing an approved design)              | `@ui-visual-snapshot`                                             |
+| Simulation bug or determinism issue                                                 | `@simulation-correctness`                                         |
+| RxDB schema / save / export-import change                                           | `@rxdb-save-integrity`                                            |
+| CI workflow change                                                                  | `@ci-workflow`                                                    |
+| E2E test authoring, fixture creation, snapshot regen                                | `@e2e-test-runner`                                                |
+| Live QA on production site                                                          | `@playwright-prod`                                                |
+| Post-implementation realism check (does it feel like baseball?)                     | `@baseball-manager`                                               |
+| Tuning probabilistic gameplay parameters (hit rates, walk%, etc.)                   | `@baseball-manager`                                               |
+| User perspective on casual UX, friction, first-run clarity                          | `@user-casual-watcher`                                            |
+| User perspective on manager-mode decisions, decision panel                          | `@user-manager-strategist`                                        |
+| User perspective on team editor ergonomics, import/export                           | `@user-custom-team-builder`                                       |
+| User perspective on save management, data integrity surfaces                        | `@user-save-curator`                                              |
+| User perspective on stats readability, column labeling                              | `@user-stats-fan`                                                 |
 
 ---
 
