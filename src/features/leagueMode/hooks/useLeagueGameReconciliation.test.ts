@@ -15,8 +15,8 @@ vi.mock("@feat/leagueMode/utils/advanceGameDayIfComplete", () => ({
 }));
 
 import { scheduledGameStore } from "@feat/leagueMode/storage/scheduledGameStore";
-import { advanceGameDayIfComplete } from "@feat/leagueMode/utils/advanceGameDayIfComplete";
 import type { LeagueGameContext, ScheduledGameRecord } from "@feat/leagueMode/storage/types";
+import { advanceGameDayIfComplete } from "@feat/leagueMode/utils/advanceGameDayIfComplete";
 
 import { useLeagueGameReconciliation } from "./useLeagueGameReconciliation";
 
