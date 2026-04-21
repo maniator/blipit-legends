@@ -60,7 +60,7 @@ test.describe("Visual", () => {
    *
    * Desktop-only to keep CI time reasonable; the accordion layout is the
    * same across all viewports.  We programmatically open every closed
-   * <details> element and then wait until all 9 sections are structurally
+   * <details> element and then wait until all 11 sections are structurally
    * open before snapshotting.
    */
   test(
@@ -79,9 +79,9 @@ test.describe("Visual", () => {
       while ((await closedSummaries.count()) > 0) {
         await closedSummaries.first().click();
       }
-      // Wait until all 10 sections are structurally open before snapshotting.
+      // Wait until all 11 sections are structurally open before snapshotting.
       await expect(page.locator('[data-testid="instructions-modal"] details[open]')).toHaveCount(
-        10,
+        11,
       );
       await expect(page.getByTestId("instructions-modal")).toHaveScreenshot(
         "instructions-modal-all-sections.png",
