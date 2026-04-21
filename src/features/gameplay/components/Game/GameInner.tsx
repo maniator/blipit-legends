@@ -1,7 +1,6 @@
 import * as React from "react";
 
 import { useGameHistorySync } from "@feat/careerStats/hooks/useGameHistorySync";
-import { resolveRestoreLabels } from "@feat/customTeams/adapters/customTeamAdapter";
 import Announcements from "@feat/gameplay/components/Announcements";
 import Diamond from "@feat/gameplay/components/Diamond";
 import GameControls from "@feat/gameplay/components/GameControls";
@@ -16,15 +15,16 @@ import {
   DEFAULT_MANAGER_DECISION_VALUES,
   sanitizeManagerDecisionValues,
 } from "@feat/gameplay/context/managerDecisionValues";
+import { useAutoRestoreSave } from "@feat/gameplay/hooks/useAutoRestoreSave";
 import { useGameSaveRestore } from "@feat/gameplay/hooks/useGameSaveRestore";
 import { useLeagueAwareContext } from "@feat/gameplay/hooks/useLeagueAwareContext";
+import { useModalLoadSave } from "@feat/gameplay/hooks/useModalLoadSave";
 import { useLeagueGameReconciliation } from "@feat/leagueMode/hooks/useLeagueGameReconciliation";
 import { deriveScheduledGameSeed } from "@feat/leagueMode/utils/deriveScheduledGameSeed";
 import { useRxdbGameSync } from "@feat/saves/hooks/useRxdbGameSync";
-import { useSaveStore } from "@feat/saves/hooks/useSaveStore";
 import { useCustomTeams } from "@shared/hooks/useCustomTeams";
 import { appLog } from "@shared/utils/logger";
-import { getSeed, reinitSeed, restoreRng, restoreSeed } from "@shared/utils/rng";
+import { reinitSeed } from "@shared/utils/rng";
 import { currentSeedStr } from "@shared/utils/saves";
 import { useLocalStorage } from "usehooks-ts";
 
@@ -34,18 +34,6 @@ import type { PlayerOverrides } from "@storage/types";
 import type { GameSaveSetup, SaveRecord } from "@storage/types";
 
 import { FieldPanel, GameBody, GameDiv, LogPanel } from "./styles";
-
-/** Finds the best save to auto-resume: prefer seed+snapshot match, fallback to any snapshot. */
-const findMatchedSave = (saves: SaveRecord[]): SaveRecord | null => {
-  const currentSeed = getSeed()?.toString(36);
-  let anySnapshot: SaveRecord | null = null;
-  for (const s of saves) {
-    if (s.stateSnapshot == null) continue;
-    if (currentSeed != null && s.seed === currentSeed) return s; // best match
-    if (anySnapshot == null) anySnapshot = s; // first snapshot fallback
-  }
-  return anySnapshot;
-};
 
 interface Props {
   /** Shared buffer populated by GameProviderWrapper's onDispatch callback. */
@@ -160,75 +148,26 @@ const GameInner: React.FunctionComponent<Props> = ({
     }
   }, [gameOver, onGameOver]);
 
-  // Reactive saves list — used for auto-resume detection on initial load.
-  const { saves, createSave } = useSaveStore();
-
-  // Mark the scheduled league game as completed once the game ends and the save ID is available.
-  useLeagueGameReconciliation(leagueGameContext, completedGameSaveId);
-
-  // Set rxAutoSave once when the first seed-matched save appears in the reactive list.
-  // Skip auto-restore when navigating via "Load Saved Game" — the user explicitly chose a save.
-  // Also skip when a fresh new game is pending — pendingGameSetup takes precedence over any
-  // existing save so the finished-game state is never replayed on top of the new session.
-  const restoredRef = React.useRef(pendingGameSetup != null || pendingLoadSave != null);
-  const [rxAutoSave, setRxAutoSave] = React.useState<SaveRecord | null>(null);
-  React.useEffect(() => {
-    if (restoredRef.current) return;
-    const matched = findMatchedSave(saves);
-    if (!matched) return;
-    restoredRef.current = true;
-    setRxAutoSave(matched);
-  }, [saves]);
-
-  // Restore state from the RxDB save as soon as it is loaded and auto-activate the session.
-  // Guard against double-dispatch if customTeams updates after the initial restore.
-  const prevRxAutoSaveRef = React.useRef<SaveRecord | null>(null);
-  React.useEffect(() => {
-    if (!rxAutoSave || rxAutoSave === prevRxAutoSaveRef.current) return;
-    if (customTeamsLoading) return; // defer until custom teams are loaded
-    prevRxAutoSaveRef.current = rxAutoSave;
-    const { stateSnapshot: snap, setup } = rxAutoSave;
-    if (!snap) return;
-    if (snap.rngState !== null) {
-      restoreSeed(rxAutoSave.seed);
-      restoreRng(snap.rngState);
-    } else {
-      reinitSeed(rxAutoSave.seed);
-    }
-    dispatch({
-      type: "restore_game",
-      payload: {
-        ...snap.state,
-        teamLabels: resolveRestoreLabels(snap.state, customTeams),
-      },
-    });
-    setStrategy(setup.strategy);
-    if (setup.managedTeam !== null) setManagedTeam(setup.managedTeam);
-    setManagerMode(setup.managerMode);
-    setDecisionValues(
-      setup.decisionValues != null
-        ? sanitizeManagerDecisionValues(setup.decisionValues)
-        : DEFAULT_MANAGER_DECISION_VALUES,
-    );
-    rxSaveIdRef.current = rxAutoSave.id;
-    // If the restored save was already FINAL, mark it so history sync skips re-commit.
-    setWasAlreadyFinalOnLoad(snap.state.gameOver === true);
-    setLoadedSaveLeagueId(setup.leagueContext?.leagueId ?? null);
-    setGameActive(true);
-    onGameSessionStarted?.();
-  }, [
+  // Auto-resume on mount: detects a seed-matched save and restores it once.
+  // Skip when pendingGameSetup or pendingLoadSave is already active.
+  const { restoredRef, createSave } = useAutoRestoreSave({
+    skipAutoRestore: pendingGameSetup != null || pendingLoadSave != null,
     dispatch,
-    rxAutoSave,
     customTeams,
     customTeamsLoading,
-    setStrategy,
-    setManagedTeam,
+    rxSaveIdRef,
     setManagerMode,
+    setManagedTeam,
+    setStrategy,
     setDecisionValues,
     setWasAlreadyFinalOnLoad,
     setLoadedSaveLeagueId,
+    setGameActive,
     onGameSessionStarted,
-  ]);
+  });
+
+  // Mark the scheduled league game as completed once the game ends and the save ID is available.
+  useLeagueGameReconciliation(leagueGameContext, completedGameSaveId);
 
   const handleStart = (
     homeTeam: string,
@@ -363,61 +302,21 @@ const GameInner: React.FunctionComponent<Props> = ({
 
   // ── Modal-triggered save load ─────────────────────────────────────────────
   // Directly restores game state when the user loads a save from within the
-  // running game via the SavesModal. The scheduler's effect-level gameOver guard
-  // and the cancelled flag are sufficient to resume/restart auto-play — no
-  // false→true gameActive dance needed now that the scheduler no longer reads
-  // gameStateRef inside the timeout callback (the stale-ref guard was removed).
-  const handleModalLoad = React.useCallback(
-    (slot: SaveRecord) => {
-      const snap = slot.stateSnapshot;
-      if (!snap) return;
-
-      // Prevent the auto-resume effect from re-running while we restore.
-      restoredRef.current = true;
-
-      if (snap.rngState !== null) {
-        restoreSeed(slot.seed);
-        restoreRng(snap.rngState);
-      } else {
-        reinitSeed(slot.seed);
-      }
-      dispatch({
-        type: "restore_game",
-        payload: {
-          ...snap.state,
-          teamLabels: resolveRestoreLabels(snap.state, customTeams),
-        },
-      });
-
-      const { setup } = slot;
-      setManagerMode(setup.managerMode);
-      setManagedTeam(setup.managedTeam ?? 0);
-      setStrategy(setup.strategy);
-      setDecisionValues(
-        setup.decisionValues != null
-          ? sanitizeManagerDecisionValues(setup.decisionValues)
-          : DEFAULT_MANAGER_DECISION_VALUES,
-      );
-
-      rxSaveIdRef.current = slot.id;
-      // If the loaded save was already FINAL, mark it so history sync skips re-commit.
-      setWasAlreadyFinalOnLoad(snap.state.gameOver === true);
-      setLoadedSaveLeagueId(slot.setup.leagueContext?.leagueId ?? null);
-      setGameActive(true); // no-op if already active; triggers scheduler if game was over
-      onGameSessionStarted?.();
-    },
-    [
-      dispatch,
-      customTeams,
-      setManagerMode,
-      setManagedTeam,
-      setStrategy,
-      setDecisionValues,
-      setWasAlreadyFinalOnLoad,
-      setLoadedSaveLeagueId,
-      onGameSessionStarted,
-    ],
-  );
+  // running game via the SavesModal.
+  const handleModalLoad = useModalLoadSave({
+    dispatch,
+    customTeams,
+    rxSaveIdRef,
+    restoredRef,
+    setManagerMode,
+    setManagedTeam,
+    setStrategy,
+    setDecisionValues,
+    setWasAlreadyFinalOnLoad,
+    setLoadedSaveLeagueId,
+    setGameActive,
+    onGameSessionStarted,
+  });
 
   const handleBackToLeague = React.useCallback(() => {
     if (backToLeagueId) {
