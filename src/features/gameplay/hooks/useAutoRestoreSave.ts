@@ -128,6 +128,8 @@ export const useAutoRestoreSave = ({
     setWasAlreadyFinalOnLoad,
     setLoadedSaveLeagueId,
     onGameSessionStarted,
+    // rxSaveIdRef is a MutableRefObject — intentionally excluded (refs are stable).
+    // setGameActive is a useState setter — intentionally excluded (guaranteed stable by React).
   ]);
 
   return { restoredRef, createSave, saves };
