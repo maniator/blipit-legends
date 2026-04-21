@@ -582,6 +582,15 @@ describe("detectDecision", () => {
     });
     expect(d?.kind).not.toBe("steal");
   });
+  it("does NOT offer steal with stealEnabled=false in decisionValues (master switch)", () => {
+    // aggressive pct=91 normally clears the default 72 threshold and offers steal.
+    // With stealEnabled=false, the entire steal block is skipped.
+    const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "aggressive", true, {
+      ...DEFAULT_MANAGER_DECISION_VALUES,
+      stealEnabled: false,
+    });
+    expect(d?.kind).not.toBe("steal");
+  });
   it("offers bunt when runner on 1st, 0 outs, inning 6+, close game, steal unavailable", () => {
     const d = detectDecision(
       makeState({ baseLayout: [1, 0, 0], outs: 0, inning: 6, score: [0, 1] }),

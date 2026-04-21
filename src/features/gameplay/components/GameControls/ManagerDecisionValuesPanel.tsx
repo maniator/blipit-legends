@@ -108,6 +108,23 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
           {/* ── Tactical toggles ──────────────────────────────────── */}
           <DecisionPanelSection>
             <DecisionToggleRow>
+              <label htmlFor="steal-enabled">
+                Steal attempts
+                <span title="Master switch for stolen-base attempts. Off = neither you nor the AI is ever offered or attempts a steal (team-wide stop sign).">
+                  {" "}
+                  ⓘ
+                </span>
+              </label>
+              <input
+                id="steal-enabled"
+                type="checkbox"
+                checked={values.stealEnabled}
+                onChange={(e) => set("stealEnabled", e.target.checked)}
+                data-testid="steal-enabled-toggle"
+              />
+            </DecisionToggleRow>
+
+            <DecisionToggleRow>
               <label htmlFor="bunt-enabled">
                 Sacrifice bunt
                 <span title="Offer / attempt sacrifice bunt only when tied or trailing in late close games (within 2 runs).">

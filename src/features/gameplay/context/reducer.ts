@@ -99,7 +99,7 @@ export const detectDecision = (
     scoreDiff <= 2;
 
   let stealDecision: { kind: "steal"; base: 0 | 1; successPct: number } | null = null;
-  if (outs < 2) {
+  if (decisionValues.stealEnabled && outs < 2) {
     if (baseLayout[0] && !baseLayout[1]) {
       const pct = computeStealSuccessPct(0, strategy, state);
       if (pct > decisionValues.stealMinOfferPct)

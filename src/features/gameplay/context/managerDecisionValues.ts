@@ -45,6 +45,14 @@ export interface ManagerDecisionValues {
   aiStealThreshold: number;
 
   /**
+   * Whether the steal option is offered to the human manager / attempted by
+   * the AI. Default: true. When false, no steal is ever offered or attempted —
+   * a team-wide "stop sign" managerial directive (mirrors how `defensiveShiftEnabled`
+   * and `ibbEnabled` work for those tactics).
+   */
+  stealEnabled: boolean;
+
+  /**
    * Whether the sacrifice bunt option is offered to the human manager /
    * attempted by the AI. Default: true.
    */
@@ -85,6 +93,7 @@ export interface ManagerDecisionValues {
 export const DEFAULT_MANAGER_DECISION_VALUES: ManagerDecisionValues = {
   stealMinOfferPct: 72,
   aiStealThreshold: 65,
+  stealEnabled: true,
   buntEnabled: true,
   ibbEnabled: true,
   pinchHitterEnabled: true,
@@ -141,6 +150,10 @@ export const sanitizeManagerDecisionValues = (
   return {
     stealMinOfferPct,
     aiStealThreshold,
+    stealEnabled:
+      typeof raw.stealEnabled === "boolean"
+        ? raw.stealEnabled
+        : DEFAULT_MANAGER_DECISION_VALUES.stealEnabled,
     buntEnabled:
       typeof raw.buntEnabled === "boolean"
         ? raw.buntEnabled

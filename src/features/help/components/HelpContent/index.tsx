@@ -192,6 +192,11 @@ const HelpContent: React.FunctionComponent = () => (
           Settings persist locally and are saved with each game.
         </Li>
         <Li>
+          <strong>Steal attempts</strong> — master switch for stolen bases. When off, neither you
+          nor the AI is ever offered or attempts a steal (a team-wide stop sign). When on, the two
+          steal threshold sliders below control how aggressively steals are attempted.
+        </Li>
+        <Li>
           <strong>Steal offer threshold</strong> — sets how confident the steal must look before
           you&apos;re prompted. Higher = you&apos;re only prompted on near-sure things; lower = more
           frequent steal prompts (with more risk).

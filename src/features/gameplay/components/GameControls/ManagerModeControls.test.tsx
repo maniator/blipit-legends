@@ -196,4 +196,22 @@ describe("ManagerModeControls", () => {
     await userEvent.click(screen.getByTestId("manager-decision-tuning-reset"));
     expect(onReset).toHaveBeenCalledOnce();
   });
+
+  it("renders the Steal attempts toggle (defaults checked) and propagates change", async () => {
+    const onChange = vi.fn();
+    render(
+      <ManagerModeControls
+        {...defaultProps}
+        managerMode={true}
+        onDecisionValuesChange={onChange}
+      />,
+    );
+    await userEvent.click(screen.getByTestId("manager-decision-tuning-toggle"));
+    const stealToggle = screen.getByTestId("steal-enabled-toggle") as HTMLInputElement;
+    expect(stealToggle.checked).toBe(true);
+    await userEvent.click(stealToggle);
+    expect(onChange).toHaveBeenCalled();
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0];
+    expect(lastCall.stealEnabled).toBe(false);
+  });
 });
