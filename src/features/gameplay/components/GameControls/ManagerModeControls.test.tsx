@@ -176,6 +176,11 @@ describe("ManagerModeControls", () => {
     expect(screen.getByTestId("manager-decision-tuning-toggle")).toBeTruthy();
   });
 
+  it("shows Decision Tuning toggle even when managerMode is false (panel is always accessible)", () => {
+    render(<ManagerModeControls {...defaultProps} managerMode={false} />);
+    expect(screen.getByTestId("manager-decision-tuning-toggle")).toBeTruthy();
+  });
+
   it("does not show Decision Tuning panel until toggle is clicked", () => {
     render(<ManagerModeControls {...defaultProps} managerMode={true} />);
     expect(screen.queryByTestId("manager-decision-tuning-panel")).toBeNull();

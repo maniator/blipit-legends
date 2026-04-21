@@ -187,9 +187,10 @@ const HelpContent: React.FunctionComponent = () => (
     <Section title="Decision Tuning">
       <List>
         <Li>
-          Open the <strong>⚙️ Decision Tuning</strong> panel (visible while Manager Mode is on) to
-          adjust how aggressively the game offers tactical decisions and how the unmanaged AI plays.
-          Settings persist locally and are saved with each game.
+          Open the <strong>⚙️ Decision Tuning</strong> panel (always accessible from the game
+          controls, regardless of Manager Mode) to adjust how aggressively the game offers tactical
+          decisions and how the unmanaged AI plays. Settings persist locally and are saved with each
+          game.
         </Li>
         <Li>
           <strong>Steal attempts</strong> — master switch for stolen bases. When off, neither you

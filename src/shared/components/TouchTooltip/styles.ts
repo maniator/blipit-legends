@@ -23,7 +23,7 @@ export const Trigger = styled.button`
   justify-content: center;
 
   &:focus-visible {
-    outline: 2px solid #4f46e5;
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
     outline-offset: 2px;
     border-radius: 4px;
   }
@@ -44,10 +44,10 @@ export const Bubble = styled.span<{ $open: boolean }>`
   width: max-content;
   max-width: min(80vw, 22rem);
   padding: 0.5rem 0.625rem;
-  background: #1f2937;
-  color: #f9fafb;
+  background: ${({ theme }) => theme.colors.bgInput};
+  color: ${({ theme }) => theme.colors.textPrimary};
   border-radius: 6px;
-  font-size: 0.85rem;
+  font-size: ${({ theme }) => theme.fontSizes.sub};
   font-weight: 400;
   line-height: 1.35;
   text-align: left;
@@ -77,6 +77,6 @@ export const Bubble = styled.span<{ $open: boolean }>`
     left: 50%;
     transform: translateX(-50%);
     border: 5px solid transparent;
-    border-top-color: #1f2937;
+    border-top-color: ${({ theme }) => theme.colors.bgInput};
   }
 `;

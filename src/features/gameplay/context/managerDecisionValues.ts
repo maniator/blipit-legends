@@ -106,10 +106,10 @@ export const DEFAULT_MANAGER_DECISION_VALUES: ManagerDecisionValues = {
   aiPitchingChangeAggressiveness: 50,
 };
 
-const STEAL_PCT_MIN = 65;
-const STEAL_PCT_MAX = 85;
-const AGGRESSIVENESS_MIN = 0;
-const AGGRESSIVENESS_MAX = 100;
+export const STEAL_PCT_MIN = 65;
+export const STEAL_PCT_MAX = 85;
+export const AGGRESSIVENESS_MIN = 0;
+export const AGGRESSIVENESS_MAX = 100;
 
 const clampInt = (value: number, min: number, max: number): number =>
   Math.round(Math.min(max, Math.max(min, value)));

@@ -1,7 +1,11 @@
 import * as React from "react";
 
 import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
-import { DEFAULT_MANAGER_DECISION_VALUES } from "@feat/gameplay/context/managerDecisionValues";
+import {
+  DEFAULT_MANAGER_DECISION_VALUES,
+  STEAL_PCT_MAX,
+  STEAL_PCT_MIN,
+} from "@feat/gameplay/context/managerDecisionValues";
 import TouchTooltip from "@shared/components/TouchTooltip";
 
 import {
@@ -87,8 +91,8 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                 <input
                   id="steal-min-offer-pct"
                   type="range"
-                  min={62}
-                  max={85}
+                  min={STEAL_PCT_MIN}
+                  max={STEAL_PCT_MAX}
                   step={1}
                   value={values.stealMinOfferPct}
                   onChange={(e) => set("stealMinOfferPct", Number(e.target.value))}
@@ -108,7 +112,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                 <input
                   id="ai-steal-threshold"
                   type="range"
-                  min={62}
+                  min={STEAL_PCT_MIN}
                   max={values.stealMinOfferPct}
                   step={1}
                   value={values.aiStealThreshold}
