@@ -109,7 +109,7 @@ Import-time writes to `customTeams` happen **before** any `seasons` doc is resto
 
 - **Bundle bloat at Marathon Full preset.** ~24 teams × 120 games × pitcher state etc. Bundles for a complete Full preset season could exceed several MB. Mitigation: gzip the entire envelope before download (existing exhibition-save export already pipes through `pako` or `CompressionStream`; reuse). Document the wire size budget when v4 ships.
 - **Pre-v2 user re-exports a v2 bundle by mistake.** Format-version reject prevents data corruption.
-- **A user imports a save created on a different `autogenVersion`.** Replay-warning UI per decision #A7 already covers this.
+- **A user imports a save created on a different `autogen.version`.** Replay-warning UI per decision #A7 already covers this.
 
 ## Out of scope
 

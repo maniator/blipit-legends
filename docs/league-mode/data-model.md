@@ -40,7 +40,7 @@ Notably, **none of the v1–v3 sanctioned paths write to `customTeams` itself** 
 Implementation:
 
 - A `withSanctionedCustomTeamWrite(context, fn)` helper wraps every sanctioned write site, threading the context through to `customTeamStore`. The store checks `context != null` before bypassing the lock.
-- Lock check is a fast indexed query: `seasons.find({ status: 'active' }).exec()` → flatten `leagues[].teamIds` → `Set<customTeamId>`. Cached per write batch.
+- Lock check is a fast indexed query: `seasons.find({ selector: { status: 'active' } }).exec()` → flatten `leagues[].teamIds` → `Set<customTeamId>`. Cached per write batch.
 - Write rejection logs via the shared logger and throws a typed error so UI can show a friendly message.
 
 This contract is reaffirmed in the user-facing [`README.md`](README.md) non-negotiable contracts section.
@@ -76,18 +76,18 @@ Indexes: `status`, `createdAt`.
 
 One document per team-in-season. **Snapshot of the team's roster at the moment the season started**, plus per-season state. The underlying `customTeams` doc may be edited freely without disturbing in-flight seasons.
 
-| Field             | Type             | Notes                                                                                                              |
-| ----------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `id`              | string (primary) | `${seasonId}:${customTeamId}`.                                                                                     |
-| `seasonId`        | string           | Indexed.                                                                                                           |
-| `leagueId`        | string           | Indexed. References `seasons.leagues[].id`.                                                                        |
-| `customTeamId`    | string           | References `customTeams`. Indexed.                                                                                 |
-| `rosterSnapshot`  | object           | Frozen copy of the customTeams doc's lineup/bench/rotation at season start. Per-season trades and IL operate here. |
-| `wins`            | number           |                                                                                                                    |
-| `losses`          | number           |                                                                                                                    |
-| `ties`            | number           | (For abandoned-game scenarios; v3+ may eliminate.)                                                                 |
-| `runDifferential` | number           |                                                                                                                    |
-| `divisionId`      | string \| null   | v2+ when divisions are enabled.                                                                                    |
+| Field             | Type             | Notes                                                                                                                                                                                                       |
+| ----------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | string (primary) | Plain nanoid via `generateSeasonTeamId()` (added in `@storage/generateId`). Indexed `seasonId` + `customTeamId` give the same lookup performance without putting a colon-bearing composite key into routes. |
+| `seasonId`        | string           | Indexed.                                                                                                                                                                                                    |
+| `leagueId`        | string           | Indexed. References `seasons.leagues[].id`.                                                                                                                                                                 |
+| `customTeamId`    | string           | References `customTeams`. Indexed.                                                                                                                                                                          |
+| `rosterSnapshot`  | object           | Frozen copy of the customTeams doc's lineup/bench/rotation at season start. Per-season trades and IL operate here.                                                                                          |
+| `wins`            | number           |                                                                                                                                                                                                             |
+| `losses`          | number           |                                                                                                                                                                                                             |
+| `ties`            | number           | (For abandoned-game scenarios; v3+ may eliminate.)                                                                                                                                                          |
+| `runDifferential` | number           |                                                                                                                                                                                                             |
+| `divisionId`      | string \| null   | v2+ when divisions are enabled.                                                                                                                                                                             |
 
 Indexes: `seasonId`, `leagueId`, `customTeamId`.
 
@@ -194,6 +194,7 @@ These fields are **optional** so existing customTeams docs continue to validate.
 Add to `src/storage/generateId.ts` (existing convention):
 
 - `generateSeasonId()`
+- `generateSeasonTeamId()`
 - `generateSeasonGameId()`
 - `generateSeasonTransactionId()`
 

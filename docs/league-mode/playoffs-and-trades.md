@@ -115,7 +115,7 @@ In order:
 ### Playoff fatigue & injury rules (decision #19)
 
 - **Pitcher fatigue: full strength.** Same recovery curve, same eligibility-to-start enforcement.
-- **Injury rate: ×0.25 of regular season** (0.001 per player-game vs 0.004).
+- **Injury rate: ×0.5 of regular season** (0.0075 per active-lineup player-game vs 0.015 in the regular season).
 - **Position-player wear: unchanged.**
 
 Implementation: a single `playoffMode: boolean` flag on the `seasons` doc flips the injury multiplier in the roll function. No schema changes for v3 beyond what's already in v2.

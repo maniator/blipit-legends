@@ -51,7 +51,7 @@ Eligibility threshold: SP cannot start the next game with `pitcherAvailability <
 
 Eligibility threshold: RP cannot enter a game with `pitcherAvailability < 0.35`. Allows the realistic 3-of-4-days closer pattern.
 
-**Linked v1 roster-minimum decision (per `@baseball-manager` MUST-FIX):** v1 RP minimum bumps from **1 → 3** in [`decisions.md`](decisions.md) #13 to make a credible bullpen — one RP plus the SP-derived curve produced an empty bullpen on game 2. (Decision #13 v2 minimums also revisited; see decisions.md.)
+**Linked v1 roster-minimum decision:** v1 RP minimum is **3** in [`decisions.md`](decisions.md) #13 (lineup 9 + bench 3 + 5 SP + 3 RP = 20 active) so the bullpen is credible alongside the SP-derived recovery curve. v2+ minimums add a 4th RP (5 SP + 4 RP = 9 pitchers, 23 active) per `@baseball-manager` sign-off — once full fatigue + injury systems are live, 8 pitchers cannot survive an extra-inning or short-start game. See decisions.md #13 for the canonical table.
 
 These values are **trusted defaults** per decision #11 with the realism deltas above. Both curves and thresholds are stored in a single `pitcherFatigueConstants.ts` module and pinned to `seasons.rulesetVersion` (see "Ruleset versioning" below) so a post-launch tuning pass does not silently break in-flight saved seasons' replay determinism.
 
@@ -131,10 +131,10 @@ Effect on simulation: max ~5% penalty per decision #11. Applied via `seasonModif
 
 ### Injury rolls
 
-**Rate (revised per `@baseball-manager` realism review — original 0.4% per player-game was ~6× too low for a 60-game Standard season vs MLB's ~15 IL stints/team/year):**
+**Rate:**
 
-- **Regular season:** 1.5% per active-lineup player-game (yields ~9 injuries / team / Standard 60-game season).
-- **Playoffs:** 0.375% (×0.25 of regular-season rate per decision #19).
+- **Regular season:** 1.5% per active-lineup player-game (yields ~9 injuries / team / Standard 60-game season; only active lineup rolls — bench and IL players do not).
+- **Playoffs:** 0.75% (×0.5 of regular-season rate per decision #19).
 
 Rate constants live in `injuryConstants.ts` and are pinned to `seasons.rulesetVersion`.
 
@@ -143,7 +143,7 @@ Rate constants live in `injuryConstants.ts` and are pinned to `seasons.rulesetVe
 1. Run **after** the box-score simulation completes (so injury rolls do not perturb at-bat outcomes — `@simulation-correctness` review requirement).
 2. Iterate players in fixed order: home lineup batting positions 1–9, away lineup batting positions 1–9, home starting pitcher, away starting pitcher, then any home then away RP that appeared in the game (in entrance order). This iteration order is the binding contract for replay.
 3. For each player, draw a uniform[0,1) from the seeded PRNG (per-game `derivedSeed`, same PRNG that ran the box score).
-4. If `< rulesetVersion.injuryRatePctPerGame` (regular-season) or `× 0.25` (playoff), the player is injured.
+4. If `< rulesetVersion.injuryRatePctPerGame` (regular-season) or `× 0.5` (playoff), the player is injured.
 5. Sample injury **kind first, then duration** (separate PRNG draws in that fixed order) from the duration distribution table:
 
 | Bucket     | Probability | Duration (games) |
@@ -169,7 +169,7 @@ At the **start of each game-day** (before any games of that day simulate), any p
 
 ### AI rest behavior (decision #12)
 
-**Soft probability** (per `@baseball-manager` realism review — replaces the hard `wear ≥ 8` threshold which produced visibly mechanical rest cadences):
+**Soft probability** (chosen so rest cadences look organic rather than mechanical):
 
 - Position-player rest probability per game: `restProb = clamp((wear - 6) / 4, 0, 1)`. Rolled from the per-game derived seed **after** lineup construction but **before** the box-score sim, in fixed iteration order (lineup positions 1–9 home, then 1–9 away).
 - Pitcher rest is the eligibility-threshold rule above (no probability — strict per-role threshold).
@@ -181,12 +181,14 @@ This keeps lineups recognizable (the best player plays most days) while honoring
 
 ### League-play roster minimums (decision #13)
 
-**v1 minimum (revised per `@baseball-manager` MUST-FIX):** lineup 9 + bench 3 + 5 SP + **3 RP** = **20 active**. The original v1 plan of 1 RP made bullpens empty by game 2 once the SP/RP curve split landed. Three RPs is the floor for a credible bullpen.
+**v1 minimum:** lineup 9 + bench 3 + 5 SP + **3 RP** = **20 active**. Three RPs is the floor for a credible bullpen alongside the SP-derived recovery curve — a single RP cannot cover middle relief, setup, and closer roles for a season.
 
 **v2 minimums:**
 
-- Bench ≥ 5 (was 3).
-- Pitchers ≥ 8 (5 SP + 3 RP minimum; was 5 SP + 1 RP).
+- Bench ≥ 5.
+- Pitchers ≥ 9 (5 SP + 4 RP).
+
+Approved by `@baseball-manager`: once v2's full fatigue + injury systems are live, 8 pitchers cannot survive an extra-inning or short-start game; the 4th RP keeps the bullpen viable across the season.
 
 The setup wizard validates and offers to "auto-fill missing slots from autogen" for hand-picked teams below this minimum, **without** mutating the user's persistent `customTeams` doc — only the season snapshot is augmented.
 
@@ -197,7 +199,7 @@ The setup wizard validates and offers to "auto-fill missing slots from autogen" 
 Per decision #19:
 
 - **Pitcher fatigue: full strength.** Rotation management matters more in playoffs, not less.
-- **Injury rate: ×0.25 of regular season** (0.001 vs 0.004). "Big games, fewer freak injuries" — protective by design.
+- **Injury rate: ×0.5 of regular season** (0.0075 per active-lineup player-game vs 0.015). "Big games, fewer freak injuries but October tempo still matters" — protective by design without making injuries vanish.
 - **Position-player wear: unchanged.** Stars play through fatigue.
 
 Implementation: a single `playoffMode: boolean` flag on `seasons` flips the multipliers in the injury-roll function. No schema changes, no new modifier fields.
