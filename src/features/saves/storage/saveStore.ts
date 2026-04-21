@@ -150,6 +150,7 @@ function buildStore(getDbFn: GetDb) {
         ...(summary?.scoreSnapshot !== undefined && { scoreSnapshot: summary.scoreSnapshot }),
         ...(summary?.inningSnapshot !== undefined && { inningSnapshot: summary.inningSnapshot }),
         ...(summary?.stateSnapshot !== undefined && { stateSnapshot: summary.stateSnapshot }),
+        ...(summary?.setup !== undefined && { setup: summary.setup }),
       });
     },
 

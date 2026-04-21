@@ -88,6 +88,14 @@ export interface ProgressSummary {
   inningSnapshot?: InningSnapshot;
   /** Full game State + rngState for deterministic restore. */
   stateSnapshot?: StateSnapshot;
+  /**
+   * Refreshed setup blob — supplied by the explicit user-driven save-overwrite
+   * path (SavesModal) so changes the user has made to decisionValues / strategy /
+   * managerMode / homeTeam / awayTeam since the original save are persisted on
+   * overwrite. The auto-flush game-loop sync path intentionally does NOT pass this
+   * field; setup should only refresh on an explicit "Update save" action.
+   */
+  setup?: GameSaveSetup;
 }
 
 /** Portable export format: save header + full event log, signed for integrity. */
