@@ -71,7 +71,7 @@ This container guidance is **only for Playwright visual snapshot work**. The **C
 
 ## Snapshot file conventions
 
-- Baseline PNGs live in `e2e/tests/visual/*.spec.ts-snapshots/` (one directory per spec file, e.g. `home-and-dialogs.visual.spec.ts-snapshots/`), named `<screen>-<project>-linux.png`.
+- Baseline PNGs live in `e2e/tests/visual/*.spec.ts-snapshots/` (one directory per spec file, e.g. `home-and-dialogs.visual.spec.ts-snapshots/`). Filenames typically end with `-<project>-linux.png`, but may include additional descriptive segments before that suffix (for example, screen/state qualifiers).
 - After any intentional visual change, regenerate snapshots inside `mcr.microsoft.com/playwright:v1.58.2-noble` — use the `e2e-test-runner` agent (`docker run --update-snapshots`) or the `update-visual-snapshots` workflow. **Never run `yarn test:e2e:update-snapshots` on the host OS and commit the result** — local fonts and rendering differ from the container.
 - Do NOT regenerate snapshots for unrelated layout areas.
 
