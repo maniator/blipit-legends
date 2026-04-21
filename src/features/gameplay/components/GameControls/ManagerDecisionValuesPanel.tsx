@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
 import { DEFAULT_MANAGER_DECISION_VALUES } from "@feat/gameplay/context/managerDecisionValues";
+import TouchTooltip from "@shared/components/TouchTooltip";
 
 import {
   DecisionPanelSection,
@@ -59,10 +60,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             <DecisionRow>
               <DecisionRowLabel htmlFor="steal-min-offer-pct">
                 Steal offer threshold
-                <span title="Minimum steal success % for you to be prompted. Lower = offer more steals.">
-                  {" "}
-                  ⓘ
-                </span>
+                <TouchTooltip label="Minimum steal success % for you to be prompted. Lower = offer more steals." />
               </DecisionRowLabel>
               <input
                 id="steal-min-offer-pct"
@@ -83,10 +81,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             <DecisionRow>
               <DecisionRowLabel htmlFor="ai-steal-threshold">
                 AI steal threshold
-                <span title="Minimum steal success % for the AI to attempt a steal. Must be ≤ offer threshold.">
-                  {" "}
-                  ⓘ
-                </span>
+                <TouchTooltip label="Minimum steal success % for the AI to attempt a steal. Must be ≤ offer threshold." />
               </DecisionRowLabel>
               <input
                 id="ai-steal-threshold"
@@ -110,10 +105,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             <DecisionToggleRow>
               <label htmlFor="steal-enabled">
                 Steal attempts
-                <span title="Master switch for stolen-base attempts. Off = neither you nor the AI is ever offered or attempts a steal (team-wide stop sign).">
-                  {" "}
-                  ⓘ
-                </span>
+                <TouchTooltip label="Master switch for stolen-base attempts. Off = neither you nor the AI is ever offered or attempts a steal (team-wide stop sign)." />
               </label>
               <input
                 id="steal-enabled"
@@ -127,10 +119,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             <DecisionToggleRow>
               <label htmlFor="bunt-enabled">
                 Sacrifice bunt
-                <span title="Offer / attempt sacrifice bunt only when tied or trailing in late close games (within 2 runs).">
-                  {" "}
-                  ⓘ
-                </span>
+                <TouchTooltip label="Offer / attempt sacrifice bunt only when tied or trailing in late close games (within 2 runs)." />
               </label>
               <input
                 id="bunt-enabled"
@@ -144,10 +133,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             <DecisionToggleRow>
               <label htmlFor="ibb-enabled">
                 Intentional walk (IBB)
-                <span title="Offer / attempt intentional walk: 1st base open, 2 outs, late inning, close game.">
-                  {" "}
-                  ⓘ
-                </span>
+                <TouchTooltip label="Offer / attempt intentional walk: 1st base open, 2 outs, late inning, close game." />
               </label>
               <input
                 id="ibb-enabled"
@@ -161,10 +147,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             <DecisionToggleRow>
               <label htmlFor="pinch-hitter-enabled">
                 Pinch hitter
-                <span title="Offer / attempt pinch hitter substitution in late innings with runners on base.">
-                  {" "}
-                  ⓘ
-                </span>
+                <TouchTooltip label="Offer / attempt pinch hitter substitution in late innings with runners on base." />
               </label>
               <input
                 id="pinch-hitter-enabled"
@@ -178,10 +161,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             <DecisionToggleRow>
               <label htmlFor="defensive-shift-enabled">
                 Defensive shift
-                <span title="Offer / apply defensive shift (pre-2023 rules). Off = 2023 MLB shift ban.">
-                  {" "}
-                  ⓘ
-                </span>
+                <TouchTooltip label="Offer / apply defensive shift (pre-2023 rules). Off = 2023 MLB shift ban." />
               </label>
               <input
                 id="defensive-shift-enabled"
@@ -198,10 +178,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             <DecisionRow>
               <DecisionRowLabel htmlFor="ai-pitching-aggressiveness">
                 AI pitching aggressiveness
-                <span title="0 = old-school (complete games), 50 = modern MLB, 100 = bullpen-first.">
-                  {" "}
-                  ⓘ
-                </span>
+                <TouchTooltip label="0 = old-school (complete games), 50 = modern MLB, 100 = bullpen-first." />
               </DecisionRowLabel>
               <input
                 id="ai-pitching-aggressiveness"

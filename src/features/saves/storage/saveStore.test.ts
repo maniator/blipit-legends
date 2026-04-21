@@ -244,6 +244,7 @@ describe("SaveStore.updateProgress", () => {
       decisionValues: {
         stealMinOfferPct: 80,
         aiStealThreshold: 70,
+        stealEnabled: true,
         buntEnabled: false,
         ibbEnabled: true,
         pinchHitterEnabled: true,
