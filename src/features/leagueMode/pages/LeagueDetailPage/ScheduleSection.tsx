@@ -89,9 +89,11 @@ export const ScheduleSection: React.FunctionComponent<ScheduleSectionProps> = ({
       if (!boxScore || !boxScore.stateSnapshot) {
         // Headless-simulated game: no save record, but inning runs are stored on the game record.
         if (game.awayInningRuns !== undefined && game.homeInningRuns !== undefined) {
+          const awayInningRuns = game.awayInningRuns;
+          const homeInningRuns = game.homeInningRuns;
           const awayLabel = getTeamName(game.awayTeamId);
           const homeLabel = getTeamName(game.homeTeamId);
-          const innings = Math.max(game.awayInningRuns.length, game.homeInningRuns.length, 9);
+          const innings = Math.max(awayInningRuns.length, homeInningRuns.length, 9);
           return (
             <BoxScoreTable>
               <thead>
@@ -107,23 +109,19 @@ export const ScheduleSection: React.FunctionComponent<ScheduleSectionProps> = ({
                 <tr>
                   <td>{awayLabel}</td>
                   {Array.from({ length: innings }, (_, i) => (
-                    <td key={i}>{game.awayInningRuns![i] ?? 0}</td>
+                    <td key={i}>{awayInningRuns[i] ?? 0}</td>
                   ))}
                   <td>
-                    <strong>
-                      {game.awayScore ?? game.awayInningRuns.reduce((a, b) => a + b, 0)}
-                    </strong>
+                    <strong>{game.awayScore ?? awayInningRuns.reduce((a, b) => a + b, 0)}</strong>
                   </td>
                 </tr>
                 <tr>
                   <td>{homeLabel}</td>
                   {Array.from({ length: innings }, (_, i) => (
-                    <td key={i}>{game.homeInningRuns![i] ?? 0}</td>
+                    <td key={i}>{homeInningRuns[i] ?? 0}</td>
                   ))}
                   <td>
-                    <strong>
-                      {game.homeScore ?? game.homeInningRuns.reduce((a, b) => a + b, 0)}
-                    </strong>
+                    <strong>{game.homeScore ?? homeInningRuns.reduce((a, b) => a + b, 0)}</strong>
                   </td>
                 </tr>
               </tbody>

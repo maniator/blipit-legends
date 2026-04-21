@@ -10,6 +10,7 @@ import {
 } from "@feat/customTeams/adapters/customTeamAdapter";
 import { CustomTeamStore } from "@feat/customTeams/storage/customTeamStore";
 import type { State } from "@feat/gameplay/context/gameStateTypes";
+import { appLog } from "@shared/utils/logger";
 import { computeBattingStatsFromLogs } from "@shared/utils/stats/computeBattingStatsFromLogs";
 
 import type { BatterGameStatRecord, PitcherGameStatRecord } from "@storage/types";
@@ -22,8 +23,9 @@ import { simulateGame } from "./simulateGame";
 
 /**
  * Extracts batting stat rows from a completed game state.
- * Mirrors the logic in useGameHistorySync so career stats are consistent
- * between manually played and headless-simulated games.
+ * Mirrors the per-team batting loop in useGameHistorySync.ts (`commitGame` callback)
+ * so career stats are consistent between manually-played and headless-simulated games.
+ * Keep these two implementations in sync when changing stat fields.
  */
 function buildBattingStatRows(
   gameId: string,
@@ -61,8 +63,9 @@ function buildBattingStatRows(
 
 /**
  * Extracts pitcher stat rows from a completed game state.
- * Mirrors the logic in useGameHistorySync so career stats are consistent
- * between manually played and headless-simulated games.
+ * Mirrors the pitcherResults loop in useGameHistorySync.ts (`commitGame` callback)
+ * so career stats are consistent between manually-played and headless-simulated games.
+ * Keep these two implementations in sync when changing stat fields.
  */
 function buildPitcherStatRows(
   gameId: string,
@@ -120,6 +123,18 @@ export async function simulateGameDay(
   for (const game of scheduledGames) {
     const awayDoc = allTeams.find((t) => t.id === game.awayTeamId);
     const homeDoc = allTeams.find((t) => t.id === game.homeTeamId);
+
+    if (!awayDoc || !homeDoc) {
+      // Team docs are missing (e.g. deleted after league creation). The simulation will
+      // still run with generic player IDs, but career stats won't map to real players.
+      appLog.warn("simulateGameDay: team doc(s) not found for game", {
+        gameId: game.id,
+        awayTeamId: game.awayTeamId,
+        awayFound: Boolean(awayDoc),
+        homeTeamId: game.homeTeamId,
+        homeFound: Boolean(homeDoc),
+      });
+    }
 
     const simOptions =
       awayDoc && homeDoc

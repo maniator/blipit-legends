@@ -26,8 +26,16 @@ export interface SimulatedGameResult {
 
 /** Options for a headless simulation run. When provided, the real team roster is applied so player IDs and names match career stats records. */
 export interface SimulateGameOptions {
+  /**
+   * Full roster data for both teams (lineup order, bench, pitchers, handedness,
+   * player attribute overrides). When provided, the simulation uses actual custom-team
+   * player IDs and names so career stats are meaningful. When omitted, generic player
+   * IDs are used (appropriate for built-in / default teams).
+   */
   playerOverrides?: PlayerOverrides;
+  /** Human-readable display label for the away team (shown in box scores). Defaults to the team ID. */
   awayTeamLabel?: string;
+  /** Human-readable display label for the home team (shown in box scores). Defaults to the team ID. */
   homeTeamLabel?: string;
 }
 

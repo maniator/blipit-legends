@@ -45,10 +45,9 @@ export async function createLeagueViaUI(page: Page, leagueName: string): Promise
   await expect(page.getByTestId("league-teams-select")).toBeVisible({ timeout: 15_000 });
 
   // Select both fixture teams by label
-  await page.getByTestId("league-teams-select").selectOption([
-    { label: "Visitors" },
-    { label: "Locals" },
-  ]);
+  await page
+    .getByTestId("league-teams-select")
+    .selectOption([{ label: "Visitors" }, { label: "Locals" }]);
 
   // Submit the form
   await page.getByTestId("start-league-button").click();

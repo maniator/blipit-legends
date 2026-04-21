@@ -61,9 +61,9 @@ test.describe("League Detail Page", { tag: "@desktop-only" }, () => {
 
     // Schedule section: Game Day 1 heading must be visible (regression: was previously Day 2)
     // Use an exact role match to avoid matching "Game Day 10", "Game Day 11" etc.
-    await expect(
-      page.getByRole("heading", { name: "Game Day 1", exact: true }),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Game Day 1", exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
 
     // Simulate Day button should now be enabled
     await expect(page.getByTestId("simulate-day-button")).toBeVisible();

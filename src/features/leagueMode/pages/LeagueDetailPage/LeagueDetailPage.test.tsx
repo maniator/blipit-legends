@@ -311,7 +311,7 @@ describe("LeagueDetailPage", () => {
    * Regression: clicking Box Score for a headless-simulated game must display
    * the inline final score instead of "Box score unavailable".
    */
-  it("shows inline final score for a headless-simulated game (no save record)", () => {
+  it("shows inline score instead of 'Box score unavailable' for a headless-simulated game (no save record)", () => {
     vi.mocked(useLeagueSeason).mockReturnValue({
       season: makeSeason("active"),
       isLoading: false,
