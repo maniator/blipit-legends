@@ -7,12 +7,18 @@ import { describe, expect, it } from "vitest";
 import TouchTooltip from "./index";
 
 describe("TouchTooltip", () => {
-  it("renders the trigger glyph (defaults to ⓘ) with aria-label and native title", () => {
+  it("renders the trigger glyph (defaults to ⓘ) with aria-label, aria-describedby and native title", () => {
     render(<TouchTooltip label="hello world" triggerTestId="tt" />);
     const trigger = screen.getByTestId("tt");
     expect(trigger.textContent).toContain("ⓘ");
-    expect(trigger.getAttribute("aria-label")).toBe("hello world");
+    expect(trigger.getAttribute("aria-label")).toBe("More info");
     expect(trigger.getAttribute("title")).toBe("hello world");
+    const bubbleId = trigger.getAttribute("aria-describedby");
+    expect(bubbleId).toBeTruthy();
+    const bubble = screen.getByRole("tooltip", { hidden: true });
+    expect(bubble.getAttribute("id")).toBe(bubbleId);
+    expect(bubble.textContent).toBe("hello world");
+    expect(bubble.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("starts closed (aria-expanded=false) and opens on click (mobile-tap support)", async () => {

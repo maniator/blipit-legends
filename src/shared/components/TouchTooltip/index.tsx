@@ -3,8 +3,10 @@ import * as React from "react";
 import { Bubble, Trigger, Wrapper } from "./styles";
 
 interface Props {
-  /** The tooltip body text. Also wired to `aria-label` and the native `title`
-   *  attribute so screen readers and right-click "inspect" still surface it. */
+  /** The tooltip body text. Wired to the bubble (referenced by `aria-describedby`)
+   *  and the native `title` attribute so screen readers and right-click "inspect"
+   *  still surface it. The trigger button uses a short generic `aria-label`
+   *  ("More info") to avoid overly verbose announcements. */
   label: string;
   /** Trigger glyph. Defaults to the ⓘ info icon used throughout the app. */
   children?: React.ReactNode;
@@ -33,6 +35,7 @@ interface Props {
 const TouchTooltip: React.FunctionComponent<Props> = ({ label, children = "ⓘ", triggerTestId }) => {
   const [open, setOpen] = React.useState(false);
   const wrapperRef = React.useRef<HTMLSpanElement>(null);
+  const bubbleId = React.useId();
 
   // Close on outside pointer-down or Escape key.
   React.useEffect(() => {
@@ -59,7 +62,8 @@ const TouchTooltip: React.FunctionComponent<Props> = ({ label, children = "ⓘ",
     <Wrapper ref={wrapperRef}>
       <Trigger
         type="button"
-        aria-label={label}
+        aria-label="More info"
+        aria-describedby={bubbleId}
         aria-expanded={open}
         // Native `title` retained as a fallback for assistive tech and
         // browser dev-tools surfaces — does NOT render on touch devices,
@@ -73,7 +77,7 @@ const TouchTooltip: React.FunctionComponent<Props> = ({ label, children = "ⓘ",
       >
         {children}
       </Trigger>
-      <Bubble $open={open} role="tooltip">
+      <Bubble id={bubbleId} $open={open} role="tooltip" aria-hidden={!open}>
         {label}
       </Bubble>
     </Wrapper>

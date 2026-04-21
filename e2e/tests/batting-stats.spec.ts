@@ -6,9 +6,9 @@
  *
  *   • The First Baseman (slot 2) has fewer AB than the Second Baseman (slot 3)
  *     because of a walk — the AB deficit equals the BB count (valid baseball).
- *   • The PA ordering invariant holds: every earlier slot has >= PA than the
- *     slot that follows it.
  *   • K <= AB for every batter (strikeouts must count as official at-bats).
+ *   • The away batting-stats table is visible on the away tab and hidden when
+ *     the section is collapsed.
  */
 
 import { expect, test } from "@playwright/test";

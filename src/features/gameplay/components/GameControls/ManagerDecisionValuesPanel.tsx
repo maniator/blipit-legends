@@ -51,7 +51,6 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
 }) => {
   const [open, setOpen] = React.useState(false);
   const toggleRef = React.useRef<HTMLButtonElement>(null);
-  const panelRef = React.useRef<HTMLDivElement>(null);
   const titleId = React.useId();
 
   // Notify parent so it can pause/restore the sim while the panel is open.
@@ -106,19 +105,12 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
       {open && (
         <>
           <DecisionTuningBackdrop
-            role="button"
-            tabIndex={0}
+            as="button"
+            type="button"
             aria-label="Close Decision Tuning panel"
             onClick={closePanel}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                closePanel();
-              }
-            }}
           />
           <DecisionTuningPanel
-            ref={panelRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}

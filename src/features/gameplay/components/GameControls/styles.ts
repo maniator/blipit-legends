@@ -281,11 +281,21 @@ export const DecisionTuningToggle = styled.button`
 `;
 
 export const DecisionTuningBackdrop = styled.div`
+  /* When rendered as a button via the styled-components 'as' prop, reset
+     native button styles so the visual remains a plain backdrop. */
+  appearance: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+
   ${mq.mobile} {
     position: fixed;
     inset: 0;
     z-index: 200;
     background: rgba(0, 0, 0, 0.4);
+    cursor: pointer;
   }
 
   ${mq.notMobile} {
@@ -373,7 +383,6 @@ export const DecisionRow = styled.div<{ $disabled?: boolean }>`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.s6};
   opacity: ${({ $disabled }) => ($disabled ? 0.45 : 1)};
-  pointer-events: ${({ $disabled }) => ($disabled ? "none" : "auto")};
 
   input[type="range"] {
     accent-color: ${({ theme }) => theme.colors.accentPrimary};
