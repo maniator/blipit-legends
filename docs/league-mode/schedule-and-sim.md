@@ -23,7 +23,21 @@ Inputs (frozen at season creation, persisted on the `seasons` doc for reproducib
 - `interleague?: boolean` — v2+; whether leagues cross-play.
 - `seed: string` — `seasons.masterSeed`.
 
-**Sub-PRNG isolation:** schedule generation uses an isolated sub-PRNG seeded from `mulberry32(parseInt(fnv1a(\`${masterSeed}:schedule\`), 16) >>> 0)`, never the master PRNG directly. The `parseInt(..., 16) >>> 0`step converts`fnv1a`'s hex-string output to the uint32 that `mulberry32` requires. This way a future change to autogen (or any other master-PRNG consumer) does not shift schedule output for replays.
+**Sub-PRNG isolation:** schedule generation uses an isolated sub-PRNG seeded from `mulberry32(parseInt(fnv1a(\`${masterSeed}:schedule\`), 16) >>> 0)`, never the master PRNG directly. The `parseInt(..., 16) >>> 0`step converts`fnv1a`'s hex-string output to the `uint32`that`mulberry32` requires. This way a future change to autogen (or any other master-PRNG consumer) does not shift schedule output for replays.
+
+### Sub-PRNG registry
+
+Every named sub-stream in the league system is listed here. **Implementers and reviewers should treat this section as the canonical registry** — adding a new sub-PRNG to any phase requires a row here.
+
+| Stream key                   | Phase | Seed expression                                                                      | Used by                                                                                         |
+| ---------------------------- | ----- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `:schedule`                  | v1    | `mulberry32(parseInt(fnv1a(\`${masterSeed}:schedule\`), 16) >>> 0)`                  | Schedule generation (this file).                                                                |
+| `:autogen:${autogenSubSeed}` | v1    | `mulberry32(parseInt(fnv1a(\`${masterSeed}:${autogenSubSeed}\`), 16) >>> 0)`         | Team auto-generation (see [`team-autogeneration.md`](team-autogeneration.md)).                  |
+| Per-game `derivedSeed`       | v1    | Cached on `seasonGames.derivedSeed`; consumed via `reinitSeed(derivedSeed)`          | The simulation entry point only.                                                                |
+| `:trades:day:${gameDay}`     | v3    | `mulberry32(parseInt(fnv1a(\`${masterSeed}:trades:day:${gameDay}\`), 16) >>> 0)`     | Trade scheduler / proposal generation (see [`playoffs-and-trades.md`](playoffs-and-trades.md)). |
+| `:tiebreak:${sortedTiedIds}` | v3    | `mulberry32(parseInt(fnv1a(\`${masterSeed}:tiebreak:${sortedTiedIds}\`), 16) >>> 0)` | Tiebreaker coin flip (decision #18; see [`playoffs-and-trades.md`](playoffs-and-trades.md)).    |
+
+**Hex → uint32 step is mandatory on every row.** `fnv1a()` returns a hex string; `mulberry32` expects a `uint32`. Passing the hex string raw silently breaks determinism (see [`README.md`](README.md) seed contract).
 
 Algorithm:
 

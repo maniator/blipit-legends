@@ -112,7 +112,7 @@ The full chain (also stored canonically in [`decisions.md`](decisions.md) #18):
 2. Intra-division record (v2+ only, when divisions exist).
 3. Run differential vs the tied group.
 4. Full-season run differential.
-5. Coin flip via seeded PRNG using a per-tie-key sub-stream: `mulberry32(fnv1a(\`${masterSeed}:tiebreak:${sortedTiedIds}\`))`.
+5. Coin flip via seeded PRNG using a per-tie-key sub-stream: `mulberry32(parseInt(fnv1a(\`${masterSeed}:tiebreak:${sortedTiedIds}\`), 16) >>> 0)`.
 
 Three-way+ ties resolve highest-seed-first then recurse on the residual group with a fresh `tieKey = sortedTiedIds`. v1 only ever needs steps 1, 4, and 5 (no divisions, no playoff seeding).
 
