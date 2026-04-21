@@ -133,7 +133,7 @@ const LeagueSetupPage: React.FunctionComponent = () => {
           leagueId: league.id,
           seasonNumber: 1,
           status: "pending",
-          currentGameDay: 0,
+          currentGameDay: 1,
           totalGameDays,
           defaultGamesPerTeam: gamesPerTeam,
           seed: generateSeed(),

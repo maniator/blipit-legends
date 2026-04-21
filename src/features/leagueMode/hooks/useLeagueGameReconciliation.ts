@@ -5,16 +5,16 @@ import type { LeagueGameContext } from "@feat/leagueMode/storage/types";
 import { advanceGameDayIfComplete } from "@feat/leagueMode/utils/advanceGameDayIfComplete";
 
 /**
- * Marks a scheduled league game as completed in RxDB once the game ends.
+ * Marks a scheduled league game as completed in RxDB once the game ends,
+ * recording the final score and winner for standings. Then checks whether all
+ * games on that day are finished and advances `currentGameDay` if so.
  *
- * Fires at most once per mount: when both `leagueGameContext` and
- * `completedGameId` (the RxDB save ID written after game-over) are non-null,
- * calls `scheduledGameStore.markScheduledGameCompleted` and then checks whether
- * all games on that day are finished, advancing `currentGameDay` if so.
+ * Fires at most once per mount.
  */
 export function useLeagueGameReconciliation(
   leagueGameContext: LeagueGameContext | null | undefined,
   completedGameId: string | null | undefined,
+  finalScore: { awayScore: number; homeScore: number } | null | undefined,
 ): void {
   const reconciledRef = React.useRef(false);
 
@@ -26,16 +26,32 @@ export function useLeagueGameReconciliation(
     const { scheduledGameId, leagueSeasonId } = leagueGameContext;
 
     scheduledGameStore
-      .markScheduledGameCompleted(scheduledGameId, completedGameId)
-      .then(async () => {
-        const game = await scheduledGameStore.getScheduledGame(scheduledGameId);
-        if (game) {
-          await advanceGameDayIfComplete(leagueSeasonId, game.gameDay);
+      .getScheduledGame(scheduledGameId)
+      .then(async (game) => {
+        if (!game) return;
+
+        if (finalScore) {
+          const { awayScore, homeScore } = finalScore;
+          const winnerId =
+            homeScore > awayScore
+              ? game.homeTeamId
+              : awayScore > homeScore
+                ? game.awayTeamId
+                : game.homeTeamId; // home wins ties (matches simulateGame.ts convention)
+          await scheduledGameStore.markScheduledGameCompleted(scheduledGameId, completedGameId, {
+            winnerId,
+            homeScore,
+            awayScore,
+          });
+        } else {
+          await scheduledGameStore.markScheduledGameCompleted(scheduledGameId, completedGameId);
         }
+
+        await advanceGameDayIfComplete(leagueSeasonId, game.gameDay);
       })
       .catch(() => {
         // Non-fatal: the game save is already written. The detail page will
         // re-fetch on remount and reflect any state that was persisted.
       });
-  }, [leagueGameContext, completedGameId]);
+  }, [leagueGameContext, completedGameId, finalScore]);
 }

@@ -76,7 +76,7 @@ const GameInner: React.FunctionComponent<Props> = ({
   leagueGameContext,
   onBackToLeague,
 }) => {
-  const { dispatch, dispatchLog, teams, gameOver } = useGameContext();
+  const { dispatch, dispatchLog, teams, gameOver, score } = useGameContext();
   const [, setManagerMode] = useLocalStorage("managerMode", false);
   const [, setManagedTeam] = useLocalStorage<0 | 1>("managedTeam", 0);
   const [strategy, setStrategy] = useLocalStorage<Strategy>("strategy", "balanced");
@@ -103,6 +103,10 @@ const GameInner: React.FunctionComponent<Props> = ({
 
   // Tracks the save ID once the game reaches FINAL — used for league reconciliation.
   const [completedGameSaveId, setCompletedGameSaveId] = React.useState<string | null>(null);
+  const [completedGameFinalScore, setCompletedGameFinalScore] = React.useState<{
+    awayScore: number;
+    homeScore: number;
+  } | null>(null);
 
   const { backToLeagueId, isLeagueSave, setLoadedSaveLeagueId } =
     useLeagueAwareContext(leagueGameContext);
@@ -142,9 +146,10 @@ const GameInner: React.FunctionComponent<Props> = ({
     if (gameOverFiredRef.current) return;
     gameOverFiredRef.current = true;
     onGameOver?.();
-    // Capture the save ID for league post-game reconciliation.
+    // Capture the save ID and final score for league post-game reconciliation.
     if (rxSaveIdRef.current) {
       setCompletedGameSaveId(rxSaveIdRef.current);
+      setCompletedGameFinalScore({ awayScore: score[0], homeScore: score[1] });
     }
   }, [gameOver, onGameOver]);
 
@@ -167,7 +172,7 @@ const GameInner: React.FunctionComponent<Props> = ({
   });
 
   // Mark the scheduled league game as completed once the game ends and the save ID is available.
-  useLeagueGameReconciliation(leagueGameContext, completedGameSaveId);
+  useLeagueGameReconciliation(leagueGameContext, completedGameSaveId, completedGameFinalScore);
 
   const handleStart = (
     homeTeam: string,
