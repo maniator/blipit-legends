@@ -62,6 +62,21 @@ describe("sanitizeManagerDecisionValues", () => {
     expect(result.buntEnabled).toBe(DEFAULT_MANAGER_DECISION_VALUES.buntEnabled);
   });
 
+  it("falls back to defaults when numeric fields are NaN or Infinity", () => {
+    // NaN passes typeof === "number" but must not leak into threshold comparisons
+    // (pct > NaN is always false, which silently disables steal detection)
+    const result = sanitizeManagerDecisionValues({
+      stealMinOfferPct: NaN,
+      aiStealThreshold: Infinity,
+      aiPitchingChangeAggressiveness: -Infinity,
+    });
+    expect(result.stealMinOfferPct).toBe(DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct);
+    expect(result.aiStealThreshold).toBe(DEFAULT_MANAGER_DECISION_VALUES.aiStealThreshold);
+    expect(result.aiPitchingChangeAggressiveness).toBe(
+      DEFAULT_MANAGER_DECISION_VALUES.aiPitchingChangeAggressiveness,
+    );
+  });
+
   it("accepts valid boolean false for toggles", () => {
     const result = sanitizeManagerDecisionValues({
       buntEnabled: false,

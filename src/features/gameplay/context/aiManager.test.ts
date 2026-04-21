@@ -229,6 +229,38 @@ describe("makeAiPitchingDecision", () => {
       expect(decision.pitcherIdx).toBe(1);
     }
   });
+  it("aggressiveness=100 (bullpen-first): does NOT pull a fresh pitcher (0 pitches)", () => {
+    alwaysPull();
+    // Regression: at aggressiveness=100, highCount=75 which equals computeFatigueFactor's
+    // fresh-zone ceiling (pitchesBeyond=0 → fatigueFactor=1.0).  Without the pitch-count
+    // gate, a pitcher at 0 pitches has the same fatigueFactor (1.0) as the threshold,
+    // and isHighFatigue would be true.  The gate `pitchCount >= highCount` prevents this.
+    const state = makeState({
+      pitcherPitchCount: [0, 0], // completely fresh starter
+      pitcherBattersFaced: [0, 0],
+      rosterPitchers: [[], ["sp1", "rp1"]],
+      activePitcherIdx: [0, 0],
+      substitutedOut: [[], []],
+    });
+    const decision = makeAiPitchingDecision(state, 1, { sp1: "SP", rp1: "RP" }, 100);
+    expect(decision.kind).toBe("none");
+  });
+
+  it("aggressiveness=100 (bullpen-first): pulls pitcher at exactly the highCount boundary (75 pitches)", () => {
+    alwaysPull();
+    // At aggressiveness=100, highCount=75. A pitcher at exactly 75 pitches should
+    // trigger the high-fatigue path (pitchCount >= highCount is true at the boundary).
+    const state = makeState({
+      pitcherPitchCount: [0, 75],
+      pitcherBattersFaced: [0, 0],
+      rosterPitchers: [[], ["sp1", "rp1"]],
+      activePitcherIdx: [0, 0],
+      substitutedOut: [[], []],
+    });
+    const decision = makeAiPitchingDecision(state, 1, { sp1: "SP", rp1: "RP" }, 100);
+    expect(decision.kind).toBe("pitching_change");
+  });
+
   it("aggressiveness=100 (bullpen-first): pulls pitcher at lower pitch count", () => {
     alwaysPull();
     // At aggressiveness=100, highCount = round(100 + (50-100)*0.5) = round(75) = 75
@@ -266,7 +298,7 @@ describe("makeAiTacticalDecision", () => {
     const result = makeAiTacticalDecision(state, {
       kind: "steal",
       base: 0,
-      successPct: 70, // 70 >= 65 → steal
+      successPct: 70, // 70 > 65 → steal
     });
     expect(result.kind).toBe("tactical");
     if (result.kind === "tactical") {

@@ -7,8 +7,17 @@
  * Design notes:
  * - These are control-layer values (localStorage + save setup), NOT game State.
  *   They are never added to the reducer to keep determinism concerns isolated.
- * - All defaults reproduce the pre-existing simulator behavior so changing
- *   nothing is a no-op for existing games.
+ * - Defaults preserve prior simulator behavior where practical, with the
+ *   following intentional changes called out explicitly:
+ *   • Bunt detection is now situational (inning ≥ 6, close game ≤ 2 run diff)
+ *     rather than the previous unconditional positional check (`outs < 2 &&
+ *     runner on 1st/2nd`).  The old check offered bunts in clearly wrong
+ *     situations (e.g. inning 1 up by 10), so the new default is more
+ *     baseball-correct.  `buntEnabled` only toggles whether this situational
+ *     bunt logic is active; it does not restore the previous unconditional
+ *     bunt-offer behavior.
+ *   • `stealMinOfferPct` default of 72 matches the prior hard-coded `> 72`
+ *     threshold, preserving the exact steal-offer boundary.
  * - The AI steal threshold bug (0.62 fraction vs 65 integer %) is corrected
  *   here as the canonical fix; the new default 65 is the baseball-correct value.
  * - defensiveShiftEnabled defaults to false to reflect the 2023 MLB shift ban
@@ -95,21 +104,26 @@ const clampInt = (value: number, min: number, max: number): number =>
  * Returns a sanitized copy of the provided decision values.
  * All fields are clamped/coerced to safe values so corrupt localStorage data
  * does not reach gameplay logic.
+ *
+ * `Number.isFinite` is used instead of `typeof === "number"` to reject NaN and
+ * ±Infinity — both pass the typeof check but produce NaN/broken values after
+ * clamp/round math, causing threshold comparisons (e.g. `pct > NaN`) to always
+ * return false.
  */
 export const sanitizeManagerDecisionValues = (
   raw: Partial<ManagerDecisionValues>,
 ): ManagerDecisionValues => {
   const stealMinOfferPct = clampInt(
-    typeof raw.stealMinOfferPct === "number"
-      ? raw.stealMinOfferPct
+    Number.isFinite(raw.stealMinOfferPct)
+      ? (raw.stealMinOfferPct as number)
       : DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct,
     STEAL_PCT_MIN,
     STEAL_PCT_MAX,
   );
 
   const aiStealThreshold = clampInt(
-    typeof raw.aiStealThreshold === "number"
-      ? raw.aiStealThreshold
+    Number.isFinite(raw.aiStealThreshold)
+      ? (raw.aiStealThreshold as number)
       : DEFAULT_MANAGER_DECISION_VALUES.aiStealThreshold,
     STEAL_PCT_MIN,
     // AI threshold must be ≤ the manager offer threshold.
@@ -117,8 +131,8 @@ export const sanitizeManagerDecisionValues = (
   );
 
   const aggressiveness = clampInt(
-    typeof raw.aiPitchingChangeAggressiveness === "number"
-      ? raw.aiPitchingChangeAggressiveness
+    Number.isFinite(raw.aiPitchingChangeAggressiveness)
+      ? (raw.aiPitchingChangeAggressiveness as number)
       : DEFAULT_MANAGER_DECISION_VALUES.aiPitchingChangeAggressiveness,
     AGGRESSIVENESS_MIN,
     AGGRESSIVENESS_MAX,
