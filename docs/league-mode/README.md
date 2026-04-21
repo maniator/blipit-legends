@@ -6,20 +6,26 @@ League Mode adds **multi-team leagues, full seasons, and playoffs** on top of th
 
 ## Document map
 
-| Doc                                                  | What it covers                                                                                                                   |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| [`roadmap.md`](roadmap.md)                           | Full **v0 → v4** phase plan, what each version ships, what each version explicitly defers                                        |
-| [`decisions.md`](decisions.md)                       | Every locked design decision (presets, fatigue knobs, autogen behavior, etc.) with rationale and the question that drove it      |
-| [`data-model.md`](data-model.md)                     | RxDB collections, schemas, the "all teams live in `customTeams`" contract, autogen markers, season state                         |
-| [`setup-wizard.md`](setup-wizard.md)                 | League creation flow, step-by-step UX, validations                                                                               |
-| [`team-autogeneration.md`](team-autogeneration.md)   | Autogen modes, naming themes, parity slider, generator algorithm, determinism contract                                           |
-| [`schedule-and-sim.md`](schedule-and-sim.md)         | Round-robin schedule generation, per-game seed derivation, headless sim, "sim to next user game" loop                            |
-| [`fatigue-and-injuries.md`](fatigue-and-injuries.md) | v1 pitcher fatigue, v2 position-player wear & injury system, modifier injection contract                                         |
-| [`playoffs-and-trades.md`](playoffs-and-trades.md)   | v3 scope: playoff bracket (WC/LCS/BCS), trade engine, AI trade behavior                                                          |
-| [`awards-and-archive.md`](awards-and-archive.md)     | v4 scope: composite award formulas, season archival policy, optional offseason carryover                                         |
-| [`routing.md`](routing.md)                           | New routes added per phase, league-context handoff rules                                                                         |
-| [`ui-reuse.md`](ui-reuse.md)                         | Component reuse catalog — what existing UI to reuse on every league screen, generalization candidates, net-new components budget |
-| [`risks.md`](risks.md)                               | Consolidated risk register across v1–v4                                                                                          |
+| Doc                                                    | What it covers                                                                                                                                           |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`roadmap.md`](roadmap.md)                             | Full **v0 → v4** phase plan, what each version ships, what each version explicitly defers                                                                |
+| [`decisions.md`](decisions.md)                         | Every locked design decision (presets, fatigue knobs, autogen behavior, etc.) with rationale and the question that drove it                              |
+| [`data-model.md`](data-model.md)                       | RxDB collections, schemas, the "all teams live in `customTeams`" contract, autogen markers, season state                                                 |
+| [`setup-wizard.md`](setup-wizard.md)                   | League creation flow, step-by-step UX, validations                                                                                                       |
+| [`team-autogeneration.md`](team-autogeneration.md)     | Autogen modes, naming themes, parity slider, generator algorithm, determinism contract                                                                   |
+| [`schedule-and-sim.md`](schedule-and-sim.md)           | Round-robin schedule generation, per-game seed derivation, headless sim, "sim to next user game" loop                                                    |
+| [`fatigue-and-injuries.md`](fatigue-and-injuries.md)   | v1 pitcher fatigue, v2 position-player wear & injury system, modifier injection contract                                                                 |
+| [`playoffs-and-trades.md`](playoffs-and-trades.md)     | v3 scope: playoff bracket (WC/LCS/BCS), trade engine, AI trade behavior                                                                                  |
+| [`awards-and-archive.md`](awards-and-archive.md)       | v4 scope: composite award formulas, season archival policy, optional offseason carryover                                                                 |
+| [`routing.md`](routing.md)                             | New routes added per phase, league-context handoff rules                                                                                                 |
+| [`ui-reuse.md`](ui-reuse.md)                           | Component reuse catalog — what existing UI to reuse on every league screen, generalization candidates, net-new components budget                         |
+| [`risks.md`](risks.md)                                 | Consolidated risk register across v1–v4                                                                                                                  |
+| [`leagues-hub.md`](leagues-hub.md)                     | `/leagues` hub UX — five canonical states, return-user "Continue" CTA, home-screen integration, `/saves` vs `/leagues` mental model, microcopy inventory |
+| [`multi-team-manager.md`](multi-team-manager.md)       | v4 optional "manage every team" toggle — prompt routing rules, opposing-managers behavior, persistence, determinism                                      |
+| [`save-export.md`](save-export.md)                     | SaveStore export/import bundle format v2 — league-state inclusion, checksum scope, ID collision policy, ruleset-version gating                           |
+| [`style-guide-additions.md`](style-guide-additions.md) | Proposed new visual tokens (StatusPill, StatusBanner, EmptyState, BracketConnector, SortableTable) for `@ux-design-lead` sign-off                        |
+| [`follow-ups.md`](follow-ups.md)                       | Items intentionally deferred to follow-up PRs with owner + blocker phase                                                                                 |
+| [`agent-prompts/`](agent-prompts/)                     | Ready-to-paste `@pm-agent` prompts for each phase (`v1.md`, `v2.md`, `v3.md`, `v4.md`)                                                                   |
 
 ## Headline scope (locked)
 
