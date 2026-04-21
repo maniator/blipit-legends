@@ -89,7 +89,7 @@
 - **Injury report UI**, **transactions feed UI**.
 - **Expanded league-play roster minimums**: bench ≥ 5, pitchers ≥ 9 (lineup 9 + bench 5 + 5 SP + 4 RP minimum = 23). Setup wizard offers to "auto-fill missing slots from autogen" for hand-picked teams below this minimum, **without** mutating the user's persistent `customTeams` doc — only the season snapshot is augmented for that case.
 - **In-depth roster management UI** — set lineup, set rotation, manage IL, swap bench.
-- **AI rest behavior** — pitchers gated by strict eligibility threshold (SP ≥ 0.70, RP ≥ 0.35); position players use the **soft probability** formula `restProb = clamp((wear − 6)/4, 0, 1)` rolled after lineup but before box-score sim, broken ties by lex `playerId`. See [`fatigue-and-injuries.md`](fatigue-and-injuries.md) and decisions #12/#13.
+- **AI rest behavior** — pitchers gated by strict eligibility threshold (SP ≥ 0.70, RP ≥ 0.35); position players use the **soft probability** formula `restProb = clamp((wear − 6)/4, 0, 1)` rolled after lineup but before box-score sim, in fixed iteration order (lineup positions 1–9 home, then 1–9 away — matches the injury-roll iteration convention). See [`fatigue-and-injuries.md`](fatigue-and-injuries.md) and decisions #12/#13.
 
 **Defers:** trades, playoffs, awards, minors, multi-team manager mode, replay UI.
 

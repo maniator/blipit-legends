@@ -106,11 +106,15 @@ After each round, remaining teams are re-paired by regular-season record (highes
 
 ### Tiebreakers (decision #18)
 
-In order:
+The full chain (also stored canonically in [`decisions.md`](decisions.md) #18):
 
 1. Head-to-head record.
-2. Run differential.
-3. Coin flip via seeded PRNG (deterministic).
+2. Intra-division record (v2+ only, when divisions exist).
+3. Run differential vs the tied group.
+4. Full-season run differential.
+5. Coin flip via seeded PRNG using a per-tie-key sub-stream: `mulberry32(fnv1a(\`${masterSeed}:tiebreak:${sortedTiedIds}\`))`.
+
+Three-way+ ties resolve highest-seed-first then recurse on the residual group with a fresh `tieKey = sortedTiedIds`. v1 only ever needs steps 1, 4, and 5 (no divisions, no playoff seeding).
 
 ### Playoff fatigue & injury rules (decision #19)
 
