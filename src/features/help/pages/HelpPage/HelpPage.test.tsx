@@ -59,12 +59,12 @@ describe("HelpPage", () => {
     expect(screen.getByText("Saves")).toBeInTheDocument();
   });
 
-  it("renders all 10 accordion sections", () => {
+  it("renders all 11 accordion sections", () => {
     renderHelpPage();
     const helpPage = screen.getByTestId("help-page");
     // <details> elements have implicit ARIA role "group" — scope to the container.
     const details = within(helpPage).getAllByRole("group");
-    expect(details).toHaveLength(10);
+    expect(details).toHaveLength(11);
     // Spot-check section titles via <summary> scoped to the container.
     const rawSummaries = Array.from(helpPage.querySelectorAll("summary")).map((s) =>
       s.textContent?.trim(),
@@ -72,6 +72,7 @@ describe("HelpPage", () => {
     expect(rawSummaries).toContain("Basics");
     expect(rawSummaries).toContain("Game Flow");
     expect(rawSummaries).toContain("Manager Mode");
+    expect(rawSummaries).toContain("Decision Tuning");
     expect(rawSummaries).toContain("Hit types");
     expect(rawSummaries).toContain("Saves");
     expect(rawSummaries).toContain("Player Stats");

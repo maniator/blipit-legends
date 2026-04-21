@@ -110,7 +110,10 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             <DecisionToggleRow>
               <label htmlFor="bunt-enabled">
                 Sacrifice bunt
-                <span title="Offer / attempt sacrifice bunt in late close games."> ⓘ</span>
+                <span title="Offer / attempt sacrifice bunt only when tied or trailing in late close games (within 2 runs).">
+                  {" "}
+                  ⓘ
+                </span>
               </label>
               <input
                 id="bunt-enabled"
@@ -195,10 +198,18 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                 data-testid="ai-pitching-aggressiveness-slider"
               />
               <DecisionRowValue data-testid="ai-pitching-aggressiveness-value">
-                {values.aiPitchingChangeAggressiveness ===
-                DEFAULT_MANAGER_DECISION_VALUES.aiPitchingChangeAggressiveness
-                  ? "Modern"
-                  : values.aiPitchingChangeAggressiveness < 50
+                {/*
+                  Modern label deadband: anything within ±4 of the default 50 reads as
+                  "Modern" so small slider nudges don't flip the label. Below the band =
+                  Old-school; above the band = Bullpen.
+                */}
+                {Math.abs(
+                  values.aiPitchingChangeAggressiveness -
+                    DEFAULT_MANAGER_DECISION_VALUES.aiPitchingChangeAggressiveness,
+                ) <= 4
+                  ? `Modern (${values.aiPitchingChangeAggressiveness})`
+                  : values.aiPitchingChangeAggressiveness <
+                      DEFAULT_MANAGER_DECISION_VALUES.aiPitchingChangeAggressiveness
                     ? `Old-school (${values.aiPitchingChangeAggressiveness})`
                     : `Bullpen (${values.aiPitchingChangeAggressiveness})`}
               </DecisionRowValue>

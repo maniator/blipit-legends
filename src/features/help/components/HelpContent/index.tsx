@@ -184,6 +184,50 @@ const HelpContent: React.FunctionComponent = () => (
       </List>
     </Section>
 
+    <Section title="Decision Tuning">
+      <List>
+        <Li>
+          Open the <strong>⚙️ Decision Tuning</strong> panel (visible while Manager Mode is on) to
+          adjust how aggressively the game offers tactical decisions and how the unmanaged AI plays.
+          Settings persist locally and are saved with each game.
+        </Li>
+        <Li>
+          <strong>Steal offer threshold</strong> — sets how confident the steal must look before
+          you&apos;re prompted. Higher = you&apos;re only prompted on near-sure things; lower = more
+          frequent steal prompts (with more risk).
+        </Li>
+        <Li>
+          <strong>AI steal threshold</strong> — the same idea for the unmanaged AI. It is capped at
+          the offer threshold so the AI never attempts steals it wouldn&apos;t even prompt you for.
+        </Li>
+        <Li>
+          <strong>Sacrifice bunt</strong> — when on, the game offers a sac bunt in late close games,
+          when you&apos;re tied or trailing, with a runner on and a manageable count. When off, no
+          bunt is ever offered or attempted.
+        </Li>
+        <Li>
+          <strong>Intentional walk (IBB)</strong> — when on, an IBB is offered late in close games
+          with first base open and two outs.
+        </Li>
+        <Li>
+          <strong>Pinch hitter</strong> — when on, pinch-hit candidates are offered late in the game
+          with runners in scoring position.
+        </Li>
+        <Li>
+          <strong>Defensive shift</strong> — defaults to <strong>off</strong> to reflect the 2023
+          MLB shift restriction. Turn it on for a pre-2023 / old-school experience.
+        </Li>
+        <Li>
+          <strong>AI pitching aggressiveness</strong> — controls how quickly the unmanaged AI pulls
+          a tired pitcher. Old-school = complete-game era; Modern = average MLB usage; Bullpen =
+          quick hooks and lots of relievers.
+        </Li>
+        <Li>
+          Click <strong>Reset to defaults</strong> to restore the recommended values at any time.
+        </Li>
+      </List>
+    </Section>
+
     <Section title="Live batting stats">
       <List>
         <Li>
