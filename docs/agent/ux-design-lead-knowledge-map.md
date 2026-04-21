@@ -35,11 +35,11 @@ The agent **must cite a source from this map** for every design system claim. An
 
 ### A3. Visual regression baselines
 
-| Source                                        | Path                                  | Owner              | Refresh trigger           |
-| --------------------------------------------- | ------------------------------------- | ------------------ | ------------------------- |
-| Visual snapshot PNGs (current rendered state) | `e2e/tests/visual.spec.ts-snapshots/` | `@e2e-test-runner` | Any intentional UI change |
+| Source                                        | Path                                    | Owner              | Refresh trigger           |
+| --------------------------------------------- | --------------------------------------- | ------------------ | ------------------------- |
+| Visual snapshot PNGs (current rendered state) | `e2e/tests/visual/*.spec.ts-snapshots/` | `@e2e-test-runner` | Any intentional UI change |
 
-Naming convention: `<screen>-<project>-linux.png` where `project` is one of: `desktop`, `tablet`, `iphone-15-pro-max`, `iphone-15`, `pixel-7`, `pixel-5`.
+Naming convention: within each per-spec snapshots directory (for example, `e2e/tests/visual/home-and-dialogs.visual.spec.ts-snapshots/`), files follow `<screen>-<project>-linux.png` where `project` is one of: `desktop`, `tablet`, `iphone-15-pro-max`, `iphone-15`, `pixel-7`, `pixel-5`.
 
 Use these PNGs to predict which snapshot files a proposed change will affect before handing off to `@ui-visual-snapshot`.
 
@@ -137,12 +137,12 @@ When `docs/style-guide.md` says one thing and `src/shared/theme.ts` says another
 
 ## Refresh cadence
 
-| Trigger                                             | Action required                                                                                |
-| --------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Any addition to `src/shared/theme.ts`               | Re-read theme file; update A1 table if a new token category was added                          |
-| Any new Playwright viewport project added to `e2e/` | Update A4 viewport table; update spec template                                                 |
-| Any screen added to `e2e/tests/visual.spec.ts`      | Update A3 table with the new snapshot file names                                               |
-| Any route added to `src/router.tsx`                 | Update A2 architecture reference; consider whether a new persona scenario applies              |
-| Any new user-facing feature shipped                 | Update the persona descriptions if the feature changes core user flows                         |
-| WCAG version update (currently 2.2)                 | Review B1 criteria table; flag any newly required criterion to `@ux-design-lead`               |
-| Monthly cadence                                     | Spot-check `docs/style-guide.md` for drift vs. `src/shared/theme.ts`; flag any inconsistencies |
+| Trigger                                                 | Action required                                                                                |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Any addition to `src/shared/theme.ts`                   | Re-read theme file; update A1 table if a new token category was added                          |
+| Any new Playwright viewport project added to `e2e/`     | Update A4 viewport table; update spec template                                                 |
+| Any screen added to `e2e/tests/visual/*.visual.spec.ts` | Update A3 table with the new snapshot file names from the relevant `*-snapshots/` directory    |
+| Any route added to `src/router.tsx`                     | Update A2 architecture reference; consider whether a new persona scenario applies              |
+| Any new user-facing feature shipped                     | Update the persona descriptions if the feature changes core user flows                         |
+| WCAG version update (currently 2.2)                     | Review B1 criteria table; flag any newly required criterion to `@ux-design-lead`               |
+| Monthly cadence                                         | Spot-check `docs/style-guide.md` for drift vs. `src/shared/theme.ts`; flag any inconsistencies |

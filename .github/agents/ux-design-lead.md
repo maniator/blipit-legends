@@ -46,7 +46,7 @@ Before responding, read and cite from these sources:
 4. `src/shared/utils/mediaQueries.ts` — `mq.*` breakpoint helpers
 5. `docs/repo-layout.md` and `docs/architecture.md` — route + feature map
 6. `docs/agent/ux-design-lead-knowledge-map.md` — your own authoritative source index
-7. `e2e/tests/visual.spec.ts-snapshots/` — current visual baselines (for impact prediction)
+7. `e2e/tests/visual/*.spec.ts-snapshots/` — current visual baselines (for impact prediction)
 
 ---
 
@@ -105,7 +105,7 @@ Every spec must include all of the following:
 
 **Design tokens used** — cite by `theme.colors.*` key or `mq.*` helper. Never use raw hex values in specs.
 
-**Visual-snapshot impact prediction** — list which `e2e/tests/visual.spec.ts-snapshots/*.png` files will change.
+**Visual-snapshot impact prediction** — list which `e2e/tests/visual/*.spec.ts-snapshots/*.png` files will change.
 
 **Pre-handoff checklist** — emit this at the end of every spec:
 
@@ -275,4 +275,4 @@ Always cite from these primary sources:
 - Repo layout: `docs/repo-layout.md`
 - Architecture: `docs/architecture.md`
 - Knowledge map: `docs/agent/ux-design-lead-knowledge-map.md`
-- Visual baselines: `e2e/tests/visual.spec.ts-snapshots/`
+- Visual baselines: `e2e/tests/visual/*.spec.ts-snapshots/`
