@@ -72,13 +72,14 @@ All league routes are deep-linkable. Refreshing any URL rehydrates from RxDB.
 
 ### Lock contract surfacing in routes
 
-The Custom Team Editor route (`/teams/:id/edit`) needs to enforce the roster-edit lock when the team is in an active league:
+The Custom Team Editor route (`/teams/:id/edit`) needs to enforce the roster-edit lock when the team is in an active league. **Implemented as a first-class editor mode**, not as generic "disable":
 
-- The route still renders (so the user can read the team).
-- The form is disabled with a banner: "This team is in an active season. Trades, lineup changes, and IL moves happen on the season's team page. Edit will be available again when the season ends."
-- Banner includes a deep-link to `/leagues/:seasonId/teams/:seasonTeamId/manage`.
+- `<CustomTeamEditor mode="locked" lockedReason={…} lockedDeepLink={…} />` — the editor itself owns the lock rendering so every consumer (this route + the v2 `SeasonTeamPage` embed) gets the same UX without re-implementing.
+- In `mode="locked"`: form inputs are disabled, DnD handles use `@dnd-kit`'s `disabled` (not opacity), destructive actions (Save / Delete / Import) are **hidden** (not just disabled), and `editorReducer` actions are guarded as no-ops at the dispatch site so keyboard shortcuts can't mutate state that storage will reject.
+- `<StatusBanner>` (extracted in v1) renders inside the editor in lock mode with the message: _"This team is in an active season. Trades, lineup changes, and IL moves happen on the season's team page. Edit will be available again when the season ends."_ Banner includes a deep-link to `/leagues/:seasonId/teams/:seasonTeamId/manage`.
+- Visual snapshots: locked state gets its own mobile + desktop baselines.
 
-This route-level enforcement is the user-facing half of the lock contract; the storage-layer guard is described in [`data-model.md`](data-model.md) and [`setup-wizard.md`](setup-wizard.md).
+This route-level enforcement is the user-facing half of the lock contract; the storage-layer guard (the binding contract) is described in [`data-model.md`](data-model.md) and [`setup-wizard.md`](setup-wizard.md).
 
 ## Deferred (out of v4)
 

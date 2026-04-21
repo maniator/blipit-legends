@@ -140,18 +140,19 @@ Migration strategy v1 → v2: defaults `wear = 0`, `injuryStatus = null`, `seaso
 
 Indexes: `seasonId`, `seasonTeamId`.
 
-### `seasonTransactions` (v3)
+### `seasonTransactions` (**v2** — introduced for IL events; expanded in v3 for trades)
 
-One document per transaction (trade, call-up, IL move).
+One document per transaction (IL move, trade, call-up, demote). Introduced in **v2** to back the IL move events in the wear/injury system and the v2 transactions feed UI; the schema is forward-compatible with the v3 trade kinds (no v2→v3 schema bump on this collection).
 
-| Field       | Type                                                                       |
-| ----------- | -------------------------------------------------------------------------- |
-| `id`        | string (primary)                                                           |
-| `seasonId`  | string (indexed)                                                           |
-| `gameDay`   | number (indexed)                                                           |
-| `kind`      | `'trade' \| 'il_in' \| 'il_out' \| 'callup' \| 'demote'`                   |
-| `payload`   | object — kind-specific structure (e.g., trade asset lists, IL injury kind) |
-| `createdAt` | number                                                                     |
+| Field        | Type                                                                                                                                                                                                                                                     | Idempotency notes                                                                                                                                                                                                                                                                               |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`         | string (primary)                                                                                                                                                                                                                                         | For trades, derived deterministically as `trade:${proposalId}` where `proposalId = fnv1a(seasonId + gameDay + sortedTeamPair + sortedPlayerIds)`; for IL events as `il:${seasonPlayerStateId}:${gameDay}:${kind}`. Re-running a trade proposal collides on insert and is detected as duplicate. |
+| `seasonId`   | string (indexed)                                                                                                                                                                                                                                         |                                                                                                                                                                                                                                                                                                 |
+| `gameDay`    | number (indexed)                                                                                                                                                                                                                                         |                                                                                                                                                                                                                                                                                                 |
+| `kind`       | `'il_in' \| 'il_out' \| 'trade' \| 'trade_aborted' \| 'callup' \| 'demote' \| 'inconsistency_detected'` (kinds added per phase: v2 = IL; v3 = trade kinds; v4 = call-up/demote; `inconsistency_detected` always available for crash-recovery audit rows) |                                                                                                                                                                                                                                                                                                 |
+| `kind`-index | string (indexed)                                                                                                                                                                                                                                         | The transactions feed and trade-deadline checks filter by `kind`.                                                                                                                                                                                                                               |
+| `payload`    | object — kind-specific structure (e.g., trade asset lists, IL injury kind)                                                                                                                                                                               |                                                                                                                                                                                                                                                                                                 |
+| `createdAt`  | number                                                                                                                                                                                                                                                   |                                                                                                                                                                                                                                                                                                 |
 
 ### `seasonAwards` (v4)
 
@@ -200,19 +201,28 @@ All ids use the same `nanoid`-style scheme as existing id helpers; never `Date.n
 
 ## RxDB collection-count budget
 
-Per the stored note about RxDB's 16-collection open limit:
+Per the practical RxDB/Dexie open-collection guidance (~16 in single-tab usage; the exact number depends on browser):
 
-| Collection           | Version added | Counts toward open limit |
-| -------------------- | ------------- | ------------------------ |
-| `seasons`            | v1            | yes                      |
-| `seasonTeams`        | v1            | yes                      |
-| `seasonGames`        | v1            | yes                      |
-| `seasonPlayerState`  | v1            | yes                      |
-| `seasonTransactions` | v3            | yes                      |
-| `seasonAwards`       | v4            | yes                      |
-| `seasonArchives`     | v4 (gated)    | yes (only if enabled)    |
+| Collection           | Version added                                        | Counts toward open limit |
+| -------------------- | ---------------------------------------------------- | ------------------------ |
+| `seasons`            | v1                                                   | yes                      |
+| `seasonTeams`        | v1                                                   | yes                      |
+| `seasonGames`        | v1                                                   | yes                      |
+| `seasonPlayerState`  | v1                                                   | yes                      |
+| `seasonTransactions` | **v2** (IL events; expanded in v3 for trades)        | yes                      |
+| `seasonAwards`       | v4                                                   | yes                      |
+| `seasonArchives`     | v4 (gated, lazy-opened only when user opens archive) | yes (only if enabled)    |
 
-Existing app already uses ~10 collections. Adding 4 in v1 brings us to ~14 — within budget. Adding all v4 collections + archive enabled brings us to ~17 — **over budget**. Action: in v4, before enabling `seasonArchives`, audit current collection count; if too high, either gate the archive collection lazily or collapse one of the historical collections into archive.
+**Re-baselined count** (against the actual `addCollections` call in `src/storage/db.ts`):
+
+| Stage              | Open collections                                                                                                                    | Total |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| Today (registered) | 7–8: `saves`, `events`, `teams`, `players`, `completedGames`, `batterGameStats`, `pitcherGameStats` (+ `customTeams` if registered) | 7–8   |
+| + v1 (4)           | + `seasons`, `seasonTeams`, `seasonGames`, `seasonPlayerState`                                                                      | 11–12 |
+| + v2 (1)           | + `seasonTransactions` (introduced in v2 for IL events)                                                                             | 12–13 |
+| + v4 (2)           | + `seasonAwards` + `seasonArchives` (lazy)                                                                                          | 14–15 |
+
+We project landing **at or just under the practical 16-collection cap** at v4, not over. Mitigation triggers if a future addition crosses 15: lazy-open `seasonArchives` only when the archive UI mounts; consider collapsing a historical collection into archive form. Pre-v4 task: empirically verify the cap on the current target browsers.
 
 ## Determinism notes
 

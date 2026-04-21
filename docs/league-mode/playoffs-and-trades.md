@@ -122,12 +122,19 @@ Implementation: a single `playoffMode: boolean` flag on the `seasons` doc flips 
 
 ### Bracket UI (decision #25)
 
-Two layouts:
+Two separate components composed by an outer switcher (single-component CSS-only switching is rejected — different DOM structure, different a11y, different test surface):
 
-- **Mobile (vertical accordion)**: each round renders as a collapsible row. Tap a round → expand to show series. Tap a series → expand to show games + result.
-- **Desktop (horizontal tree)**: classic bracket layout, three columns wide for a single league, four for two-league + World Series.
+```
+<PlayoffBracket bracket={…}>           // shared container
+  <PlayoffBracketAccordion />          // mobile (vertical accordion, native <details>)
+  <PlayoffBracketTree />                // tablet+desktop (horizontal tree)
+</PlayoffBracket>
+```
 
-Component: `<PlayoffBracket layout={mobile|desktop} bracket={bracket} />`. Layout is media-query-driven via `mq.notDesktop` / `mq.desktop` (per repo styled-components convention).
+- **Mobile (vertical accordion)**: each round renders as a collapsible `<details>` row. Tap a round → expand to show series. Tap a series → expand to show games + result. Selected via `${mq.mobile}` (rendered) / `${mq.notMobile}` (hidden).
+- **Tablet + Desktop (horizontal tree)**: classic bracket layout, three columns wide for a single league, four for two-league + World Series. Selected via `${mq.notMobile}` (rendered) / `${mq.mobile}` (hidden).
+
+Layout switching uses `mq.mobile` and `mq.notMobile` from `@shared/utils/mediaQueries` — never raw `@media` strings, never the non-existent `mq.notDesktop`.
 
 **Per-game result detail inside the bracket reuses `LineScore` and `HitLog` from the gameplay package** — the bracket is the only net-new visual; everything inside a series-game expansion is existing UI per [`ui-reuse.md`](ui-reuse.md).
 

@@ -69,31 +69,44 @@ The following live in `src/` today and are first-class candidates for reuse in l
 
 ### Styled-components & tokens
 
-| Pattern / token                                    | Where                                                        | Reuse                                                                                                                                                               |
-| -------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `mq` breakpoint helpers                            | `src/shared/utils/mediaQueries.ts`                           | **Always** use for league responsive styles. Never write raw `@media` strings.                                                                                      |
-| Pill / badge styling (e.g., `ManagerModeControls`) | `src/features/gameplay/components/GameControls/styles.ts`    | Pattern source for the **fatigue badge** (🟢/🟡/🔴) and **IL badge** (🚑). Extract a shared `<StatusPill>` styled component to `src/shared/components/StatusPill/`. |
-| Color palette, typography, button variants         | `docs/style-guide.md`                                        | **Single source of truth.** Every league UI must use existing tokens. New colors require a style-guide update first.                                                |
-| `dvh`-based modal `max-height`                     | `src/features/exhibition/components/NewGameDialog/styles.ts` | Reuse for league setup wizard modal sizing — don't use `vh`.                                                                                                        |
+| Pattern / token                            | Where                                                     | Reuse                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------ | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mq` breakpoint helpers                    | `src/shared/utils/mediaQueries.ts`                        | **Always** use for league responsive styles. Never write raw `@media` strings.                                                                                                                                                                                                                                 |
+| Pill / badge styling (e.g., `NotifBadge`)  | `src/features/gameplay/components/GameControls/styles.ts` | Pattern source for the **fatigue badge** (🟢/🟡/🔴) and **IL badge** (🚑). Extract a shared `<StatusPill>` styled component to `src/shared/components/StatusPill/`. Pill colors must map to existing semantic tokens in [`docs/style-guide.md`](../style-guide.md); new colors require a style-guide PR first. |
+| Color palette, typography, button variants | `docs/style-guide.md`                                     | **Single source of truth.** Every league UI must use existing tokens. New colors require a style-guide update first.                                                                                                                                                                                           |
+| `dvh`-based modal `max-height`             | `src/features/exhibition/styles.ts`                       | Reuse for league setup wizard modal sizing — `max-height: min(90dvh, 820px)` desktop / `min(96dvh, 820px)` mobile. Never use `vh`.                                                                                                                                                                             |
 
 ## Net-new components catalog
 
 Where reuse genuinely doesn't fit, these are the new components introduced. Keep this list small.
 
-| Component              | Phase | Built from                                                                                                                                                                                               |
-| ---------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `StatusPill`           | v1    | Extracted shared component for `🟢 Fresh` / `🟡 Tired` / `🔴 Spent` (and v2 `🚑 IL`) badges. Single component, variant prop.                                                                             |
-| `StandingsTable`       | v1    | Composes `<table>` with the same column-header / sortable conventions as `CareerStatsBattingTable`. Consider extracting a shared `<SortableTable>` if a third sortable table appears in the same PR set. |
-| `ScheduleDayList`      | v1    | List of `seasonGames` rows; each row composes `LineScore` for completed games and `CustomTeamMatchup` for upcoming.                                                                                      |
-| `LeagueSetupWizard`    | v1    | Uses existing modal shell + form primitives; reducer pattern modeled on `CustomTeamEditor`'s `editorReducer`.                                                                                            |
-| `AutogenPanel`         | v1    | Composed inside `LeagueSetupWizard`. Reuses `StatusPill` for theme/parity selectors styling.                                                                                                             |
-| `SeasonHomePage`       | v1    | Composes `StandingsTable`, `ScheduleDayList`, `CustomTeamMatchup` (next-game CTA).                                                                                                                       |
-| `RosterManagementPage` | v2    | Composes `SortablePlayerRow`, `SubstitutionPanel`, `PlayerStatsPanel`. No new dnd-kit setup needed.                                                                                                      |
-| `TransactionsFeedPage` | v2/v3 | Generic chronological feed list. Single new list component; rows compose existing player/team avatars.                                                                                                   |
-| `TradeCenterPage`      | v3    | Composes `PlayerStatsPanel` + `DecisionPanel` modal shell.                                                                                                                                               |
-| `PlayoffBracket`       | v3    | New component; vertical-accordion / horizontal-tree layout switch via `mq`.                                                                                                                              |
-| `AwardsPage`           | v4    | Composes `CareerStatsSummaryPanel` for winner cards + `CareerStatsBattingTable`/`CareerStatsPitchingTable` for top-3.                                                                                    |
-| `LeadersPage`          | v4    | Pure reuse — `CareerStatsBattingTable` + `CareerStatsPitchingTable` with season-scoped data.                                                                                                             |
+| Component                                    | Phase | Built from                                                                                                                                                                                                                   |
+| -------------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `StatusPill`                                 | v1    | Extracted shared component for `🟢 Fresh` / `🟡 Tired` / `🔴 Spent` (and v2 `🚑 IL`) badges. Single component, variant prop. Pill colors must map to existing semantic tokens in [`docs/style-guide.md`](../style-guide.md). |
+| `StatusBanner`                               | v1    | Shared inline-banner component (title + body + optional CTA). Used by the **roster-edit lock banner** on `/teams/:id/edit` and `SeasonTeamPage`, plus "trade deadline passed" / "season abandoned" surfaces in v3+.          |
+| `EmptyState`                                 | v1    | Icon + title + body + CTA. Used by `LeaguesHubPage`, `TransactionsFeedPage`, `InjuryReportPage`, `AwardsPage` (pre-completion), `PlayoffBracketPage` (pre-playoffs).                                                         |
+| `ModalShell`                                 | v1    | Extracted modal primitive (header / scroll body / sticky footer; `dvh`-based sizing) from `src/features/exhibition/styles.ts` + `InstructionsModal/styles.ts`. Consumed by `LeagueSetupWizard` and onward.                   |
+| `StandingsTable`                             | v1    | Composes `<SortableTable>` (extracted from `CareerStatsBattingTable` / `CareerStatsPitchingTable`).                                                                                                                          |
+| `ScheduleDayList`                            | v1    | List of `seasonGames` rows; each row composes `LineScore` for completed games and `CustomTeamMatchup` for upcoming.                                                                                                          |
+| `LeagueSetupWizard`                          | v1    | Uses `<ModalShell>` + form primitives; reducer pattern modeled on `CustomTeamEditor`'s `editorReducer`.                                                                                                                      |
+| `AutogenPanel`                               | v1    | Composed inside `LeagueSetupWizard`. Reuses `StatusPill` for theme/parity selectors styling.                                                                                                                                 |
+| `SeasonHomePage`                             | v1    | Composes `StandingsTable`, `ScheduleDayList`, `CustomTeamMatchup` (next-game CTA).                                                                                                                                           |
+| `SeasonContextProvider` / `useSeasonContext` | v1    | Non-visual; rehydrates the season + leagues + seasonTeams subset for any league sub-route. Consumed by every league page.                                                                                                    |
+| `RosterManagementPage`                       | v2    | Composes the **decoupled** `SortablePlayerRow` (extracted in v1; see Generalization candidates), `SubstitutionPanel`, `PlayerStatsPanel`. No new dnd-kit setup.                                                              |
+| `TradeProposalDialog`                        | v3    | Discrete modal composed of `<ModalShell>` + `PlayerStatsPanel` rows + Accept/Reject affordances modeled on `DecisionPanel`. Not folded into `TradeCenterPage`.                                                               |
+| `TradeCenterPage`                            | v3    | Composes `PlayerStatsPanel` (compact-row variant) + `TradeProposalDialog`.                                                                                                                                                   |
+| `PlayoffBracketAccordion`                    | v3    | Mobile bracket — vertical accordion using native `<details>`. Selected via `${mq.mobile}`.                                                                                                                                   |
+| `PlayoffBracketTree`                         | v3    | Tablet/desktop bracket — horizontal tree with connector lines (new visual token; pre-clear with `@ux-design-lead` per [`docs/style-guide.md`](../style-guide.md)). Selected via `${mq.notMobile}`.                           |
+| `PlayoffBracket`                             | v3    | Outer switcher container that renders the appropriate bracket variant per viewport.                                                                                                                                          |
+| `PlayoffSeriesPage`                          | v3    | Series-level scaffolding (best-of-N progress, "Game N starts in…"). Per-game expansion reuses `LineScore` + `HitLog`.                                                                                                        |
+| `AwardsPage`                                 | v4    | Composes `CareerStatsSummaryPanel` for winner cards + `CareerStatsBattingTable`/`CareerStatsPitchingTable` for top-3 finishers.                                                                                              |
+
+**Reclassified as compositions, not net-new components:**
+
+- `LeadersPage` — `PageLayout` + `CareerStatsBattingTable` + `CareerStatsPitchingTable` with season-scoped data. Zero net-new visual surface.
+- `TransactionsFeedPage` — once `<SlotList>` is extracted (v1), this is a `<SlotList>` consumer.
+- `SeasonHistoryPage` — `PageLayout` + reuse of `StandingsTable` / `AwardsPage` views with archived data.
+- `InjuryReportPage` — `PageLayout` + `<SortableTable>` + `StatusPill` (IL variant). Composition.
 
 ## Generalization candidates
 
@@ -102,24 +115,26 @@ When implementing the components above, expect to lift these out of single-featu
 - **`<SortableTable>`** — both `CareerStatsBattingTable` and `CareerStatsPitchingTable` carry similar sort logic. The new `StandingsTable` in v1 makes this the third use site → extract.
 - **`<SlotList>`** — `SaveSlotList` and the new `SeasonList` (v1) share the same shape. Extract on the v1 PR that adds the league hub.
 - **`<StatusPill>`** — already noted; extract in v1.
-- **Modal shell** — there is no shared "Dialog" primitive yet; `SavesModal`, `InstructionsModal`, `DecisionPanel`, and `NewGameDialog` each style their own `<dialog>`. Don't extract for v1 league work (out of scope), but reuse the closest existing shell verbatim instead of re-implementing.
+- **Modal shell** — there is no shared "Dialog" primitive yet; `SavesModal`, `InstructionsModal`, `DecisionPanel`, and the exhibition setup modal each style their own `<dialog>`. **Recommended for v1:** extract a `<ModalShell>` primitive (header bar, scroll body, sticky footer, `max-height: min(90dvh, 820px)` desktop / `min(96dvh, 820px)` mobile) from `src/features/exhibition/styles.ts` and `InstructionsModal/styles.ts`. The `LeagueSetupWizard` is a modal-on-route and will drift visually if it inlines its own shell rather than borrowing the existing pattern.
+- **`<SortablePlayerRow>` decoupled from editor reducer** — the existing row in `CustomTeamEditor/SortablePlayerRow.tsx` is bound to `editorReducer` and `useEditorDragHandlers`. Extract a presentational row + a hook layer in v1 so the v2 `RosterManagementPage` can reuse it without forking.
+- **`<EmptyState>`** — used today implicitly in `SaveSlotList`; will recur on the leagues hub, transactions feed, injury report, awards (pre-completion), and bracket (pre-playoffs). Extract in v1.
 
 ## Per-screen reuse map (quick reference)
 
-| New screen                     | Primary reused components                                                           |
-| ------------------------------ | ----------------------------------------------------------------------------------- |
-| `LeaguesHubPage`               | `PageLayout`, `<SlotList>`/`SaveSlotList` shape, `FixedBottomBanner`                |
-| `LeagueSetupWizard`            | `NewGameDialog` modal shell, existing form primitives, `StatusPill` (autogen knobs) |
-| `SeasonHomePage`               | `PageLayout`, `StandingsTable`, `ScheduleDayList`, `CustomTeamMatchup`              |
-| `SeasonSchedulePage`           | `PageLayout`, `ScheduleDayList`, `LineScore` (completed games inline)               |
-| `SeasonTeamPage`               | `PageLayout`, `CustomTeamEditor` (read-only), `StatusPill`, `PlayerStatsPanel`      |
-| `RosterManagementPage` (v2)    | `SortablePlayerRow`, `SubstitutionPanel`, `PlayerStatsPanel`, `StatusPill`          |
-| `InjuryReportPage` (v2)        | `PageLayout`, `<SortableTable>`, `StatusPill` (IL variant)                          |
-| `TransactionsFeedPage` (v2/v3) | `PageLayout`, generic feed list                                                     |
-| `TradeCenterPage` (v3)         | `PlayerStatsPanel`, `DecisionPanel` shell                                           |
-| `PlayoffBracketPage` (v3)      | `PageLayout`, new `PlayoffBracket`, `LineScore` (per-game inline)                   |
-| `AwardsPage` (v4)              | `CareerStatsSummaryPanel`, `CareerStatsBattingTable`/`CareerStatsPitchingTable`     |
-| `LeadersPage` (v4)             | `CareerStatsBattingTable`, `CareerStatsPitchingTable`                               |
+| New screen                     | Primary reused components                                                                                      |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `LeaguesHubPage`               | `PageLayout`, `<SlotList>`/`SaveSlotList` shape, `FixedBottomBanner`                                           |
+| `LeagueSetupWizard`            | `<ModalShell>` (extracted from exhibition modal in v1), existing form primitives, `StatusPill` (autogen knobs) |
+| `SeasonHomePage`               | `PageLayout`, `StandingsTable`, `ScheduleDayList`, `CustomTeamMatchup`                                         |
+| `SeasonSchedulePage`           | `PageLayout`, `ScheduleDayList`, `LineScore` (completed games inline)                                          |
+| `SeasonTeamPage`               | `PageLayout`, `CustomTeamEditor` (read-only), `StatusPill`, `PlayerStatsPanel`                                 |
+| `RosterManagementPage` (v2)    | `SortablePlayerRow`, `SubstitutionPanel`, `PlayerStatsPanel`, `StatusPill`                                     |
+| `InjuryReportPage` (v2)        | `PageLayout`, `<SortableTable>`, `StatusPill` (IL variant)                                                     |
+| `TransactionsFeedPage` (v2/v3) | `PageLayout`, generic feed list                                                                                |
+| `TradeCenterPage` (v3)         | `PlayerStatsPanel`, `DecisionPanel` shell                                                                      |
+| `PlayoffBracketPage` (v3)      | `PageLayout`, new `PlayoffBracket`, `LineScore` (per-game inline)                                              |
+| `AwardsPage` (v4)              | `CareerStatsSummaryPanel`, `CareerStatsBattingTable`/`CareerStatsPitchingTable`                                |
+| `LeadersPage` (v4)             | `CareerStatsBattingTable`, `CareerStatsPitchingTable`                                                          |
 
 ## Out-of-scope: visual redesigns
 
@@ -128,5 +143,9 @@ League Mode does **not** introduce new colors, typography scales, or button vari
 ## Testing reuse
 
 - Reuse extends to **visual snapshots**: when a league screen embeds an existing component (`LineScore`, `PlayerStatsPanel`, etc.), do not re-snapshot the inner component as a separate baseline. The existing component's snapshot covers it.
-- New screens get exactly **one mobile + one desktop** visual snapshot per state worth capturing.
-- Use the `@ui-visual-snapshot` agent for baseline regeneration — never run snapshot updates outside the Playwright Docker container.
+- **Snapshot baseline convention** (matches existing repo practice in `e2e/tests/visual/*.spec.ts-snapshots/`):
+  - **Top-level league pages** get baselines on **all 6 device projects** (`desktop`, `tablet`, `iphone-15-pro-max`, `iphone-15`, `pixel-7`, `pixel-5`) — same as `home-screen-*` and `instructions-modal-*` today. Trim only when two close phone projects render visually identically.
+  - **Embedded sub-components** (e.g. `<StatusPill>`, `<StandingsTable>` excerpts inside a larger page snapshot) get **1 mobile + 1 desktop** baseline.
+  - **State variants** that need their own baseline at minimum: empty (no seasons / no IL / no awards), locked (Custom Team Editor in lock mode), trade-deadline-passed (TradeCenterPage read-only), pre-playoffs (PlayoffBracketPage during regular season), standings ties (StandingsTable with tiebreaker badges), wizard validation error (each step's error chrome).
+- **Container parity for baseline regeneration is a hard repo invariant.** Visual snapshot baselines are regenerated **only inside `mcr.microsoft.com/playwright:v1.58.2-noble`** via the `update-visual-snapshots` workflow or the `@e2e-test-runner` agent. Never via host-OS `yarn test:e2e:update-snapshots`. This applies to every league screen across v1–v4.
+- Estimated total new baseline PNGs across v1–v4: ~100 (v1: ~36, v2: ~22, v3: ~24, v4: ~20). Plan CI/storage budget accordingly.

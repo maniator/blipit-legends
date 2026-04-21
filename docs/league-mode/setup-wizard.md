@@ -11,7 +11,7 @@ The wizard refuses to advance past Step 1 if `seasons` already contains an `acti
 
 ## UI reuse
 
-Per [`ui-reuse.md`](ui-reuse.md), the wizard composes existing primitives — the modal shell from `NewGameDialog`, the field/label patterns already used in exhibition setup, and `StatusPill` (extracted in v1) for the autogen theme/parity selectors. Net-new wizard components are limited to `LeagueSetupWizard`, `AutogenPanel`, and the per-step renderers; everything underneath them is existing UI.
+Per [`ui-reuse.md`](ui-reuse.md), the wizard composes existing primitives — the modal shell extracted from the exhibition setup modal (`src/features/exhibition/styles.ts`, `max-height: min(90dvh, 820px)` desktop / `min(96dvh, 820px)` mobile — never bare `vh`), the field/label patterns already used in exhibition setup, and `StatusPill` (extracted in v1) for the autogen theme/parity selectors. Net-new wizard components are limited to `LeagueSetupWizard`, `AutogenPanel`, and the per-step renderers; everything underneath them is existing UI.
 
 ## Step layout
 

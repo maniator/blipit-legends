@@ -20,21 +20,40 @@ pitcherStartsThisSeason: number  // running counter
 
 After every completed `seasonGames`:
 
-- **Starting pitcher** (winning + losing): `pitcherDaysRest = 0`, `pitcherStartsThisSeason++`, `pitcherAvailability` recalculated using a recovery curve (see below).
-- **All other pitchers** on both teams: `pitcherDaysRest++`, `pitcherAvailability` ticks toward 1 along the recovery curve.
+- **Starting pitcher** (winning + losing): `pitcherDaysRest = 0`, `pitcherStartsThisSeason++`, `pitcherAvailability` recalculated using the **role-specific** recovery curve (see below).
+- **All other pitchers** on both teams: `pitcherDaysRest++`, `pitcherAvailability` ticks toward 1 along the role-specific recovery curve.
 
-Recovery curve (defaults; tunable in a single constants module):
+`pitchingRole` is read from the team's `customTeams` snapshot (`'SP'` vs `'RP'`; `'SP/RP'` is bucketed as `'SP'` for recovery-curve purposes since SP outings dominate fatigue accrual).
+
+Recovery curves (defaults; tunable in a single constants module). **Per the `@baseball-manager` realism review (v0 docs review, MUST-FIX), starters and relievers use distinct curves to match modern MLB rotation/bullpen behavior:**
+
+**Starting pitchers (SP, ~80–110 pitches per outing):**
 
 | Days rest | Availability after |
 | --------- | ------------------ |
-| 0         | 0.20               |
-| 1         | 0.45               |
-| 2         | 0.70               |
-| 3         | 0.85               |
-| 4         | 0.95               |
+| 0         | 0.10               |
+| 1         | 0.20               |
+| 2         | 0.40               |
+| 3         | 0.75               |
+| 4         | 1.00               |
 | 5+        | 1.00               |
 
-These values are **trusted defaults** per decision #11. We do not route them through `@baseball-manager` for tuning before v1 ships; we revisit after v1 is in users' hands.
+Eligibility threshold: SP cannot start the next game with `pitcherAvailability < 0.70`. This forbids 1-day-rest SP starts and makes 3-day-rest borderline ("Tired" yellow).
+
+**Relief pitchers (RP, ~10–25 pitches per appearance):**
+
+| Days rest | Availability after |
+| --------- | ------------------ |
+| 0         | 0.40               |
+| 1         | 0.80               |
+| 2         | 0.95               |
+| 3+        | 1.00               |
+
+Eligibility threshold: RP cannot enter a game with `pitcherAvailability < 0.35`. Allows the realistic 3-of-4-days closer pattern.
+
+**Linked v1 roster-minimum decision (per `@baseball-manager` MUST-FIX):** v1 RP minimum bumps from **1 → 3** in [`decisions.md`](decisions.md) #13 to make a credible bullpen — one RP plus the SP-derived curve produced an empty bullpen on game 2. (Decision #13 v2 minimums also revisited; see decisions.md.)
+
+These values are **trusted defaults** per decision #11 with the realism deltas above. Both curves and thresholds are stored in a single `pitcherFatigueConstants.ts` module and pinned to `seasons.rulesetVersion` (see "Ruleset versioning" below) so a post-launch tuning pass does not silently break in-flight saved seasons' replay determinism.
 
 ### UI: pill badge
 
@@ -46,7 +65,7 @@ States derived from `pitcherAvailability`:
 | 0.50 – 0.84  | 🟡 Tired | yellow |
 | < 0.50       | 🔴 Spent | red    |
 
-Implemented as a single shared `<StatusPill variant="fresh|tired|spent|il">` component extracted from existing pill styling in `ManagerModeControls/styles.ts`. Lives at `src/shared/components/StatusPill/` and is reused in v2 for the IL badge (`🚑 IL`) — see [`ui-reuse.md`](ui-reuse.md).
+Implemented as a single shared `<StatusPill variant="fresh|tired|spent|il">` component extracted from the existing pill styling in `src/features/gameplay/components/GameControls/styles.ts` (`NotifBadge` + `theme.radii.pill`). Lives at `src/shared/components/StatusPill/` and is reused in v2 for the IL badge (`🚑 IL`) — see [`ui-reuse.md`](ui-reuse.md). Pill colors must map to existing semantic tokens in [`docs/style-guide.md`](../style-guide.md); raise a style-guide PR before introducing any new color.
 
 Rendered on:
 
@@ -73,12 +92,22 @@ type SeasonModifiers = {
 
 ### Eligibility-to-start enforcement
 
-A pitcher with `pitcherAvailability < 0.30` (i.e., "Spent") cannot be selected as the next game's starter:
+A pitcher fails the **role-specific** eligibility threshold for next-game selection: SP needs `pitcherAvailability ≥ 0.70` to start; RP needs `pitcherAvailability ≥ 0.35` to enter.
 
-- AI rotation logic skips them and rolls forward to the next available SP.
+- AI rotation logic skips ineligible pitchers and rolls forward to the next available SP / RP.
 - Manager-mode UI grays out the option with a tooltip "Resting today".
 
 This is the v1 user-visible consequence of fatigue — the rotation actually rotates.
+
+### v1 AI rotation/lineup policy (per PM-agent dev-readiness review, blocking before sim PR)
+
+For non-user teams in v1, the AI:
+
+- Cycles through the 5 SPs in their `customTeams.pitchers[]` order, skipping any with `pitcherAvailability < 0.70`. If all SPs are below threshold, picks the highest-availability SP.
+- Brings the highest-availability RP (≥ 0.35) into late-inning manager prompts; otherwise no RP change.
+- Plays the top 9 lineup as defined in `customTeams.lineup[]`. (Position-player wear-driven rest enters in v2.)
+
+When the user runs **Quick sim** for their own team's game, manager-mode prompts auto-resolve identically to the AI policy above (same rotation/lineup rules; no PRNG calls beyond what the headless sim already makes).
 
 ### Determinism
 
@@ -102,19 +131,35 @@ Effect on simulation: max ~5% penalty per decision #11. Applied via `seasonModif
 
 ### Injury rolls
 
-Per game, per player on the active lineup:
+**Rate (revised per `@baseball-manager` realism review — original 0.4% per player-game was ~6× too low for a 60-game Standard season vs MLB's ~15 IL stints/team/year):**
 
-- Roll a uniform[0,1) from the seeded PRNG.
-- If `< 0.004` (regular season; `< 0.001` in playoffs per decision #19), the player is injured.
-- Sample injury kind + duration from a distribution table (e.g., 60% short-term 1–3 games, 30% medium 4–10 games, 10% long-term 11–30 games).
-- Write `injuryStatus = { kind, ilUntilGameDay: currentGameDay + duration }` to `seasonPlayerState`.
-- Write a `seasonTransactions` row of kind `'il_in'`.
+- **Regular season:** 1.5% per active-lineup player-game (yields ~9 injuries / team / Standard 60-game season).
+- **Playoffs:** 0.375% (×0.25 of regular-season rate per decision #19).
+
+Rate constants live in `injuryConstants.ts` and are pinned to `seasons.rulesetVersion`.
+
+**Per-game procedure (deterministic):**
+
+1. Run **after** the box-score simulation completes (so injury rolls do not perturb at-bat outcomes — `@simulation-correctness` review requirement).
+2. Iterate players in fixed order: home lineup batting positions 1–9, away lineup batting positions 1–9, home starting pitcher, away starting pitcher, then any home then away RP that appeared in the game (in entrance order). This iteration order is the binding contract for replay.
+3. For each player, draw a uniform[0,1) from the seeded PRNG (per-game `derivedSeed`, same PRNG that ran the box score).
+4. If `< rulesetVersion.injuryRatePctPerGame` (regular-season) or `× 0.25` (playoff), the player is injured.
+5. Sample injury **kind first, then duration** (separate PRNG draws in that fixed order) from the duration distribution table:
+
+| Bucket     | Probability | Duration (games) |
+| ---------- | ----------- | ---------------- |
+| Short-term | 60%         | 1–3              |
+| Medium     | 30%         | 4–10             |
+| Long-term  | 10%         | 11–30            |
+
+6. Write `injuryStatus = { kind, ilUntilGameDay: currentGameDay + duration }` to `seasonPlayerState`.
+7. Write a `seasonTransactions` row of kind `'il_in'` with deterministic id `il:${seasonPlayerStateId}:${gameDay}:il_in`.
 
 Effect: `seasonModifiers.injuryFilter` excludes injured players from lineup-eligibility for the duration. AI auto-fills with bench players; manager-mode prompts the user.
 
 ### Recovery
 
-Each game tick, any player with `injuryStatus.ilUntilGameDay <= currentGameDay` is cleared (`injuryStatus = null`) and a `seasonTransactions` row of kind `'il_out'` is written.
+At the **start of each game-day** (before any games of that day simulate), any player with `injuryStatus.ilUntilGameDay <= currentGameDay` is cleared (`injuryStatus = null`) and a `seasonTransactions` row of kind `'il_out'` is written with deterministic id `il:${seasonPlayerStateId}:${gameDay}:il_out`. Pinning recovery to the start of the day (not the end) is the binding contract for replay.
 
 ### UI
 
@@ -124,20 +169,24 @@ Each game tick, any player with `injuryStatus.ilUntilGameDay <= currentGameDay` 
 
 ### AI rest behavior (decision #12)
 
-Threshold-based:
+**Soft probability** (per `@baseball-manager` realism review — replaces the hard `wear ≥ 8` threshold which produced visibly mechanical rest cadences):
 
-- Rest a position player when `wear ≥ 8`.
-- Rest a pitcher when `pitcherAvailability < 0.85`.
+- Position-player rest probability per game: `restProb = clamp((wear - 6) / 4, 0, 1)`. Rolled from the per-game derived seed **after** lineup construction but **before** the box-score sim, in fixed iteration order (lineup positions 1–9 home, then 1–9 away).
+- Pitcher rest is the eligibility-threshold rule above (no probability — strict per-role threshold).
 - Otherwise, play the best available lineup.
 
-This keeps lineups recognizable (the best player plays most days) while honoring fatigue (stars do get scheduled rest).
+This keeps lineups recognizable (the best player plays most days) while honoring fatigue (stars do get scheduled rest) without creating a guessable cadence.
+
+**Catcher wear multiplier (deferred to v2.1 follow-up):** real catchers play ~110/162 (68%) vs other positions ~140/162 (86%). When v2 ships, accept universal `wear += 1/game` as a known limitation; flag for a v2.1 retune via `@baseball-manager` after a Standard season log is captured.
 
 ### League-play roster minimums (decision #13)
 
-v2 raises the minimum roster requirements for league play:
+**v1 minimum (revised per `@baseball-manager` MUST-FIX):** lineup 9 + bench 3 + 5 SP + **3 RP** = **20 active**. The original v1 plan of 1 RP made bullpens empty by game 2 once the SP/RP curve split landed. Three RPs is the floor for a credible bullpen.
+
+**v2 minimums:**
 
 - Bench ≥ 5 (was 3).
-- Pitchers ≥ 6 (was 5; minimum 5 SP + 1 RP).
+- Pitchers ≥ 8 (5 SP + 3 RP minimum; was 5 SP + 1 RP).
 
 The setup wizard validates and offers to "auto-fill missing slots from autogen" for hand-picked teams below this minimum, **without** mutating the user's persistent `customTeams` doc — only the season snapshot is augmented.
 
@@ -160,6 +209,25 @@ Implementation: a single `playoffMode: boolean` flag on `seasons` flips the mult
 - All injury rolls use the per-game derived seed (`seasonGames.derivedSeed`) → same seed = same injuries.
 - Recovery curves and wear formulas are pure functions of `seasonPlayerState` → fully reproducible.
 - `seasonModifiers` injection is a typed structural pass-through; the gameplay context never reads from RxDB directly.
+- Player iteration order for injury rolls and rest rolls is fixed (see "Per-game procedure" above) — this is a binding contract for replay.
+- All injury and wear rolls happen **after** the box-score sim completes (and recovery clears at the **start** of each game-day, before sims) — keeps fatigue/injury logic changes from perturbing at-bat outcomes for a given seed.
+
+## Ruleset versioning (`seasons.rulesetVersion`)
+
+All tuning constants for fatigue and injuries — pitcher recovery curves, eligibility thresholds, max fatigue penalty (`12%`), wear formula, wear penalty cap (`5%`), AI rest probability formula, injury rate (`1.5%` regular / `0.375%` playoff), injury duration distribution — are pinned to a single integer constant exported from `src/features/league/ruleset/index.ts`:
+
+```
+export const CURRENT_RULESET_VERSION = 1;
+```
+
+Every `seasons` doc snapshots `rulesetVersion: number` at create time. On resume:
+
+- If `season.rulesetVersion === CURRENT_RULESET_VERSION` → resume normally.
+- Else → the season is locked into the historical ruleset bundled with the version it was created under (the constants module exports a per-version map; reads dispatch on the season's rulesetVersion).
+
+Any source-level change to a tuning constant **must bump `CURRENT_RULESET_VERSION` and add a new historical entry**. CI guard test (`tests/league/rulesetVersionEnforcement.test.ts`) snapshots the canonical constants per version; any diff to the snapshot must be paired with a version bump.
+
+Without this, every release that tweaks a constant silently breaks all in-flight saved seasons' replay determinism.
 
 ## Testing surface
 

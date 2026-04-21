@@ -84,7 +84,8 @@
 - **2 leagues × 2 divisions** layout.
 - **Interleague schedule** with DH harmonization (home team's rule).
 - **Position-player wear** added to `seasonPlayerState` (~5% knob) — schema bump on `seasonPlayerState`.
-- **Injury system**: 0.4% per player-game, IL collection, automatic bench-fill replacement, return rolls per recovery distribution.
+- **Injury system**: 0.4% per player-game, IL collection, automatic bench-fill replacement, return rolls per recovery distribution. (See `@baseball-manager` follow-up note in [`fatigue-and-injuries.md`](fatigue-and-injuries.md) — current 0.4% per starter-game is suspected ~6× too low; v2 ships with the rate behind a `injuryRatePctPerGame` constant tracked on `seasons.rulesetVersion` so post-launch tuning does not break replay determinism for in-flight seasons.)
+- **`seasonTransactions` collection introduced in v2** to back the IL events and the new transactions feed UI. Schema is forward-compatible with v3 trade kinds — no v2→v3 schema bump on this collection. (Promoted from v3 per the PM-agent dev-readiness review.)
 - **Injury report UI**, **transactions feed UI**.
 - **Expanded league-play roster minimums**: bench ≥ 5, pitchers ≥ 6 (lineup 9 + bench 5 + 5 SP + 1 RP minimum = 20). Setup wizard offers to "auto-fill missing slots from autogen" for hand-picked teams below this minimum, **without** mutating the user's persistent `customTeams` doc — only the season snapshot is augmented for that case.
 - **In-depth roster management UI** — set lineup, set rotation, manage IL, swap bench.
