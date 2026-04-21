@@ -319,12 +319,46 @@ export const DecisionTuningPanel = styled.div`
   }
 `;
 
+export const DecisionPanelTitleRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.xs};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.borderForm};
+  padding-bottom: ${({ theme }) => theme.spacing.xs};
+`;
+
 export const DecisionPanelTitle = styled.div`
   font-size: ${({ theme }) => theme.fontSizes.base};
   font-weight: bold;
   color: ${({ theme }) => theme.colors.textPrimary};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.borderForm};
-  padding-bottom: ${({ theme }) => theme.spacing.xs};
+`;
+
+export const DecisionPanelClose = styled.button`
+  background: transparent;
+  border: 1px solid transparent;
+  color: ${({ theme }) => theme.colors.textSecondaryLink};
+  font-size: ${({ theme }) => theme.fontSizes.base};
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: ${({ theme }) => theme.radii.sm};
+  flex-shrink: 0;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.bgSurface};
+    border-color: ${({ theme }) => theme.colors.borderForm};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 2px;
+  }
 `;
 
 export const DecisionPanelSection = styled.div`
@@ -333,11 +367,13 @@ export const DecisionPanelSection = styled.div`
   gap: ${({ theme }) => theme.spacing.xs};
 `;
 
-export const DecisionRow = styled.div`
+export const DecisionRow = styled.div<{ $disabled?: boolean }>`
   display: grid;
   grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.s6};
+  opacity: ${({ $disabled }) => ($disabled ? 0.45 : 1)};
+  pointer-events: ${({ $disabled }) => ($disabled ? "none" : "auto")};
 
   input[type="range"] {
     accent-color: ${({ theme }) => theme.colors.accentPrimary};
@@ -346,6 +382,10 @@ export const DecisionRow = styled.div`
 
     ${mq.mobile} {
       width: 60px;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
     }
   }
 `;

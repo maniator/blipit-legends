@@ -25,6 +25,7 @@ type Props = {
   onRequestNotifPermission: () => void;
   onDecisionValuesChange: (values: ManagerDecisionValues) => void;
   onDecisionValuesReset: () => void;
+  onDecisionPanelOpenChange?: (open: boolean) => void;
 };
 
 /** Inner sub-component that accesses game context for the substitution button. */
@@ -100,6 +101,7 @@ const ManagerModeControls: React.FunctionComponent<Props> = ({
   onRequestNotifPermission,
   onDecisionValuesChange,
   onDecisionValuesReset,
+  onDecisionPanelOpenChange,
 }) => (
   <>
     <ToggleLabel>
@@ -161,6 +163,7 @@ const ManagerModeControls: React.FunctionComponent<Props> = ({
       values={decisionValues}
       onChange={onDecisionValuesChange}
       onReset={onDecisionValuesReset}
+      onOpenChange={onDecisionPanelOpenChange}
     />
   </>
 );

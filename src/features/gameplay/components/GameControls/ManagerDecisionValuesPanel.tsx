@@ -9,8 +9,10 @@ import {
 import TouchTooltip from "@shared/components/TouchTooltip";
 
 import {
+  DecisionPanelClose,
   DecisionPanelSection,
   DecisionPanelTitle,
+  DecisionPanelTitleRow,
   DecisionResetButton,
   DecisionRow,
   DecisionRowLabel,
@@ -25,6 +27,12 @@ interface Props {
   values: ManagerDecisionValues;
   onChange: (values: ManagerDecisionValues) => void;
   onReset: () => void;
+  /**
+   * Optional callback fired whenever the panel opens or closes. Used by the
+   * parent to auto-pause the simulation while the mobile bottom-sheet covers
+   * the field, then restore the prior pause state on close.
+   */
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -39,8 +47,36 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
   values,
   onChange,
   onReset,
+  onOpenChange,
 }) => {
   const [open, setOpen] = React.useState(false);
+  const toggleRef = React.useRef<HTMLButtonElement>(null);
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  const titleId = React.useId();
+
+  // Notify parent so it can pause/restore the sim while the panel is open.
+  React.useEffect(() => {
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
+
+  // Close on Escape and restore focus to the toggle for keyboard users.
+  React.useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setOpen(false);
+        toggleRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  const closePanel = React.useCallback(() => {
+    setOpen(false);
+    toggleRef.current?.focus();
+  }, []);
 
   const set = <K extends keyof ManagerDecisionValues>(key: K, val: ManagerDecisionValues[K]) => {
     if (key === "stealMinOfferPct" && typeof val === "number") {
@@ -53,9 +89,12 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
     onChange({ ...values, [key]: val });
   };
 
+  const stealDisabled = !values.stealEnabled;
+
   return (
     <div data-testid="manager-decision-tuning-container">
       <DecisionTuningToggle
+        ref={toggleRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
@@ -70,20 +109,52 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             role="button"
             tabIndex={0}
             aria-label="Close Decision Tuning panel"
-            onClick={() => setOpen(false)}
+            onClick={closePanel}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                setOpen(false);
+                closePanel();
               }
             }}
           />
-          <DecisionTuningPanel data-testid="manager-decision-tuning-panel">
-            <DecisionPanelTitle>Manager &amp; AI Decision Values</DecisionPanelTitle>
+          <DecisionTuningPanel
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            data-testid="manager-decision-tuning-panel"
+          >
+            <DecisionPanelTitleRow>
+              <DecisionPanelTitle id={titleId}>Manager &amp; AI Decision Values</DecisionPanelTitle>
+              <DecisionPanelClose
+                type="button"
+                aria-label="Close Decision Tuning panel"
+                onClick={closePanel}
+                data-testid="manager-decision-tuning-close"
+              >
+                ✕
+              </DecisionPanelClose>
+            </DecisionPanelTitleRow>
 
             {/* ── Steal ──────────────────────────────────────────────── */}
             <DecisionPanelSection>
-              <DecisionRow>
+              {/* Master switch lives at the top of its dependent-sliders section
+                so the reading order matches dependency order. */}
+              <DecisionToggleRow>
+                <label htmlFor="steal-enabled">
+                  Steal attempts
+                  <TouchTooltip label="Master switch for stolen-base attempts. Off = neither you nor the AI is ever offered or attempts a steal (team-wide stop sign). Disables the two steal-threshold sliders below." />
+                </label>
+                <input
+                  id="steal-enabled"
+                  type="checkbox"
+                  checked={values.stealEnabled}
+                  onChange={(e) => set("stealEnabled", e.target.checked)}
+                  data-testid="steal-enabled-toggle"
+                />
+              </DecisionToggleRow>
+
+              <DecisionRow $disabled={stealDisabled}>
                 <DecisionRowLabel htmlFor="steal-min-offer-pct">
                   Steal offer threshold
                   <TouchTooltip label="Minimum steal success % for you to be prompted. Lower = offer more steals." />
@@ -97,6 +168,8 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                   value={values.stealMinOfferPct}
                   onChange={(e) => set("stealMinOfferPct", Number(e.target.value))}
                   aria-label="Steal offer threshold"
+                  aria-disabled={stealDisabled}
+                  disabled={stealDisabled}
                   data-testid="manager-steal-min-pct-slider"
                 />
                 <DecisionRowValue data-testid="manager-steal-min-pct-value">
@@ -104,7 +177,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                 </DecisionRowValue>
               </DecisionRow>
 
-              <DecisionRow>
+              <DecisionRow $disabled={stealDisabled}>
                 <DecisionRowLabel htmlFor="ai-steal-threshold">
                   AI steal threshold
                   <TouchTooltip label="Minimum steal success % for the AI to attempt a steal. Must be ≤ offer threshold." />
@@ -118,6 +191,8 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                   value={values.aiStealThreshold}
                   onChange={(e) => set("aiStealThreshold", Number(e.target.value))}
                   aria-label="AI steal threshold"
+                  aria-disabled={stealDisabled}
+                  disabled={stealDisabled}
                   data-testid="ai-steal-threshold-slider"
                 />
                 <DecisionRowValue data-testid="ai-steal-threshold-value">
@@ -128,20 +203,6 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
 
             {/* ── Tactical toggles ──────────────────────────────────── */}
             <DecisionPanelSection>
-              <DecisionToggleRow>
-                <label htmlFor="steal-enabled">
-                  Steal attempts
-                  <TouchTooltip label="Master switch for stolen-base attempts. Off = neither you nor the AI is ever offered or attempts a steal (team-wide stop sign)." />
-                </label>
-                <input
-                  id="steal-enabled"
-                  type="checkbox"
-                  checked={values.stealEnabled}
-                  onChange={(e) => set("stealEnabled", e.target.checked)}
-                  data-testid="steal-enabled-toggle"
-                />
-              </DecisionToggleRow>
-
               <DecisionToggleRow>
                 <label htmlFor="bunt-enabled">
                   Sacrifice bunt
