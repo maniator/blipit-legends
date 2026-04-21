@@ -3,6 +3,7 @@ import * as React from "react";
 import { GameHistoryStore } from "@feat/careerStats/storage/gameHistoryStore";
 import { computePitcherGameStats } from "@feat/careerStats/utils/computePitcherGameStats";
 import { useGameContext } from "@feat/gameplay/context/index";
+import type { LeagueGameContext } from "@feat/leagueMode/storage/types";
 import { appLog } from "@shared/utils/logger";
 import { getRngState, getSeed } from "@shared/utils/rng";
 import { computeBattingStatsFromLogs } from "@shared/utils/stats/computeBattingStatsFromLogs";
@@ -34,6 +35,8 @@ export const useGameHistorySync = (
   rxSaveIdRef: React.MutableRefObject<string | null>,
   /** Pass true when the save being loaded was already in FINAL state. */
   wasAlreadyFinalOnLoad: boolean,
+  /** Pass the league game context when the game was launched from league mode. */
+  leagueGameContext?: LeagueGameContext | null,
 ): { isCommitting: boolean } => {
   const gameContext = useGameContext();
   const { gameOver } = gameContext;
@@ -53,6 +56,9 @@ export const useGameHistorySync = (
   const gameStateRef = React.useRef(gameContext);
   gameStateRef.current = gameContext;
 
+  const leagueGameContextRef = React.useRef(leagueGameContext);
+  leagueGameContextRef.current = leagueGameContext;
+
   React.useEffect(() => {
     if (!gameOver) return;
     // Skip if: already committed, in-flight, or the game was already FINAL when loaded.
@@ -60,6 +66,7 @@ export const useGameHistorySync = (
 
     const saveId = rxSaveIdRef.current;
     const state = gameStateRef.current;
+    const leagueGameContext = leagueGameContextRef.current;
 
     // gameInstanceId is always present (set in createFreshGameState via generateGameInstanceId).
     // Fall back to saveId as a safeguard. If both are absent bail out.
@@ -116,6 +123,12 @@ export const useGameHistorySync = (
       awayScore: state.score[0],
       innings: state.inning,
       ...(saveId ? { committedBySaveId: saveId } : {}),
+      ...(leagueGameContext?.leagueSeasonId
+        ? { leagueSeasonId: leagueGameContext.leagueSeasonId }
+        : {}),
+      ...(leagueGameContext?.scheduledGameId
+        ? { scheduledGameId: leagueGameContext.scheduledGameId }
+        : {}),
     };
 
     // Build pitcher stat rows from pitcherGameLog.

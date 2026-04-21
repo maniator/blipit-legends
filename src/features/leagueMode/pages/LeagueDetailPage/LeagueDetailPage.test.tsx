@@ -271,4 +271,89 @@ describe("LeagueDetailPage", () => {
     const day2Button = screen.getByTestId("play-game-button-sgame_day2");
     expect(day2Button).toBeDisabled();
   });
+
+  /**
+   * Box score toggle must appear for a completed simulated game (no completedGameId).
+   */
+  it("shows Box Score toggle for a completed simulated game (no completedGameId)", () => {
+    vi.mocked(useLeagueSeason).mockReturnValue({
+      season: makeSeason("active"),
+      isLoading: false,
+      error: null,
+    });
+
+    vi.mocked(useScheduledGames).mockReturnValue({
+      games: [
+        {
+          id: "sgame_sim",
+          leagueSeasonId: "lsn_1",
+          gameDay: 1,
+          awayTeamId: "team_a",
+          homeTeamId: "team_b",
+          status: "completed",
+          // completedGameId intentionally absent — headless-simulated game
+          homeScore: 6,
+          awayScore: 3,
+          winnerId: "team_b",
+          schemaVersion: 0,
+        },
+      ],
+      isLoading: false,
+      error: null,
+    });
+
+    renderPage();
+
+    expect(screen.getByTestId("box-score-toggle-sgame_sim")).toBeInTheDocument();
+  });
+
+  /**
+   * Regression: clicking Box Score for a headless-simulated game must display
+   * the inline final score instead of "Box score unavailable".
+   */
+  it("shows inline final score for a headless-simulated game (no save record)", () => {
+    vi.mocked(useLeagueSeason).mockReturnValue({
+      season: makeSeason("active"),
+      isLoading: false,
+      error: null,
+    });
+
+    vi.mocked(useScheduledGames).mockReturnValue({
+      games: [
+        {
+          id: "sgame_sim",
+          leagueSeasonId: "lsn_1",
+          gameDay: 1,
+          awayTeamId: "team_a",
+          homeTeamId: "team_b",
+          status: "completed",
+          homeScore: 6,
+          awayScore: 3,
+          winnerId: "team_b",
+          schemaVersion: 0,
+        },
+      ],
+      isLoading: false,
+      error: null,
+    });
+
+    // Panel is expanded and getBoxScore returns null (no save record)
+    vi.mocked(useLeagueBoxScore).mockReturnValue({
+      isExpanded: vi.fn((gameId) => gameId === "sgame_sim"),
+      toggleBoxScore: vi.fn(),
+      getBoxScore: vi.fn().mockReturnValue(null),
+    });
+
+    renderPage();
+
+    const panel = screen.getByTestId("box-score-panel-sgame_sim");
+    expect(panel).toBeInTheDocument();
+
+    // Should NOT show the "unavailable" message
+    expect(panel).not.toHaveTextContent("Box score unavailable");
+
+    // Should show the final scores
+    expect(panel).toHaveTextContent("6");
+    expect(panel).toHaveTextContent("3");
+  });
 });

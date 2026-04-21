@@ -93,6 +93,14 @@ const scheduledGamesSchemaV1: RxJsonSchema<ScheduledGameRecord> = {
     winnerId: { type: "string", maxLength: 128 },
     homeScore: { type: "number", minimum: 0, maximum: 9999, multipleOf: 1 },
     awayScore: { type: "number", minimum: 0, maximum: 9999, multipleOf: 1 },
+    awayInningRuns: {
+      type: "array",
+      items: { type: "number", minimum: 0, maximum: 999, multipleOf: 1 },
+    },
+    homeInningRuns: {
+      type: "array",
+      items: { type: "number", minimum: 0, maximum: 999, multipleOf: 1 },
+    },
     schemaVersion: { type: "number", minimum: 0, maximum: 999, multipleOf: 1 },
   },
   required: [

@@ -5,7 +5,7 @@ import type { SaveRecord } from "@storage/types";
 
 export interface UseLeagueBoxScoreReturn {
   isExpanded: (gameId: string) => boolean;
-  toggleBoxScore: (gameId: string, completedGameId: string) => void;
+  toggleBoxScore: (gameId: string, completedGameId: string | null | undefined) => void;
   getBoxScore: (gameId: string) => SaveRecord | null | undefined;
 }
 
@@ -21,7 +21,7 @@ export const useLeagueBoxScore = (): UseLeagueBoxScoreReturn => {
   );
 
   const toggleBoxScore = React.useCallback(
-    (gameId: string, completedGameId: string) => {
+    (gameId: string, completedGameId: string | null | undefined) => {
       const expanded = expandedBoxScores.has(gameId);
       setExpandedBoxScores((prev) => {
         const next = new Set(prev);
@@ -33,6 +33,16 @@ export const useLeagueBoxScore = (): UseLeagueBoxScoreReturn => {
         return next;
       });
       if (!expanded && !loadedBoxScores.has(gameId)) {
+        if (!completedGameId) {
+          // Headless-simulated game: no save record exists — mark as null so the
+          // panel renders the inline score from homeScore/awayScore instead.
+          setLoadedBoxScores((prev) => {
+            const next = new Map(prev);
+            next.set(gameId, null);
+            return next;
+          });
+          return;
+        }
         getDb()
           .then(async (db) => {
             const doc = await db.saves.findOne(completedGameId).exec();

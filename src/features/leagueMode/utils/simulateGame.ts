@@ -9,6 +9,8 @@ import { resolvePitch } from "@feat/gameplay/context/pitchResolutionPipeline";
 import reducerFactory, { detectDecision } from "@feat/gameplay/context/reducer";
 import { reinitSeed } from "@shared/utils/rng";
 
+import type { PlayerOverrides } from "@storage/types";
+
 import type { ScheduledGameRecord } from "../storage/types";
 import { deriveScheduledGameSeed } from "./deriveScheduledGameSeed";
 
@@ -18,6 +20,15 @@ export interface SimulatedGameResult {
   winnerId: string;
   loserId: string;
   isTie: boolean;
+  /** Full final game state — used by callers to extract career stats and per-inning box score data. */
+  finalState: State;
+}
+
+/** Options for a headless simulation run. When provided, the real team roster is applied so player IDs and names match career stats records. */
+export interface SimulateGameOptions {
+  playerOverrides?: PlayerOverrides;
+  awayTeamLabel?: string;
+  homeTeamLabel?: string;
 }
 
 const MAX_ITERATIONS = 10_000;
@@ -25,12 +36,56 @@ const MAX_ITERATIONS = 10_000;
 export async function simulateGame(
   game: ScheduledGameRecord,
   leagueSeasonId: string,
+  options?: SimulateGameOptions,
 ): Promise<SimulatedGameResult> {
   const seed = deriveScheduledGameSeed(leagueSeasonId, game.id);
   reinitSeed(seed);
 
   let state: State = createFreshGameState([game.awayTeamId, game.homeTeamId]);
   const reducerFn = reducerFactory(() => {});
+
+  // Apply team roster / player overrides so the simulation uses real player IDs
+  // and names — this makes career stats meaningful for custom-team players.
+  if (options) {
+    const { playerOverrides, awayTeamLabel, homeTeamLabel } = options;
+    state = reducerFn(state, {
+      type: "setTeams",
+      payload: {
+        teams: [game.awayTeamId, game.homeTeamId] as [string, string],
+        teamLabels: [awayTeamLabel ?? game.awayTeamId, homeTeamLabel ?? game.homeTeamId] as [
+          string,
+          string,
+        ],
+        ...(playerOverrides && {
+          playerOverrides: [playerOverrides.away, playerOverrides.home] as [
+            typeof playerOverrides.away,
+            typeof playerOverrides.home,
+          ],
+          lineupOrder: [playerOverrides.awayOrder, playerOverrides.homeOrder] as [
+            string[],
+            string[],
+          ],
+          rosterBench: [playerOverrides.awayBench ?? [], playerOverrides.homeBench ?? []] as [
+            string[],
+            string[],
+          ],
+          rosterPitchers: [
+            playerOverrides.awayPitchers ?? [],
+            playerOverrides.homePitchers ?? [],
+          ] as [string[], string[]],
+          ...(playerOverrides.awayHandedness !== undefined ||
+          playerOverrides.homeHandedness !== undefined
+            ? {
+                handednessByTeam: [
+                  playerOverrides.awayHandedness ?? {},
+                  playerOverrides.homeHandedness ?? {},
+                ] as [Record<string, string>, Record<string, string>],
+              }
+            : {}),
+        }),
+      },
+    } as GameAction);
+  }
 
   let iterations = 0;
 
@@ -131,5 +186,5 @@ export async function simulateGame(
     loserId = game.awayTeamId;
   }
 
-  return { homeScore, awayScore, winnerId, loserId, isTie };
+  return { homeScore, awayScore, winnerId, loserId, isTie, finalState: state };
 }

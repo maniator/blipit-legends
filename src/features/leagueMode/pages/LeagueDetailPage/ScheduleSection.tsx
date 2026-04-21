@@ -30,7 +30,7 @@ interface ScheduleSectionProps {
   launchingGameId: string | null;
   onPlayGame: (game: ScheduledGameRecord) => void;
   isExpanded: (gameId: string) => boolean;
-  onToggleBoxScore: (gameId: string, completedGameId: string) => void;
+  onToggleBoxScore: (gameId: string, completedGameId: string | null | undefined) => void;
   getBoxScore: (gameId: string) => SaveRecord | null | undefined;
 }
 
@@ -87,6 +87,78 @@ export const ScheduleSection: React.FunctionComponent<ScheduleSectionProps> = ({
         return <BoxScoreStatusText>Loading…</BoxScoreStatusText>;
       }
       if (!boxScore || !boxScore.stateSnapshot) {
+        // Headless-simulated game: no save record, but inning runs are stored on the game record.
+        if (game.awayInningRuns !== undefined && game.homeInningRuns !== undefined) {
+          const awayLabel = getTeamName(game.awayTeamId);
+          const homeLabel = getTeamName(game.homeTeamId);
+          const innings = Math.max(game.awayInningRuns.length, game.homeInningRuns.length, 9);
+          return (
+            <BoxScoreTable>
+              <thead>
+                <tr>
+                  <th>Team</th>
+                  {Array.from({ length: innings }, (_, i) => (
+                    <th key={i}>{i + 1}</th>
+                  ))}
+                  <th>R</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{awayLabel}</td>
+                  {Array.from({ length: innings }, (_, i) => (
+                    <td key={i}>{game.awayInningRuns![i] ?? 0}</td>
+                  ))}
+                  <td>
+                    <strong>
+                      {game.awayScore ?? game.awayInningRuns.reduce((a, b) => a + b, 0)}
+                    </strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td>{homeLabel}</td>
+                  {Array.from({ length: innings }, (_, i) => (
+                    <td key={i}>{game.homeInningRuns![i] ?? 0}</td>
+                  ))}
+                  <td>
+                    <strong>
+                      {game.homeScore ?? game.homeInningRuns.reduce((a, b) => a + b, 0)}
+                    </strong>
+                  </td>
+                </tr>
+              </tbody>
+            </BoxScoreTable>
+          );
+        }
+        // Fallback: show final score only (older simulated games without inning data).
+        if (game.homeScore !== undefined && game.awayScore !== undefined) {
+          const awayLabel = getTeamName(game.awayTeamId);
+          const homeLabel = getTeamName(game.homeTeamId);
+          return (
+            <BoxScoreTable>
+              <thead>
+                <tr>
+                  <th>Team</th>
+                  <th>R</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{awayLabel}</td>
+                  <td>
+                    <strong>{game.awayScore}</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td>{homeLabel}</td>
+                  <td>
+                    <strong>{game.homeScore}</strong>
+                  </td>
+                </tr>
+              </tbody>
+            </BoxScoreTable>
+          );
+        }
         return <BoxScoreStatusText>Box score unavailable</BoxScoreStatusText>;
       }
       const { state } = boxScore.stateSnapshot;
@@ -176,20 +248,20 @@ export const ScheduleSection: React.FunctionComponent<ScheduleSectionProps> = ({
                         {launchingGameId === game.id ? "Loading…" : "▶ Play"}
                       </PlayButton>
                     )}
-                    {game.status === "completed" && game.completedGameId && (
+                    {game.status === "completed" && (
                       <BoxScoreToggle
                         type="button"
                         data-testid={`box-score-toggle-${game.id}`}
                         aria-expanded={isExpanded(game.id)}
                         onClick={() => {
-                          onToggleBoxScore(game.id, game.completedGameId!);
+                          onToggleBoxScore(game.id, game.completedGameId);
                         }}
                       >
                         {isExpanded(game.id) ? "▴ Box Score" : "▾ Box Score"}
                       </BoxScoreToggle>
                     )}
                   </GameRow>
-                  {isExpanded(game.id) && game.completedGameId && (
+                  {isExpanded(game.id) && (
                     <BoxScorePanel data-testid={`box-score-panel-${game.id}`}>
                       {renderBoxScore(game)}
                     </BoxScorePanel>

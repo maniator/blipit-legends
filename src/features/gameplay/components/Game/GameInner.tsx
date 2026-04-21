@@ -127,7 +127,11 @@ const GameInner: React.FunctionComponent<Props> = ({
   });
 
   useRxdbGameSync(rxSaveIdRef, actionBufferRef, { wasAlreadyFinalOnLoad });
-  const { isCommitting } = useGameHistorySync(rxSaveIdRef, wasAlreadyFinalOnLoad);
+  const { isCommitting } = useGameHistorySync(
+    rxSaveIdRef,
+    wasAlreadyFinalOnLoad,
+    leagueGameContext,
+  );
 
   React.useEffect(() => {
     onSavingStateChange?.(isCommitting);

@@ -21,6 +21,19 @@ describe("simulateGame", () => {
     expect(result.loserId).toBeTruthy();
   });
 
+  it("returns finalState with inning runs and play logs", async () => {
+    const result = await simulateGame(makeGame(), "lsn_test");
+    expect(result.finalState).toBeDefined();
+    expect(result.finalState.gameOver).toBe(true);
+    expect(Array.isArray(result.finalState.inningRuns[0])).toBe(true);
+    expect(Array.isArray(result.finalState.inningRuns[1])).toBe(true);
+    // inningRuns totals must match the final scores
+    const awayTotal = result.finalState.inningRuns[0].reduce((a, b) => a + b, 0);
+    const homeTotal = result.finalState.inningRuns[1].reduce((a, b) => a + b, 0);
+    expect(awayTotal).toBe(result.awayScore);
+    expect(homeTotal).toBe(result.homeScore);
+  });
+
   it("is deterministic — same game/season ID produces same result", async () => {
     const result1 = await simulateGame(makeGame(), "lsn_test");
     const result2 = await simulateGame(makeGame(), "lsn_test");

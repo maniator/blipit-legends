@@ -45,7 +45,13 @@ export function buildScheduledGameStore(getDbFn: GetDb) {
     async markScheduledGameCompleted(
       scheduledGameId: string,
       completedGameId: string,
-      result?: { winnerId: string; homeScore: number; awayScore: number },
+      result?: {
+        winnerId: string;
+        homeScore: number;
+        awayScore: number;
+        awayInningRuns?: number[];
+        homeInningRuns?: number[];
+      },
     ): Promise<void> {
       const db = await getDbFn();
       const doc = await db.scheduledGames.findOne(scheduledGameId).exec();
@@ -63,6 +69,8 @@ export function buildScheduledGameStore(getDbFn: GetDb) {
           winnerId: result.winnerId,
           homeScore: result.homeScore,
           awayScore: result.awayScore,
+          ...(result.awayInningRuns !== undefined && { awayInningRuns: result.awayInningRuns }),
+          ...(result.homeInningRuns !== undefined && { homeInningRuns: result.homeInningRuns }),
         });
       } else {
         await doc.patch({ status: "completed", completedGameId });

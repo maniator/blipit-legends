@@ -49,6 +49,10 @@ export interface ScheduledGameRecord {
   winnerId?: string;
   homeScore?: number;
   awayScore?: number;
+  /** Per-inning run totals for the away team (index 0 = inning 1). Only set for simulated games. */
+  awayInningRuns?: number[];
+  /** Per-inning run totals for the home team (index 0 = inning 1). Only set for simulated games. */
+  homeInningRuns?: number[];
   schemaVersion: number;
 }
 
