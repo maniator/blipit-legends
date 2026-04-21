@@ -147,7 +147,7 @@ export const ScheduleSection: React.FunctionComponent<ScheduleSectionProps> = ({
           const dayGames = gameDayMap.get(gameDay) ?? [];
           return (
             <GameDaySection key={gameDay}>
-              <GameDayHeading>Game Day {gameDay + 1}</GameDayHeading>
+              <GameDayHeading>Game Day {gameDay}</GameDayHeading>
               {dayGames.map((game) => (
                 <React.Fragment key={game.id}>
                   <GameRow data-testid={`game-row-${game.id}`}>

@@ -45,7 +45,7 @@ const makeSeason = (status: LeagueSeasonRecord["status"] = "pending"): LeagueSea
   leagueId: "lg_1",
   seasonNumber: 1,
   status,
-  currentGameDay: 0,
+  currentGameDay: 1,
   totalGameDays: 5,
   defaultGamesPerTeam: 10,
   seed: "abc123",
@@ -188,5 +188,87 @@ describe("LeagueDetailPage", () => {
 
     renderPage();
     expect(screen.getByTestId("league-detail-error")).toHaveTextContent("Network error");
+  });
+
+  /**
+   * Regression test for the display off-by-one bug where `gameDay + 1` caused
+   * "Game Day 2" to appear as the first label when the schedule starts at day 1.
+   * The fix: ScheduleSection now renders `Game Day {gameDay}` (no +1).
+   */
+  it("renders Game Day 1 label when the first game is on day 1 (display off-by-one regression)", () => {
+    vi.mocked(useLeagueSeason).mockReturnValue({
+      season: makeSeason("active"),
+      isLoading: false,
+      error: null,
+    });
+
+    vi.mocked(useScheduledGames).mockReturnValue({
+      games: [
+        {
+          id: "sgame_1",
+          leagueSeasonId: "lsn_1",
+          gameDay: 1, // 1-indexed: first day
+          awayTeamId: "team_a",
+          homeTeamId: "team_b",
+          status: "scheduled",
+          schemaVersion: 0,
+        },
+      ],
+      isLoading: false,
+      error: null,
+    });
+
+    renderPage();
+
+    // Must show "Game Day 1", NOT "Game Day 2"
+    expect(screen.getByText("Game Day 1")).toBeInTheDocument();
+    expect(screen.queryByText("Game Day 2")).not.toBeInTheDocument();
+  });
+
+  /**
+   * Regression test: the Play button for the current game day must be enabled,
+   * and Play buttons for future days must be disabled.
+   */
+  it("enables Play button only for the current game day", () => {
+    vi.mocked(useLeagueSeason).mockReturnValue({
+      season: makeSeason("active"), // currentGameDay: 1
+      isLoading: false,
+      error: null,
+    });
+
+    vi.mocked(useScheduledGames).mockReturnValue({
+      games: [
+        {
+          id: "sgame_day1",
+          leagueSeasonId: "lsn_1",
+          gameDay: 1,
+          awayTeamId: "team_a",
+          homeTeamId: "team_b",
+          status: "scheduled",
+          schemaVersion: 0,
+        },
+        {
+          id: "sgame_day2",
+          leagueSeasonId: "lsn_1",
+          gameDay: 2,
+          awayTeamId: "team_b",
+          homeTeamId: "team_a",
+          status: "scheduled",
+          schemaVersion: 0,
+        },
+      ],
+      isLoading: false,
+      error: null,
+    });
+
+    renderPage();
+
+    // Day 1 Play button should be enabled
+    const day1Button = screen.getByTestId("play-game-button-sgame_day1");
+    expect(day1Button).not.toBeDisabled();
+
+    // Day 2 Play button should be disabled (future day)
+    const day2Button = screen.getByTestId("play-game-button-sgame_day2");
+    expect(day2Button).toBeDisabled();
   });
 });
