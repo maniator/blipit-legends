@@ -7,7 +7,10 @@ import {
 } from "@feat/customTeams/adapters/customTeamAdapter";
 import type { State, Strategy } from "@feat/gameplay/context/index";
 import { useGameContext } from "@feat/gameplay/context/index";
-import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
+import {
+  DEFAULT_MANAGER_DECISION_VALUES,
+  type ManagerDecisionValues,
+} from "@feat/gameplay/context/managerDecisionValues";
 import { useImportSave } from "@feat/saves/hooks/useImportSave";
 import { useSaveSlotActions } from "@feat/saves/hooks/useSaveSlotActions";
 import { useSaveStore } from "@feat/saves/hooks/useSaveStore";
@@ -102,7 +105,7 @@ export const useSavesModal = ({
       managerMode,
       homeTeam: teams[1],
       awayTeam: teams[0],
-      ...(decisionValues !== undefined && { decisionValues }),
+      decisionValues: decisionValues ?? DEFAULT_MANAGER_DECISION_VALUES,
     };
 
     if (currentSaveId) {

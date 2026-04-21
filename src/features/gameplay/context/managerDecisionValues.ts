@@ -12,9 +12,10 @@
  *   • Bunt detection is now situational (inning ≥ 6, close game ≤ 2 run diff)
  *     rather than the previous unconditional positional check (`outs < 2 &&
  *     runner on 1st/2nd`).  The old check offered bunts in clearly wrong
- *     situations (e.g. inning 1 up by 10) and the new default is
- *     baseball-correct.  Users who want the old broad behavior can leave
- *     buntEnabled on and accept all offers regardless of context.
+ *     situations (e.g. inning 1 up by 10), so the new default is more
+ *     baseball-correct.  `buntEnabled` only toggles whether this situational
+ *     bunt logic is active; it does not restore the previous unconditional
+ *     bunt-offer behavior.
  *   • `stealMinOfferPct` default of 72 matches the prior hard-coded `> 72`
  *     threshold, preserving the exact steal-offer boundary.
  * - The AI steal threshold bug (0.62 fraction vs 65 integer %) is corrected
