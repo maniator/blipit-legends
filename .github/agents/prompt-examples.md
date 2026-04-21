@@ -496,3 +496,159 @@ Requirements:
 5. Update the fixtures table in `../docs/e2e-testing.md`.
 6. Confirm the test still asserts the same behavior it did before.
 ```
+
+---
+
+## UX Design Lead
+
+### UX heuristic review of a screen
+
+```
+@ux-design-lead
+
+Perform a heuristic review of the <screen name> screen (route: <route>).
+
+Apply Nielsen's 10 usability heuristics and WCAG 2.2 AA checklist.
+
+Output:
+- A prioritized issue list (P0 / P1 / P2) with: heuristic/criterion, problem description,
+  component file path, and proposed fix.
+- Flag any contrast failures with the specific theme.colors.* token and computed ratio.
+- Note any missing ARIA roles or keyboard navigation gaps.
+- Include which user persona(s) are most affected by each P0/P1 issue.
+```
+
+### Design spec for a new feature
+
+```
+@ux-design-lead
+
+Produce a full design spec for: <feature description>.
+
+Requirements:
+- State the user goal and non-goals.
+- Name the relevant persona(s) and conduct proxy-user interviews as needed.
+- Document the primary flow and all edge-case flows.
+- Include a rudimentary mockup (ASCII wireframe for layout, Mermaid diagram for flow/state).
+- Cover all states: default, loading, empty, error, success.
+- Finalize all copy (American English, sentence case buttons, standard baseball terminology).
+- Document accessibility: keyboard path, focus order, ARIA roles, contrast vs theme.colors.* keys.
+- Describe responsive behavior at each of the 6 Playwright viewports.
+- Cite all design tokens by theme key — no raw hex values.
+- Predict which visual snapshot PNGs will change.
+- End with the pre-handoff checklist.
+```
+
+### Add a design token to the style guide
+
+```
+@ux-design-lead
+
+We need a new design token for: <role description, e.g., "warning state background for form fields">.
+
+Requirements:
+- First check whether any existing token in docs/style-guide.md already covers this need.
+- If a new token is truly needed, propose: token name, value (using theme.colors.* as reference),
+  role, usage examples, and the exact docs/style-guide.md section to update.
+- Verify the proposed value meets WCAG 2.2 AA contrast requirements against any text that will
+  appear on top of it.
+- Commit the docs/style-guide.md update locally and return the commit SHA.
+```
+
+### Accessibility audit of a flow
+
+```
+@ux-design-lead
+
+Perform a WCAG 2.2 AA accessibility audit of the <flow name> flow
+(e.g., "new game setup → game play → game over").
+
+Requirements:
+- Walk through the complete flow step-by-step.
+- For each step, check: keyboard operability (2.1.1), visible focus (2.4.7),
+  focus order (2.4.3), contrast (1.4.3 / 1.4.11), name/role/value (4.1.2),
+  and error identification (3.3.1).
+- Output a prioritized issue list (P0 = hard WCAG AA failure, P1 = AA advisory, P2 = polish).
+- For each issue: cite the WCAG criterion, describe the problem with the component file path,
+  and propose the specific fix.
+- Flag which persona(s) are most affected (e.g., screen reader user, keyboard-only user).
+- If a proxy-user interview with a persona agent would add value, conduct it and include the digest.
+```
+
+---
+
+## User persona interviews
+
+### Casual watcher — friction audit
+
+```
+@user-casual-watcher
+
+I'm designing the <screen/feature>. As a casual user who just wants to watch a game on your phone:
+
+1. When you land on this screen for the first time, what is your first reaction?
+2. How many taps does it take to get to a live game from here? Is that too many?
+3. Is there anything on this screen that would confuse or frustrate you?
+4. Is there anything you'd expect to see that's missing?
+5. Would you feel confident closing and reopening the app and finding your game again?
+```
+
+### Manager-mode strategist — decision panel review
+
+```
+@user-manager-strategist
+
+I'm designing the <decision panel / manager-mode feature>. As someone who actively manages
+games and wants to make smart in-game decisions:
+
+1. Does the decision panel show you the information you need to decide? What's missing?
+2. Is the countdown timer long enough to think through the options?
+3. Are the available options clear? Do you understand what each one does?
+4. After you make a decision, can you tell what happened as a result?
+5. Does this feel like a realistic manager decision for this game situation?
+```
+
+### Custom-team builder — editor ergonomics
+
+```
+@user-custom-team-builder
+
+I'm designing the <team editor / import flow>. As a power user who builds and manages
+custom rosters:
+
+1. Is the lineup/bench/pitcher layout efficient for entering a full 25-man roster?
+2. When an import fails, does the error tell you exactly what to fix and where?
+3. Can you drag players between sections reliably? Any spots that feel finicky?
+4. After saving, are you confident your changes were actually persisted?
+5. Is the export format something you could open and understand without help?
+```
+
+### Save curator — save management review
+
+```
+@user-save-curator
+
+I'm designing the <saves page / export-import flow>. As someone who carefully manages
+their saved games and moves them between devices:
+
+1. Looking at the saves list, can you identify each game without opening it?
+2. Is it clear which saves are in progress vs. completed?
+3. Before you delete a save, does the UI make you feel confident you won't lose something important?
+4. When you import a save file, do you know what you're getting before you commit?
+5. What information would make you feel most confident that your saves are safe?
+```
+
+### Stats fan — stats page review
+
+```
+@user-stats-fan
+
+I'm designing the <career stats / team stats page>. As a serious baseball fan who
+reads Baseball-Reference:
+
+1. Are all the column abbreviations correct and standard? Call out any that are wrong or missing.
+2. Is the table dense enough, or does it feel dumbed-down?
+3. On mobile, can you read the full stat line without horizontal scrolling being painful?
+4. Are there any stats you'd expect to see that aren't here?
+5. Do the number ranges look realistic for a simulated baseball season?
+```

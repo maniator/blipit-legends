@@ -75,6 +75,18 @@ This container guidance is **only for Playwright visual snapshot work**. The **C
 - After any intentional visual change, regenerate snapshots inside `mcr.microsoft.com/playwright:v1.58.2-noble` — use the `e2e-test-runner` agent (`docker run --update-snapshots`) or the `update-visual-snapshots` workflow. **Never run `yarn test:e2e:update-snapshots` on the host OS and commit the result** — local fonts and rendering differ from the container.
 - Do NOT regenerate snapshots for unrelated layout areas.
 
+## Consult `@ux-design-lead` first when scope includes new design work
+
+Route to `@ux-design-lead` **before** implementation when the work includes any of the following:
+
+- A net-new screen, modal, dialog, panel, toast, empty state, or error state
+- A new copy string longer than ~5 words shown to the user
+- A new color, font size, spacing token, or component variant (style-guide additions must come from `@ux-design-lead`)
+- Any accessibility-relevant change (focus order, ARIA roles, keyboard shortcut, contrast)
+- Any change to navigation structure or route hierarchy
+
+`@ux-design-lead` will produce a spec with mockups, copy, design tokens, and a pre-handoff checklist. Implement only from an approved spec. Do not introduce design-system additions on your own — `@ux-design-lead` owns `docs/style-guide.md`.
+
 ## Consult `@pm-agent` first when scope is unclear
 
 Route to `@pm-agent` before implementation when a UI change needs cross-feature scoping (route architecture context, gameplay expectation ambiguity, or feature tradeoff/risk framing). Keep `@senior-lead` escalation for technical sign-off on high-risk changes.

@@ -37,15 +37,17 @@ Pre-commit hooks (Husky + lint-staged) auto-run ESLint fix, Prettier, and Vitest
 
 ## Detailed Reference Docs
 
-| Doc                               | Contents                                                                                                                                       |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/repo-layout.md`             | Full directory tree, path aliases, feature ownership                                                                                           |
-| `docs/architecture.md`            | Route architecture, auto-play scheduler, Manager Mode, notifications                                                                           |
-| `docs/rxdb-persistence.md`        | RxDB setup, schema versioning/migrations, SaveStore/CustomTeamStore APIs                                                                       |
-| `docs/e2e-testing.md`             | Playwright projects, helpers, `data-testid` reference, visual snapshots, CI                                                                    |
-| `docs/style-guide.md`             | **Consult before any new color, font size, or component** — color palette, typography, breakpoints, all button variants, forms, modals, tables |
-| `.github/copilot-instructions.md` | Technical gotchas and code conventions (full list)                                                                                             |
-| `.github/agents/README.md`        | Specialist agent routing guide                                                                                                                 |
+| Doc                                | Contents                                                                                                                                                                   |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/repo-layout.md`              | Full directory tree, path aliases, feature ownership                                                                                                                       |
+| `docs/architecture.md`             | Route architecture, auto-play scheduler, Manager Mode, notifications                                                                                                       |
+| `docs/rxdb-persistence.md`         | RxDB setup, schema versioning/migrations, SaveStore/CustomTeamStore APIs                                                                                                   |
+| `docs/e2e-testing.md`              | Playwright projects, helpers, `data-testid` reference, visual snapshots, CI                                                                                                |
+| `docs/style-guide.md`              | **Consult before any new color, font size, or component** — owned by `@ux-design-lead`; color palette, typography, breakpoints, all button variants, forms, modals, tables |
+| `.github/copilot-instructions.md`  | Technical gotchas and code conventions (full list)                                                                                                                         |
+| `.github/agents/README.md`         | Specialist agent routing guide                                                                                                                                             |
+| `.github/agents/ux-design-lead.md` | UX specs, wireframes, accessibility audits, design-system additions — route here before `@ui-visual-snapshot` for any net-new UI                                           |
+| `.github/agents/user-*.md`         | User persona proxy agents — invoke any of these from any agent for in-persona UX research interviews                                                                       |
 
 ## Architecture
 
