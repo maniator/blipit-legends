@@ -9,7 +9,7 @@
 
 ## 1. Current IA Audit — What's in `GameControls` Today
 
-`src/features/gameplay/components/GameControls/index.tsx` renders a single `<Controls>` panel that mixes two distinct concern categories:
+`src/features/gameplay/components/GameControls/index.tsx` renders a single `<Controls>` panel that mixes two distinct concern categories. The decision-tuning UI lives in the sibling file `src/features/gameplay/components/GameControls/ManagerDecisionValuesPanel.tsx` (note: single file, not its own directory) and the volume sliders live in `VolumeControls.tsx` in the same folder.
 
 ### 1a. Persistent preferences (survive across games, user-level config)
 
@@ -56,12 +56,12 @@ Persistent preferences (speed, volume, `decisionValues`) do not belong in the ga
 
 ### What moves to `/settings`
 
-| Setting                          | localStorage key        | Notes                                                 |
-| -------------------------------- | ----------------------- | ----------------------------------------------------- |
-| Speed preference                 | `speed`                 | Default speed for new games                           |
-| Announcement volume              | `announcementVolume`    | Persisted across games                                |
-| Music / alert volume             | `alertVolume`           | Persisted across games                                |
-| Manager Decision Values defaults | `managerDecisionValues` | Tuning sliders for steal, bunt, IBB, shift thresholds |
+| Setting                 | localStorage key        | Notes                                                                                                                                                                                                                      |
+| ----------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Speed preference        | `speed`                 | Default speed for new games                                                                                                                                                                                                |
+| Announcement volume     | `announcementVolume`    | Persisted across games                                                                                                                                                                                                     |
+| Music / alert volume    | `alertVolume`           | Persisted across games                                                                                                                                                                                                     |
+| Manager Decision Values | `managerDecisionValues` | Tuning sliders + enable toggles for steal, bunt, IBB, pinch-hitter, and defensive shift. Changes apply **live to the current game** (the runtime decision logic reads the same key on every check), not just to new games. |
 
 ### What stays in the game HUD
 
@@ -99,7 +99,7 @@ Persistent preferences (speed, volume, `decisionValues`) do not belong in the ga
 │  │  Speed   ○ Slow  ○ Normal  ● Fast  ○ Instant           │  │
 │  └────────────────────────────────────────────────────────┘  │
 │                                                              │
-│  MANAGER DECISIONS (defaults for new games)                  │
+│  MANAGER DECISIONS (applies live to current game)            │
 │  ┌────────────────────────────────────────────────────────┐  │
 │  │  Steal threshold    [━━━━━━━━━●━━━━━━━━━━] 45          │  │
 │  │  Bunt threshold     [━━━━━━━━━●━━━━━━━━━━] 40          │  │
@@ -112,11 +112,22 @@ Persistent preferences (speed, volume, `decisionValues`) do not belong in the ga
 ```
 
 **Mobile layout (≤ 430 px):** Single-column stacked sections; section headers remain visible as sticky
-anchors. Sliders use full-width touch targets (min height 44 px per WCAG 2.5.5). The "Reset to
-defaults" button is full-width below the decision sliders.
+anchors. Sliders use full-width touch targets (min height 44 px — comfortably exceeds WCAG 2.2 AA 2.5.8
+"Target Size (Minimum)" 24 × 24 CSS px and meets the AAA 2.5.5 44 × 44 target). The "Reset to defaults"
+button is full-width below the decision sliders.
 
 **Desktop layout (≥ 1280 px):** Two-column grid — Audio + Playback left column, Manager Decisions
-right column.
+right column. The `mq.desktop` helper triggers at 1024 px, which is intentionally _not_ used here —
+1280 px is chosen so the 820 px tablet viewport and 1024 px short-laptop viewports stay single-column.
+Implementer: use a literal `@media (min-width: 1280px)` query.
+
+> **Wireframe scope:** The four "threshold" sliders shown above are an illustrative simplification.
+> The real `DecisionValuesTuner` must mirror every control already exposed by
+> `ManagerDecisionValuesPanel.tsx` — namely the steal / bunt / IBB / pinch-hitter / defensive-shift
+> _enable toggles_ plus the `manager-steal-min-pct`, `ai-steal-threshold`, and
+> `ai-pitching-aggressiveness` sliders. Preserve the existing `data-testid` values
+> (`manager-steal-min-pct-slider`, `ai-steal-threshold-slider`, `steal-enabled-toggle`, etc.) when
+> moving the controls so existing E2E tests continue to pass.
 
 ---
 
@@ -194,7 +205,7 @@ Once `/settings` is live:
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Discoverability regression** — users accustomed to adjusting volume in the HUD may not find `/settings`                                                                                                           | P1       | Keep mute toggle icon (🔊/🔇) in HUD as a single-tap shortcut that writes to `announcementVolume`; full slider lives on `/settings`                                                                                                                                                          |
 | **Speed slider removal from HUD** — power users change speed mid-game frequently                                                                                                                                    | P1       | Keep Speed slider in HUD (secondary affordance); `/settings` is canonical default                                                                                                                                                                                                            |
-| **`managerDecisionValues` confusion** — users may not understand "defaults for new games" framing                                                                                                                   | P2       | Clear section header copy: "Manager Decisions (defaults for new games)" with tooltip/help text                                                                                                                                                                                               |
+| **`managerDecisionValues` framing** — changes apply live mid-game, not just to future games; users may expect "save and apply on next game" semantics                                                               | P2       | Section header copy: "Manager Decisions (applies live to current game)" plus a short helper sentence under the section title                                                                                                                                                                 |
 | **Snapshot churn** — removing VolumeControls from HUD changes layout snapshots for all 6 viewports                                                                                                                  | P1       | Coordinate with `@e2e-test-runner` to regenerate baselines in the same PR as implementation                                                                                                                                                                                                  |
 | **Self-heal loop** — `useGameControls` currently self-heals corrupt localStorage values on mount; `useSettings` must replicate this guard                                                                           | P1       | Carry the sanitization + write-back pattern from `useGameControls` into the new `useSettings` hook                                                                                                                                                                                           |
 | **Speed=0 (Instant) and volume side-effects** — `setSpeechRate` and `setAnnouncementVolume` are called inside `useGameControls` effects; extracting to `useSettings` must not break these calls during active games | P0       | `useGameControls` retains the `useEffect` calls that call `setSpeechRate` / `setAnnouncementVolume`; it reads from localStorage directly. `useSettings` writes to localStorage; `usehooks-ts` `useLocalStorage` emits storage events that re-trigger `useGameControls` effects automatically |
@@ -204,12 +215,15 @@ Once `/settings` is live:
 
 ## Design tokens used
 
-- `theme.colors.surface` — settings card background
-- `theme.colors.text` — label color
-- `theme.colors.primary` — slider thumb and active radio
-- `theme.colors.border` — section dividers
-- `mq.sm` — stacked single-column below 430 px
-- `mq.lg` — two-column grid at 1280 px
+- `theme.colors.bgSurface` — settings card background
+- `theme.colors.textBody` — label color
+- `theme.colors.accentPrimary` — slider thumb and active radio
+- `theme.colors.borderSubtle` — section dividers
+- `mq.mobile` — stacked single-column layout (≤ 768 px)
+- Explicit layout breakpoint at `1280 px` — switch to the two-column grid. The existing `mq.desktop`
+  helper fires at ≥ 1024 px which is too low for this layout (it would activate two-column on the
+  1024 px short-laptop viewport). Use a literal `@media (min-width: 1280px)` query and add a brief
+  comment referencing this rationale so future contributors don't replace it with `mq.desktop`.
 
 ---
 
@@ -244,10 +258,10 @@ New baselines needed for `/settings` route (all 6 viewports × at least 1 state 
 ## Pre-handoff checklist
 
 - [x] Goal + non-goals stated
-- [x] Persona(s) named (Casual Auto-Watcher, Manager-Mode Strategist, Stats-Curious Fan)
+- [x] Persona(s) named (Casual Auto-Watcher, Manager-Mode Strategist)
 - [x] Primary flow + edge-case flows documented
 - [x] Rudimentary mockup (ASCII) attached
-- [x] All states covered (default / loading n/a / empty n/a / error n/a / success implicit on save)
+- [x] All states covered (default / loading n/a — values are synchronous from `localStorage` / empty n/a — falls back to `DEFAULT_MANAGER_DECISION_VALUES` / error: private-mode `localStorage` write failures must surface a non-blocking inline message — implementer to confirm / success implicit on save with optional toast on Reset to defaults)
 - [x] Copy finalized (American English; sentence case; consistent baseball terms)
 - [x] Accessibility: keyboard path, ARIA roles noted; contrast via `theme.colors.*`
 - [x] Responsive behavior documented for all 6 Playwright viewports
