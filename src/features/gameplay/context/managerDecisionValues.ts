@@ -51,17 +51,10 @@ export interface ManagerDecisionValues {
 
   /**
    * Minimum steal success % at which the AI auto-commits to a steal attempt.
-   * Range: 65–stealMinOfferPct (integer %). Default: 75.
+   * Range: 65–stealMinOfferPct (integer %). Default: 67.
    *
    * Being below stealMinOfferPct means the AI steals more aggressively than
    * the human is prompted. Must be ≤ stealMinOfferPct; enforced in sanitize.
-   *
-   * Raised from 67→75 (2025-06 sweep): baseline 100-game sweep with seeds 0–99
-   * produced 3.05 SB/team/game vs the 2023 MLB target of 0.85.  At threshold 67,
-   * a balanced-strategy runner on 1st (success% = 70) always exceeded the gate
-   * and stole on every eligible pitch.  At 75, balanced batters (70 < 75) no
-   * longer trigger AI steals; only aggressive-strategy situations (success% ≈ 91)
-   * and high-speed runners clear the bar, which better reflects MLB steal selectivity.
    */
   aiStealThreshold: number;
 
@@ -119,7 +112,7 @@ export interface ManagerDecisionValues {
  */
 export const DEFAULT_MANAGER_DECISION_VALUES: ManagerDecisionValues = {
   stealMinOfferPct: 72,
-  aiStealThreshold: 75,
+  aiStealThreshold: 67,
   stealEnabled: true,
   buntEnabled: true,
   ibbEnabled: true,

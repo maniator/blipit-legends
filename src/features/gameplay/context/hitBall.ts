@@ -447,15 +447,12 @@ export const handleBallInPlay = (
   const shiftBoost = (state.defensiveShift ?? false) ? 100 : 0;
 
   // HR threshold for deep_fly shifts with strategy via stratMod(strategy, "homerun"):
-  //   power  (1.6) → shift = -(0.6 * 50) = -30 → hrThreshold = 670  (more HRs)
-  //   contact (0.7) → shift = +(0.3 * 50) = +15 → hrThreshold = 715  (fewer HRs)
-  //   balanced (1.0) → shift = 0 → hrThreshold = 700  (default)
-  // Baseline sweep (seeds 0–99) yielded 0.74 HR/team/game vs 2023 MLB target 1.08.
-  // Lowering the base from 770→700 (and clamp floor from 720→650) raises HR rate by ~40%,
-  // bringing per-team average to ~1.03–1.10 within the 10% tolerance band.
+  //   power  (1.6) → shift = -(0.6 * 50) = -30 → hrThreshold = 740  (more HRs)
+  //   contact (0.7) → shift = +(0.3 * 50) = +15 → hrThreshold = 785  (fewer HRs)
+  //   balanced (1.0) → shift = 0 → hrThreshold = 770  (default)
   const hrThreshold = Math.max(
-    650,
-    Math.min(820, 700 - Math.round((stratMod(strategy, "homerun") - 1.0) * 50)),
+    720,
+    Math.min(820, 770 - Math.round((stratMod(strategy, "homerun") - 1.0) * 50)),
   );
 
   switch (battedBallType) {
