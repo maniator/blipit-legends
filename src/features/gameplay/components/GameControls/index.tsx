@@ -2,17 +2,21 @@ import * as React from "react";
 
 import { resolveTeamLabel } from "@feat/customTeams/adapters/customTeamAdapter";
 import { Strategy } from "@feat/gameplay/context/index";
+import { useGameContext } from "@feat/gameplay/context/index";
 import { useCustomTeams } from "@shared/hooks/useCustomTeams";
+import { useMediaQuery } from "usehooks-ts";
 
 import type { SaveRecord } from "@storage/types";
 
 import { SPEED_STEP_LABELS, SPEED_STEPS } from "./constants";
 import ManagerModeControls from "./ManagerModeControls";
+import MoreMenu from "./MoreMenu";
 import {
   AutoPlayGroup,
   Button,
   Controls,
   HelpButton,
+  InlineSecondaryGroup,
   PausePlayButton,
   SpeedLabel,
   SpeedRow,
@@ -105,6 +109,100 @@ const GameControls: React.FunctionComponent<Props> = ({
     [paused, setPaused],
   );
 
+  // Mobile (<= 768px) collapses non-critical controls behind a "More"
+  // disclosure (Phase 3 mobile header). Desktop/tablet keep the existing
+  // inline AutoPlayGroup. usehooks-ts's `useMediaQuery` falls back to `false`
+  // in environments without `window.matchMedia` (e.g. jsdom), so existing
+  // unit tests continue to render the desktop layout.
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const { pendingDecision } = useGameContext();
+  const decisionActive = pendingDecision !== null && pendingDecision !== undefined;
+
+  // The set of secondary controls that move into the "More" panel on mobile.
+  // Rendered exactly once per layout — either inline (desktop/tablet) or
+  // inside the MoreMenu panel (mobile) — to avoid duplicating stateful
+  // children like `SavesModal` / `InstructionsModal`.
+  const secondaryControls = (
+    <>
+      <React.Suspense
+        fallback={
+          <Button $variant="saves" disabled aria-label="Open saves panel">
+            💾 Saves
+          </Button>
+        }
+      >
+        <SavesModal
+          strategy={strategy}
+          managedTeam={managedTeam}
+          managerMode={managerMode}
+          decisionValues={decisionValues}
+          currentSaveId={currentSaveId}
+          onSaveIdChange={setCurrentSaveId}
+          onLoadSave={onLoadSave}
+          gameStarted={gameStarted}
+        />
+      </React.Suspense>
+      <React.Suspense
+        fallback={
+          <HelpButton disabled aria-label="How to play">
+            ?
+          </HelpButton>
+        }
+      >
+        <InstructionsModal />
+      </React.Suspense>
+      <SpeedRow>
+        <ToggleLabel>
+          Sim speed
+          <SpeedSlider
+            type="range"
+            min={0}
+            max={SPEED_STEPS.length - 1}
+            step={1}
+            value={speedIndex}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const idx = Math.min(
+                SPEED_STEPS.length - 1,
+                Math.max(0, parseInt(e.target.value, 10)),
+              );
+              setSpeed(SPEED_STEPS[idx]);
+            }}
+            aria-label="Game speed"
+            data-testid="speed-slider"
+          />
+          <SpeedLabel>{SPEED_STEP_LABELS[speedIndex]}</SpeedLabel>
+        </ToggleLabel>
+      </SpeedRow>
+      <VolumeControls
+        announcementVolume={announcementVolume}
+        alertVolume={alertVolume}
+        onAnnouncementVolumeChange={handleAnnouncementVolumeChange}
+        onAlertVolumeChange={handleAlertVolumeChange}
+        onToggleAnnouncementMute={handleToggleAnnouncementMute}
+        onToggleAlertMute={handleToggleAlertMute}
+      />
+      {gameStarted && (
+        <ManagerModeControls
+          managerMode={managerMode}
+          strategy={strategy}
+          managedTeam={managedTeam}
+          teams={resolvedTeamLabels}
+          notifPermission={notifPermission}
+          gameStarted={gameStarted}
+          gameOver={gameOver}
+          decisionValues={decisionValues}
+          onManagerModeChange={handleManagerModeChange}
+          onStrategyChange={(e) => setStrategy(e.target.value as Strategy)}
+          onManagedTeamChange={(e) => setManagedTeam(Number(e.target.value) === 1 ? 1 : 0)}
+          onRequestNotifPermission={handleRequestNotifPermission}
+          onDecisionValuesChange={setDecisionValues}
+          onDecisionValuesReset={resetDecisionValues}
+          onDecisionPanelOpenChange={handleDecisionPanelOpenChange}
+        />
+      )}
+    </>
+  );
+
   return (
     <>
       <Controls>
@@ -129,94 +227,26 @@ const GameControls: React.FunctionComponent<Props> = ({
               New Game
             </Button>
           ))}
-        <React.Suspense
-          fallback={
-            <Button $variant="saves" disabled aria-label="Open saves panel">
-              💾 Saves
-            </Button>
-          }
+        <AutoPlayGroup
+          // On mobile, the AutoPlayGroup chip is only meaningful when there's
+          // an active game (so the pause button is shown). When neither
+          // pause/play nor the inline secondary controls render, hide the
+          // empty chip entirely.
+          style={isMobile && !(gameStarted && !gameOver) ? { display: "none" } : undefined}
         >
-          <SavesModal
-            strategy={strategy}
-            managedTeam={managedTeam}
-            managerMode={managerMode}
-            decisionValues={decisionValues}
-            currentSaveId={currentSaveId}
-            onSaveIdChange={setCurrentSaveId}
-            onLoadSave={onLoadSave}
-            gameStarted={gameStarted}
-          />
-        </React.Suspense>
-        <React.Suspense
-          fallback={
-            <HelpButton disabled aria-label="How to play">
-              ?
-            </HelpButton>
-          }
-        >
-          <InstructionsModal />
-        </React.Suspense>
-        <AutoPlayGroup>
-          <SpeedRow>
-            {gameStarted && !gameOver && (
-              <PausePlayButton
-                onClick={() => setPaused(!paused)}
-                aria-label={paused ? "Resume game" : "Pause game"}
-                data-testid="pause-play-button"
-                title={paused ? "Resume" : "Pause"}
-              >
-                {paused ? "▶" : "⏸"}
-              </PausePlayButton>
-            )}
-            <ToggleLabel>
-              Speed
-              <SpeedSlider
-                type="range"
-                min={0}
-                max={SPEED_STEPS.length - 1}
-                step={1}
-                value={speedIndex}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  const idx = Math.min(
-                    SPEED_STEPS.length - 1,
-                    Math.max(0, parseInt(e.target.value, 10)),
-                  );
-                  setSpeed(SPEED_STEPS[idx]);
-                }}
-                aria-label="Game speed"
-                data-testid="speed-slider"
-              />
-              <SpeedLabel>{SPEED_STEP_LABELS[speedIndex]}</SpeedLabel>
-            </ToggleLabel>
-          </SpeedRow>
-          <VolumeControls
-            announcementVolume={announcementVolume}
-            alertVolume={alertVolume}
-            onAnnouncementVolumeChange={handleAnnouncementVolumeChange}
-            onAlertVolumeChange={handleAlertVolumeChange}
-            onToggleAnnouncementMute={handleToggleAnnouncementMute}
-            onToggleAlertMute={handleToggleAlertMute}
-          />
-          {gameStarted && (
-            <ManagerModeControls
-              managerMode={managerMode}
-              strategy={strategy}
-              managedTeam={managedTeam}
-              teams={resolvedTeamLabels}
-              notifPermission={notifPermission}
-              gameStarted={gameStarted}
-              gameOver={gameOver}
-              decisionValues={decisionValues}
-              onManagerModeChange={handleManagerModeChange}
-              onStrategyChange={(e) => setStrategy(e.target.value as Strategy)}
-              onManagedTeamChange={(e) => setManagedTeam(Number(e.target.value) === 1 ? 1 : 0)}
-              onRequestNotifPermission={handleRequestNotifPermission}
-              onDecisionValuesChange={setDecisionValues}
-              onDecisionValuesReset={resetDecisionValues}
-              onDecisionPanelOpenChange={handleDecisionPanelOpenChange}
-            />
+          {gameStarted && !gameOver && (
+            <PausePlayButton
+              onClick={() => setPaused(!paused)}
+              aria-label={paused ? "Resume game" : "Pause game"}
+              data-testid="pause-play-button"
+              title={paused ? "Resume" : "Pause"}
+            >
+              {paused ? "▶" : "⏸"}
+            </PausePlayButton>
           )}
+          {!isMobile && <InlineSecondaryGroup>{secondaryControls}</InlineSecondaryGroup>}
         </AutoPlayGroup>
+        {isMobile && <MoreMenu disabled={decisionActive}>{secondaryControls}</MoreMenu>}
       </Controls>
       {gameStarted && managerMode && (
         <React.Suspense fallback={null}>
