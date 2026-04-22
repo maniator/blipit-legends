@@ -5,6 +5,7 @@ import { useCustomTeams } from "@shared/hooks/useCustomTeams";
 
 import type { TeamWithRoster } from "@storage/types";
 
+import type { EditorPlayer, EditorState } from "./editorState";
 import {
   editorReducer,
   editorStateToCreateInput,
@@ -12,7 +13,15 @@ import {
   validateEditorState,
 } from "./editorState";
 import { BenchFormSection, LineupFormSection, PitchersSection } from "./RosterSections";
-import { ButtonRow, CancelBtn, EditorContainer, EditorTitle, ErrorMsg, SaveBtn } from "./styles";
+import {
+  ButtonRow,
+  CancelBtn,
+  EditorContainer,
+  EditorTitle,
+  ErrorMsg,
+  LiveRegion,
+  SaveBtn,
+} from "./styles";
 import { TeamInfoSection } from "./TeamInfoSection";
 import { useEditorDragHandlers } from "./useEditorDragHandlers";
 import type { PendingPlayerImport } from "./useImportPlayerFile";
@@ -47,6 +56,39 @@ const CustomTeamEditor: React.FunctionComponent<Props> = ({ team, onSave, onCanc
   const pitchersFileRef = React.useRef<HTMLInputElement>(null);
   const [pendingPlayerImport, setPendingPlayerImport] = React.useState<PendingPlayerImport | null>(
     null,
+  );
+
+  // Track the most recently added player so its row can apply the one-shot
+  // highlight + autofocus the name input. Cleared after the highlight window
+  // (1.5s) so subsequent edits / re-renders don't re-trigger the animation.
+  const [newlyAddedPlayerId, setNewlyAddedPlayerId] = React.useState<string | null>(null);
+  const [addAnnouncement, setAddAnnouncement] = React.useState("");
+  const stateRef = React.useRef(state);
+  stateRef.current = state;
+
+  React.useEffect(() => {
+    if (!newlyAddedPlayerId) return;
+    const t = window.setTimeout(() => setNewlyAddedPlayerId(null), 1500);
+    return () => window.clearTimeout(t);
+  }, [newlyAddedPlayerId]);
+
+  /**
+   * Adds a player to the requested section using a default-populated factory.
+   * Centralises the announcement / focus / highlight side effects so each
+   * "Add" button stays a one-liner.
+   */
+  const handleAddPlayerWithDefaults = React.useCallback(
+    (
+      section: "lineup" | "bench" | "pitchers",
+      makePlayer: (state: EditorState) => EditorPlayer,
+    ) => {
+      const player = makePlayer(stateRef.current);
+      dispatch({ type: "ADD_PLAYER", section, player });
+      setNewlyAddedPlayerId(player.id);
+      const noun = section === "pitchers" ? "pitcher" : "batter";
+      setAddAnnouncement(`New ${noun} added — ${player.name}`);
+    },
+    [],
   );
 
   const handleExportPlayer = usePlayerExport();
@@ -142,6 +184,8 @@ const CustomTeamEditor: React.FunctionComponent<Props> = ({ team, onSave, onCanc
             lineupFileRef={lineupFileRef}
             onImportFile={handleImportLineupFile}
             handleExportPlayer={handleExportPlayer}
+            newlyAddedPlayerId={newlyAddedPlayerId}
+            onAddPlayerWithDefaults={handleAddPlayerWithDefaults}
           />
           <BenchFormSection
             bench={state.bench}
@@ -152,6 +196,8 @@ const CustomTeamEditor: React.FunctionComponent<Props> = ({ team, onSave, onCanc
             benchFileRef={benchFileRef}
             onImportFile={handleImportBenchFile}
             handleExportPlayer={handleExportPlayer}
+            newlyAddedPlayerId={newlyAddedPlayerId}
+            onAddPlayerWithDefaults={handleAddPlayerWithDefaults}
           />
         </DndContext>
       </div>
@@ -166,7 +212,18 @@ const CustomTeamEditor: React.FunctionComponent<Props> = ({ team, onSave, onCanc
         handleExportPlayer={handleExportPlayer}
         sensors={sensors}
         handlePitchersDragEnd={handlePitchersDragEnd}
+        newlyAddedPlayerId={newlyAddedPlayerId}
+        onAddPlayerWithDefaults={handleAddPlayerWithDefaults}
       />
+
+      <LiveRegion
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        data-testid="custom-team-editor-add-announcement"
+      >
+        {addAnnouncement}
+      </LiveRegion>
 
       <ButtonRow>
         <SaveBtn type="button" onClick={handleSave} data-testid="custom-team-save-button">

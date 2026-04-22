@@ -881,3 +881,205 @@ describe("validateEditorState — player name uniqueness", () => {
     expect(validateEditorState(state)).toBe("");
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Default-populated row factories (Phase 1B): newly added rows must be valid
+// on first paint — sensible name/position/handedness/midpoint stats.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import {
+  createDefaultBatter,
+  createDefaultPitcher,
+  DEFAULT_STAT_MIDPOINT,
+  nextDefaultNameIndex,
+  pickDefaultBenchPosition,
+  pickDefaultLineupPosition,
+  pickDefaultPitcherPosition,
+} from "./editorState";
+import { HITTER_STAT_CAP, PITCHER_STAT_CAP } from "./statBudget";
+
+describe("createDefaultBatter / createDefaultPitcher", () => {
+  it("creates a lineup batter with midpoint stats at-or-below the hitter cap", () => {
+    const state = initEditorState();
+    const p = createDefaultBatter(state, "lineup");
+    expect(p.role).toBe("batter");
+    expect(p.handedness).toBe("R");
+    expect(p.contact).toBe(DEFAULT_STAT_MIDPOINT);
+    expect(p.power).toBe(DEFAULT_STAT_MIDPOINT);
+    expect(p.speed).toBe(DEFAULT_STAT_MIDPOINT);
+    expect(p.contact + p.power + p.speed).toBeLessThanOrEqual(HITTER_STAT_CAP);
+    expect(p.name).toBe("New batter 1");
+    // Lineup default → first DEFAULT_LINEUP_POSITIONS slot, "C".
+    expect(p.position).toBe("C");
+    // ID should use the storage helper prefix, not the legacy ep_ counter.
+    expect(p.id.startsWith("p_")).toBe(true);
+  });
+
+  it("picks the next unfilled lineup defensive slot", () => {
+    const taken = ["C", "1B", "2B", "3B", "SS"];
+    const state = {
+      ...initEditorState(),
+      lineup: taken.map((pos, i) => ({
+        id: `seed${i}`,
+        name: `Seed ${i}`,
+        role: "batter" as const,
+        position: pos,
+        handedness: "R" as const,
+        contact: 50,
+        power: 50,
+        speed: 50,
+      })),
+    };
+    expect(pickDefaultLineupPosition(state.lineup)).toBe("LF");
+    const p = createDefaultBatter(state, "lineup");
+    expect(p.position).toBe("LF");
+  });
+
+  it("falls back to DH when every defensive slot is filled", () => {
+    const state = {
+      ...initEditorState(),
+      lineup: ["C", "1B", "2B", "3B", "SS", "LF", "CF", "RF", "DH"].map((pos, i) => ({
+        id: `seed${i}`,
+        name: `Seed ${i}`,
+        role: "batter" as const,
+        position: pos,
+        handedness: "R" as const,
+        contact: 50,
+        power: 50,
+        speed: 50,
+      })),
+    };
+    expect(pickDefaultLineupPosition(state.lineup)).toBe("DH");
+  });
+
+  it("bench default picks the first uncovered required field position", () => {
+    const state = {
+      ...initEditorState(),
+      lineup: ["C", "1B", "2B", "3B", "SS", "LF", "CF"].map((pos, i) => ({
+        id: `seed${i}`,
+        name: `Seed ${i}`,
+        role: "batter" as const,
+        position: pos,
+        handedness: "R" as const,
+        contact: 50,
+        power: 50,
+        speed: 50,
+      })),
+    };
+    // RF is the only uncovered required position → bench default picks RF.
+    expect(pickDefaultBenchPosition(state.lineup, state.bench)).toBe("RF");
+  });
+
+  it("creates a pitcher with midpoint stats well below the pitcher cap", () => {
+    const state = initEditorState();
+    const p = createDefaultPitcher(state);
+    expect(p.role).toBe("pitcher");
+    expect(p.handedness).toBe("R");
+    expect(p.velocity).toBe(DEFAULT_STAT_MIDPOINT);
+    expect(p.control).toBe(DEFAULT_STAT_MIDPOINT);
+    expect(p.movement).toBe(DEFAULT_STAT_MIDPOINT);
+    expect(p.velocity + p.control + p.movement).toBeLessThanOrEqual(PITCHER_STAT_CAP);
+    expect(p.name).toBe("New pitcher 1");
+    expect(p.position).toBe("SP");
+    expect(p.pitchingRole).toBe("SP");
+  });
+
+  it("pitcher default flips to RP once the rotation has 5 starters", () => {
+    const sp = (i: number) => ({
+      id: `sp${i}`,
+      name: `SP ${i}`,
+      role: "pitcher" as const,
+      position: "SP",
+      handedness: "R" as const,
+      velocity: 50,
+      control: 50,
+      movement: 50,
+      pitchingRole: "SP" as const,
+    });
+    const state = {
+      ...initEditorState(),
+      pitchers: [sp(1), sp(2), sp(3), sp(4), sp(5)],
+    };
+    expect(pickDefaultPitcherPosition(state.pitchers)).toBe("RP");
+    expect(createDefaultPitcher(state).position).toBe("RP");
+  });
+
+  it("nextDefaultNameIndex skips already-used numeric default names", () => {
+    const state = {
+      ...initEditorState(),
+      lineup: [
+        {
+          id: "x1",
+          name: "New batter 1",
+          role: "batter" as const,
+          position: "C",
+          handedness: "R" as const,
+          contact: 50,
+          power: 50,
+          speed: 50,
+        },
+      ],
+      bench: [
+        {
+          id: "x3",
+          name: "New batter 3",
+          role: "batter" as const,
+          position: "1B",
+          handedness: "R" as const,
+          contact: 50,
+          power: 50,
+          speed: 50,
+        },
+      ],
+    };
+    // Skip 1, return 2 (3 is also used but we pick the smallest gap).
+    expect(nextDefaultNameIndex(state, "batter")).toBe(2);
+  });
+
+  it("a freshly created lineup row produces a valid roster when the rest is in place", () => {
+    // Build a near-complete roster; the new row fills the last lineup slot.
+    const seedBatter = (id: string, position: string) => ({
+      id,
+      name: `Seed ${id}`,
+      role: "batter" as const,
+      position,
+      handedness: "R" as const,
+      contact: 50,
+      power: 50,
+      speed: 50,
+    });
+    const seedPitcher = (id: string) => ({
+      id,
+      name: `Pitch ${id}`,
+      role: "pitcher" as const,
+      position: "SP",
+      handedness: "R" as const,
+      velocity: 50,
+      control: 50,
+      movement: 50,
+      pitchingRole: "SP" as const,
+    });
+    const partial = {
+      ...initEditorState(),
+      name: "Eagles",
+      abbreviation: "EAG",
+      lineup: [
+        seedBatter("p1", "C"),
+        seedBatter("p2", "1B"),
+        seedBatter("p3", "2B"),
+        seedBatter("p4", "3B"),
+        seedBatter("p5", "SS"),
+        seedBatter("p6", "LF"),
+        seedBatter("p7", "CF"),
+        seedBatter("p8", "RF"),
+      ],
+      bench: [],
+      pitchers: [seedPitcher("sp1")],
+    };
+    const newRow = createDefaultBatter(partial, "lineup");
+    // Lineup has all 8 fielding positions filled → next default should be DH.
+    expect(newRow.position).toBe("DH");
+    const next = { ...partial, lineup: [...partial.lineup, newRow] };
+    expect(validateEditorState(next)).toBe("");
+  });
+});

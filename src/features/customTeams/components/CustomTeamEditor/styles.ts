@@ -1,5 +1,5 @@
 import { mq } from "@shared/utils/mediaQueries";
-import styled from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 
 export const EditorContainer = styled.div`
   display: flex;
@@ -122,12 +122,36 @@ export const StatValue = styled.span`
   flex-shrink: 0;
 `;
 
-export const PlayerCard = styled.div`
+/**
+ * One-shot 1.5s highlight applied to a freshly added player row. Uses
+ * `bgPlayerSelected` from the theme as the peak background and fades back to
+ * the card's default surface. `prefers-reduced-motion: reduce` collapses the
+ * animation to its final state (no flash).
+ */
+const newRowHighlight = keyframes`
+  0%   { background-color: var(--player-card-highlight); }
+  100% { background-color: var(--player-card-bg); }
+`;
+
+export const PlayerCard = styled.div<{ $isNewlyAdded?: boolean }>`
   background: ${({ theme }) => theme.colors.bgSurface};
   border: 1px solid ${({ theme }) => theme.colors.borderCard};
   border-radius: ${({ theme }) => theme.radii.lg};
   padding: ${({ theme }) => theme.spacing.s10} ${({ theme }) => theme.spacing.md};
   margin-bottom: ${({ theme }) => theme.spacing.sm};
+
+  ${({ theme, $isNewlyAdded }) =>
+    $isNewlyAdded &&
+    css`
+      --player-card-bg: ${theme.colors.bgSurface};
+      --player-card-highlight: ${theme.colors.bgPlayerSelected};
+      animation: ${newRowHighlight} 1500ms ease-out 1 both;
+
+      @media (prefers-reduced-motion: reduce) {
+        animation: none;
+        background: ${theme.colors.bgSurface};
+      }
+    `}
 `;
 
 export const PlayerHeader = styled.div`
@@ -417,4 +441,21 @@ export const PlayerDuplicateActions = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
   margin-top: ${({ theme }) => theme.spacing.sm};
   flex-wrap: wrap;
+`;
+
+/**
+ * Visually-hidden polite live region used to announce roster mutations
+ * (e.g. "New batter added — New batter 3") to assistive tech without
+ * affecting layout. Uses the standard SR-only clip pattern.
+ */
+export const LiveRegion = styled.div`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 `;
