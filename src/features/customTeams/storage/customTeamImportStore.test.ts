@@ -33,7 +33,8 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  await db.close();
+  // Guard against tests that close db early (e.g. to stay within RxDB OSS 16-collection limit).
+  await db.close().catch(() => undefined);
 });
 
 describe("importCustomTeams", () => {
@@ -263,7 +264,10 @@ describe("importCustomTeams", () => {
 
     const json = exportFn([withNL(teamWithIdentity) as TeamWithRoster]);
 
-    // Import into a fresh in-memory DB (simulates a different install)
+    // Import into a fresh in-memory DB (simulates a different install).
+    // Close the primary `db` first to stay within the RxDB OSS 16-collection limit
+    // (11 collections × 2 open DBs = 22 > 16 → COL23).
+    await db.close();
     const freshDb = await createTestDb(getRxStorageMemory());
     const freshStore = makeCustomTeamStore(() => Promise.resolve(freshDb));
 
