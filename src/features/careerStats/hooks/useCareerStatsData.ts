@@ -73,8 +73,9 @@ export function useCareerStatsData() {
           setTeamsWithHistory(Array.from(ids));
         });
       })
-      .catch(() => {
-        // Silently degrade — history just won't include non-custom teams.
+      .catch((err) => {
+        // eslint-disable-next-line no-console
+        console.error("[useCareerStatsData] Failed to subscribe to completedGames:", err);
       });
 
     return () => {
@@ -100,6 +101,7 @@ export function useCareerStatsData() {
       setEraLeader(null);
       setSavesLeader(null);
       setStrikeoutsLeader(null);
+      setDataLoading(false);
       return;
     }
 

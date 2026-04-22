@@ -85,12 +85,8 @@ describe("useCareerStatsData", () => {
     vi.mocked(getDb).mockResolvedValue({
       completedGames: {
         find: vi.fn(() => ({
-          exec: vi
-            .fn()
-            .mockResolvedValue([
-              { toJSON: () => ({ homeTeamId: "z_team", awayTeamId: "a_team" }) },
-            ]),
           // Reactive observable: subscribe fires immediately with the game docs.
+          // (exec is not called by the reactive subscription path)
           $: {
             subscribe: (fn: (docs: unknown[]) => void) => {
               fn([{ toJSON: () => ({ homeTeamId: "z_team", awayTeamId: "a_team" }) }]);
