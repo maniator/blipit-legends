@@ -1,6 +1,13 @@
 import "fake-indexeddb/auto";
 import "@testing-library/jest-dom/vitest";
 
+import { addRxPlugin } from "rxdb";
+import { RxDBMigrationSchemaPlugin } from "rxdb/plugins/migration-schema";
+
+// Register the RxDB migration-schema plugin once for all tests.
+// Required for collections with `migrationStrategies` (e.g. teamsV1CollectionConfig v1).
+addRxPlugin(RxDBMigrationSchemaPlugin);
+
 import * as React from "react";
 
 import { theme } from "@shared/theme";

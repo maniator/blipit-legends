@@ -363,6 +363,7 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
     await store.appendEvents(saveId, [{ type: "hit", at: 0, payload: {} }]);
     const json = await store.exportRxdbSave(saveId);
     // Import into a fresh db
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     // Insert the teams so importRxdbSave does not reject them as missing.
     await insertMinimalTeam(db2, "ct_rt_home");
@@ -415,6 +416,7 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
   it("importRxdbSave handles saves with no events", async () => {
     const saveId = await store.createSave(makeCustomFormatSetup());
     const json = await store.exportRxdbSave(saveId);
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
     await insertMinimalTeam(db2, "ct_rt_away");
@@ -450,6 +452,7 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
     const sig = fnv1a(RXDB_EXPORT_KEY + JSON.stringify({ header, events }));
     const bundle = JSON.stringify({ version: 1, header, events, sig });
 
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_norm_home");
     await insertMinimalTeam(db2, "ct_norm_away");
@@ -473,6 +476,7 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
     await insertMinimalTeam(db, "ct_rt_away");
     const json = await store.exportRxdbSave(saveId);
 
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
     await insertMinimalTeam(db2, "ct_rt_away");
@@ -599,6 +603,7 @@ describe("SaveStore — sac-fly outLog entries in stateSnapshot export/import", 
     });
     const json = await store.exportRxdbSave(saveId);
 
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
     await insertMinimalTeam(db2, "ct_rt_away");
@@ -624,6 +629,7 @@ describe("SaveStore — sac-fly outLog entries in stateSnapshot export/import", 
     });
     const json = await store.exportRxdbSave(saveId);
 
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
     await insertMinimalTeam(db2, "ct_rt_away");
@@ -659,6 +665,7 @@ describe("SaveStore — RBI in stateSnapshot export/import compatibility", () =>
     });
     const json = await store.exportRxdbSave(saveId);
 
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
     await insertMinimalTeam(db2, "ct_rt_away");
@@ -684,6 +691,7 @@ describe("SaveStore — RBI in stateSnapshot export/import compatibility", () =>
     });
     const json = await store.exportRxdbSave(saveId);
 
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
     await insertMinimalTeam(db2, "ct_rt_away");
@@ -712,6 +720,7 @@ describe("SaveStore — manager decision state in stateSnapshot export/import", 
     });
     const json = await store.exportRxdbSave(saveId);
 
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
     await insertMinimalTeam(db2, "ct_rt_away");
@@ -730,6 +739,7 @@ describe("SaveStore — manager decision state in stateSnapshot export/import", 
     });
     const json = await store.exportRxdbSave(saveId);
 
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
     await insertMinimalTeam(db2, "ct_rt_away");
@@ -748,6 +758,7 @@ describe("SaveStore — manager decision state in stateSnapshot export/import", 
     });
     const json = await store.exportRxdbSave(saveId);
 
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
     await insertMinimalTeam(db2, "ct_rt_away");
@@ -766,6 +777,7 @@ describe("SaveStore — manager decision state in stateSnapshot export/import", 
     });
     const json = await store.exportRxdbSave(saveId);
 
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
     await insertMinimalTeam(db2, "ct_rt_away");
@@ -784,6 +796,7 @@ describe("SaveStore — manager decision state in stateSnapshot export/import", 
     });
     const json = await store.exportRxdbSave(saveId);
 
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
     await insertMinimalTeam(db2, "ct_rt_away");
