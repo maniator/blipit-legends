@@ -115,6 +115,7 @@ const SortablePlayerRow: React.FunctionComponent<Props> = ({
           />
         ) : (
           <TextInput
+            id={`name-${player.id}`}
             ref={nameInputRef}
             value={player.name}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
