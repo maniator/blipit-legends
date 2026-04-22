@@ -244,11 +244,11 @@ Per the practical RxDB/Dexie open-collection guidance (~16 in single-tab usage; 
 | Stage              | Open collections                                                                                                                    | Total |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | ----- |
 | Today (registered) | 7–8: `saves`, `events`, `teams`, `players`, `completedGames`, `batterGameStats`, `pitcherGameStats` (+ `customTeams` if registered) | 7–8   |
-| + v1 (4)           | + `seasons`, `seasonTeams`, `seasonGames`, `seasonPlayerState`                                                                      | 11–12 |
-| + v2 (1)           | + `seasonTransactions` (introduced in v2 for IL events)                                                                             | 12–13 |
-| + v4 (2)           | + `seasonAwards` + `seasonArchives` (lazy)                                                                                          | 14–15 |
+| + v1 (5)           | + `seasons`, `seasonTeams`, `seasonGames`, `seasonPlayerState`, `importInProgress` (small tombstone collection)                     | 12–13 |
+| + v2 (1)           | + `seasonTransactions` (introduced in v2 for IL events)                                                                             | 13–14 |
+| + v4 (2)           | + `seasonAwards` + `seasonArchives` (lazy)                                                                                          | 15–16 |
 
-We project landing **at or just under the practical 16-collection cap** at v4, not over. Mitigation triggers if a future addition crosses 15: lazy-open `seasonArchives` only when the archive UI mounts; consider collapsing a historical collection into archive form. Pre-v4 task: empirically verify the cap on the current target browsers.
+We project landing **right at the practical 16-collection cap** at v4. Mitigation triggers if a future addition would cross 16: lazy-open `seasonArchives` only when the archive UI mounts; lazy-open `importInProgress` only when an import starts (it has no read traffic outside the boot scan, which can use a one-shot query against a temporarily-opened handle); consider collapsing a historical collection into archive form. Pre-v4 task: empirically verify the cap on the current target browsers.
 
 ## Determinism notes
 
