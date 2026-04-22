@@ -106,6 +106,37 @@ export const DbResetNotice = styled.div`
   }
 `;
 
+/**
+ * One-time dismissible banner shown when a loaded save's steal threshold is
+ * silently clamped to STEAL_PCT_MIN (65%).  Rendered inside GameInner so it
+ * appears within the game view rather than as a full-page overlay.
+ */
+export const StealClampNotice = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9998;
+  background: ${({ theme }) => theme.colors.bgInfo ?? theme.colors.bgWarn};
+  color: ${({ theme }) => theme.colors.textPrimary};
+  padding: ${({ theme }) => theme.spacing.s10} ${({ theme }) => theme.spacing.lg};
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.md};
+  font-size: ${({ theme }) => theme.fontSizes.subLg};
+
+  button {
+    background: none;
+    border: 1px solid ${({ theme }) => theme.colors.borderWhiteAlpha};
+    color: ${({ theme }) => theme.colors.textPrimary};
+    cursor: pointer;
+    padding: ${({ theme }) => theme.spacing.xxs} ${({ theme }) => theme.spacing.sm};
+    border-radius: ${({ theme }) => theme.radii.sm};
+    font-size: ${({ theme }) => theme.fontSizes.bodyLg};
+  }
+`;
+
 export const LogPanel = styled.div`
   min-width: 0;
   overflow-y: auto;
