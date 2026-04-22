@@ -7,6 +7,7 @@ import {
   DEFAULT_PITCHING_STAMINA,
 } from "@feat/customTeams/storage/customTeamSanitizers";
 
+import { generatePlayerId } from "@storage/generateId";
 import type {
   CreateCustomTeamInput,
   TeamBatterPlayer,
@@ -17,6 +18,14 @@ import type {
 
 import { DEFAULT_LINEUP_POSITIONS, REQUIRED_FIELD_POSITIONS } from "./playerConstants";
 import { HITTER_STAT_CAP, hitterStatTotal, PITCHER_STAT_CAP, pitcherStatTotal } from "./statBudget";
+
+/**
+ * Midpoint value used as the default for newly added player stat sliders.
+ * Keeps a fresh hitter at exactly the cap (50+50+50 = 150 = HITTER_STAT_CAP)
+ * and a fresh pitcher comfortably under (150 < PITCHER_STAT_CAP=160), so a
+ * just-added row passes editor validation immediately on first paint.
+ */
+export const DEFAULT_STAT_MIDPOINT = 50;
 
 /** A batter row as edited in the form. */
 export interface EditorBatterPlayer {
@@ -97,6 +106,129 @@ export type EditorAction =
 
 let playerIdCounter = 0;
 export const makePlayerId = (): string => `ep_${Date.now()}_${++playerIdCounter}`;
+
+/**
+ * Returns the next sequential default-name index for a given role within the
+ * team. Names already in use of the form `New batter N` / `New pitcher N` are
+ * skipped — we always pick the smallest positive integer that is not already
+ * taken in any section (so adding lineup, bench, and pitcher rows in any order
+ * yields `New batter 1`, `New batter 2`, `New pitcher 1`, …).
+ */
+export function nextDefaultNameIndex(
+  state: Pick<EditorState, "lineup" | "bench" | "pitchers">,
+  role: "batter" | "pitcher",
+): number {
+  const re = role === "batter" ? /^New batter (\d+)$/i : /^New pitcher (\d+)$/i;
+  const players: ReadonlyArray<EditorPlayer> =
+    role === "batter" ? [...state.lineup, ...state.bench] : state.pitchers;
+  const used = new Set<number>();
+  for (const p of players) {
+    const m = re.exec(p.name.trim());
+    if (m) {
+      const n = Number.parseInt(m[1], 10);
+      if (Number.isFinite(n) && n > 0) used.add(n);
+    }
+  }
+  let n = 1;
+  while (used.has(n)) n += 1;
+  return n;
+}
+
+/**
+ * Picks the default position for a newly added lineup row: the first
+ * DEFAULT_LINEUP_POSITIONS slot not already filled in the lineup, falling back
+ * to "DH" when every fielding slot is taken.
+ */
+export function pickDefaultLineupPosition(lineup: ReadonlyArray<EditorBatterPlayer>): string {
+  const filled = new Set(lineup.map((p) => p.position).filter(Boolean));
+  for (const pos of DEFAULT_LINEUP_POSITIONS) {
+    if (!filled.has(pos)) return pos;
+  }
+  return "DH";
+}
+
+/**
+ * Picks the default position for a newly added bench row.
+ *
+ * Spec deviation: the spec called for "BN", but no `BN` value exists in
+ * BATTER_POSITION_OPTIONS (the position select would render as "— select —").
+ * To keep the new row immediately valid (pickable from the dropdown and
+ * useful for satisfying REQUIRED_FIELD_POSITIONS coverage), we instead pick
+ * the first required field position that is not yet covered by lineup+bench,
+ * falling back to "DH" when every required position is already covered.
+ */
+export function pickDefaultBenchPosition(
+  lineup: ReadonlyArray<EditorBatterPlayer>,
+  bench: ReadonlyArray<EditorBatterPlayer>,
+): string {
+  const covered = new Set([...lineup, ...bench].map((p) => p.position).filter(Boolean));
+  for (const pos of REQUIRED_FIELD_POSITIONS) {
+    if (!covered.has(pos)) return pos;
+  }
+  return "DH";
+}
+
+/**
+ * Picks the default position for a newly added pitcher row: "SP" while the
+ * rotation has fewer than 5 starters, otherwise "RP".
+ */
+export function pickDefaultPitcherPosition(
+  pitchers: ReadonlyArray<EditorPitcherPlayer>,
+): "SP" | "RP" {
+  const starters = pitchers.filter((p) => p.position === "SP" || p.pitchingRole === "SP").length;
+  return starters < 5 ? "SP" : "RP";
+}
+
+/**
+ * Builds a new batter row populated with sensible defaults so the row passes
+ * editor validation (no over-cap warning, name non-empty, position pre-filled)
+ * the moment it is added.
+ */
+export function createDefaultBatter(
+  state: Pick<EditorState, "lineup" | "bench" | "pitchers">,
+  section: "lineup" | "bench",
+): EditorBatterPlayer {
+  const n = nextDefaultNameIndex(state, "batter");
+  const position =
+    section === "lineup"
+      ? pickDefaultLineupPosition(state.lineup)
+      : pickDefaultBenchPosition(state.lineup, state.bench);
+  return {
+    id: generatePlayerId(),
+    name: `New batter ${n}`,
+    role: "batter",
+    position,
+    handedness: "R",
+    contact: DEFAULT_STAT_MIDPOINT,
+    power: DEFAULT_STAT_MIDPOINT,
+    speed: DEFAULT_STAT_MIDPOINT,
+    stamina: DEFAULT_BATTING_STAMINA,
+  };
+}
+
+/**
+ * Builds a new pitcher row populated with sensible defaults so the row passes
+ * editor validation (no over-cap warning, name non-empty, position pre-filled)
+ * the moment it is added.
+ */
+export function createDefaultPitcher(
+  state: Pick<EditorState, "lineup" | "bench" | "pitchers">,
+): EditorPitcherPlayer {
+  const n = nextDefaultNameIndex(state, "pitcher");
+  const position = pickDefaultPitcherPosition(state.pitchers);
+  return {
+    id: generatePlayerId(),
+    name: `New pitcher ${n}`,
+    role: "pitcher",
+    position,
+    handedness: "R",
+    velocity: DEFAULT_STAT_MIDPOINT,
+    control: DEFAULT_STAT_MIDPOINT,
+    movement: DEFAULT_STAT_MIDPOINT,
+    pitchingRole: position,
+    stamina: DEFAULT_PITCHING_STAMINA,
+  };
+}
 
 const moveItem = <T>(arr: T[], from: number, to: number): T[] => {
   if (to < 0 || to >= arr.length) return arr;

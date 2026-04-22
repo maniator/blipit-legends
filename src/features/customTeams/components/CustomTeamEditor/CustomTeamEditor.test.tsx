@@ -253,6 +253,78 @@ describe("CustomTeamEditor — create mode", () => {
       });
     }
   });
+
+  // ── Phase 1B: defaults + announcement ────────────────────────────────────────
+
+  it("Phase 1B: adding a lineup batter populates default name, position, and stats", async () => {
+    renderEditor();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("custom-team-add-lineup-player-button"));
+    });
+    const nameInput = screen.getByPlaceholderText(/player name/i) as HTMLInputElement;
+    expect(nameInput.value).toBe("New batter 1");
+    // Name is non-empty, so aria-invalid must NOT be set on the input.
+    expect(nameInput.getAttribute("aria-invalid")).toBeNull();
+    const positionSelect = screen.getByTestId(
+      "custom-team-player-position-select",
+    ) as HTMLSelectElement;
+    expect(positionSelect.value).toBe("C");
+    // Stat sliders all read 50 (DEFAULT_STAT_MIDPOINT).
+    const sliders = screen.getAllByRole("slider") as HTMLInputElement[];
+    const coreStats = sliders.slice(0, 3); // contact, power, speed
+    coreStats.forEach((s) => expect(s.value).toBe("50"));
+  });
+
+  it("Phase 1B: adding multiple lineup batters fills sequential positions and names", async () => {
+    renderEditor();
+    const addBtn = screen.getByTestId("custom-team-add-lineup-player-button");
+    await act(async () => {
+      fireEvent.click(addBtn);
+    });
+    await act(async () => {
+      fireEvent.click(addBtn);
+    });
+    const nameInputs = screen.getAllByPlaceholderText(/player name/i) as HTMLInputElement[];
+    expect(nameInputs[0].value).toBe("New batter 1");
+    expect(nameInputs[1].value).toBe("New batter 2");
+    const positionSelects = screen.getAllByTestId(
+      "custom-team-player-position-select",
+    ) as HTMLSelectElement[];
+    expect(positionSelects[0].value).toBe("C");
+    expect(positionSelects[1].value).toBe("1B");
+  });
+
+  it("Phase 1B: adding a pitcher populates default name and SP position", async () => {
+    renderEditor();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("custom-team-add-pitcher-button"));
+    });
+    const nameInput = screen.getByPlaceholderText(/player name/i) as HTMLInputElement;
+    expect(nameInput.value).toBe("New pitcher 1");
+    const positionSelect = screen.getByTestId(
+      "custom-team-player-position-select",
+    ) as HTMLSelectElement;
+    expect(positionSelect.value).toBe("SP");
+  });
+
+  it("Phase 1B: announces new row via polite live region", async () => {
+    renderEditor();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("custom-team-add-bench-player-button"));
+    });
+    const live = screen.getByTestId("custom-team-editor-add-announcement");
+    expect(live.getAttribute("aria-live")).toBe("polite");
+    expect(live.textContent).toMatch(/New batter added — New batter 1/);
+  });
+
+  it("Phase 1B: newly added row tags the container with role=group + aria-label", async () => {
+    renderEditor();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("custom-team-add-pitcher-button"));
+    });
+    const group = screen.getByRole("group", { name: /New pitcher, position SP/i });
+    expect(group).toBeTruthy();
+  });
 });
 
 describe("CustomTeamEditor — edit mode", () => {
