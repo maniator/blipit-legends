@@ -118,16 +118,23 @@ test.describe("Modals", () => {
       await expect(importBtn).toBeDisabled();
     });
 
-    test("invalid JSON in import textarea shows an error message", async ({ page }) => {
+    test("invalid JSON keeps Import from text disabled and shows helper guidance", async ({
+      page,
+    }) => {
       await startGameViaPlayBall(page, { seed: "modal6" });
       await openSavesModal(page);
 
-      // Enter clearly invalid JSON.
+      // Enter clearly invalid JSON; CTA stays disabled until the textarea is parseable JSON.
       await page.getByTestId("import-save-textarea").fill("not-valid-json");
-      await page.getByTestId("import-save-button").click();
+      const importBtn = page.getByTestId("import-save-button");
+      await expect(importBtn).toBeDisabled();
 
-      // An error message should appear inside the modal.
-      await expect(page.getByTestId("import-error")).toBeVisible({ timeout: 5_000 });
+      // Blur the textarea to reveal inline helper guidance.
+      await page.getByTestId("import-save-textarea").blur();
+      await expect(page.getByTestId("import-save-helper")).toHaveAttribute("data-tone", "error");
+      await expect(page.getByTestId("import-save-helper")).toContainText(
+        /doesn't look like valid saves JSON/i,
+      );
     });
   });
 
