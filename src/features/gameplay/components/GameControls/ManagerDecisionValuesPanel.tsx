@@ -302,14 +302,15 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                 </DecisionRowLabel>
                 {/*
                  * datalist provides semantic tick marks at the three named
-                 * positions (Passive / Balanced / Aggressive) without replacing
-                 * the free-range slider. Browser support is ≥ Chrome 20,
-                 * Firefox 4, Safari 12.1.
+                 * positions (Old-school / Modern / Bullpen) without replacing
+                 * the free-range slider. Labels match the DecisionRowValue display so
+                 * users see consistent terminology at the tick anchors.
+                 * Browser support is ≥ Chrome 20, Firefox 4, Safari 12.1.
                  */}
                 <datalist id="ai-pitching-aggressiveness-ticks">
-                  <option value="0" label="Passive" />
-                  <option value="50" label="Balanced" />
-                  <option value="100" label="Aggressive" />
+                  <option value="0" label="Old-school" />
+                  <option value="50" label="Modern" />
+                  <option value="100" label="Bullpen" />
                 </datalist>
                 <input
                   id="ai-pitching-aggressiveness"
@@ -362,8 +363,11 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                   >
                     Yes, reset
                   </button>
+                  {/* autoFocus so keyboard users land on the safe option when
+                       the confirm row mounts (WCAG 2.4.3 focus order). */}
                   <button
                     type="button"
+                    autoFocus
                     onClick={() => setConfirmReset(false)}
                     data-testid="manager-decision-tuning-reset-cancel"
                   >
