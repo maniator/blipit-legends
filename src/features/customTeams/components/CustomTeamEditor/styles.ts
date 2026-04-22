@@ -70,6 +70,7 @@ export const TextInput = styled.input`
   font-family: inherit;
   font-size: ${({ theme }) => theme.fontSizes.md};
   width: 100%;
+  scroll-margin-top: ${({ theme }) => theme.spacing.s40};
 
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
@@ -77,7 +78,7 @@ export const TextInput = styled.input`
   }
 
   &[aria-invalid="true"] {
-    border-color: ${({ theme }) => theme.colors.dangerText};
+    border-color: ${({ theme }) => theme.colors.borderDanger};
   }
 `;
 
@@ -222,14 +223,77 @@ export const AddPlayerBtn = styled.button`
   }
 `;
 
-export const ErrorMsg = styled.p`
-  color: ${({ theme }) => theme.colors.textWarn};
-  font-size: ${({ theme }) => theme.fontSizes.base};
-  margin: 0 0 ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.errorBg};
-  border: 1px solid ${({ theme }) => theme.colors.borderDanger};
+/**
+ * Phase 2A — canonical top-of-form error summary container.
+ *
+ * Tokens are sourced verbatim from the spec / `theme.ts` (see
+ * `docs/style-guide.md` §12.1.a). There must only ever be ONE
+ * `ErrorSummary` rendered per form — inline field messages must never
+ * duplicate the copy from this block.
+ */
+export const ErrorSummary = styled.div`
+  background: ${({ theme }) => theme.colors.errorBgTransparent};
+  border: 1px solid ${({ theme }) => theme.colors.borderExhibitionError};
   border-radius: ${({ theme }) => theme.radii.md};
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+`;
+
+export const ErrorSummaryHeading = styled.h3`
+  color: ${({ theme }) => theme.colors.textError};
+  font-size: ${({ theme }) => theme.fontSizes.md};
+  font-weight: 600;
+  letter-spacing: ${({ theme }) => theme.letterSpacing.wide};
+  margin: 0 0 ${({ theme }) => theme.spacing.sm};
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 2px;
+  }
+`;
+
+export const ErrorSummaryList = styled.ul`
+  list-style: disc;
+  margin: 0;
+  padding-left: ${({ theme }) => theme.spacing.lg};
+
+  & > li {
+    color: ${({ theme }) => theme.colors.textWarn};
+    font-size: ${({ theme }) => theme.fontSizes.sub};
+    line-height: 1.4;
+  }
+
+  & > li + li {
+    margin-top: ${({ theme }) => theme.spacing.xxs};
+  }
+`;
+
+export const ErrorSummaryLink = styled.a`
+  color: ${({ theme }) => theme.colors.textLink};
+  text-decoration: underline;
+
+  &:hover,
+  &:focus-visible {
+    color: ${({ theme }) => theme.colors.textSecondaryLink};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 2px;
+  }
+`;
+
+/**
+ * Per-field inline error message rendered directly beneath an invalid
+ * input. The `id` MUST follow the `err-{fieldId}` pattern so the input's
+ * `aria-describedby` can reference it. Copy must be the SHORT per-field
+ * complement to the summary — never duplicate the summary line verbatim.
+ */
+export const InlineFieldError = styled.p`
+  color: ${({ theme }) => theme.colors.textError};
+  font-size: ${({ theme }) => theme.fontSizes.tiny};
+  margin: ${({ theme }) => theme.spacing.xxs} 0 0;
+  line-height: 1.3;
 `;
 
 export const SelectInput = styled.select`
@@ -314,6 +378,13 @@ export const SaveBtn = styled.button`
   &:focus-visible {
     outline: 2px solid ${({ theme }) => theme.colors.textPrimary};
     outline-offset: 2px;
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: ${({ theme }) => theme.colors.accentPrimary};
   }
 `;
 
