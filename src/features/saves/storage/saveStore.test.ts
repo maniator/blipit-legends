@@ -9,6 +9,15 @@ import type { GameSetup } from "@storage/types";
 import { createTestDb } from "@test/helpers/db";
 import { makeState } from "@test/testHelpers";
 
+/**
+ * Module-private signing key used by `exportRxdbSave` / `importRxdbSave`.
+ * Kept in sync with the production constant in `saveStore.ts`; centralized
+ * here so signature-construction tests do not drift if the key ever changes.
+ * If the production key changes, update this constant and all signature
+ * tests will pick it up.
+ */
+const RXDB_EXPORT_KEY = "ballgame:rxdb:v1";
+
 const makeSetup = (overrides: Partial<GameSetup> = {}): GameSetup => ({
   homeTeamId: "Yankees",
   awayTeamId: "Mets",
@@ -411,7 +420,6 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
 
   it("importRxdbSave preserves ct_* team IDs unchanged (v1 canonical format)", async () => {
     // In v1, ct_* is the canonical format — IDs are preserved as-is without any prefix normalization.
-    const RXDB_EXPORT_KEY_LOCAL = "ballgame:rxdb:v1";
     const header: Record<string, unknown> = {
       id: "test-norm-save-id",
       name: "ct_norm_away vs ct_norm_home",
@@ -431,7 +439,7 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
       },
     };
     const events: unknown[] = [];
-    const sig = fnv1a(RXDB_EXPORT_KEY_LOCAL + JSON.stringify({ header, events }));
+    const sig = fnv1a(RXDB_EXPORT_KEY + JSON.stringify({ header, events }));
     const bundle = JSON.stringify({ version: 1, header, events, sig });
 
     const db2 = await createTestDb(getRxStorageMemory());
@@ -831,8 +839,6 @@ describe("SaveStore — updatedAt advances on updateProgress", () => {
 });
 
 describe("importRxdbSave — missing custom team rejection", () => {
-  const RXDB_EXPORT_KEY = "ballgame:rxdb:v1";
-
   const makeCustomSave = (homeTeamId: string, awayTeamId = "ct_default_away"): { json: string } => {
     const header = {
       id: `save_${Date.now()}_test`,
@@ -954,7 +960,6 @@ describe("SaveStore export/import — decisionValues round-trip (#233-F3)", () =
 
   it("handles import of a bundle where decisionValues is absent (pre-decisionValues save)", async () => {
     // Simulate a legacy export bundle that has no decisionValues in setup.
-    const RXDB_EXPORT_KEY_LOCAL = "ballgame:rxdb:v1";
     const header: Record<string, unknown> = {
       id: "legacy-dv-save",
       name: "Legacy Save",
@@ -975,7 +980,7 @@ describe("SaveStore export/import — decisionValues round-trip (#233-F3)", () =
       },
     };
     const events: unknown[] = [];
-    const sig = fnv1a(RXDB_EXPORT_KEY_LOCAL + JSON.stringify({ header, events }));
+    const sig = fnv1a(RXDB_EXPORT_KEY + JSON.stringify({ header, events }));
     const bundle = JSON.stringify({ version: 1, header, events, sig });
 
     const db2 = await createTestDb(getRxStorageMemory());
