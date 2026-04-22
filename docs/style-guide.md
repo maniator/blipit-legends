@@ -911,6 +911,62 @@ CountdownFill: transition: width 0.95s linear, background 0.5s ease;
 ![In-game mobile view](screenshots/style-guide/game-mobile.png)
 _Mobile game view: compact line score, BSO row, diamond field, and bottom log panel_
 
+### 11.4 Mobile game header disclosure (`More` menu)
+
+**Source files:** `src/features/gameplay/components/GameControls/MoreMenu.tsx`, `src/features/gameplay/components/GameControls/styles.ts`
+
+On mobile (`mq.mobile`, ≤ 768px), non-critical game-header controls (sim speed,
+sound, manager mode, save game…, share, etc.) collapse behind a single **More**
+disclosure trigger. The mobile header keeps only: scoreboard, inning indicator,
+BSO row, pause/play (when a game is active), and the **More** trigger. Desktop
+and tablet layouts are unchanged.
+
+**Compact-secondary trigger variant** (reusable):
+
+| Property       | Token                                                             |
+| -------------- | ----------------------------------------------------------------- |
+| Background     | `bgFormAlpha15` → `bgFormAlpha40` when `aria-expanded="true"`     |
+| Border         | `1px solid borderPanel`                                           |
+| Text color     | `textBody`                                                        |
+| Padding        | `spacing.xs spacing.sm`                                           |
+| Border radius  | `radii.sm`                                                        |
+| Height         | `sizes.inputSm` (30px)                                            |
+| Font size      | `fontSizes.label` (12px)                                          |
+| Letter spacing | `letterSpacing.wide` (0.6px)                                      |
+| Text transform | `uppercase`                                                       |
+| Chevron        | Rotates 180° on expand; respects `prefers-reduced-motion: reduce` |
+| Focus ring     | Universal (`2px solid accentPrimary`, `outline-offset: 2px`)      |
+
+**Bottom-anchored disclosure region:**
+
+| Property      | Value                                                                      |
+| ------------- | -------------------------------------------------------------------------- |
+| Position      | `fixed; left: 0; right: 0; bottom: 0; z-index: 150`                        |
+| Background    | `bgSurface`                                                                |
+| Top border    | `1px solid borderPanel`                                                    |
+| Border radius | `radii.lg radii.lg 0 0` (top corners only)                                 |
+| Padding       | `spacing.md spacing.lg`                                                    |
+| Gap           | `spacing.md`                                                               |
+| Max height    | `min(70dvh, 520px)` — uses `dvh`, never `vh`                               |
+| Animation     | `transform: translateY(...)` 200ms ease; respects `prefers-reduced-motion` |
+| Visibility    | Hidden on `mq.notMobile` (desktop/tablet keep inline layout)               |
+
+**ARIA / focus contract:**
+
+- Trigger is a `<button>` with `aria-expanded`, `aria-controls="game-header-more"`,
+  `aria-haspopup="true"`, `aria-label="More game controls"`. Visible label
+  toggles `More` ↔ `Less`.
+- Panel uses `id="game-header-more"`, `role="region"`,
+  `aria-label="Additional game controls"`. **Not** `role="dialog"` — the game
+  continues to play and focus is **not** trapped.
+- On open, focus moves to the first focusable control inside the panel.
+  On close, focus returns to the trigger. Escape and click-outside close.
+- While a manager decision is awaiting input the trigger is `aria-disabled="true"`
+  with tooltip `Available after the decision`, and an open panel auto-collapses.
+
+No new design tokens are introduced — the trigger composes existing color,
+spacing, radius, size, font-size, and letter-spacing tokens.
+
 ---
 
 ## 12. Status & Feedback
