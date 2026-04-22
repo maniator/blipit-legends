@@ -18,6 +18,7 @@ import {
   setAnnouncementVolume,
   setSpeechRate,
 } from "@feat/gameplay/utils/announce";
+import { useUIPause } from "@shared/contexts/UIPauseContext";
 import { useTeamWithRoster } from "@shared/hooks/useTeamWithRoster";
 import { useLocalStorage } from "usehooks-ts";
 
@@ -49,6 +50,10 @@ export const useGameControls = ({
   // reactive; useLocalStorage was unreliable here due to useSyncExternalStore
   // emitter timing in usehooks-ts v3.
   const [paused, setPaused] = React.useState(false);
+  // UI-pause coordination — incremented while a blocking modal (e.g. Saves)
+  // is open. Combined with the user-driven `paused` so the autoplay scheduler
+  // suspends ticks for either reason. Pure UI; no reducer dispatch.
+  const { isPaused: uiPaused } = useUIPause();
   const [currentSaveId, setCurrentSaveId] = React.useState<string | null>(null);
 
   // Sanitize values read from localStorage — invalid entries are coerced to safe defaults
@@ -138,7 +143,7 @@ export const useGameControls = ({
     gameOver,
     muted: safeAnnouncementVolume === 0,
     speed: safeSpeed,
-    paused,
+    paused: paused || uiPaused,
     handlePitch,
     inning,
     atBat,

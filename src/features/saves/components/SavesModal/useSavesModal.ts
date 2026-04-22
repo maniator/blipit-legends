@@ -14,6 +14,7 @@ import {
 import { useImportSave } from "@feat/saves/hooks/useImportSave";
 import { useSaveSlotActions } from "@feat/saves/hooks/useSaveSlotActions";
 import { useSaveStore } from "@feat/saves/hooks/useSaveStore";
+import { useUIPauseScope } from "@shared/contexts/UIPauseContext";
 import { useCustomTeams } from "@shared/hooks/useCustomTeams";
 import { getRngState } from "@shared/utils/rng";
 import { currentSeedStr } from "@shared/utils/saves";
@@ -92,8 +93,21 @@ export const useSavesModal = ({
   logRef.current = dispatchLog;
   const log = (msg: string) => logRef.current({ type: "log", payload: msg });
 
-  const open = () => ref.current?.showModal();
-  const close = () => ref.current?.close();
+  // Track dialog open state so the UI-pause scope can suspend the Manager
+  // Mode countdown and autoplay scheduler while the modal is open. This is a
+  // pure UI pause — no reducer dispatch, no PRNG calls — so determinism and
+  // seed-anchored regression tests are unaffected.
+  const [isOpen, setIsOpen] = React.useState(false);
+  useUIPauseScope(isOpen);
+
+  const open = () => {
+    ref.current?.showModal();
+    setIsOpen(true);
+  };
+  const close = () => {
+    ref.current?.close();
+    setIsOpen(false);
+  };
 
   const handleSave = () => {
     const teamLabel = (id: string) => resolveTeamLabel(id, customTeams);

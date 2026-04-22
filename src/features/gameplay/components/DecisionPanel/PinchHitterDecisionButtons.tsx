@@ -15,6 +15,8 @@ type Props = {
   currentBatterFatiguePowerPenalty?: number;
   onSkip: () => void;
   onDispatch: (action: { type: string; payload?: unknown }) => void;
+  /** When true, action buttons are visually disabled via `aria-disabled`. */
+  paused?: boolean;
 };
 
 const PinchHitterDecisionButtons: React.FunctionComponent<Props> = ({
@@ -28,10 +30,12 @@ const PinchHitterDecisionButtons: React.FunctionComponent<Props> = ({
   currentBatterFatiguePowerPenalty,
   onSkip,
   onDispatch,
+  paused = false,
 }) => {
   const [selectedCandidateId, setSelectedCandidateId] = React.useState<string>(() =>
     candidates.length > 0 ? candidates[0].id : "",
   );
+  const aria = paused ? { "aria-disabled": true as const } : {};
 
   React.useEffect(() => {
     setSelectedCandidateId(candidates.length > 0 ? candidates[0].id : "");
@@ -44,12 +48,16 @@ const PinchHitterDecisionButtons: React.FunctionComponent<Props> = ({
         {(["contact", "patient", "power", "aggressive", "balanced"] as Strategy[]).map((s) => (
           <ActionButton
             key={s}
+            $paused={paused}
+            {...aria}
             onClick={() => onDispatch({ type: "set_pinch_hitter_strategy", payload: s })}
           >
             {s.charAt(0).toUpperCase() + s.slice(1)}
           </ActionButton>
         ))}
-        <SkipButton onClick={onSkip}>Skip</SkipButton>
+        <SkipButton $paused={paused} {...aria} onClick={onSkip}>
+          Skip
+        </SkipButton>
       </>
     );
   }
@@ -117,10 +125,17 @@ const PinchHitterDecisionButtons: React.FunctionComponent<Props> = ({
           </option>
         ))}
       </select>
-      <ActionButton onClick={handleConfirm} disabled={!selectedCandidateId}>
+      <ActionButton
+        $paused={paused}
+        {...aria}
+        onClick={handleConfirm}
+        disabled={!selectedCandidateId}
+      >
         Send up pinch hitter
       </ActionButton>
-      <SkipButton onClick={onSkip}>Skip</SkipButton>
+      <SkipButton $paused={paused} {...aria} onClick={onSkip}>
+        Skip
+      </SkipButton>
     </>
   );
 };

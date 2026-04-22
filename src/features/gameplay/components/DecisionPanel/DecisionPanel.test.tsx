@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { ContextValue, DecisionType } from "@feat/gameplay/context/index";
 import { GameContext } from "@feat/gameplay/context/index";
+import { UIPauseContext, UIPauseProvider } from "@shared/contexts/UIPauseContext";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -25,7 +26,26 @@ vi.mock("@feat/gameplay/utils/announce", () => ({
 }));
 
 const renderWithContext = (ui: React.ReactElement, ctx: ContextValue = makeContextValue()) =>
-  render(<GameContext.Provider value={ctx}>{ui}</GameContext.Provider>);
+  render(
+    <UIPauseProvider>
+      <GameContext.Provider value={ctx}>{ui}</GameContext.Provider>
+    </UIPauseProvider>,
+  );
+
+/**
+ * Wraps the panel with a forced UI-pause context value so we can drive the
+ * paused state directly without exercising the provider's reducer.
+ */
+const renderForcedPaused = (
+  ui: React.ReactElement,
+  ctx: ContextValue,
+  paused: boolean,
+): ReturnType<typeof render> =>
+  render(
+    <UIPauseContext.Provider value={{ isPaused: paused, pushPause: () => {}, popPause: () => {} }}>
+      <GameContext.Provider value={ctx}>{ui}</GameContext.Provider>
+    </UIPauseContext.Provider>,
+  );
 
 describe("DecisionPanel", () => {
   it("renders nothing when pendingDecision is null", () => {
@@ -466,5 +486,149 @@ describe("DecisionPanel — closes notification", () => {
       );
     });
     expect(mockReg.getNotifications).toHaveBeenCalled();
+  });
+});
+
+describe("DecisionPanel — UI pause (Saves modal open)", () => {
+  // The previous SW describes leave navigator.serviceWorker = undefined.
+  // Stub it locally so DecisionPanel's mount effect (which expects an event
+  // emitter when the property exists) does not throw — the stub is a no-op
+  // because these tests do not exercise SW notification paths.
+  const swStub = {
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    ready: Promise.resolve({
+      showNotification: vi.fn().mockResolvedValue(undefined),
+      getNotifications: vi.fn().mockResolvedValue([]),
+    }),
+  };
+  beforeAll(() => {
+    Object.defineProperty(navigator, "serviceWorker", {
+      value: swStub,
+      writable: true,
+      configurable: true,
+    });
+  });
+  afterAll(() => {
+    Object.defineProperty(navigator, "serviceWorker", {
+      value: undefined,
+      writable: true,
+      configurable: true,
+    });
+  });
+  it("renders Paused pill with status role + microcopy when paused", () => {
+    renderForcedPaused(
+      <DecisionPanel strategy="balanced" />,
+      makeContextValue({ pendingDecision: { kind: "bunt" } }),
+      true,
+    );
+    const pill = screen.getByTestId("decision-panel-pause-pill");
+    expect(pill).toHaveTextContent(/paused while saves is open/i);
+    expect(pill).toHaveAttribute("role", "status");
+    expect(pill).toHaveAttribute("aria-live", "polite");
+  });
+
+  it("does NOT render the pause pill when not paused", () => {
+    renderWithContext(
+      <DecisionPanel strategy="balanced" />,
+      makeContextValue({ pendingDecision: { kind: "bunt" } }),
+    );
+    expect(screen.queryByTestId("decision-panel-pause-pill")).toBeNull();
+  });
+
+  it("marks decision action buttons as aria-disabled (NOT disabled) when paused", () => {
+    renderForcedPaused(
+      <DecisionPanel strategy="balanced" />,
+      makeContextValue({ pendingDecision: { kind: "bunt" } }),
+      true,
+    );
+    const yesBtn = screen.getByRole("button", { name: /yes, bunt/i });
+    const skipBtn = screen.getByRole("button", { name: /skip/i });
+    expect(yesBtn).toHaveAttribute("aria-disabled", "true");
+    expect(skipBtn).toHaveAttribute("aria-disabled", "true");
+    // Native disabled must NOT be set so focus return survives modal close.
+    expect(yesBtn).not.toBeDisabled();
+    expect(skipBtn).not.toBeDisabled();
+  });
+
+  it("links countdown progressbar aria-describedby to pause pill when paused", () => {
+    renderForcedPaused(
+      <DecisionPanel strategy="balanced" />,
+      makeContextValue({ pendingDecision: { kind: "bunt" } }),
+      true,
+    );
+    const bar = screen.getByRole("progressbar", { name: /auto-skip countdown/i });
+    expect(bar).toHaveAttribute("aria-describedby", "decision-panel-pause-pill");
+  });
+
+  it("does not set aria-describedby on countdown when not paused", () => {
+    renderWithContext(
+      <DecisionPanel strategy="balanced" />,
+      makeContextValue({ pendingDecision: { kind: "bunt" } }),
+    );
+    const bar = screen.getByRole("progressbar", { name: /auto-skip countdown/i });
+    expect(bar).not.toHaveAttribute("aria-describedby");
+  });
+
+  it("freezes countdown — does NOT decrement and does NOT auto-skip while paused", () => {
+    vi.useFakeTimers();
+    const dispatch = vi.fn();
+    renderForcedPaused(
+      <DecisionPanel strategy="balanced" />,
+      makeContextValue({ pendingDecision: { kind: "bunt" }, dispatch }),
+      true,
+    );
+    // Advance well past the auto-skip timeout.
+    act(() => {
+      vi.advanceTimersByTime(15000);
+    });
+    // The countdown label must still show the initial value.
+    expect(screen.getByText(/auto-skip 10s/i)).toBeInTheDocument();
+    // Auto-skip MUST NOT fire while paused.
+    expect(dispatch).not.toHaveBeenCalledWith({ type: "skip_decision" });
+    vi.useRealTimers();
+  });
+
+  it("resumes countdown from the same remaining seconds after pause is released", () => {
+    vi.useFakeTimers();
+    const dispatch = vi.fn();
+    // Pre-build the game context value once; passing a new reference on every
+    // render would re-trigger DecisionPanel's pendingDecision effect and reset
+    // the countdown back to 10s, masking the actual freeze/resume behavior.
+    const ctx = makeContextValue({ pendingDecision: { kind: "bunt" }, dispatch });
+
+    const Harness: React.FC<{ paused: boolean }> = ({ paused }) => (
+      <UIPauseContext.Provider
+        value={{ isPaused: paused, pushPause: () => {}, popPause: () => {} }}
+      >
+        <GameContext.Provider value={ctx}>
+          <DecisionPanel strategy="balanced" />
+        </GameContext.Provider>
+      </UIPauseContext.Provider>
+    );
+
+    const { rerender } = render(<Harness paused={false} />);
+    // Tick 3 seconds — countdown should drop to 7s.
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(screen.getByText(/auto-skip 7s/i)).toBeInTheDocument();
+
+    // Pause and advance 5 seconds — value must remain at 7s.
+    rerender(<Harness paused={true} />);
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(screen.getByText(/auto-skip 7s/i)).toBeInTheDocument();
+    expect(dispatch).not.toHaveBeenCalledWith({ type: "skip_decision" });
+
+    // Resume — countdown must continue from 7s, not from 10s and not from
+    // a "catch-up" that would skew determinism.
+    rerender(<Harness paused={false} />);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByText(/auto-skip 6s/i)).toBeInTheDocument();
+    vi.useRealTimers();
   });
 });
