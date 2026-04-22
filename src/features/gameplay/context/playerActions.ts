@@ -127,7 +127,10 @@ const computeWaitOutcome = (
       Math.max(
         0,
         Math.round(
-          (220 * stratMod(strategy, "walk") * walkRateMultiplier) / (zoneMod * controlFactor),
+          // Raised 220→380: baseline sweep (seeds 0–99) gave 1.90 BB/team/game vs 2023 MLB
+          // target 3.28. Increasing the deliberate-take ball chance brings intentional
+          // walks (3-0 count AI take) closer to realistic draw rates.
+          (380 * stratMod(strategy, "walk") * walkRateMultiplier) / (zoneMod * controlFactor),
         ),
       ),
     );
@@ -138,7 +141,9 @@ const computeWaitOutcome = (
     Math.max(
       0,
       Math.round(
-        ((500 * zoneMod * controlFactor * calledStrikeRateMultiplier) /
+        // Lowered 500→350: reduces called-strike frequency on taken pitches, increasing
+        // ball accumulation to bring BB/game closer to the 2023 MLB target of 3.28/team.
+        ((350 * zoneMod * controlFactor * calledStrikeRateMultiplier) /
           stratMod(strategy, "walk")) *
           (1 / Math.max(0.5, walkRateMultiplier)),
       ),
