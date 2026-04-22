@@ -6,12 +6,12 @@ type Props = {
   onNewGame: () => void;
   onLoadSaves: () => void;
   onManageTeams: () => void;
+  /** Always-visible Career Stats entry. The destination renders its own empty state when no games have been played. */
+  onCareerStats: () => void;
   /** When provided, shows a "Resume Current Game" button above the other actions. */
   onResumeCurrent?: () => void;
   /** When provided, shows a "How to Play" button. */
   onHelp?: () => void;
-  /** When provided, shows a "Career Stats" button. */
-  onCareerStats?: () => void;
   /** When provided, shows a "Contact / Report Bug" button at the bottom of the menu. */
   onContact?: () => void;
 };
@@ -20,9 +20,9 @@ const HomeScreen: React.FunctionComponent<Props> = ({
   onNewGame,
   onLoadSaves,
   onManageTeams,
+  onCareerStats,
   onResumeCurrent,
   onHelp,
-  onCareerStats,
   onContact,
 }) => (
   <HomeContainer data-testid="home-screen">
@@ -42,11 +42,9 @@ const HomeScreen: React.FunctionComponent<Props> = ({
       <SecondaryBtn onClick={onLoadSaves} data-testid="home-load-saves-button">
         Load Saved Game
       </SecondaryBtn>
-      {onCareerStats && (
-        <SecondaryBtn onClick={onCareerStats} data-testid="home-career-stats-button">
-          Career Stats
-        </SecondaryBtn>
-      )}
+      <SecondaryBtn onClick={onCareerStats} data-testid="home-career-stats-button">
+        Career stats
+      </SecondaryBtn>
       <SecondaryBtn onClick={onManageTeams} data-testid="home-manage-teams-button">
         Manage Teams
       </SecondaryBtn>
