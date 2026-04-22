@@ -29,7 +29,7 @@ import {
 import { detectDecision } from "@feat/gameplay/context/reducer";
 import getRandomInt from "@feat/gameplay/utils/getRandomInt";
 import { Hit } from "@shared/constants/hitTypes";
-import { restoreRng } from "@shared/utils/rng";
+import { reinitSeed } from "@shared/utils/rng";
 import { generateRoster } from "@shared/utils/roster";
 import { describe, expect, it } from "vitest";
 
@@ -86,7 +86,11 @@ const nextPitchAction = (state: State, strategy = "balanced" as string): GameAct
 // ---------------------------------------------------------------------------
 
 const runGameWithAI = (seed: number, decisionValues: ManagerDecisionValues): GameStats => {
-  restoreRng(seed);
+  // Use reinitSeed (not restoreRng) so that:
+  //  (a) the module-level `seed` identity variable is correctly set, and
+  //  (b) the API contract is respected — restoreRng is for mid-game save restore
+  //      (expects a captured rngInternalA), not for fresh game initialization.
+  reinitSeed(seed.toString(36));
   const { reducer } = makeReducer();
 
   const awayTeam = "New York Mets";
@@ -162,13 +166,24 @@ const runGameWithAI = (seed: number, decisionValues: ManagerDecisionValues): Gam
             continue;
           }
 
-          // set_one_pitch_modifier or other non-pitch-replacing decisions:
-          // Apply the modifier state update, then fall through to pitch.
+          // set_one_pitch_modifier or other non-pitch-replacing decisions
+          // (including make_substitution for pinch hitter):
+          // Apply the state update, then fall through to pitch.
           if (!replacePitch) {
             state = reducer(state, {
               type: aiAction.actionType as GameAction["type"],
               payload: aiAction.payload,
             });
+            // Mirror production: after a pinch-hit substitution, lock the
+            // strategy to "contact" so the decision is not re-offered this
+            // at-bat (matches the set_pinch_hitter_strategy dispatch in
+            // usePitchDispatch after make_substitution).
+            if (aiAction.actionType === "make_substitution" && decision.kind === "pinch_hitter") {
+              state = reducer(state, {
+                type: "set_pinch_hitter_strategy",
+                payload: "contact",
+              });
+            }
             // Fall through — pitch still happens this tick
           }
         } else {
