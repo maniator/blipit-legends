@@ -251,10 +251,10 @@ describe("resolveSwingOutcome", () => {
     expect(["whiff", "foul", "contact"]).toContain(whiffNoMod);
     expect(["whiff", "foul", "contact"]).toContain(whiffHighContact);
     // High contact should never *increase* whiff chance:
-    // whiff threshold with contactMod=+20 is max(8, 22-2) = 20, so roll=10 is still whiff
-    // but roll=21 would switch from whiff to foul.
-    expect(resolveSwingOutcome(21)).toBe("whiff");
-    expect(resolveSwingOutcome(21, { batterContactMod: 20 })).toBe("foul"); // no longer a whiff
+    // whiff threshold with contactMod=+20 is max(8, 20-2) = 18, so roll=10 is still whiff
+    // but roll=19 would switch from whiff to foul.
+    expect(resolveSwingOutcome(19)).toBe("whiff");
+    expect(resolveSwingOutcome(19, { batterContactMod: 20 })).toBe("foul"); // no longer a whiff
   });
 
   it("fatigue reduces pitcher effectiveness (fewer whiffs)", () => {
@@ -392,22 +392,22 @@ describe("resolveBattedBallType", () => {
 
   describe("pitcher stats affect contact quality", () => {
     it("high pitcher velocity reduces hard contact threshold (contact quality suppressed)", () => {
-      // No mods: hardThreshold=20; contactRoll=17 < 20 → hard → typeRoll=10 < 40 → deep_fly
-      // velocityMod=20, movementMod=20: hardThreshold = max(10, 20 - round(40/10)) = 16
-      //   contactRoll=17 ≥ 16 → medium → typeRoll=10 < 35 → medium_fly
-      expect(resolveBattedBallType(17, 10)).toBe("deep_fly");
+      // No mods: hardThreshold=26; contactRoll=23 < 26 → hard → typeRoll=10 < 40 → deep_fly
+      // velocityMod=20, movementMod=20: hardThreshold = max(10, 26 - round(40/10)) = 22
+      //   contactRoll=23 ≥ 22 → medium → typeRoll=10 < 35 → medium_fly
+      expect(resolveBattedBallType(23, 10)).toBe("deep_fly");
       expect(
-        resolveBattedBallType(17, 10, { pitcherVelocityMod: 20, pitcherMovementMod: 20 }),
+        resolveBattedBallType(23, 10, { pitcherVelocityMod: 20, pitcherMovementMod: 20 }),
       ).toBe("medium_fly");
     });
   });
 
   describe("pitcher fatigue increases hard contact (batted ball quality rises)", () => {
-    it("tired pitcher: contactRoll=21 becomes hard (was medium with fresh pitcher)", () => {
-      // fatigueFactor=1.0: hardThreshold=20; 21 ≥ 20 → medium → typeRoll=10 < 35 → medium_fly
-      // fatigueFactor=1.4: hardThreshold=20+round(0.4*10)=24; 21 < 24 → hard → typeRoll=10 < 40 → deep_fly
-      const freshResult = resolveBattedBallType(21, 10, { fatigueFactor: 1.0 });
-      const tiredResult = resolveBattedBallType(21, 10, { fatigueFactor: 1.4 });
+    it("tired pitcher: contactRoll=27 becomes hard (was medium with fresh pitcher)", () => {
+      // fatigueFactor=1.0: hardThreshold=26; 27 ≥ 26 → medium → typeRoll=10 < 35 → medium_fly
+      // fatigueFactor=1.4: hardThreshold=26+round(0.4*10)=30; 27 < 30 → hard → typeRoll=10 < 40 → deep_fly
+      const freshResult = resolveBattedBallType(27, 10, { fatigueFactor: 1.0 });
+      const tiredResult = resolveBattedBallType(27, 10, { fatigueFactor: 1.4 });
       expect(freshResult).toBe("medium_fly");
       expect(tiredResult).toBe("deep_fly");
     });

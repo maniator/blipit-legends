@@ -487,11 +487,11 @@ describe("detectDecision", () => {
       detectDecision(makeState({ gameOver: true, baseLayout: [1, 0, 0] }), "balanced", true),
     ).toBeNull();
   });
-  it(`does NOT offer steal with balanced (pct=70 not > ${DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct} default threshold)`, () => {
+  it(`does NOT offer steal with balanced (pct=65 not > ${DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct} default threshold)`, () => {
     const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "balanced", true);
     expect(d?.kind).not.toBe("steal");
   });
-  it(`offers steal from 1st with aggressive (pct=91 > ${DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct} default threshold)`, () => {
+  it(`offers steal from 1st with aggressive (pct=85 > ${DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct} default threshold)`, () => {
     const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "aggressive", true);
     expect(d?.kind).toBe("steal");
     if (d?.kind === "steal") {
@@ -504,7 +504,13 @@ describe("detectDecision", () => {
     expect(d?.kind).not.toBe("steal");
   });
   it("offers steal from 2nd when 3rd is empty", () => {
-    const d = detectDecision(makeState({ baseLayout: [0, 1, 0], outs: 0 }), "aggressive", true);
+    // With base_pct=55 for 2nd→3rd and aggressive (1.3), pct=72 < default stealMinOfferPct(80).
+    // Use a lower stealMinOfferPct to verify 2nd-base steal detection still works.
+    const d = detectDecision(makeState({ baseLayout: [0, 1, 0], outs: 0 }), "aggressive", true, {
+      ...DEFAULT_MANAGER_DECISION_VALUES,
+      stealMinOfferPct: 70,
+      aiStealThreshold: 65,
+    });
     expect(d?.kind).toBe("steal");
     if (d?.kind === "steal") expect(d.base).toBe(1);
   });
@@ -565,16 +571,16 @@ describe("detectDecision", () => {
     ).not.toBe("ibb");
   });
   it("offers steal with lower stealMinOfferPct", () => {
-    // balanced pct=70; with threshold 69, 70 > 69 is true → steal offered
+    // balanced pct=65; with threshold 64, 65 > 64 is true → steal offered
     const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "balanced", true, {
       ...DEFAULT_MANAGER_DECISION_VALUES,
-      stealMinOfferPct: 69,
-      aiStealThreshold: 65,
+      stealMinOfferPct: 64,
+      aiStealThreshold: 64,
     });
     expect(d?.kind).toBe("steal");
   });
   it("does NOT offer steal with higher stealMinOfferPct", () => {
-    // aggressive pct=91; with threshold 95, 91 > 95 is false → no steal
+    // aggressive pct=85; with threshold 95, 85 > 95 is false → no steal
     const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "aggressive", true, {
       ...DEFAULT_MANAGER_DECISION_VALUES,
       stealMinOfferPct: 95,
@@ -583,7 +589,7 @@ describe("detectDecision", () => {
     expect(d?.kind).not.toBe("steal");
   });
   it("does NOT offer steal with stealEnabled=false in decisionValues (master switch)", () => {
-    // aggressive pct=91 normally clears the default 72 threshold and offers steal.
+    // aggressive pct=85 normally clears the default 80 threshold and offers steal.
     // With stealEnabled=false, the entire steal block is skipped.
     const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "aggressive", true, {
       ...DEFAULT_MANAGER_DECISION_VALUES,
@@ -818,7 +824,7 @@ describe("wait – take modifier", () => {
 // Line 272: playerWait default path → called strike
 describe("wait – default (no modifier) → called strike", () => {
   it("random < strikeThreshold → called strike", () => {
-    // strikeThreshold = round(500 / 1.0) = 500 for balanced; random 0.3 → 300 < 500 → strike
+    // strikeThreshold = round(380 / 0.85) ≈ 447 for balanced; random 0.3 → 300 < 447 → strike
     vi.spyOn(rngModule, "random").mockReturnValue(0.3);
     const { state } = dispatchAction(makeState({ strikes: 0 }), "wait", { strategy: "balanced" });
     expect(state.strikes).toBe(1);
@@ -968,7 +974,7 @@ describe("reducer – unknown action type", () => {
 describe("detectDecision – additional branches", () => {
   it("offers steal from 1st (patient strategy has steal mod 0.7 → 49%, not > 72)", () => {
     const d = detectDecision(makeState({ baseLayout: [1, 0, 0], outs: 0 }), "patient", true);
-    // patient steal mod 0.7 → base_pct 70 * 0.7 = 49 → not > 72 → no steal offered
+    // patient steal mod 0.7 → base_pct 65 * 0.7 = 45 → not > 80 → no steal offered
     expect(d?.kind).not.toBe("steal");
   });
 
@@ -1331,8 +1337,8 @@ describe("defensive_shift decision", () => {
   });
 
   it("defensive shift raises ground-out rate for hard grounders", () => {
-    // hard_grounder: base threshold 500; shift boost +100 = 600.
-    // roll=550 → without shift: 550 >= 500 → single. With shift: 550 < 600 → ground out.
+    // hard_grounder: base threshold 650; shift boost +100 = 750.
+    // roll=550 → with shift: 550 < 750 → ground out.
     vi.spyOn(rngModule, "random").mockReturnValue(0.55);
     const { state: shiftOn, logs: logsOn } = dispatchAction(
       makeState({ defensiveShift: true }),
@@ -1344,8 +1350,8 @@ describe("defensive_shift decision", () => {
   });
 
   it("without defensive shift, same random does NOT produce a ground out", () => {
-    // Without shift: threshold 500. roll=550 → 550 >= 500 → single.
-    vi.spyOn(rngModule, "random").mockReturnValue(0.55);
+    // Without shift: threshold 650. roll=700 → 700 >= 650 → single.
+    vi.spyOn(rngModule, "random").mockReturnValue(0.70);
     const { state: shiftOff } = dispatchAction(makeState({ defensiveShift: false }), "hit", {
       battedBallType: "hard_grounder",
       strategy: "balanced",
@@ -1434,7 +1440,7 @@ describe("strikeout tracking", () => {
 
   it("wait resulting in a strikeout appends to strikeoutLog", () => {
     // Force a strike outcome by making random always return a value in strike range
-    vi.spyOn(rngModule, "random").mockReturnValue(0); // 0/1000 < 500 → strike
+    vi.spyOn(rngModule, "random").mockReturnValue(0); // 0/1000 < 447 → strike
     const { state } = dispatchAction(
       makeState({ strikes: 2, atBat: 1, batterIndex: [0, 4], lineupOrder: NINE_HOME }),
       "wait",
@@ -1444,7 +1450,7 @@ describe("strikeout tracking", () => {
   });
 
   it("wait resulting in a walk (ball 4) on 2-strike count does NOT add a K", () => {
-    // Force a ball outcome: random = 999 (> 500 threshold → ball)
+    // Force a ball outcome: random = 999 (> 447 threshold → ball)
     vi.spyOn(rngModule, "random").mockReturnValue(0.999);
     const { state } = dispatchAction(
       makeState({ strikes: 2, balls: 3, atBat: 0, batterIndex: [0, 0] }),
@@ -2029,8 +2035,12 @@ describe("steal success pct with runner speed", () => {
         TeamCustomPlayerOverrides,
       ],
     });
-    const fastDecision = detectDecision(fastState, "aggressive", true);
-    const slowDecision = detectDecision(slowState, "aggressive", true);
+    // Use lower stealMinOfferPct so both fast and slow runner steals are detected.
+    // aggressive from 1st: base_pct=65*1.3; fast (speedFactor=1.1)→93, slow (speedFactor=0.9)→76.
+    // Both > 70 threshold → steal offered for both; fast > slow.
+    const customValues = { ...DEFAULT_MANAGER_DECISION_VALUES, stealMinOfferPct: 70, aiStealThreshold: 65 };
+    const fastDecision = detectDecision(fastState, "aggressive", true, customValues);
+    const slowDecision = detectDecision(slowState, "aggressive", true, customValues);
     expect(fastDecision?.kind).toBe("steal");
     expect(slowDecision?.kind).toBe("steal");
     if (fastDecision?.kind === "steal" && slowDecision?.kind === "steal") {

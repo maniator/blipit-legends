@@ -311,12 +311,12 @@ describe("makeAiPitchingDecision", () => {
 });
 
 describe("makeAiTacticalDecision", () => {
-  it("steal: sends runner when successPct meets AI threshold (default 67)", () => {
+  it("steal: sends runner when successPct meets AI threshold (default 80)", () => {
     const state = makeState({ atBat: 0, score: [0, 0], inning: 5 });
     const result = makeAiTacticalDecision(state, {
       kind: "steal",
       base: 0,
-      successPct: 70, // 70 > 67 → steal
+      successPct: 85, // 85 > 80 → steal
     });
     expect(result.kind).toBe("tactical");
     if (result.kind === "tactical") {
@@ -330,7 +330,7 @@ describe("makeAiTacticalDecision", () => {
     const result = makeAiTacticalDecision(state, {
       kind: "steal",
       base: 0,
-      successPct: 60, // 60 < 67 → no steal
+      successPct: 75, // 75 < 80 → no steal
     });
     expect(result.kind).toBe("none");
   });

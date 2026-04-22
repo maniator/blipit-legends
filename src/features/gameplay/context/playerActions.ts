@@ -138,7 +138,7 @@ const computeWaitOutcome = (
     Math.max(
       0,
       Math.round(
-        ((500 * zoneMod * controlFactor * calledStrikeRateMultiplier) /
+        ((380 * zoneMod * controlFactor * calledStrikeRateMultiplier) /
           stratMod(strategy, "walk")) *
           (1 / Math.max(0.5, walkRateMultiplier)),
       ),

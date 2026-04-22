@@ -32,7 +32,7 @@ export interface ResolveSwingOutcomeOptions {
  * Uses a 0–99 roll.  Thresholds are modified by pitcher stuff and batter
  * contact skill.  Fatigue softens pitcher velocity effectiveness.
  *
- * Base rates: whiff 22%, foul 33%, contact 45%.
+ * Base rates: whiff 20%, foul 33%, contact 47%.
  *
  * @param roll     0–99 random roll from the caller.
  * @param options  Pitcher/batter modifier options (all default to 0 / 1.0).
@@ -47,7 +47,7 @@ export const resolveSwingOutcome = (
     whiffRateMultiplier = 1,
   }: ResolveSwingOutcomeOptions = {},
 ): SwingOutcome => {
-  const baseWhiff = 22;
+  const baseWhiff = 20;
   const baseFoul = 33;
 
   // Velocity adds to whiff (harder to square up); fatigue reduces this bonus.

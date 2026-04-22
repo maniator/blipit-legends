@@ -411,10 +411,10 @@ export interface HandleBallInPlayOptions {
  * `pitchSimulation.ts` and maps it to a final ball-in-play result:
  *
  *   pop_up        → always out (pop-up, runners hold under infield fly rule)
- *   weak_grounder → 65% ground out (FC / DP if runner on 1st), 35% infield single
- *   hard_grounder → 50% ground out (FC / DP if runner on 1st), 50% single through infield
- *   line_drive    → 20% liner caught (sac fly eligible), 80% hit (Single → HR spread)
- *   medium_fly    → 70% fly out (sac fly + tag-up eligible), 30% hit (Single or Double)
+ *   weak_grounder → 85% ground out (FC / DP if runner on 1st), 15% infield single
+ *   hard_grounder → 65% ground out (FC / DP if runner on 1st), 35% single through infield
+ *   line_drive    → 30% liner caught (sac fly eligible), 70% hit (Single → HR spread)
+ *   medium_fly    → 80% fly out (sac fly + tag-up eligible), 20% hit (Single or Double)
  *   deep_fly      → 35% warning-track out (sac fly + tag-up eligible), 65% hit (Double → HR)
  */
 export const handleBallInPlay = (
@@ -447,30 +447,30 @@ export const handleBallInPlay = (
   const shiftBoost = (state.defensiveShift ?? false) ? 100 : 0;
 
   // HR threshold for deep_fly shifts with strategy via stratMod(strategy, "homerun"):
-  //   power  (1.6) → shift = -(0.6 * 50) = -30 → hrThreshold = 740  (more HRs)
-  //   contact (0.7) → shift = +(0.3 * 50) = +15 → hrThreshold = 785  (fewer HRs)
-  //   balanced (1.0) → shift = 0 → hrThreshold = 770  (default)
+  //   power  (1.6) → shift = -(0.6 * 50) = -30 → hrThreshold = 690  (more HRs)
+  //   contact (0.7) → shift = +(0.3 * 50) = +15 → hrThreshold = 735  (fewer HRs)
+  //   balanced (1.0) → shift = 0 → hrThreshold = 720  (default)
   const hrThreshold = Math.max(
-    720,
-    Math.min(820, 770 - Math.round((stratMod(strategy, "homerun") - 1.0) * 50)),
+    670,
+    Math.min(820, 720 - Math.round((stratMod(strategy, "homerun") - 1.0) * 50)),
   );
 
   switch (battedBallType) {
     case "weak_grounder":
-      // 65% ground out (may produce FC or DP if runner on 1st); +10% with defensive shift.
-      if (roll < 650 + shiftBoost) return handleGrounder(state, log, pitchKey);
+      // 85% ground out (may produce FC or DP if runner on 1st); +10% with defensive shift.
+      if (roll < 850 + shiftBoost) return handleGrounder(state, log, pitchKey);
       log("Tapper sneaks through — infield single!");
       return processConfirmedHit(Hit.Single, base, log, strategy);
 
     case "hard_grounder":
-      // 50% ground out (may produce FC or DP if runner on 1st); +10% with defensive shift.
-      if (roll < 500 + shiftBoost) return handleGrounder(state, log, pitchKey);
+      // 65% ground out (may produce FC or DP if runner on 1st); +10% with defensive shift.
+      if (roll < 650 + shiftBoost) return handleGrounder(state, log, pitchKey);
       log("Sharp grounder finds a hole — single!");
       return processConfirmedHit(Hit.Single, base, log, strategy);
 
     case "line_drive":
-      // 20% liner caught (sac fly: 40%, tag-up from 2nd: 10%); 80% hit spread.
-      if (roll < 200) {
+      // 30% liner caught (sac fly: 40%, tag-up from 2nd: 10%); 70% hit spread.
+      if (roll < 300) {
         log("Line drive — snagged for the out!");
         return handleFlyOut(state, log, pitchKey, { sacFlyPct: 40, tagUp2ndPct: 10 });
       }
@@ -482,7 +482,7 @@ export const handleBallInPlay = (
         log(HIT_CALLOUTS[Hit.Double]);
         return processConfirmedHit(Hit.Double, base, log, strategy);
       }
-      if (roll < 930) {
+      if (roll < 970) {
         log(HIT_CALLOUTS[Hit.Triple]);
         return processConfirmedHit(Hit.Triple, base, log, strategy);
       }
@@ -490,8 +490,8 @@ export const handleBallInPlay = (
       return processConfirmedHit(Hit.Homerun, base, log, strategy);
 
     case "medium_fly":
-      // 70% fly out (sac fly: 65%, tag-up from 2nd: 20%); 30% hit: Single (18%), Double (12%).
-      if (roll < 700) {
+      // 80% fly out (sac fly: 65%, tag-up from 2nd: 20%); 20% hit: ~12% single, ~8% double.
+      if (roll < 800) {
         log("Fly ball — caught for the out.");
         return handleFlyOut(state, log, pitchKey, { sacFlyPct: 65, tagUp2ndPct: 20 });
       }

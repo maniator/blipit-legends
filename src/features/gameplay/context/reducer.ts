@@ -41,7 +41,7 @@ const createLogger = (dispatchLogger: (action: LogAction) => void) => (message: 
 };
 
 const computeStealSuccessPct = (base: 0 | 1, strategy: Strategy, state: State): number => {
-  const base_pct = base === 0 ? 70 : 60;
+  const base_pct = base === 0 ? 65 : 55;
   const runnerId = state.baseRunnerIds?.[base] ?? null;
   const runnerSpeedMod = runnerId
     ? (state.resolvedMods?.[state.atBat as 0 | 1]?.[runnerId] ?? ZERO_MODS).speedMod

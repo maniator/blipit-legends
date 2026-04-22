@@ -33,7 +33,7 @@ describe("playerWait — computeWaitOutcome threshold clamping", () => {
 
   it("extreme high pitcher mods (+20/+20): strike threshold does not exceed 999", () => {
     // With controlMod=+20 and velocityMod=+20, controlFactor = 1 + (20+10)/100 = 1.3
-    // adjustedStrikeThreshold = clamp(500 * 1.0 * 1.3 / 1.0, 0, 999) = 650 — well within range
+    // adjustedStrikeThreshold = clamp(380 * 1.0 * 1.3 / 0.85, 0, 999) ≈ 581 — well within range
     const state = buildStateWithPitcher(20, 20);
     // Force RNG to always return 998 (near top of range) — should still be deterministic
     vi.spyOn(rngModule, "random").mockReturnValue(0.999);
@@ -44,7 +44,7 @@ describe("playerWait — computeWaitOutcome threshold clamping", () => {
 
   it("extreme low pitcher mods (-20/-20): strike threshold is not negative", () => {
     // With controlMod=-20 and velocityMod=-20, controlFactor = 1 + (-20-10)/100 = 0.7
-    // adjustedStrikeThreshold = clamp(500 * 1.0 * 0.7 / 1.0, 0, 999) = 350 — fine
+    // adjustedStrikeThreshold = clamp(380 * 1.0 * 0.7 / 0.85, 0, 999) ≈ 313 — fine
     const state = buildStateWithPitcher(-20, -20);
     vi.spyOn(rngModule, "random").mockReturnValue(0.001);
     const { log } = makeLogs();
@@ -63,7 +63,7 @@ describe("playerWait — computeWaitOutcome threshold clamping", () => {
 
   it("with no pitcher overrides: outcome is deterministic (baseline behavior preserved)", () => {
     const state = makeState({ atBat: 0 });
-    // RNG 0.4 → 400 < 500 → strike on "swing"
+    // RNG 0.4 → 400 < 447 (= round(380/0.85)) → strike
     vi.spyOn(rngModule, "random").mockReturnValue(0.4);
     const { log, logs } = makeLogs();
     playerWait(state, log);
@@ -72,8 +72,9 @@ describe("playerWait — computeWaitOutcome threshold clamping", () => {
 
   it("higher walkRateMultiplier reduces called-strike outcomes under fixed RNG", () => {
     const state = makeState({ atBat: 0 });
-    // random=500; baseline threshold is ~588, but walk-boosted threshold drops to ~452.
-    vi.spyOn(rngModule, "random").mockReturnValue(0.5);
+    // random=400; baseline threshold ≈ 447 (=round(380/0.85)), walk-boosted threshold ≈ 344 (=round(380/0.85/1.3)).
+    // 400 < 447 → strike (baseline); 400 ≥ 344 → ball (walk boosted).
+    vi.spyOn(rngModule, "random").mockReturnValue(0.4);
     const { log } = makeLogs();
 
     const baseline = playerWait(state, log, "balanced", null, undefined, {
@@ -91,8 +92,9 @@ describe("playerWait — computeWaitOutcome threshold clamping", () => {
 
   it("higher calledStrikeRateMultiplier increases called-strike outcomes under fixed RNG", () => {
     const state = makeState({ atBat: 0 });
-    // random=620; baseline threshold is ~588 (ball), boosted threshold rises to ~764 (strike).
-    vi.spyOn(rngModule, "random").mockReturnValue(0.62);
+    // random=500; baseline threshold ≈ 447 (ball), boosted threshold ≈ 581 (=round(380*1.3/0.85)) (strike).
+    // 500 ≥ 447 → ball (baseline); 500 < 581 → strike (strike-rate boosted).
+    vi.spyOn(rngModule, "random").mockReturnValue(0.5);
     const { log } = makeLogs();
 
     const baseline = playerWait(state, log, "balanced", null, undefined, {

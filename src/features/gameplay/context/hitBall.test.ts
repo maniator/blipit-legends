@@ -353,16 +353,16 @@ describe("hitBall — baseRunnerIds in grounder paths", () => {
 });
 
 describe("handleBallInPlay — strategy effects", () => {
-  it("power strategy lowers HR threshold on deep_fly (more HRs at roll=750)", () => {
-    // Default hrThreshold=770: roll=750 → triple. Power: hrThreshold=740 → HR.
+  it("power strategy lowers HR threshold on deep_fly (more HRs at roll=700)", () => {
+    // Default hrThreshold=720: roll=700 → triple. Power: hrThreshold=690 → HR.
     const state = makeState({ score: [0, 0] });
 
-    vi.spyOn(rngModule, "random").mockReturnValue(0.75); // roll=750
+    vi.spyOn(rngModule, "random").mockReturnValue(0.70); // roll=700
     const { logs: balancedLogs } = makeLogs();
     handleBallInPlay("deep_fly", state, balancedLogs.push.bind(balancedLogs));
     const isTriple = balancedLogs.some((l) => l.includes("triple"));
 
-    vi.spyOn(rngModule, "random").mockReturnValue(0.75); // roll=750 again
+    vi.spyOn(rngModule, "random").mockReturnValue(0.70); // roll=700 again
     const { logs: powerLogs } = makeLogs();
     handleBallInPlay("deep_fly", state, powerLogs.push.bind(powerLogs), { strategy: "power" });
     const isHR = powerLogs.some((l) => l.includes("home run") || l.includes("GONE"));

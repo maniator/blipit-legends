@@ -21,10 +21,11 @@
  *     is 65 (raised from 62) — sub-65 % steals are below the realistic MLB
  *     break-even noise floor and are not surfaced even on the most aggressive
  *     user settings.
- * - The AI steal threshold bug (0.62 fraction vs 65 integer %) is corrected
- *   here as the canonical fix; the new default 67 sits just above the realistic
- *   MLB break-even noise floor (~65–70 %) so the AI runs decisively when the
- *   numbers favor it without chasing high-variance attempts.
+ * - The AI steal threshold is set to 80 (previously 67). 80 aligns with the
+ *   modern MLB break-even for stolen bases; the old 67 sat just above the noise
+ *   floor and allowed far too many low-odds attempts. stealMinOfferPct is also
+ *   raised to 80 so the constraint aiStealThreshold ≤ stealMinOfferPct holds:
+ *   both human prompt and AI now require genuinely high-probability steals.
  * - defensiveShiftEnabled defaults to false to reflect the 2023 MLB shift ban
  *   (Rule 5.02(c)). Users can enable it for a pre-2023 / old-school experience.
  */
@@ -32,20 +33,20 @@
 export interface ManagerDecisionValues {
   /**
    * Minimum steal success % at which the human manager is offered a steal
-   * decision prompt. Range: 65–85 (integer %). Default: 72.
+   * decision prompt. Range: 65–85 (integer %). Default: 80.
    *
    * Higher = only offer steals with a very high success chance.
    * Lower  = offer steals more aggressively (higher risk).
-   * 72 matches the previous hard-coded threshold (pct > 72, i.e. 73%+).
+   * 80 means the human manager is only prompted for very high-chance steals.
    */
   stealMinOfferPct: number;
 
   /**
    * Minimum steal success % at which the AI auto-commits to a steal attempt.
-   * Range: 65–stealMinOfferPct (integer %). Default: 67.
+   * Range: 65–stealMinOfferPct (integer %). Default: 80.
    *
-   * Being below stealMinOfferPct means the AI steals more aggressively than
-   * the human is prompted. Must be ≤ stealMinOfferPct; enforced in sanitize.
+   * 80 aligns with the modern MLB steal break-even; the AI only steals when
+   * the odds genuinely favor it. Must be ≤ stealMinOfferPct; enforced in sanitize.
    */
   aiStealThreshold: number;
 
@@ -96,8 +97,8 @@ export interface ManagerDecisionValues {
 }
 
 export const DEFAULT_MANAGER_DECISION_VALUES: ManagerDecisionValues = {
-  stealMinOfferPct: 72,
-  aiStealThreshold: 67,
+  stealMinOfferPct: 80,
+  aiStealThreshold: 80,
   stealEnabled: true,
   buntEnabled: true,
   ibbEnabled: true,

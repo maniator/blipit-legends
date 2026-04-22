@@ -62,7 +62,8 @@ export const resolveContactQuality = (
 ): ContactQuality => {
   // Hard contact threshold: batter power raises it; pitcher stuff lowers it;
   // fatigue raises it (tired pitchers allow more hard contact).
-  const hardBase = 20;
+  // hardBase = 26% hard contact (vs MLB ~32%; tuned for sim realism).
+  const hardBase = 26;
   const hardThreshold = Math.max(
     10,
     Math.min(

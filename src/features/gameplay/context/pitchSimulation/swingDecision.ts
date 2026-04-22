@@ -45,7 +45,7 @@ export interface ComputeSwingRateOptions {
  *   "take"  → 0   (batter takes the pitch no matter what)
  *
  * Swing rates by strikes (base):
- *   0 strikes → 360 (36%)  — selective early
+ *   0 strikes → 320 (32%)  — selective early
  *   1 strike  → 450 (45%)  — start protecting
  *   2 strikes → 580 (58%)  — must protect the plate
  */
@@ -62,7 +62,7 @@ export const computeSwingRate = (
   if (onePitchMod === "swing") return 1000;
   if (onePitchMod === "take") return 0;
 
-  const baseRates = [360, 450, 580];
+  const baseRates = [320, 450, 580];
   const base = baseRates[Math.min(strikes, 2)];
 
   const protectBonus = onePitchMod === "protect" ? 1.2 : 1.0;
