@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   DEFAULT_MANAGER_DECISION_VALUES,
+  getDefaultDecisionValues,
   sanitizeManagerDecisionValues,
 } from "./managerDecisionValues";
 
@@ -131,5 +132,58 @@ describe("DEFAULT_MANAGER_DECISION_VALUES", () => {
 
   it("has aiPitchingChangeAggressiveness = 50 (modern MLB average default)", () => {
     expect(DEFAULT_MANAGER_DECISION_VALUES.aiPitchingChangeAggressiveness).toBe(50);
+  });
+});
+
+describe("getDefaultDecisionValues — A/B experiment flag", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+    vi.resetModules();
+  });
+
+  it("returns DEFAULT_MANAGER_DECISION_VALUES (Variant A) when no flag is set", () => {
+    // Module is already loaded; _abVariant was read at load time with empty
+    // localStorage (no flag). Values should match Variant A.
+    const defaults = getDefaultDecisionValues();
+    expect(defaults).toEqual(DEFAULT_MANAGER_DECISION_VALUES);
+  });
+
+  it("DEFAULT_MANAGER_DECISION_VALUES has buntEnabled = true (Variant A baseline)", () => {
+    expect(DEFAULT_MANAGER_DECISION_VALUES.buntEnabled).toBe(true);
+  });
+
+  it("DEFAULT_MANAGER_DECISION_VALUES has aiStealThreshold = 67 (Variant A baseline)", () => {
+    expect(DEFAULT_MANAGER_DECISION_VALUES.aiStealThreshold).toBe(67);
+  });
+
+  // aiPitchingChangeAggressiveness = 50 is already covered in describe("DEFAULT_MANAGER_DECISION_VALUES")
+  // above; no duplicate needed here.
+
+  it("Variant B values differ from Variant A on the three changed fields", async () => {
+    // Simulate module re-load with Variant B flag set by reimporting with the
+    // flag already in localStorage. vi.resetModules() allows a fresh import.
+    localStorage.setItem("__blip_ab_decision_variant", "b");
+    vi.resetModules();
+
+    const { getDefaultDecisionValues: getDefaultB } = await import("./managerDecisionValues");
+    const variantB = getDefaultB();
+
+    // The three Variant B fields differ from the Variant A const.
+    expect(variantB.aiStealThreshold).toBe(70);
+    expect(variantB.aiPitchingChangeAggressiveness).toBe(60);
+    expect(variantB.buntEnabled).toBe(false);
+
+    // All other fields match Variant A.
+    expect(variantB.stealMinOfferPct).toBe(DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct);
+    expect(variantB.stealEnabled).toBe(DEFAULT_MANAGER_DECISION_VALUES.stealEnabled);
+    expect(variantB.ibbEnabled).toBe(DEFAULT_MANAGER_DECISION_VALUES.ibbEnabled);
+    expect(variantB.pinchHitterEnabled).toBe(DEFAULT_MANAGER_DECISION_VALUES.pinchHitterEnabled);
+    expect(variantB.defensiveShiftEnabled).toBe(
+      DEFAULT_MANAGER_DECISION_VALUES.defensiveShiftEnabled,
+    );
   });
 });
