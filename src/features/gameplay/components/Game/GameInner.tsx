@@ -15,6 +15,7 @@ import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisi
 import {
   DEFAULT_MANAGER_DECISION_VALUES,
   sanitizeManagerDecisionValues,
+  STEAL_PCT_MIN,
 } from "@feat/gameplay/context/managerDecisionValues";
 import { useRxdbGameSync } from "@feat/saves/hooks/useRxdbGameSync";
 import { useSaveStore } from "@feat/saves/hooks/useSaveStore";
@@ -28,7 +29,28 @@ import type { ExhibitionGameSetup } from "@storage/types";
 import type { PlayerOverrides } from "@storage/types";
 import type { GameSaveSetup, SaveRecord } from "@storage/types";
 
-import { FieldPanel, GameBody, GameDiv, LogPanel } from "./styles";
+import { FieldPanel, GameBody, GameDiv, LogPanel, StealClampNotice } from "./styles";
+
+/**
+ * Module-level flag: set to `true` the first time the steal-clamp toast fires
+ * so it never shows more than once per browser session.  Cleared only on a
+ * full page reload (i.e. module re-evaluation).
+ */
+let _stealClampToastShown = false;
+
+/**
+ * Returns true when any steal-percentage field in `dv` is below STEAL_PCT_MIN
+ * and would therefore be silently clamped by `sanitizeManagerDecisionValues`.
+ */
+const wouldClampStealThreshold = (
+  dv: Partial<ManagerDecisionValues> | null | undefined,
+): boolean => {
+  if (!dv) return false;
+  return (
+    (Number.isFinite(dv.stealMinOfferPct) && (dv.stealMinOfferPct as number) < STEAL_PCT_MIN) ||
+    (Number.isFinite(dv.aiStealThreshold) && (dv.aiStealThreshold as number) < STEAL_PCT_MIN)
+  );
+};
 
 /** Finds the best save to auto-resume: prefer seed+snapshot match, fallback to any snapshot. */
 const findMatchedSave = (saves: SaveRecord[]): SaveRecord | null => {
@@ -94,6 +116,8 @@ const GameInner: React.FunctionComponent<Props> = ({
   const [gameKey, setGameKey] = React.useState(0);
   const [gameActive, setGameActive] = React.useState(false);
   const [activeTeam, setActiveTeam] = React.useState<0 | 1>(0);
+  // One-time dismissible toast shown when a loaded save's steal threshold is clamped.
+  const [showStealClampToast, setShowStealClampToast] = React.useState(false);
 
   // Fallback buffer when rendered without the Game wrapper (e.g. in tests).
   const localBufferRef = React.useRef<GameAction[]>([]);
@@ -170,6 +194,10 @@ const GameInner: React.FunctionComponent<Props> = ({
     setStrategy(setup.strategy);
     if (setup.managedTeam !== null) setManagedTeam(setup.managedTeam);
     setManagerMode(setup.managerMode);
+    if (wouldClampStealThreshold(setup.decisionValues) && !_stealClampToastShown) {
+      _stealClampToastShown = true;
+      setShowStealClampToast(true);
+    }
     setDecisionValues(
       setup.decisionValues != null
         ? sanitizeManagerDecisionValues(setup.decisionValues)
@@ -339,6 +367,10 @@ const GameInner: React.FunctionComponent<Props> = ({
     setManagerMode(setup.managerMode);
     setManagedTeam(setup.managedTeam ?? 0);
     setStrategy(setup.strategy);
+    if (wouldClampStealThreshold(setup.decisionValues) && !_stealClampToastShown) {
+      _stealClampToastShown = true;
+      setShowStealClampToast(true);
+    }
     setDecisionValues(
       setup.decisionValues != null
         ? sanitizeManagerDecisionValues(setup.decisionValues)
@@ -398,6 +430,10 @@ const GameInner: React.FunctionComponent<Props> = ({
       setManagerMode(setup.managerMode);
       setManagedTeam(setup.managedTeam ?? 0);
       setStrategy(setup.strategy);
+      if (wouldClampStealThreshold(setup.decisionValues) && !_stealClampToastShown) {
+        _stealClampToastShown = true;
+        setShowStealClampToast(true);
+      }
       setDecisionValues(
         setup.decisionValues != null
           ? sanitizeManagerDecisionValues(setup.decisionValues)
@@ -422,28 +458,42 @@ const GameInner: React.FunctionComponent<Props> = ({
   );
 
   return (
-    <GameDiv>
-      <LineScore />
-      <GameControls
-        key={gameKey}
-        onNewGame={handleNewGame}
-        gameStarted={gameActive}
-        onLoadSave={handleModalLoad}
-        onBackToHome={onBackToHome}
-        isCommitting={isCommitting}
-      />
-      <GameBody>
-        <FieldPanel>
-          <Diamond />
-        </FieldPanel>
-        <LogPanel data-testid="log-panel">
-          <TeamTabBar teams={teams} activeTeam={activeTeam} onSelect={setActiveTeam} />
-          <PlayerStatsPanel activeTeam={activeTeam} />
-          <HitLog activeTeam={activeTeam} />
-          <Announcements />
-        </LogPanel>
-      </GameBody>
-    </GameDiv>
+    <>
+      {showStealClampToast && (
+        <StealClampNotice role="status" aria-live="polite" data-testid="steal-clamp-notice">
+          <span>Steal threshold updated to 65% (minimum)</span>
+          <button
+            type="button"
+            aria-label="Dismiss steal threshold notice"
+            onClick={() => setShowStealClampToast(false)}
+          >
+            ×
+          </button>
+        </StealClampNotice>
+      )}
+      <GameDiv>
+        <LineScore />
+        <GameControls
+          key={gameKey}
+          onNewGame={handleNewGame}
+          gameStarted={gameActive}
+          onLoadSave={handleModalLoad}
+          onBackToHome={onBackToHome}
+          isCommitting={isCommitting}
+        />
+        <GameBody>
+          <FieldPanel>
+            <Diamond />
+          </FieldPanel>
+          <LogPanel data-testid="log-panel">
+            <TeamTabBar teams={teams} activeTeam={activeTeam} onSelect={setActiveTeam} />
+            <PlayerStatsPanel activeTeam={activeTeam} />
+            <HitLog activeTeam={activeTeam} />
+            <Announcements />
+          </LogPanel>
+        </GameBody>
+      </GameDiv>
+    </>
   );
 };
 
