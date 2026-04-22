@@ -137,6 +137,7 @@ const MoreMenu: React.FunctionComponent<MoreMenuProps> = ({ disabled = false, ch
         // Use inert-style hiding when closed so off-screen controls don't
         // grab focus during keyboard navigation.
         aria-hidden={!open}
+        inert={!open}
         tabIndex={-1}
         data-testid="game-header-more-panel"
         data-state={open ? "open" : "closed"}
