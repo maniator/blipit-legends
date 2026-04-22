@@ -8,7 +8,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // Mock RxDB getDb so no real DB is needed.
 vi.mock("@storage/db", () => ({
   getDb: vi.fn().mockResolvedValue({
-    completedGames: { find: vi.fn(() => ({ exec: vi.fn().mockResolvedValue([]) })) },
+    completedGames: {
+      find: vi.fn(() => ({
+        exec: vi.fn().mockResolvedValue([]),
+        // Reactive observable: subscribe fires immediately with empty array.
+        $: {
+          subscribe: (fn: (docs: unknown[]) => void) => {
+            fn([]);
+            return { unsubscribe: vi.fn() };
+          },
+        },
+      })),
+    },
   }),
 }));
 
@@ -353,6 +364,13 @@ describe("CareerStatsPage", () => {
           exec: vi
             .fn()
             .mockResolvedValue([{ toJSON: () => ({ homeTeamId: "Yankees", awayTeamId: "Mets" }) }]),
+          // Reactive observable: subscribe fires immediately with the game docs.
+          $: {
+            subscribe: (fn: (docs: unknown[]) => void) => {
+              fn([{ toJSON: () => ({ homeTeamId: "Yankees", awayTeamId: "Mets" }) }]);
+              return { unsubscribe: vi.fn() };
+            },
+          },
         })),
       },
     } as any);

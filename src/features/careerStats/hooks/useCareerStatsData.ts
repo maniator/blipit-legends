@@ -53,29 +53,32 @@ export function useCareerStatsData() {
   }, [customTeams, teamsWithHistory]);
 
   React.useEffect(() => {
+    // Use a reactive subscription so this updates automatically when new games
+    // are inserted (e.g. after an import), eliminating the WebKit import-then-query
+    // race where the one-shot query fired before IndexedDB writes had propagated.
     let cancelled = false;
+    let subscription: { unsubscribe: () => void } | null = null;
 
-    async function loadTeamIds() {
-      try {
-        const db = await getDb();
-        const completedGames = await db.completedGames.find().exec();
+    getDb()
+      .then((db) => {
         if (cancelled) return;
-
-        const ids = new Set<string>();
-        for (const game of completedGames) {
-          const row = game.toJSON();
-          ids.add(row.homeTeamId);
-          ids.add(row.awayTeamId);
-        }
-        setTeamsWithHistory(Array.from(ids));
-      } catch {
+        subscription = db.completedGames.find().$.subscribe((completedGames) => {
+          const ids = new Set<string>();
+          for (const game of completedGames) {
+            const row = game.toJSON();
+            ids.add(row.homeTeamId);
+            ids.add(row.awayTeamId);
+          }
+          setTeamsWithHistory(Array.from(ids));
+        });
+      })
+      .catch(() => {
         // Silently degrade — history just won't include non-custom teams.
-      }
-    }
+      });
 
-    void loadTeamIds();
     return () => {
       cancelled = true;
+      subscription?.unsubscribe();
     };
   }, []);
 

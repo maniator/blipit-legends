@@ -458,17 +458,22 @@ function buildStore(getDbFn: GetDb) {
    * Returns aggregate career team stats from completed games (W/L/T, RS/RA, streak, last10).
    * Games are computed by matching teamId against homeTeamId or awayTeamId.
    * Tied games (rs === ra) are tracked separately and excluded from win-percentage calculation.
+   *
+   * Uses two separate indexed queries instead of $or to ensure reliable index hits on
+   * RxDB v17 beta.7 / Dexie (IndexedDB) — $or is not guaranteed to use indexes in this version.
    */
   async function getTeamCareerSummary(teamId: string): Promise<TeamCareerSummary> {
     const db = await getDbFn();
-    const rows = await db.completedGames
-      .find({
-        selector: { $or: [{ homeTeamId: teamId }, { awayTeamId: teamId }] },
-        sort: [{ playedAt: "asc" }],
-      })
-      .exec();
+    const [homeRows, awayRows] = await Promise.all([
+      db.completedGames.find({ selector: { homeTeamId: teamId } }).exec(),
+      db.completedGames.find({ selector: { awayTeamId: teamId } }).exec(),
+    ]);
 
-    const docs = rows.map((r) => r.toJSON() as CompletedGameRecord);
+    // Merge and sort chronologically (playedAt asc) in memory.
+    const docs = [
+      ...homeRows.map((r) => r.toJSON() as CompletedGameRecord),
+      ...awayRows.map((r) => r.toJSON() as CompletedGameRecord),
+    ].sort((a, b) => a.playedAt - b.playedAt);
 
     let wins = 0;
     let losses = 0;

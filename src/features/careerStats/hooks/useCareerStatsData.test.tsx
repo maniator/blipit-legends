@@ -6,7 +6,18 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@storage/db", () => ({
   getDb: vi.fn().mockResolvedValue({
-    completedGames: { find: vi.fn(() => ({ exec: vi.fn().mockResolvedValue([]) })) },
+    completedGames: {
+      find: vi.fn(() => ({
+        exec: vi.fn().mockResolvedValue([]),
+        // Reactive observable: subscribe fires immediately with empty array.
+        $: {
+          subscribe: (fn: (docs: unknown[]) => void) => {
+            fn([]);
+            return { unsubscribe: vi.fn() };
+          },
+        },
+      })),
+    },
   }),
 }));
 
@@ -79,6 +90,13 @@ describe("useCareerStatsData", () => {
             .mockResolvedValue([
               { toJSON: () => ({ homeTeamId: "z_team", awayTeamId: "a_team" }) },
             ]),
+          // Reactive observable: subscribe fires immediately with the game docs.
+          $: {
+            subscribe: (fn: (docs: unknown[]) => void) => {
+              fn([{ toJSON: () => ({ homeTeamId: "z_team", awayTeamId: "a_team" }) }]);
+              return { unsubscribe: vi.fn() };
+            },
+          },
         })),
       },
     } as any);
