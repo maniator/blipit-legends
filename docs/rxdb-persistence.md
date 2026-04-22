@@ -49,6 +49,14 @@ vi.mock("@feat/saves/hooks/useSaveStore", () => ({
 
 **Last-resort fallback** (`getDb()` in `src/storage/db.ts`): if `initDb()` throws with RxError code `DB6` (hash mismatch at same version) or `DM4` (migration strategy execution failed), the entire database is wiped and recreated, and a user-facing reset notice is shown. This fallback exists only as a safety net — it must never be the primary recovery path. Every schema change must have a proper migration strategy so the fallback never fires.
 
+### Upgrade checklist
+
+Before bumping the `rxdb` version in `package.json`:
+
+1. Recount collections in `src/storage/db.ts` and any lazy-opened collections (e.g. `seasonArchives` in league mode). Total must be ≤ the new RxDB version's `NON_PREMIUM_COLLECTION_LIMIT` (find via `node_modules/rxdb/dist/esm/plugins/utils/utils-premium.js`).
+2. The cap is enforced at runtime in `node_modules/rxdb/dist/esm/rx-collection.js` (`COL23` error) regardless of dev-mode plugin presence; switching storage adapters does NOT bypass it. The cap is also process-wide (a global `OPEN_COLLECTIONS` Set), so a second `RxDatabase` does not help.
+3. If the new cap would be exceeded, mitigations (in order of preference): fold collections together, make seldom-used collections lazy-open with `close()` on unmount, only as a last resort consider RxDB Premium (`setPremiumFlag()`).
+
 ### Collections
 
 | Collection         | Purpose                                                                                                                                                                                                                                                                                       |

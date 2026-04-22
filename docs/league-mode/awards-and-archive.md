@@ -23,7 +23,7 @@ Awards are computed once per league at season completion.
 Each award doc stores its full formula breakdown:
 
 ```
-seasonAwards.formula = {
+seasons.awards[i].formula = {
   components: [
     { label: 'OPS-proxy', value: 0.823, weight: 0.40 },
     { label: 'Runs created', value: 81, weight: 0.20 },
@@ -112,7 +112,7 @@ Per decision #22:
   - Compute `checksum = fnv1a(canonicalJSON(archivedData))` (hex string, same `fnv1a` helper from `@storage/hash`; reuse the v2 export `canonicalJSON()` utility from `src/features/saves/storage/canonicalJSON.ts` — plain `JSON.stringify` has no guaranteed key-order stability across runtimes, which would manifest as spurious checksum mismatches indistinguishable from corruption). Then gzip + base64-encode `canonicalJSON(archivedData)` for the `compressed` field.
   - Write a single `seasonArchives` doc keyed by `seasonId` with `{ compressed, checksum, archivedAt }`.
   - Delete the source docs.
-  - `seasons` and `seasonAwards` are **NOT** archived — they remain queryable for the seasons-list UI and history screens.
+  - `seasons` is **NOT** archived (which keeps awards queryable since they live on `seasons.awards[]`).
 
 ### Integrity / corruption handling
 
@@ -123,6 +123,15 @@ On every read of a `seasonArchives` doc:
 3. Compare to stored `checksum`.
 4. **If mismatch:** surface a non-fatal error _"Season history appears corrupted — historical detail unavailable"_. **Do not delete the doc.** The corrupted archive doc must survive intact so the user can export it for diagnostics.
 5. **If match:** parse JSON and return the reconstructed in-memory season data (not re-written to RxDB).
+
+### Lazy-open operational contract (RxDB collection-cap mitigation)
+
+`seasonArchives` is the only league-mode collection that is **not** part of the steady-state `OPEN_COLLECTIONS` set. The contract (mirrored in `data-model.md` §`seasonArchives`) is:
+
+- The `seasonArchives` collection is added via `db.addCollections({ seasonArchives: ... })` **only when the archive UI route mounts** (the "View Season History" / `/leagues/:seasonId/archive` entry point). It is also added on the write path during a "Start New Season" archive action, then closed when that action completes.
+- The collection is removed via `collection.close()` **only on archive-UI route unmount** (component cleanup). Use `close()`, never `db.removeCollection()` (which would be destructive).
+- This keeps `seasonArchives` out of the steady-state count. The v4 steady-state is 12; the transient peak while the archive UI is mounted is 13 — exactly at the future RxDB 13-cap with zero headroom. Closing on unmount is therefore mandatory, not optional.
+- See `data-model.md` §RxDB collection-count budget for the full rationale.
 
 ### Recovery / read path
 
@@ -138,6 +147,7 @@ When v4 ships, instrument doc counts in dev tools. If a typical user with 5+ com
 - **Unit**: archive failure (write error) aborts cleanly (no partial deletion).
 - **Unit**: single-byte mutation in `compressed` produces `fnv1a` mismatch → surfaces named error string, doc is NOT deleted.
 - **Integration**: archive + recovery produces identical history-screen output.
+- **Integration**: after closing the archive UI route, `OPEN_COLLECTIONS.size` returns to the steady-state count (assert exact integer equality — not "less than 16" — so the lazy-open contract regression-tests itself if v4 quietly adds another always-open collection).
 
 ---
 
