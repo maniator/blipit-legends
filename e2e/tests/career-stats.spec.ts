@@ -35,11 +35,9 @@ test.describe("Career Stats smoke", () => {
     await resetAppState(page);
   });
 
-  test("Career Stats button is not present on the Home screen on a fresh install", async ({
-    page,
-  }) => {
+  test("Career Stats button is visible on the Home screen on a fresh install", async ({ page }) => {
     await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId("home-career-stats-button")).not.toBeAttached();
+    await expect(page.getByTestId("home-career-stats-button")).toBeVisible();
   });
 
   test("Career Stats page loads at /stats", async ({ page }) => {
@@ -47,13 +45,16 @@ test.describe("Career Stats smoke", () => {
     await expect(page.getByTestId("career-stats-page")).toBeVisible({ timeout: 15_000 });
   });
 
-  test("Career Stats page shows no-teams empty state on fresh install", async ({ page }) => {
-    await page.goto("/stats");
+  test("Career Stats page shows the no-games empty state on fresh install", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId("home-career-stats-button").click();
     await expect(page.getByTestId("career-stats-page")).toBeVisible({ timeout: 15_000 });
-    // Fresh install → no teams, no history → explicit no-teams message
-    await expect(page.getByTestId("career-stats-no-teams")).toBeVisible({ timeout: 5_000 });
+    await expect(page).toHaveURL(/\/stats/);
+    await expect(page.getByTestId("career-stats-empty-state")).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByTestId("career-stats-empty-play-ball")).toBeVisible();
     // The team selector must NOT appear in this state.
-    await expect(page.getByTestId("career-stats-team-select")).not.toBeVisible();
+    await expect(page.getByTestId("career-stats-team-select")).not.toBeAttached();
   });
 
   test("Career Stats page has Batting and Pitching tab buttons", async ({ page }) => {
