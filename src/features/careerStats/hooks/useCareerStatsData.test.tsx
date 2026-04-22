@@ -2,14 +2,13 @@ import * as React from "react";
 
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@storage/db", () => ({
   getDb: vi.fn().mockResolvedValue({
     completedGames: {
       find: vi.fn(() => ({
-        exec: vi.fn().mockResolvedValue([]),
-        // Reactive observable: subscribe fires immediately with empty array.
+        // Production code uses only find().$; exec is never called by the reactive path.
         $: {
           subscribe: (fn: (docs: unknown[]) => void) => {
             fn([]);
@@ -61,11 +60,19 @@ import { getDb } from "@storage/db";
 import { useCareerStatsData } from "./useCareerStatsData";
 
 function Probe() {
-  const { selectedTeamId } = useCareerStatsData();
-  return <div data-testid="selected-team-id">{selectedTeamId}</div>;
+  const { selectedTeamId, dataLoading } = useCareerStatsData();
+  return (
+    <>
+      <div data-testid="selected-team-id">{selectedTeamId}</div>
+      <div data-testid="data-loading">{String(dataLoading)}</div>
+    </>
+  );
 }
 
 describe("useCareerStatsData", () => {
+  beforeEach(() => {
+    mockNavigate.mockClear();
+  });
   it("reads selectedTeamId from the :teamId path param", async () => {
     render(
       <MemoryRouter initialEntries={["/stats/team2"]}>
@@ -107,6 +114,24 @@ describe("useCareerStatsData", () => {
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith("/stats/a_team", { replace: true });
+    });
+  });
+
+  it("dataLoading is false when no teamId is in the URL", async () => {
+    // Guards the fix where the !selectedTeamId branch explicitly calls setDataLoading(false),
+    // preventing the loading spinner from being stuck when the user navigates to /stats
+    // (no team selected) while a previous team's data load was in flight.
+    render(
+      <MemoryRouter initialEntries={["/stats"]}>
+        <Routes>
+          <Route path="/stats" element={<Probe />} />
+          <Route path="/stats/:teamId" element={<Probe />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("data-loading")).toHaveTextContent("false");
     });
   });
 });

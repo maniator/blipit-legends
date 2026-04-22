@@ -130,11 +130,19 @@ export function useCareerStatsData() {
         setEraLeader(pitchingLeaders.eraLeader);
         setSavesLeader(pitchingLeaders.savesLeader);
         setStrikeoutsLeader(pitchingLeaders.strikeoutsLeader);
-      } catch {
+      } catch (err) {
         if (!cancelled) {
+          // eslint-disable-next-line no-console
+          console.error("[useCareerStatsData] Failed to load stats for team:", selectedTeamId, err);
           setBattingRows([]);
           setPitchingRows([]);
           setTeamSummary(null);
+          setHrLeader(null);
+          setAvgLeader(null);
+          setRbiLeader(null);
+          setEraLeader(null);
+          setSavesLeader(null);
+          setStrikeoutsLeader(null);
         }
       } finally {
         if (!cancelled) {
