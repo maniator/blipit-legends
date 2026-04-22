@@ -49,10 +49,9 @@ test.describe("Team Summary and Leaders", () => {
       timeout: 15_000,
     });
     await teamSelect.selectOption("e2e_summary_team");
-    // With the RxDB reactive subscription fix in useCareerStatsData, the imported
-    // history rows are now guaranteed to be reflected in the query result.  Use a
-    // generous 45 s timeout to accommodate slow CI runners (iphone-15-pro-max WebKit
-    // can take longer than 30 s to process the RxDB subscription update and re-render).
+    // The RxDB reactive subscription ensures the stats page self-heals once imported
+    // rows propagate, but rendering the updated UI can still be slow on CI WebKit
+    // runners (iphone-15-pro-max can take > 30 s).  Use a generous 45 s timeout.
     const summaryWL = page.getByTestId("summary-wl");
     await expect(summaryWL).toHaveText("2-1", { timeout: 45_000 });
   }
