@@ -1,3 +1,4 @@
+import { mq } from "@shared/utils/mediaQueries";
 import styled from "styled-components";
 
 export const Wrapper = styled.span`
@@ -87,7 +88,7 @@ export const Bubble = styled.span`
 
   /* On devices that can hover (desktop), also show on hover regardless of
      the tap-toggle state, so existing hover UX is preserved. */
-  @media (hover: hover) {
+  ${mq.canHover} {
     ${Wrapper}:hover & {
       visibility: visible;
       opacity: 1;
@@ -115,7 +116,7 @@ export const BubbleCloseButton = styled.button`
   /* Hidden on pointer/hover devices (desktop); shown on touch devices. */
   display: none;
 
-  @media (hover: none) {
+  ${mq.noHover} {
     display: inline-flex;
     align-items: center;
     justify-content: center;

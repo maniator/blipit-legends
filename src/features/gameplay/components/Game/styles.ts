@@ -6,7 +6,7 @@ import styled from "styled-components";
  * `LogPanel` (height) and `GameDiv` (padding-bottom) so the field area
  * is never obscured by the log.
  */
-const MOBILE_LOG_HEIGHT = "33vh";
+const MOBILE_LOG_HEIGHT = "33dvh";
 
 export const GameDiv = styled.main`
   color: ${({ theme }) => theme.colors.textPrimary};

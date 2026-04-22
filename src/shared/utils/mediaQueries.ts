@@ -39,4 +39,14 @@ export const mq = {
    * "Short" = viewport height ≤ 760 px; "not-mobile" = width > 768 px.
    */
   shortNotMobile: `@media (max-height: 760px) and (min-width: ${breakpoints.mobile + 1}px)`,
+  /**
+   * Devices that support a fine pointer / hover (desktop, mouse/trackpad).
+   * Use instead of raw `@media (hover: hover)` strings.
+   */
+  canHover: `@media (hover: hover)`,
+  /**
+   * Touch-primary devices where hover is not available.
+   * Use instead of raw `@media (hover: none)` strings.
+   */
+  noHover: `@media (hover: none)`,
 } as const;
