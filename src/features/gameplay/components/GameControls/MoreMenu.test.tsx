@@ -63,14 +63,20 @@ describe("MoreMenu (mobile game-header disclosure)", () => {
     const user = userEvent.setup();
     renderMenu();
     const trigger = screen.getByTestId("game-header-more-trigger");
+    const panel = screen.getByTestId("game-header-more-panel");
+    expect(panel).toHaveAttribute("aria-hidden", "true");
+    expect(panel).toHaveAttribute("inert");
     await user.click(trigger);
     expect(trigger).toHaveAttribute("aria-expanded", "true");
     expect(trigger).toHaveTextContent(/^Less/);
-    const panel = screen.getByTestId("game-header-more-panel");
     expect(panel).toHaveAttribute("data-state", "open");
+    expect(panel).toHaveAttribute("aria-hidden", "false");
+    expect(panel).not.toHaveAttribute("inert");
     await user.click(trigger);
     expect(trigger).toHaveAttribute("aria-expanded", "false");
     expect(trigger).toHaveTextContent(/^More/);
+    expect(panel).toHaveAttribute("aria-hidden", "true");
+    expect(panel).toHaveAttribute("inert");
   });
 
   it("moves focus to the first control on open and back to trigger on close", async () => {
