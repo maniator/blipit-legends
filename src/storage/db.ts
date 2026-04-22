@@ -8,9 +8,14 @@ import {
   playersV1CollectionConfig,
   teamsV1CollectionConfig,
 } from "@feat/customTeams/storage/schemaV1";
+import { seasonGamesCollectionConfig } from "@feat/league/storage/seasonGamesSchema";
+import { seasonPlayerStateCollectionConfig } from "@feat/league/storage/seasonPlayerStateSchema";
+import { seasonsCollectionConfig } from "@feat/league/storage/seasonsSchema";
+import { seasonTeamsCollectionConfig } from "@feat/league/storage/seasonTeamsSchema";
 import { eventsV1CollectionConfig, savesV1CollectionConfig } from "@feat/saves/storage/schemaV1";
 import { appLog } from "@shared/utils/logger";
 import {
+  addRxPlugin,
   createRxDatabase,
   removeRxDatabase,
   type RxCollection,
@@ -18,6 +23,11 @@ import {
   type RxStorage,
 } from "rxdb";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
+import { RxDBMigrationSchemaPlugin } from "rxdb/plugins/migration-schema";
+
+// Register the migration-schema plugin once at module load.
+// Required for any collection that specifies `migrationStrategies`.
+addRxPlugin(RxDBMigrationSchemaPlugin);
 
 import type {
   BatterGameStatRecord,
@@ -26,6 +36,10 @@ import type {
   PitcherGameStatRecord,
   PlayerRecord,
   SaveRecord,
+  SeasonGameRecord,
+  SeasonPlayerStateRecord,
+  SeasonRecord,
+  SeasonTeamRecord,
   TeamRecord,
 } from "./types";
 
@@ -44,6 +58,10 @@ export type DbCollections = {
   completedGames: RxCollection<CompletedGameRecord>;
   batterGameStats: RxCollection<BatterGameStatRecord>;
   pitcherGameStats: RxCollection<PitcherGameStatRecord>;
+  seasons: RxCollection<SeasonRecord>;
+  seasonTeams: RxCollection<SeasonTeamRecord>;
+  seasonGames: RxCollection<SeasonGameRecord>;
+  seasonPlayerState: RxCollection<SeasonPlayerStateRecord>;
 };
 
 export type BallgameDb = RxDatabase<DbCollections>;
@@ -122,6 +140,10 @@ async function initDb(
       completedGames: completedGamesV1CollectionConfig,
       batterGameStats: batterGameStatsV1CollectionConfig,
       pitcherGameStats: pitcherGameStatsV1CollectionConfig,
+      seasons: seasonsCollectionConfig,
+      seasonTeams: seasonTeamsCollectionConfig,
+      seasonGames: seasonGamesCollectionConfig,
+      seasonPlayerState: seasonPlayerStateCollectionConfig,
     });
     return db;
   } catch (err) {
@@ -138,6 +160,24 @@ let dbPromise: Promise<BallgameDb> | null = null;
 let dbWasReset = false;
 /** Returns true if the database was reset during this session. */
 export const wasDbReset = (): boolean => dbWasReset;
+
+/**
+ * FOR TESTS ONLY — closes the cached singleton DB and resets the promise so
+ * the next `getDb()` call creates a fresh database instance. This allows test
+ * isolation without full module reloads, keeping OPEN_COLLECTIONS count < 16.
+ */
+export const _resetDbSingletonForTests = async (): Promise<void> => {
+  if (dbPromise) {
+    try {
+      const db = await dbPromise;
+      await db.close();
+    } catch {
+      // Ignore: DB may already be closed or the promise may have rejected.
+    }
+    dbPromise = null;
+    dbWasReset = false;
+  }
+};
 
 /**
  * Returns true when an error represents a schema failure that warrants a last-resort
@@ -211,3 +251,16 @@ export const batterGameStatsCollection = async (): Promise<RxCollection<BatterGa
 
 export const pitcherGameStatsCollection = async (): Promise<RxCollection<PitcherGameStatRecord>> =>
   (await getDb()).pitcherGameStats;
+
+export const seasonsCollection = async (): Promise<RxCollection<SeasonRecord>> =>
+  (await getDb()).seasons;
+
+export const seasonTeamsCollection = async (): Promise<RxCollection<SeasonTeamRecord>> =>
+  (await getDb()).seasonTeams;
+
+export const seasonGamesCollection = async (): Promise<RxCollection<SeasonGameRecord>> =>
+  (await getDb()).seasonGames;
+
+export const seasonPlayerStateCollection = async (): Promise<
+  RxCollection<SeasonPlayerStateRecord>
+> => (await getDb()).seasonPlayerState;

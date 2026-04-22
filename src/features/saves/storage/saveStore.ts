@@ -8,7 +8,11 @@ import type {
   ProgressSummary,
   RxdbExportedSave,
   SaveRecord,
+  V2BundleHeader,
 } from "@storage/types";
+
+import { canonicalJSON } from "./canonicalJSON";
+import type { V2BundleCollections } from "./types";
 
 // DOC_SCHEMA_VERSION is the schemaVersion field on SaveRecord/EventRecord rows —
 // it is independent of the RxDB collection schema version (saves collection is v2).
@@ -16,6 +20,13 @@ const DOC_SCHEMA_VERSION = 1;
 const MAX_SAVES = 3;
 const RXDB_EXPORT_VERSION = 1 as const;
 const RXDB_EXPORT_KEY = "ballgame:rxdb:v1";
+export const RXDB_EXPORT_VERSION_V2 = 2 as const;
+export const RXDB_EXPORT_KEY_V2 = "ballgame:rxdb:v2";
+
+/** localStorage key for the import-in-progress tombstone. */
+const IMPORT_IN_PROGRESS_KEY = "ballgame:import-in-progress:v1";
+/** localStorage key for the epoch ms timestamp when the interrupted import started. */
+const IMPORT_STARTED_AT_KEY_PREFIX = "ballgame:import-started-at:";
 
 type GetDb = () => Promise<BallgameDb>;
 
@@ -209,12 +220,22 @@ function buildStore(getDbFn: GetDb) {
         throw new Error("Invalid JSON");
       }
       if (!parsed || typeof parsed !== "object") throw new Error("Invalid save file");
-      const { version, header, events, sig } = parsed as RxdbExportedSave;
+      const bundle = parsed as Record<string, unknown>;
+      const version = bundle["version"];
       if (typeof version !== "number")
         throw new Error(
           "Invalid save file: missing or unrecognized format. Please export a save from the app and try again.",
         );
+      // Reject v2 bundles — they must be imported via importRxdbSaveV2.
+      if (version === 2)
+        throw new Error(
+          "This save was created with a newer version of the app. Update first to import.",
+        );
       if (version !== RXDB_EXPORT_VERSION) throw new Error(`Unsupported save version: ${version}`);
+      const { header, events, sig } = bundle as unknown as Extract<
+        RxdbExportedSave,
+        { version: 1 }
+      >;
       if (!header || typeof header !== "object" || typeof header.id !== "string")
         throw new Error("Invalid save data");
       const expectedSig = fnv1a(RXDB_EXPORT_KEY + JSON.stringify({ header, events }));
@@ -249,6 +270,340 @@ function buildStore(getDbFn: GetDb) {
       nextIdxMap.delete(cleanId);
       appendQueues.delete(cleanId);
       return cleanHeader;
+    },
+
+    /**
+     * Exports all collections as a v2 signed bundle JSON string.
+     * The bundle contains: saves, events, customTeams (teams), seasons,
+     * seasonTeams, seasonGames, seasonPlayerState.
+     *
+     * Signature: fnv1a(RXDB_EXPORT_KEY_V2 + canonicalJSON(header))
+     * Per-collection arrays are sorted by `id` before signing (canonicalJSON
+     * handles this automatically for object arrays with `id` fields).
+     */
+    async exportRxdbSaveV2(): Promise<string> {
+      const db = await getDbFn();
+
+      const [
+        saveDocs,
+        eventDocs,
+        teamDocs,
+        seasonDocs,
+        seasonTeamDocs,
+        seasonGameDocs,
+        seasonPlayerStateDocs,
+      ] = await Promise.all([
+        db.saves.find().exec(),
+        db.events.find().exec(),
+        db.teams.find().exec(),
+        db.seasons.find().exec(),
+        db.seasonTeams.find().exec(),
+        db.seasonGames.find().exec(),
+        db.seasonPlayerState.find().exec(),
+      ]);
+
+      const collections: V2BundleCollections = {
+        saves: saveDocs.map((d) => d.toJSON() as unknown as SaveRecord),
+        events: eventDocs.map((d) => d.toJSON() as unknown as EventRecord),
+        customTeams: teamDocs.map((d) => d.toJSON() as unknown),
+        seasons: seasonDocs.map((d) => d.toJSON() as unknown),
+        seasonTeams: seasonTeamDocs.map((d) => d.toJSON() as unknown),
+        seasonGames: seasonGameDocs.map((d) => d.toJSON() as unknown),
+        seasonPlayerState: seasonPlayerStateDocs.map((d) => d.toJSON() as unknown),
+        seasonTransactions: [],
+        gameHistory: [],
+      } as unknown as V2BundleCollections;
+
+      const header: V2BundleHeader = {
+        exportedAt: Date.now(),
+        appVersion: import.meta.env?.VITE_APP_VERSION ?? "unknown",
+        rulesetVersion: (() => {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            return require("@feat/league/ruleset").CURRENT_RULESET_VERSION as number;
+          } catch {
+            return 1;
+          }
+        })(),
+        collections,
+      };
+
+      const sig = fnv1a(RXDB_EXPORT_KEY_V2 + canonicalJSON(header));
+      const payload: RxdbExportedSave = { version: RXDB_EXPORT_VERSION_V2, header, sig };
+      return JSON.stringify(payload, null, 2);
+    },
+
+    /**
+     * Imports a v2 bundle produced by `exportRxdbSaveV2`.
+     *
+     * Import order: customTeams → seasons → seasonTeams/seasonGames/seasonPlayerState
+     *
+     * Active-season collision: if an imported season with status='active' already
+     * exists locally with the same id, the entire import is rejected.
+     *
+     * Completed-season id collision: the season id is suffixed with
+     * `-imported-<shortToken>` and all child docs' seasonId references are rewritten.
+     *
+     * @returns The parsed V2BundleHeader on success.
+     */
+    async importRxdbSaveV2(json: string): Promise<V2BundleHeader> {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(json);
+      } catch {
+        throw new Error("Invalid JSON");
+      }
+      if (!parsed || typeof parsed !== "object") throw new Error("Invalid save file");
+      const bundle = parsed as Record<string, unknown>;
+
+      if (bundle["version"] !== RXDB_EXPORT_VERSION_V2)
+        throw new Error("Invalid v2 bundle: wrong version field");
+
+      const rawHeader = bundle["header"] as V2BundleHeader | undefined;
+      const sig = bundle["sig"] as string | undefined;
+      if (!rawHeader || typeof sig !== "string") throw new Error("Invalid save file: missing header or sig");
+
+      const expectedSig = fnv1a(RXDB_EXPORT_KEY_V2 + canonicalJSON(rawHeader));
+      if (sig !== expectedSig)
+        throw new Error(
+          "This save file appears corrupted. Try re-exporting from the source.",
+        );
+
+      // Import CURRENT_RULESET_VERSION lazily to avoid circular deps.
+      let currentRulesetVersion = 1;
+      try {
+        // Dynamic import avoids circular dependency at module load time.
+        const rulesetModule = await import("@feat/league/ruleset");
+        currentRulesetVersion = rulesetModule.CURRENT_RULESET_VERSION;
+      } catch {
+        // Fall back to 1 if the module is unavailable (e.g., test environment).
+        currentRulesetVersion = 1;
+      }
+
+      if (rawHeader.rulesetVersion > currentRulesetVersion)
+        throw new Error(
+          "This save was created with a newer ruleset. Update the app first.",
+        );
+
+      const importStartedAt = Date.now();
+
+      // Write import-in-progress tombstone to localStorage.
+      try {
+        localStorage.setItem(IMPORT_IN_PROGRESS_KEY, "1");
+        localStorage.setItem(`${IMPORT_STARTED_AT_KEY_PREFIX}${importStartedAt}`, "1");
+      } catch {
+        // localStorage unavailable — continue without tombstone.
+      }
+
+      try {
+        const db = await getDbFn();
+        const { collections } = rawHeader;
+
+        // ── 1. customTeams (teams) ──────────────────────────────────────────
+        if (Array.isArray(collections.customTeams) && collections.customTeams.length > 0) {
+          await db.teams.bulkUpsert(
+            collections.customTeams as Parameters<typeof db.teams.bulkUpsert>[0],
+          );
+        }
+
+        // ── 2. seasons ──────────────────────────────────────────────────────
+        // Check for active-season collisions before writing anything.
+        const localActiveSeasonsResult = await db.seasons
+          .find({ selector: { status: "active" } })
+          .exec();
+        const localActiveSeasonIds = new Set(localActiveSeasonsResult.map((d) => d.id));
+
+        // Separate imported seasons by collision type.
+        const incomingSeasons: Array<Record<string, unknown>> = Array.isArray(collections.seasons)
+          ? (collections.seasons as unknown as Array<Record<string, unknown>>)
+          : [];
+        const idRemap = new Map<string, string>(); // originalId → rewrittenId
+
+        for (const season of incomingSeasons) {
+          const seasonId = season["id"] as string;
+          const isActive = season["status"] === "active";
+
+          if (localActiveSeasonIds.has(seasonId) && isActive) {
+            throw new Error(
+              `You already have an active season with id "${seasonId}". ` +
+                "Complete or abandon it before importing this bundle.",
+            );
+          }
+
+          // For completed/abandoned seasons with id collision, rename them.
+          if (localActiveSeasonIds.has(seasonId) || !isActive) {
+            const existing = await db.seasons.findOne(seasonId).exec();
+            if (existing && !isActive) {
+              // Rewrite the id to avoid collision.
+              const shortToken = Math.random().toString(36).slice(2, 8);
+              const newId = `${seasonId}-imported-${shortToken}`;
+              idRemap.set(seasonId, newId);
+            }
+          }
+        }
+
+        // Write seasons with potential id rewrites.
+        for (const season of incomingSeasons) {
+          const originalId = season["id"] as string;
+          const rewrittenId = idRemap.get(originalId) ?? originalId;
+          await db.seasons.upsert(
+            ({ ...season, id: rewrittenId }) as unknown as Parameters<
+              typeof db.seasons.upsert
+            >[0],
+          );
+        }
+
+        // ── 3. seasonTeams, seasonGames, seasonPlayerState ───────────────────
+        // Rewrite seasonId references if ids were remapped above.
+
+        const rewriteSeasonId = (
+          docs: Array<Record<string, unknown>>,
+        ): Array<Record<string, unknown>> =>
+          docs.map((doc) => {
+            const sid = doc["seasonId"] as string | undefined;
+            if (sid && idRemap.has(sid)) {
+              return { ...doc, seasonId: idRemap.get(sid)! };
+            }
+            return doc;
+          });
+
+        const incomingTeams = Array.isArray(collections.seasonTeams)
+          ? rewriteSeasonId(collections.seasonTeams as unknown as Array<Record<string, unknown>>)
+          : [];
+        const incomingGames = Array.isArray(collections.seasonGames)
+          ? rewriteSeasonId(collections.seasonGames as unknown as Array<Record<string, unknown>>)
+          : [];
+        const incomingPlayerStates = Array.isArray(collections.seasonPlayerState)
+          ? rewriteSeasonId(
+              collections.seasonPlayerState as unknown as Array<Record<string, unknown>>,
+            )
+          : [];
+
+        await Promise.all([
+          incomingTeams.length > 0
+            ? db.seasonTeams.bulkUpsert(
+                incomingTeams as unknown as Parameters<typeof db.seasonTeams.bulkUpsert>[0],
+              )
+            : Promise.resolve(),
+          incomingGames.length > 0
+            ? db.seasonGames.bulkUpsert(
+                incomingGames as unknown as Parameters<typeof db.seasonGames.bulkUpsert>[0],
+              )
+            : Promise.resolve(),
+          incomingPlayerStates.length > 0
+            ? db.seasonPlayerState.bulkUpsert(
+                incomingPlayerStates as unknown as Parameters<
+                  typeof db.seasonPlayerState.bulkUpsert
+                >[0],
+              )
+            : Promise.resolve(),
+        ]);
+
+        // ── 4. saves + events ────────────────────────────────────────────────
+        if (Array.isArray(collections.saves) && collections.saves.length > 0) {
+          await db.saves.bulkUpsert(
+            collections.saves as Parameters<typeof db.saves.bulkUpsert>[0],
+          );
+        }
+        if (Array.isArray(collections.events) && collections.events.length > 0) {
+          await db.events.bulkUpsert(
+            collections.events as Parameters<typeof db.events.bulkUpsert>[0],
+          );
+        }
+
+        // Clear tombstone on success.
+        try {
+          localStorage.removeItem(IMPORT_IN_PROGRESS_KEY);
+          localStorage.removeItem(`${IMPORT_STARTED_AT_KEY_PREFIX}${importStartedAt}`);
+        } catch {
+          // Non-fatal.
+        }
+
+        return rawHeader;
+      } catch (err) {
+        // Clear tombstone on failure so the interrupted-import check doesn't
+        // surface a false positive for a cleanly-rejected import.
+        try {
+          localStorage.removeItem(IMPORT_IN_PROGRESS_KEY);
+          localStorage.removeItem(`${IMPORT_STARTED_AT_KEY_PREFIX}${importStartedAt}`);
+        } catch {
+          // Non-fatal.
+        }
+        throw err;
+      }
+    },
+
+    /**
+     * Checks for an interrupted v2 import tombstone in localStorage.
+     * If found, removes orphaned `teams` docs that were written during the
+     * interrupted import but are not referenced by any season.
+     *
+     * Call this on app startup after the DB is initialized.
+     */
+    async checkAndCleanupInterruptedImport(): Promise<void> {
+      let inProgress = false;
+      let startedAt = 0;
+      try {
+        inProgress = localStorage.getItem(IMPORT_IN_PROGRESS_KEY) === "1";
+        // Find the most recent started-at key.
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(IMPORT_STARTED_AT_KEY_PREFIX)) {
+            const epoch = parseInt(key.slice(IMPORT_STARTED_AT_KEY_PREFIX.length), 10);
+            if (!isNaN(epoch) && epoch > startedAt) startedAt = epoch;
+          }
+        }
+      } catch {
+        return; // localStorage unavailable.
+      }
+
+      if (!inProgress) return;
+
+      // Remove orphaned teams: written after (startedAt - 5000) ms and not
+      // referenced by any season's leagues[].teamIds.
+      const db = await getDbFn();
+      const allSeasons = await db.seasons.find().exec();
+      const referencedTeamIds = new Set<string>();
+      for (const season of allSeasons) {
+        const leagues = (season.toJSON() as unknown as { leagues?: Array<{ teamIds?: string[] }> })
+          .leagues;
+        if (Array.isArray(leagues)) {
+          for (const league of leagues) {
+            if (Array.isArray(league.teamIds)) {
+              for (const tid of league.teamIds) referencedTeamIds.add(tid);
+            }
+          }
+        }
+      }
+
+      if (startedAt > 0) {
+        const threshold = startedAt - 5000;
+        const allTeams = await db.teams.find().exec();
+        const orphans = allTeams.filter((t) => {
+          const doc = t.toJSON() as unknown as { createdAt?: string | number; id: string };
+          const created =
+            typeof doc.createdAt === "number"
+              ? doc.createdAt
+              : doc.createdAt
+                ? new Date(doc.createdAt).getTime()
+                : 0;
+          return created > threshold && !referencedTeamIds.has(doc.id);
+        });
+        await Promise.all(orphans.map((t) => t.remove()));
+      }
+
+      // Clear tombstone.
+      try {
+        localStorage.removeItem(IMPORT_IN_PROGRESS_KEY);
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(IMPORT_STARTED_AT_KEY_PREFIX)) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch {
+        // Non-fatal.
+      }
     },
   };
 }
