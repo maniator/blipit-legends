@@ -128,10 +128,13 @@ On every read of a `seasonArchives` doc:
 
 `seasonArchives` is the only league-mode collection that is **not** part of the steady-state `OPEN_COLLECTIONS` set. The contract (mirrored in `data-model.md` §`seasonArchives`) is:
 
-- The `seasonArchives` collection is added via `db.addCollections({ seasonArchives: ... })` **only when the archive UI route mounts** (the "View Season History" / `/leagues/:seasonId/archive` entry point). It is also added on the write path during a "Start New Season" archive action, then closed when that action completes.
-- The collection is removed via `collection.close()` **only on archive-UI route unmount** (component cleanup). Use `close()`, never `db.removeCollection()` (which would be destructive).
-- This keeps `seasonArchives` out of the steady-state count. The v4 steady-state is 12; the transient peak while the archive UI is mounted is 13 — exactly at the future RxDB 13-cap with zero headroom. Closing on unmount is therefore mandatory, not optional.
-- See `data-model.md` §RxDB collection-count budget for the full rationale.
+- **Refcounted single-owner handle.** Both archive-UI mount and the "Start New Season" archive-write path acquire `seasonArchives` via a shared helper:
+  - `acquireSeasonArchives(): Promise<RxCollection>` — if no in-process handle exists, calls `db.addCollections({ seasonArchives })` (using the existing `getDb()` singleton, never a new `RxDatabase`) and stores the handle. If a handle already exists, increments a refcount and returns the same handle. Idempotent: safe under React StrictMode dev-mode double-mount and against concurrent acquisitions racing.
+  - `releaseSeasonArchives(): Promise<void>` — decrements the refcount. When it drops to zero, calls `collection.close()` (which decrements `OPEN_COLLECTIONS` per `rxdb@17.0.0-beta.7` `rx-collection.js:615`) and clears the handle.
+
+- **StrictMode + overlap safety.** With the refcount in place, archive-UI mount/unmount cycles and a concurrent "Start New Season" archive write share the same open collection — neither path can `close()` it out from under the other. Closing only fires after the last release.
+- **Wipe-and-recreate reset.** If `getDb()` triggers the `DB6`/`DM4` wipe-and-recreate path (`src/storage/db.ts:152-155`), the refcount and handle MUST be reset to zero/null without calling `close()` on the now-dead collection. The next `acquireSeasonArchives()` call will re-`addCollections` against the fresh DB.
+- **Never use a separate `RxDatabase`.** Lazy-opening into a second `RxDatabase` instance does NOT bypass the cap (the `OPEN_COLLECTIONS` Set in `rx-collection.js:21` is process-global). The lazy path always uses the existing `getDb()` singleton.
 
 ### Recovery / read path
 
@@ -148,6 +151,7 @@ When v4 ships, instrument doc counts in dev tools. If a typical user with 5+ com
 - **Unit**: single-byte mutation in `compressed` produces `fnv1a` mismatch → surfaces named error string, doc is NOT deleted.
 - **Integration**: archive + recovery produces identical history-screen output.
 - **Integration**: after closing the archive UI route, `OPEN_COLLECTIONS.size` returns to the steady-state count (assert exact integer equality — not "less than 16" — so the lazy-open contract regression-tests itself if v4 quietly adds another always-open collection).
+- **Integration:** refcount discipline — mount the archive UI route, then trigger a "Start New Season" archive write while the route is still mounted, then unmount the route, then complete the archive write → assert `OPEN_COLLECTIONS.size` returns to the steady-state count exactly once (after the last release), and that no `addCollections` re-throw occurred mid-overlap. Cover React StrictMode dev-mode double-mount in a separate case.
 
 ---
 

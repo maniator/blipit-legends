@@ -47,7 +47,7 @@ vi.mock("@feat/saves/hooks/useSaveStore", () => ({
 { version: 1, /* properties added/changed */ }
 ```
 
-**Last-resort fallback** (`getDb()` in `src/storage/db.ts`): if `initDb()` throws with RxError code `DB6` (hash mismatch at same version) or `DM4` (migration strategy execution failed), the entire database is wiped and recreated, and a user-facing reset notice is shown. This fallback exists only as a safety net — it must never be the primary recovery path. Every schema change must have a proper migration strategy so the fallback never fires.
+**Last-resort fallback** (`getDb()` in `src/storage/db.ts`): if `initDb()` throws with RxError code `DB6` (hash mismatch at same version) or `DM4` (migration strategy execution failed), the entire database is wiped and recreated, and a user-facing reset notice is shown. This fallback exists only as a safety net — it must never be the primary recovery path. Every schema change must have a proper migration strategy so the fallback never fires. Lazy-opened collections (e.g. league-mode's `seasonArchives`, see `docs/league-mode/awards-and-archive.md` §Lazy-open operational contract) MUST reset their in-memory refcount and handle to zero/null on a wipe-and-recreate — **without** calling `close()` on the now-dead collection. The next `acquireXxx()` call will re-`addCollections` against the fresh DB.
 
 ### Upgrade checklist
 
