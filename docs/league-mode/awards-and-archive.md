@@ -136,6 +136,22 @@ On every read of a `seasonArchives` doc:
 - **Wipe-and-recreate reset.** If `getDb()` triggers the `DB6`/`DM4` wipe-and-recreate path (`src/storage/db.ts:152-155`), the refcount and handle MUST be reset to zero/null without calling `close()` on the now-dead collection. The next `acquireSeasonArchives()` call will re-`addCollections` against the fresh DB.
 - **Never use a separate `RxDatabase`.** Lazy-opening into a second `RxDatabase` instance does NOT bypass the cap (the `OPEN_COLLECTIONS` Set in `rx-collection.js:21` is process-global). The lazy path always uses the existing `getDb()` singleton.
 
+### Archived-season replay-bootstrap (v4, behind `featureFlags.allowReplay`)
+
+When the user replays an archived season (decision #23), the source `seasonGames` / `seasonPlayerState` / `seasonTransactions` rows have already been deleted (decision #22 + this doc's archive policy). Replay must bootstrap from `seasonArchives` instead.
+
+The contract:
+
+1. **Open via the shared lazy handle.** Replay-bootstrap calls `acquireSeasonArchives()` (the same refcounted helper the archive UI uses — see §Lazy-open operational contract above). It does NOT call `db.addCollections({ seasonArchives })` directly. If the archive UI is concurrently mounted, both paths share the single open handle; neither can `close()` it while the other is still holding a reference.
+
+2. **`derivedSeed[]` from the decompressed archive is authoritative — never recomputed.** `seasonArchives` stores the season's compressed `seasonGames[]` (per `data-model.md` §`seasonArchives`), which includes each game's pre-computed `derivedSeed`. Replay bootstrap MUST read `derivedSeed` directly from the decompressed payload and pass it to `reinitSeed()` per game. Recomputing via `deriveScheduledGameSeed(seasonId, seasonGameId)` would in theory yield identical seeds today — but if `deriveScheduledGameSeed` ever changes (algorithm tweak, salting, hash family swap) the archive ↔ live derivation would silently diverge and replay would no longer reproduce the original season pitch-for-pitch. This is the same invariant as risk #3 (seeded-determinism) carried into the archived-season case.
+
+3. **Decompress + checksum-verify before any read.** The archive's `checksum` field (FNV-1a of `canonicalJSON(archivedData)` pre-gzip) is verified BEFORE replay reads any field. Mismatch surfaces "archive corrupted — replay unavailable" without deleting the archive (manual recovery preserved per decision #22's existing contract).
+
+4. **Release on replay end.** The replay session calls `releaseSeasonArchives()` when the user exits replay or the season's last game finishes. If the archive UI was mounted throughout, the refcount stays >0 and the collection remains open — that's the desired behavior.
+
+5. **Replay does NOT re-write to live collections.** Decision #22's archive contract already specifies the archive is for display/replay only, never re-hydrated into `seasons` / `seasonGames` / etc. Replay reconstructs in-memory game state from the decompressed events and runs the simulator as if live — but every result is discarded. The original archived season's `awards[]`, standings, and stats are immutable history.
+
 ### Recovery / read path
 
 A "View Season History" feature on a completed season checks for the source docs first; if missing, decompresses from `seasonArchives` and reconstructs in-memory for display only (not re-written to RxDB).
