@@ -117,7 +117,7 @@ export const StealClampNotice = styled.div`
   left: 0;
   right: 0;
   z-index: 9998;
-  background: ${({ theme }) => theme.colors.bgInfo ?? theme.colors.bgWarn};
+  background: ${({ theme }) => theme.colors.bgWarn};
   color: ${({ theme }) => theme.colors.textPrimary};
   padding: ${({ theme }) => theme.spacing.s10} ${({ theme }) => theme.spacing.lg};
   display: flex;
