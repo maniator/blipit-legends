@@ -55,6 +55,38 @@ export const checkGameInvariants = (state: State): InvariantViolation[] => {
     }
   }
 
+  // Batter index must not exceed the lineup length (relevant for non-9 custom rosters).
+  for (let t = 0; t < 2; t++) {
+    const len = state.lineupOrder[t as 0 | 1]?.length ?? 9;
+    const idx = state.batterIndex[t as 0 | 1];
+    if (len > 0 && idx >= len) {
+      violations.push({ message: `Team ${t} batterIndex ${idx} >= lineupOrder.length ${len}` });
+    }
+  }
+
+  // baseRunnerIds must be consistent with baseLayout.
+  const runnerIds = state.baseRunnerIds ?? [null, null, null];
+  for (let b = 0; b < 3; b++) {
+    const hasRunner = state.baseLayout[b as 0 | 1 | 2] === 1;
+    const hasId = runnerIds[b] != null;
+    // If layout says occupied but ID is null, that's OK for stock teams (IDs may be unset).
+    // If layout says empty but ID is non-null, that IS an inconsistency.
+    if (!hasRunner && hasId) {
+      violations.push({
+        message: `baseRunnerIds[${b}]=${runnerIds[b]} but baseLayout[${b}]=0`,
+      });
+    }
+  }
+
+  // No two runners can share the same non-null ID.
+  const nonNullIds = runnerIds.filter((id): id is string => id != null);
+  const uniqueIds = new Set(nonNullIds);
+  if (uniqueIds.size !== nonNullIds.length) {
+    violations.push({
+      message: `Duplicate player IDs in baseRunnerIds: ${JSON.stringify(runnerIds)}`,
+    });
+  }
+
   return violations;
 };
 

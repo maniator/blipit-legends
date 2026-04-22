@@ -91,4 +91,74 @@ describe("checkGameInvariants", () => {
     const v = checkGameInvariants(state);
     expect(v.length).toBeGreaterThanOrEqual(3);
   });
+
+  // --- New invariants (Bug 4) ---
+
+  it("detects batterIndex >= lineupOrder.length for non-9 custom roster", () => {
+    // lineupOrder has 7 players, batterIndex[0]=7 is out of range
+    const state = makeState({
+      batterIndex: [7, 0],
+      lineupOrder: [["a", "b", "c", "d", "e", "f", "g"], []],
+    });
+    const v = checkGameInvariants(state);
+    expect(
+      v.some(
+        (x) => x.message.includes("batterIndex") && x.message.includes(">= lineupOrder.length"),
+      ),
+    ).toBe(true);
+  });
+
+  it("accepts batterIndex within lineupOrder bounds for custom roster", () => {
+    const state = makeState({
+      batterIndex: [6, 0],
+      lineupOrder: [["a", "b", "c", "d", "e", "f", "g"], []],
+    });
+    expect(checkGameInvariants(state)).toEqual([]);
+  });
+
+  it("detects baseRunnerIds entry non-null when baseLayout says empty", () => {
+    const state = makeState({
+      baseLayout: [0, 0, 0],
+      baseRunnerIds: ["player1", null, null],
+    });
+    const v = checkGameInvariants(state);
+    expect(
+      v.some(
+        (x) => x.message.includes("baseRunnerIds[0]") && x.message.includes("baseLayout[0]=0"),
+      ),
+    ).toBe(true);
+  });
+
+  it("accepts baseRunnerIds null when baseLayout says empty", () => {
+    const state = makeState({
+      baseLayout: [0, 0, 0],
+      baseRunnerIds: [null, null, null],
+    });
+    expect(checkGameInvariants(state)).toEqual([]);
+  });
+
+  it("accepts baseRunnerIds occupied with a non-null ID", () => {
+    const state = makeState({
+      baseLayout: [1, 0, 0],
+      baseRunnerIds: ["player1", null, null],
+    });
+    expect(checkGameInvariants(state)).toEqual([]);
+  });
+
+  it("detects duplicate player IDs in baseRunnerIds", () => {
+    const state = makeState({
+      baseLayout: [1, 1, 0],
+      baseRunnerIds: ["player1", "player1", null],
+    });
+    const v = checkGameInvariants(state);
+    expect(v.some((x) => x.message.includes("Duplicate player IDs in baseRunnerIds"))).toBe(true);
+  });
+
+  it("accepts distinct player IDs in baseRunnerIds", () => {
+    const state = makeState({
+      baseLayout: [1, 1, 0],
+      baseRunnerIds: ["player1", "player2", null],
+    });
+    expect(checkGameInvariants(state)).toEqual([]);
+  });
 });

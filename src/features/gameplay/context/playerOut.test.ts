@@ -34,11 +34,18 @@ describe("playerOut", () => {
     expect(next.gameOver).toBe(true);
   });
 
-  it("resets strikes and balls on out", () => {
+  it("resets strikes and balls when batterCompleted=true (batter out)", () => {
     const { log } = makeLogs();
-    const next = playerOut(makeState({ outs: 0, strikes: 2, balls: 3 }), log);
+    const next = playerOut(makeState({ outs: 0, strikes: 2, balls: 3 }), log, true);
     expect(next.strikes).toBe(0);
     expect(next.balls).toBe(0);
+  });
+
+  it("preserves strikes and balls when batterCompleted=false (caught stealing — MLB rule 5.06(b)(4)(G))", () => {
+    const { log } = makeLogs();
+    const next = playerOut(makeState({ outs: 0, strikes: 2, balls: 3 }), log, false);
+    expect(next.strikes).toBe(2);
+    expect(next.balls).toBe(3);
   });
 
   it("does NOT rotate batting order when batterCompleted=false (caught stealing)", () => {
@@ -53,7 +60,7 @@ describe("playerOut", () => {
     expect(next.batterIndex[0]).toBe(3);
   });
 
-  it("does NOT increment outsPitched or battersFaced when batterCompleted=false (caught stealing)", () => {
+  it("DOES increment outsPitched but NOT battersFaced when batterCompleted=false (caught stealing / DP runner out)", () => {
     const { log } = makeLogs();
     const pitcherEntry = {
       teamIdx: 1 as 0 | 1,
@@ -76,8 +83,8 @@ describe("playerOut", () => {
       log,
       false,
     );
-    expect(next.pitcherGameLog![1][0].outsPitched).toBe(5); // unchanged — runner out, not batter out
-    expect(next.pitcherGameLog![1][0].battersFaced).toBe(7); // unchanged
+    expect(next.pitcherGameLog![1][0].outsPitched).toBe(6); // incremented — the runner out counts toward IP
+    expect(next.pitcherGameLog![1][0].battersFaced).toBe(7); // unchanged — batter's PA is not over
   });
 
   it("DOES increment outsPitched and battersFaced when batterCompleted=true (strikeout)", () => {
@@ -116,6 +123,35 @@ describe("playerOut", () => {
     expect(next.atBat).toBe(1);
     expect(next.batterIndex[0]).toBe(6);
     expect(next.batterIndex[1]).toBe(0);
+  });
+
+  it("6-4-3 double play: pitcher receives 2 outsPitched total (first call batterCompleted=false, second true)", () => {
+    const { log } = makeLogs();
+    const pitcherEntry = {
+      teamIdx: 1 as 0 | 1,
+      pitcherId: "p1",
+      inningEntered: 1,
+      halfEntered: 0 as 0 | 1,
+      scoreOnEntry: [0, 0] as [number, number],
+      outsPitched: 0,
+      battersFaced: 0,
+      pitchesThrown: 0,
+      hitsAllowed: 0,
+      walksAllowed: 0,
+      strikeoutsRecorded: 0,
+      runsAllowed: 0,
+      homersAllowed: 0,
+    };
+    // atBat=0 → away batting → home pitching (teamIdx=1)
+    const state0 = makeState({ atBat: 0, outs: 0, pitcherGameLog: [[], [pitcherEntry]] });
+    // First call: runner forced out at 2nd (batterCompleted=false) — first out of the DP
+    const state1 = playerOut(state0, log, false);
+    expect(state1.pitcherGameLog![1][0].outsPitched).toBe(1); // runner out counted
+    expect(state1.pitcherGameLog![1][0].battersFaced).toBe(0); // batter PA not over
+    // Second call: batter thrown out at 1st (batterCompleted=true) — second out of the DP
+    const state2 = playerOut(state1, log, true);
+    expect(state2.pitcherGameLog![1][0].outsPitched).toBe(2); // 2/3 IP credited
+    expect(state2.pitcherGameLog![1][0].battersFaced).toBe(1); // batter PA now complete
   });
 });
 

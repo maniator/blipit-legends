@@ -198,12 +198,18 @@ export function makeAiPitchingDecision(
     fatigueFactor >= fatigueFactor_MEDIUM &&
     (state.inning >= 7 || isTightGame || hasRunnersOn);
 
+  // Always consume one RNG draw unconditionally so the PRNG sequence is stable
+  // regardless of whether the managerMode flag is on or off. The conditional
+  // random() in the original code desynchronizes the PRNG when managerMode
+  // toggles between sessions on the same seed.
+  const pullRoll = random();
+
   if (!isHighFatigue && !isMediumFatigue) return { kind: "none" };
 
   const pullProbability = isHighFatigue
     ? Math.min(1, 0.6 + (fatigueFactor - fatigueFactor_HIGH) * 2.5)
     : 0.4;
-  if (random() > pullProbability) return { kind: "none" };
+  if (pullRoll > pullProbability) return { kind: "none" };
 
   const relieverIdx = findMatchupAwareReliever(state, {
     pitchingTeamIdx,

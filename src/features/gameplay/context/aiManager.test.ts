@@ -290,6 +290,24 @@ describe("makeAiPitchingDecision", () => {
     const decision = makeAiPitchingDecision(state, 1, { sp1: "SP", rp1: "RP" }, 0);
     expect(decision.kind).toBe("none");
   });
+
+  it("PRNG unconditional draw: random() is called exactly once even for a fresh pitcher (early-return path)", () => {
+    // This verifies Bug 3 fix: the RNG draw must be consumed on EVERY call to
+    // makeAiPitchingDecision regardless of fatigue level, so that toggling
+    // managerMode on/off between sessions with the same seed does not
+    // desynchronize the PRNG sequence.
+    const spy = vi.spyOn(rng, "random").mockReturnValue(0.5);
+    const state = makeState({
+      pitcherPitchCount: [0, 5], // fresh pitcher — well below any fatigue threshold
+      pitcherBattersFaced: [0, 0],
+      rosterPitchers: [[], ["sp1", "rp1"]],
+      activePitcherIdx: [0, 0],
+      substitutedOut: [[], []],
+    });
+    const decision = makeAiPitchingDecision(state, 1, { sp1: "SP", rp1: "RP" });
+    expect(decision.kind).toBe("none");
+    expect(spy).toHaveBeenCalledTimes(1); // draw consumed unconditionally
+  });
 });
 
 describe("makeAiTacticalDecision", () => {

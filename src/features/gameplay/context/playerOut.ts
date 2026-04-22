@@ -123,10 +123,11 @@ export const playerOut = (
       pitchingTeam,
       (entry) => ({
         ...entry,
-        // Only credit the pitcher with this out when the batter's plate appearance is over.
-        // Caught-stealing / pickoff outs (batterCompleted=false) are runner outs and do
-        // not count toward innings pitched (IP) or batters faced.
-        outsPitched: batterCompleted ? entry.outsPitched + 1 : entry.outsPitched,
+        // Credit the pitcher with this out regardless of whether the batter's PA is over.
+        // A runner put out (e.g. caught stealing, or the lead runner in a 6-4-3 DP where
+        // batterCompleted=false) still counts as an out the pitcher recorded toward IP.
+        // battersFaced only increments when the batter's plate appearance is complete.
+        outsPitched: entry.outsPitched + 1,
         battersFaced: batterCompleted ? entry.battersFaced + 1 : entry.battersFaced,
       }),
     ),
@@ -149,8 +150,10 @@ export const playerOut = (
   // and are reset in nextHalfInning.
   return {
     ...stateWithPitcherOut,
-    strikes: 0,
-    balls: 0,
+    // Only reset the count when the batter's at-bat is over.
+    // On a caught stealing (batterCompleted=false) the same batter remains at the
+    // plate, so the count (strikes/balls) must survive. MLB rule 5.06(b)(4)(G).
+    ...(batterCompleted ? { strikes: 0, balls: 0 } : {}),
     outs: newOuts,
     pendingDecision: null,
     onePitchModifier: null,
