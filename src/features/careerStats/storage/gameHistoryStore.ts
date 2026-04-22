@@ -476,9 +476,9 @@ function buildStore(getDbFn: GetDb) {
       ...homeRows.map((r) => r.toJSON() as CompletedGameRecord),
       ...awayRows.map((r) => r.toJSON() as CompletedGameRecord),
     ];
-    const docs = Array.from(
-      new Map(mergedDocs.map((doc) => [doc.id, doc] as const)).values(),
-    ).sort((a, b) => a.playedAt - b.playedAt);
+    const docs = Array.from(new Map(mergedDocs.map((doc) => [doc.id, doc] as const)).values()).sort(
+      (a, b) => a.playedAt - b.playedAt || a.id.localeCompare(b.id),
+    );
 
     let wins = 0;
     let losses = 0;
