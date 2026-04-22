@@ -477,7 +477,9 @@ function buildStore(getDbFn: GetDb) {
       ...awayRows.map((r) => r.toJSON() as CompletedGameRecord),
     ];
     const docs = Array.from(new Map(mergedDocs.map((doc) => [doc.id, doc] as const)).values()).sort(
-      (a, b) => a.playedAt - b.playedAt || a.id.localeCompare(b.id),
+      // Ordinal id tiebreaker for equal playedAt (e.g. batch imports) — avoids
+      // locale-sensitivity across JS engines and OS environments.
+      (a, b) => a.playedAt - b.playedAt || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
     );
 
     let wins = 0;
@@ -490,6 +492,9 @@ function buildStore(getDbFn: GetDb) {
     const gameResults: ("W" | "L" | "T")[] = [];
 
     for (const doc of docs) {
+      // When homeTeamId === awayTeamId (self-matchup import), isHome is always true,
+      // so runsScored = homeScore and runsAllowed = awayScore. This is deterministic
+      // and intentional; the dedup above ensures such a game is counted exactly once.
       const isHome = doc.homeTeamId === teamId;
       const rs = isHome ? doc.homeScore : doc.awayScore;
       const ra = isHome ? doc.awayScore : doc.homeScore;
