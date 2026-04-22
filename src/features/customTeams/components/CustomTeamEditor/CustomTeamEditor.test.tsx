@@ -327,6 +327,139 @@ describe("CustomTeamEditor — create mode", () => {
   });
 });
 
+describe("CustomTeamEditor — Phase 2A error summary", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders exactly one error summary block when save is clicked with errors", async () => {
+    renderEditor();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("custom-team-save-button"));
+    });
+    const summaries = screen.getAllByTestId("custom-team-editor-error-summary");
+    expect(summaries.length).toBe(1);
+    // Legacy bottom-of-form duplicate must not exist.
+    expect(screen.queryByTestId("custom-team-save-error-hint")).toBeNull();
+  });
+
+  it("uses singular 'issue' heading copy when exactly 1 issue, plural otherwise", async () => {
+    renderEditor();
+    // Generate a valid roster, then break exactly ONE field (name) → 1 issue.
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("custom-team-regenerate-defaults-button"));
+    });
+    const nameInput = screen.getByTestId("custom-team-name-input") as HTMLInputElement;
+    await waitFor(() => expect(nameInput.value.length).toBeGreaterThan(0));
+    fireEvent.change(nameInput, { target: { value: "" } });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("custom-team-save-button"));
+    });
+    expect(document.getElementById("form-error-heading")?.textContent).toBe(
+      "1 issue to fix before saving",
+    );
+
+    // Break a second field too → plural.
+    fireEvent.change(screen.getByTestId("custom-team-abbreviation-input"), {
+      target: { value: "" },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("custom-team-save-button"));
+    });
+    expect(document.getElementById("form-error-heading")?.textContent).toMatch(
+      /^\d+ issues to fix before saving$/,
+    );
+  });
+
+  it("moves focus to the summary heading on submit-with-errors", async () => {
+    renderEditor();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("custom-team-save-button"));
+    });
+    const heading = document.getElementById("form-error-heading");
+    expect(heading).not.toBeNull();
+    expect(document.activeElement).toBe(heading);
+  });
+
+  it("disables the Save button after a failed submit attempt and re-enables once errors clear", async () => {
+    renderEditor();
+    const saveBtn = screen.getByTestId("custom-team-save-button") as HTMLButtonElement;
+    // Before first submit, save is enabled.
+    expect(saveBtn.disabled).toBe(false);
+    expect(saveBtn.getAttribute("aria-disabled")).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(saveBtn);
+    });
+
+    expect(saveBtn.disabled).toBe(true);
+    expect(saveBtn.getAttribute("aria-disabled")).toBe("true");
+    expect(saveBtn.getAttribute("title")).toBe("Fix the errors above to save");
+
+    // Generating defaults clears every validation error → button re-enables.
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("custom-team-regenerate-defaults-button"));
+    });
+    const nameInput = screen.getByTestId("custom-team-name-input") as HTMLInputElement;
+    await waitFor(() => expect(nameInput.value.length).toBeGreaterThan(0));
+    await waitFor(() => expect(saveBtn.disabled).toBe(false));
+  });
+
+  it("anchor link in the summary moves focus to the target field", async () => {
+    renderEditor();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("custom-team-save-button"));
+    });
+    const links = screen
+      .getByTestId("custom-team-editor-error-summary")
+      .querySelectorAll("a[data-target-id='ct-name']");
+    expect(links.length).toBeGreaterThan(0);
+    const link = links[0] as HTMLAnchorElement;
+    fireEvent.click(link);
+    expect(document.activeElement?.id).toBe("ct-name");
+  });
+
+  it("inline field error renders only after blur (pre-submit)", async () => {
+    renderEditor();
+    // No inline error on first paint.
+    expect(screen.queryByTestId("err-ct-name")).toBeNull();
+    const nameInput = screen.getByTestId("custom-team-name-input");
+    fireEvent.blur(nameInput);
+    // After blur, ct-name's inline error renders (because state.name is empty).
+    expect(screen.getByTestId("err-ct-name")).toBeTruthy();
+    // Untouched abbreviation still has no inline message.
+    expect(screen.queryByTestId("err-ct-abbrev")).toBeNull();
+  });
+
+  it("inline message copy is the SHORT per-field complement, not the summary copy", async () => {
+    renderEditor();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("custom-team-save-button"));
+    });
+    const inline = screen.getByTestId("err-ct-name").textContent ?? "";
+    const summary = screen.getByTestId("custom-team-editor-error-summary").textContent ?? "";
+    expect(inline).toBe("Required.");
+    // Summary contains the long-form copy and MUST differ from the inline copy.
+    expect(summary).toContain("Team name is required");
+    expect(summary).not.toBe(inline);
+  });
+
+  it("announces 'All errors resolved' when transitioning errors → 0", async () => {
+    renderEditor();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("custom-team-save-button"));
+    });
+    // Generate a valid roster which should resolve every validation issue.
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("custom-team-regenerate-defaults-button"));
+    });
+    await waitFor(() => {
+      const live = screen.getByTestId("custom-team-editor-resolved-announcement");
+      expect(live.textContent).toBe("All errors resolved");
+    });
+  });
+});
+
 describe("CustomTeamEditor — edit mode", () => {
   const makePlayer = (id: string, name: string, position: string) => ({
     id,

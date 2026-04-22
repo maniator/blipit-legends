@@ -388,15 +388,86 @@ export const initEditorState = (team?: TeamWithRoster): EditorState => ({
   error: "",
 });
 
-/** Validates the state and returns an error string or empty string if valid. */
-export function validateEditorState(state: EditorState): string {
-  if (!state.name.trim()) return "Team name is required.";
+/**
+ * Stable DOM ids for sections used as anchor targets when a validation
+ * issue does not have a single specific input element to point to.
+ *
+ * Phase 2A — keep IDs co-located with the validator that emits them so
+ * field-id ↔ DOM target stays in sync.
+ */
+export const LINEUP_SECTION_FIELD_ID = "custom-team-lineup-section";
+export const BENCH_SECTION_FIELD_ID = "custom-team-bench-section";
+export const PITCHERS_SECTION_FIELD_ID = "custom-team-pitchers-section";
+
+/** A single validation problem surfaced in the form error summary. */
+export interface ValidationIssue {
+  /**
+   * Anchor target id. Empty string means no scroll target — the issue is
+   * still listed in the summary but rendered as plain text rather than a
+   * link. Field-level inline errors only render when `fieldId` matches a
+   * known input id (e.g. `ct-name`, `ct-abbrev`).
+   */
+  fieldId: string;
+  /** Long-form copy shown inside the summary list. */
+  summaryMessage: string;
+  /**
+   * Short per-field copy shown inline beneath the offending input. MUST
+   * NOT duplicate {@link summaryMessage} verbatim — it is the field-local
+   * complement to the canonical summary copy.
+   */
+  inlineMessage?: string;
+}
+
+/**
+ * Returns every validation issue for the current editor state, in the
+ * order they should appear in the top-of-form summary.
+ *
+ * Phase 2A: collects problems across categories instead of bailing on the
+ * first one. Per-row issues (empty name, dup name, over-cap stats) are
+ * limited to one issue per row to keep the summary scannable.
+ */
+export function collectValidationIssues(state: EditorState): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+
+  if (!state.name.trim()) {
+    issues.push({
+      fieldId: "ct-name",
+      summaryMessage: "Team name is required.",
+      inlineMessage: "Required.",
+    });
+  }
+
   const abbrev = state.abbreviation.trim();
-  if (!abbrev) return "Team abbreviation is required (2–3 characters).";
-  if (abbrev.length < 2 || abbrev.length > 3) return "Team abbreviation must be 2–3 characters.";
-  if (state.lineup.length === 0) return "At least 1 lineup player is required.";
+  if (!abbrev) {
+    issues.push({
+      fieldId: "ct-abbrev",
+      summaryMessage: "Team abbreviation is required (2–3 characters).",
+      inlineMessage: "Required (2–3 characters).",
+    });
+  } else if (abbrev.length < 2 || abbrev.length > 3) {
+    issues.push({
+      fieldId: "ct-abbrev",
+      summaryMessage: "Team abbreviation must be 2–3 characters.",
+      inlineMessage: "Must be 2–3 characters.",
+    });
+  }
+
+  if (state.lineup.length === 0) {
+    issues.push({
+      fieldId: LINEUP_SECTION_FIELD_ID,
+      summaryMessage: "At least 1 lineup player is required.",
+    });
+  }
+
   for (const p of [...state.lineup, ...state.bench, ...state.pitchers]) {
-    if (!p.name.trim()) return "All players must have a name.";
+    if (!p.name.trim()) {
+      issues.push({
+        fieldId: `name-${p.id}`,
+        summaryMessage: "All players must have a name.",
+        inlineMessage: "Required.",
+      });
+      break;
+    }
   }
 
   // Enforce unique player names within the team (case-insensitive across all slots).
@@ -404,18 +475,26 @@ export function validateEditorState(state: EditorState): string {
     p.name.trim(),
   );
   const seenNamesMap = new Map<string, string>(); // lowercase → first-seen original-cased name
+  const seenIdsMap = new Map<string, string>(); // lowercase → first-seen player id
   const dupOriginals = new Set<string>();
+  let firstDupTargetId = "";
   for (const p of allPlayersForDup) {
     const lower = p.name.trim().toLowerCase();
     if (seenNamesMap.has(lower)) {
       dupOriginals.add(seenNamesMap.get(lower)!);
+      if (!firstDupTargetId) firstDupTargetId = `name-${p.id}`;
     } else {
       seenNamesMap.set(lower, p.name.trim());
+      seenIdsMap.set(lower, p.id);
     }
   }
   if (dupOriginals.size > 0) {
     const display = [...dupOriginals].map((n) => `"${n}"`).join(", ");
-    return `Duplicate player name(s) within this team: ${display}. Each player must have a unique name.`;
+    issues.push({
+      fieldId: firstDupTargetId,
+      summaryMessage: `Duplicate player name(s) within this team: ${display}. Each player must have a unique name.`,
+      inlineMessage: "Duplicate name.",
+    });
   }
 
   // Check starting lineup for duplicate or missing required positions.
@@ -428,10 +507,16 @@ export function validateEditorState(state: EditorState): string {
   );
   const missingLineupPos = DEFAULT_LINEUP_POSITIONS.filter((pos) => !lineupPosCounts.has(pos));
   if (duplicateLineupPos.length > 0) {
-    return `Starting lineup has duplicate position(s): ${duplicateLineupPos.join(", ")}. Each position must appear exactly once.`;
+    issues.push({
+      fieldId: LINEUP_SECTION_FIELD_ID,
+      summaryMessage: `Starting lineup has duplicate position(s): ${duplicateLineupPos.join(", ")}. Each position must appear exactly once.`,
+    });
   }
   if (missingLineupPos.length > 0) {
-    return `Starting lineup is missing position(s): ${missingLineupPos.join(", ")}.`;
+    issues.push({
+      fieldId: LINEUP_SECTION_FIELD_ID,
+      summaryMessage: `Starting lineup is missing position(s): ${missingLineupPos.join(", ")}.`,
+    });
   }
 
   // Check that all required field positions are covered in lineup + bench.
@@ -439,14 +524,21 @@ export function validateEditorState(state: EditorState): string {
   const coveredPositions = new Set(fieldPlayers.map((p) => p.position).filter(Boolean));
   const missingPositions = REQUIRED_FIELD_POSITIONS.filter((pos) => !coveredPositions.has(pos));
   if (missingPositions.length > 0) {
-    return `Roster must include at least one player at each of: ${missingPositions.join(", ")}.`;
+    issues.push({
+      fieldId: BENCH_SECTION_FIELD_ID,
+      summaryMessage: `Roster must include at least one player at each of: ${missingPositions.join(", ")}.`,
+    });
   }
 
   // Check hitter stat cap (contact + power + speed ≤ HITTER_STAT_CAP).
   for (const player of [...state.lineup, ...state.bench]) {
     const total = hitterStatTotal(player.contact, player.power, player.speed);
     if (total > HITTER_STAT_CAP) {
-      return `${player.name || "A hitter"} is over the stat cap (${total} / ${HITTER_STAT_CAP}).`;
+      issues.push({
+        fieldId: `name-${player.id}`,
+        summaryMessage: `${player.name || "A hitter"} is over the stat cap (${total} / ${HITTER_STAT_CAP}).`,
+      });
+      break;
     }
   }
 
@@ -457,15 +549,35 @@ export function validateEditorState(state: EditorState): string {
       player.control === undefined ||
       player.movement === undefined
     ) {
-      return `${player.name || "A pitcher"} is missing pitching stats.`;
+      issues.push({
+        fieldId: `name-${player.id}`,
+        summaryMessage: `${player.name || "A pitcher"} is missing pitching stats.`,
+      });
+      break;
     }
     const total = pitcherStatTotal(player.velocity, player.control, player.movement);
     if (total > PITCHER_STAT_CAP) {
-      return `${player.name || "A pitcher"} is over the stat cap (${total} / ${PITCHER_STAT_CAP}).`;
+      issues.push({
+        fieldId: `name-${player.id}`,
+        summaryMessage: `${player.name || "A pitcher"} is over the stat cap (${total} / ${PITCHER_STAT_CAP}).`,
+      });
+      break;
     }
   }
 
-  return "";
+  return issues;
+}
+
+/**
+ * Backward-compatible single-string validator. Returns the first issue's
+ * summary message, or an empty string when the state is valid.
+ *
+ * Prefer {@link collectValidationIssues} for new call sites that need to
+ * surface every issue at once (e.g. the form error summary block).
+ */
+export function validateEditorState(state: EditorState): string {
+  const issues = collectValidationIssues(state);
+  return issues.length > 0 ? issues[0].summaryMessage : "";
 }
 
 /** Maps EditorState to CreateCustomTeamInput. */

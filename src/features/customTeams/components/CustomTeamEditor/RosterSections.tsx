@@ -141,7 +141,11 @@ export const LineupFormSection: React.FunctionComponent<LineupFormSectionProps> 
 }) => {
   const { setNodeRef } = useDroppable({ id: LINEUP_DROPPABLE_ID });
   return (
-    <FormSection ref={setNodeRef} data-testid="custom-team-lineup-section">
+    <FormSection
+      ref={setNodeRef}
+      id="custom-team-lineup-section"
+      data-testid="custom-team-lineup-section"
+    >
       <SectionHeading>Lineup (drag to reorder; drag to/from Bench)</SectionHeading>
       {pendingPlayerImport?.section === "lineup" && (
         <DuplicateBanner
@@ -217,7 +221,11 @@ export const BenchFormSection: React.FunctionComponent<BenchFormSectionProps> = 
 }) => {
   const { setNodeRef } = useDroppable({ id: BENCH_DROPPABLE_ID });
   return (
-    <FormSection ref={setNodeRef} data-testid="custom-team-bench-section">
+    <FormSection
+      ref={setNodeRef}
+      id="custom-team-bench-section"
+      data-testid="custom-team-bench-section"
+    >
       <SectionHeading>Bench (drag to reorder; drag to/from Lineup)</SectionHeading>
       {pendingPlayerImport?.section === "bench" && (
         <DuplicateBanner
@@ -295,7 +303,7 @@ export const PitchersSection: React.FunctionComponent<PitchersSectionProps> = ({
   newlyAddedPlayerId,
   onAddPlayerWithDefaults,
 }) => (
-  <FormSection data-testid="custom-team-pitchers-section">
+  <FormSection id="custom-team-pitchers-section" data-testid="custom-team-pitchers-section">
     <SectionHeading>Pitchers (drag to reorder)</SectionHeading>
     {pendingPlayerImport?.section === "pitchers" && (
       <DuplicateBanner
