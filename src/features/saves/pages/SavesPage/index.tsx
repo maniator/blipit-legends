@@ -17,6 +17,7 @@ import {
   EmptyState,
   ErrorMessage,
   FileInput,
+  HelperText,
   ImportSection,
   ImportSectionTitle,
   LoadingState,
@@ -51,10 +52,26 @@ const SavesPage: React.FunctionComponent = () => {
     handleFileImport,
     handlePasteImport,
     handlePasteFromClipboard,
+    markBlurred,
+    notePaste,
+    canImport,
+    helperText,
+    helperTone,
+    importAnnouncement,
   } = useImportSave({
     importFn: SaveStore.importRxdbSave.bind(SaveStore),
     onSuccess: onLoadSave,
   });
+
+  const helperId = "saves-page-import-helper";
+  const importInvalid = helperTone === "error";
+  const savesHeadingRef = React.useRef<HTMLHeadingElement | null>(null);
+  // Move focus to the saves list heading on a successful import so screen
+  // readers land on the freshly-updated content rather than back at the
+  // disabled CTA. Skip the initial null → null transition.
+  React.useEffect(() => {
+    if (importAnnouncement) savesHeadingRef.current?.focus();
+  }, [importAnnouncement]);
 
   const loadSaves = React.useCallback(() => {
     setLoading(true);
@@ -105,6 +122,26 @@ const SavesPage: React.FunctionComponent = () => {
 
       <PageTitle>💾 Exhibition Saves</PageTitle>
 
+      <h2
+        ref={savesHeadingRef}
+        tabIndex={-1}
+        data-testid="saves-list-heading"
+        style={{
+          color: "inherit",
+          fontSize: "inherit",
+          margin: 0,
+          padding: 0,
+          position: "absolute",
+          width: 1,
+          height: 1,
+          overflow: "hidden",
+          clip: "rect(0 0 0 0)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        Saved games
+      </h2>
+
       {loading ? (
         <LoadingState>Loading saves…</LoadingState>
       ) : saves.length === 0 ? (
@@ -135,16 +172,29 @@ const SavesPage: React.FunctionComponent = () => {
           <PasteTextarea
             value={pasteJson}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPasteJson(e.target.value)}
+            onBlur={markBlurred}
+            onPaste={notePaste}
             placeholder='{"version":1,"header":{…},"events":[…],"sig":"…"}'
             data-testid="paste-save-textarea"
             aria-label="Paste save JSON"
+            aria-describedby={helperId}
+            aria-invalid={importInvalid || undefined}
           />
+          <HelperText
+            $tone={helperTone}
+            id={helperId}
+            data-testid="paste-save-helper"
+            data-tone={helperTone}
+          >
+            <span role="status">{importAnnouncement ?? helperText}</span>
+          </HelperText>
           <PasteActions>
             <ActionBtn
               type="button"
               $variant="primary"
               onClick={handlePasteImport}
-              disabled={importing}
+              disabled={!canImport}
+              aria-describedby={helperId}
               data-testid="paste-save-button"
             >
               {importing ? "Importing…" : "Import from text"}
