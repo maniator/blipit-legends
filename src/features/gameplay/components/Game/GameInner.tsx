@@ -13,7 +13,7 @@ import type { GameAction, Strategy } from "@feat/gameplay/context/index";
 import { useGameContext } from "@feat/gameplay/context/index";
 import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
 import {
-  DEFAULT_MANAGER_DECISION_VALUES,
+  getDefaultDecisionValues,
   sanitizeManagerDecisionValues,
   STEAL_PCT_MIN,
 } from "@feat/gameplay/context/managerDecisionValues";
@@ -109,7 +109,9 @@ const GameInner: React.FunctionComponent<Props> = ({
   const [strategy, setStrategy] = useLocalStorage<Strategy>("strategy", "balanced");
   const [currentDecisionValues, setDecisionValues] = useLocalStorage<ManagerDecisionValues>(
     "managerDecisionValues",
-    DEFAULT_MANAGER_DECISION_VALUES,
+    // Use getDefaultDecisionValues() so the A/B experiment variant is respected
+    // when no value is stored in localStorage yet.
+    getDefaultDecisionValues(),
   );
 
   // Custom team docs for resolving display names when restoring legacy saves.
@@ -205,11 +207,8 @@ const GameInner: React.FunctionComponent<Props> = ({
     setDecisionValues(
       setup.decisionValues != null
         ? sanitizeManagerDecisionValues(setup.decisionValues)
-        : DEFAULT_MANAGER_DECISION_VALUES,
+        : getDefaultDecisionValues(),
     );
-    rxSaveIdRef.current = rxAutoSave.id;
-    // If the restored save was already FINAL, mark it so history sync skips re-commit.
-    setWasAlreadyFinalOnLoad(snap.state.gameOver === true);
     setGameActive(true);
     onGameSessionStarted?.();
   }, [
@@ -378,7 +377,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     setDecisionValues(
       setup.decisionValues != null
         ? sanitizeManagerDecisionValues(setup.decisionValues)
-        : DEFAULT_MANAGER_DECISION_VALUES,
+        : getDefaultDecisionValues(),
     );
 
     rxSaveIdRef.current = pendingLoadSave.id;
@@ -441,7 +440,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       setDecisionValues(
         setup.decisionValues != null
           ? sanitizeManagerDecisionValues(setup.decisionValues)
-          : DEFAULT_MANAGER_DECISION_VALUES,
+          : getDefaultDecisionValues(),
       );
 
       rxSaveIdRef.current = slot.id;

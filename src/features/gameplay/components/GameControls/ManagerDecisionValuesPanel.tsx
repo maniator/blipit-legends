@@ -63,12 +63,20 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
   const [open, setOpen] = React.useState(false);
   const [confirmReset, setConfirmReset] = React.useState(false);
   const toggleRef = React.useRef<HTMLButtonElement>(null);
+  const closeBtnRef = React.useRef<HTMLButtonElement>(null);
   const titleId = React.useId();
 
   // Notify parent so it can pause/restore the sim while the panel is open.
   React.useEffect(() => {
     onOpenChange?.(open);
   }, [open, onOpenChange]);
+
+  // Move focus into the dialog when it opens (WCAG 2.1 APG dialog pattern).
+  // Focus the ✕ close button so keyboard users can dismiss immediately or Tab
+  // into the controls. Focus is restored to the toggle on close (see closePanel).
+  React.useEffect(() => {
+    if (open) closeBtnRef.current?.focus();
+  }, [open]);
 
   // Clear confirm-reset state when the panel closes.
   React.useEffect(() => {
@@ -142,6 +150,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             <DecisionPanelTitleRow>
               <DecisionPanelTitle id={titleId}>Manager &amp; AI Decision Values</DecisionPanelTitle>
               <DecisionPanelClose
+                ref={closeBtnRef}
                 type="button"
                 aria-label="Close Decision Tuning panel"
                 onClick={closePanel}
