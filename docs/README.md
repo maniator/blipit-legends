@@ -9,7 +9,7 @@ This directory contains the main engineering and contributor reference docs for 
 | [repo-layout.md](repo-layout.md)               | Full directory tree, file descriptions, path aliases                                                                                                                                                   |
 | [rxdb-persistence.md](rxdb-persistence.md)     | RxDB setup, schema versioning, collections, SaveStore/CustomTeamStore APIs, fingerprints, export/import bundles                                                                                        |
 | [e2e-testing.md](e2e-testing.md)               | Playwright projects, E2E helpers, `data-testid` reference, visual snapshots, CI workflows, save fixtures                                                                                               |
-| [league-mode/README.md](league-mode/README.md) | **League Mode** — concise implementation contracts and phased roadmap for league foundations first, realism layers later                                                                               |
+| [league-mode/README.md](league-mode/README.md) | **League Mode** — full v0–v4 plan, locked decisions, data model, setup wizard, autogeneration, fatigue & injuries, playoffs & trades, awards, routing, UI reuse, risks                                 |
 
 ---
 
