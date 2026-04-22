@@ -12,6 +12,10 @@ import { useNavigate } from "react-router";
 
 import {
   CareerContainer,
+  CareerEmptyBody,
+  CareerEmptyCtaBtn,
+  CareerEmptyHeading,
+  CareerEmptyStateRegion,
   EmptyState,
   PageTitle,
   TabBar,
@@ -25,6 +29,7 @@ import {
 const CareerStatsPage: React.FunctionComponent = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState<CareerStatsTab>("batting");
+  const emptyHeadingRef = React.useRef<HTMLHeadingElement | null>(null);
 
   const {
     avgLeader,
@@ -34,6 +39,7 @@ const CareerStatsPage: React.FunctionComponent = () => {
     eraLeader,
     hrLeader,
     isEmpty,
+    noCompletedGames,
     noTeams,
     pitchingRows,
     rbiLeader,
@@ -65,6 +71,14 @@ const CareerStatsPage: React.FunctionComponent = () => {
     [navigate, selectedTeamId],
   );
 
+  // Move SR focus to the empty-state heading on first paint when there are
+  // zero completed games — gives screen-reader users immediate context.
+  React.useEffect(() => {
+    if (noCompletedGames && emptyHeadingRef.current) {
+      emptyHeadingRef.current.focus();
+    }
+  }, [noCompletedGames]);
+
   return (
     <CareerContainer data-testid="career-stats-page">
       <PageHeader>
@@ -75,7 +89,27 @@ const CareerStatsPage: React.FunctionComponent = () => {
 
       <PageTitle>📊 Career Stats</PageTitle>
 
-      {noTeams ? (
+      {noCompletedGames ? (
+        <CareerEmptyStateRegion
+          role="region"
+          aria-labelledby="career-empty-heading"
+          data-testid="career-stats-empty-state"
+        >
+          <CareerEmptyHeading id="career-empty-heading" ref={emptyHeadingRef} tabIndex={-1}>
+            No games yet
+          </CareerEmptyHeading>
+          <CareerEmptyBody>
+            Play your first game to start tracking career stats for every player and team.
+          </CareerEmptyBody>
+          <CareerEmptyCtaBtn
+            type="button"
+            data-testid="career-stats-empty-play-ball"
+            onClick={() => navigate("/exhibition/new")}
+          >
+            Play Ball
+          </CareerEmptyCtaBtn>
+        </CareerEmptyStateRegion>
+      ) : noTeams ? (
         <EmptyState data-testid="career-stats-no-teams">
           No teams yet. Create a team and play a completed game to see career stats.
         </EmptyState>

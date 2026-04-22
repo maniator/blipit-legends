@@ -17,6 +17,7 @@ export function useCareerStatsData() {
   const selectedTeamId = routeTeamId ?? "";
 
   const [teamsWithHistory, setTeamsWithHistory] = React.useState<string[]>([]);
+  const [historyLoaded, setHistoryLoaded] = React.useState(false);
   const [battingRows, setBattingRows] = React.useState<BattingRow[]>([]);
   const [pitchingRows, setPitchingRows] = React.useState<PitchingRow[]>([]);
   const [dataLoading, setDataLoading] = React.useState(false);
@@ -68,8 +69,10 @@ export function useCareerStatsData() {
           ids.add(row.awayTeamId);
         }
         setTeamsWithHistory(Array.from(ids));
+        setHistoryLoaded(true);
       } catch {
         // Silently degrade — history just won't include non-custom teams.
+        if (!cancelled) setHistoryLoaded(true);
       }
     }
 
@@ -153,6 +156,13 @@ export function useCareerStatsData() {
 
   const noTeams = !teamsLoading && selectableTeamIds.length === 0;
 
+  /**
+   * True when the user has played zero completed games globally — the destination
+   * for the always-visible Home → "Career stats" entry should render an
+   * accessible empty state in this case rather than empty tables.
+   */
+  const noCompletedGames = historyLoaded && teamsWithHistory.length === 0;
+
   return {
     avgLeader,
     battingRows,
@@ -161,6 +171,7 @@ export function useCareerStatsData() {
     eraLeader,
     hrLeader,
     isEmpty,
+    noCompletedGames,
     noTeams,
     pitchingRows,
     rbiLeader,

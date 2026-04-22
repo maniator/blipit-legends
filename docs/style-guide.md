@@ -995,10 +995,19 @@ one or the other for that field, never both with identical copy.
 
 ```css
 text-align: center;
-padding: 40px;
-color: #666;
-font-size: 14px;
+padding: spacing.s40;
+color: textSubdued;
+font-size: fontSizes.md;
 ```
+
+The accessible "no completed games" empty state on the Career Stats page
+(`src/features/careerStats/pages/CareerStatsPage/styles.ts` →
+`CareerEmptyStateRegion`, `CareerEmptyHeading`, `CareerEmptyBody`,
+`CareerEmptyCtaBtn`) layers on top of these tokens with an `<h2>` headline
+(`textBody` / `fontSizes.h3`), a body paragraph (`textMuted` / `fontSizes.sub`,
+`max-width: 38ch`), and a §4.4 Play Ball CTA. The region is wrapped in
+`role="region" aria-labelledby="career-empty-heading"` and the heading carries
+`tabindex="-1"` so it can receive focus on first paint for screen-reader users.
 
 ![Saves page — empty state](screenshots/style-guide/saves-empty-state.png)
 _Saves page empty state and page layout_

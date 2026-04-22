@@ -9,27 +9,37 @@ describe("HomeScreen", () => {
   const noop = vi.fn();
 
   it("renders the home screen", () => {
-    render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} />);
+    render(
+      <HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} onCareerStats={noop} />,
+    );
     expect(screen.getByTestId("home-screen")).toBeInTheDocument();
   });
 
   it("shows the New Game button", () => {
-    render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} />);
+    render(
+      <HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} onCareerStats={noop} />,
+    );
     expect(screen.getByTestId("home-new-game-button")).toBeInTheDocument();
   });
 
   it("shows the Load Saved Game button", () => {
-    render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} />);
+    render(
+      <HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} onCareerStats={noop} />,
+    );
     expect(screen.getByTestId("home-load-saves-button")).toBeInTheDocument();
   });
 
   it("shows the Manage Teams button", () => {
-    render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} />);
+    render(
+      <HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} onCareerStats={noop} />,
+    );
     expect(screen.getByTestId("home-manage-teams-button")).toBeInTheDocument();
   });
 
   it("does NOT show Resume button when onResumeCurrent is not provided", () => {
-    render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} />);
+    render(
+      <HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} onCareerStats={noop} />,
+    );
     expect(screen.queryByTestId("home-resume-current-game-button")).not.toBeInTheDocument();
   });
 
@@ -39,6 +49,7 @@ describe("HomeScreen", () => {
         onNewGame={noop}
         onLoadSaves={noop}
         onManageTeams={noop}
+        onCareerStats={noop}
         onResumeCurrent={noop}
       />,
     );
@@ -47,21 +58,42 @@ describe("HomeScreen", () => {
 
   it("calls onNewGame when New Game button is clicked", () => {
     const onNewGame = vi.fn();
-    render(<HomeScreen onNewGame={onNewGame} onLoadSaves={noop} onManageTeams={noop} />);
+    render(
+      <HomeScreen
+        onNewGame={onNewGame}
+        onLoadSaves={noop}
+        onManageTeams={noop}
+        onCareerStats={noop}
+      />,
+    );
     fireEvent.click(screen.getByTestId("home-new-game-button"));
     expect(onNewGame).toHaveBeenCalled();
   });
 
   it("calls onLoadSaves when Load Saved Game button is clicked", () => {
     const onLoadSaves = vi.fn();
-    render(<HomeScreen onNewGame={noop} onLoadSaves={onLoadSaves} onManageTeams={noop} />);
+    render(
+      <HomeScreen
+        onNewGame={noop}
+        onLoadSaves={onLoadSaves}
+        onManageTeams={noop}
+        onCareerStats={noop}
+      />,
+    );
     fireEvent.click(screen.getByTestId("home-load-saves-button"));
     expect(onLoadSaves).toHaveBeenCalled();
   });
 
   it("calls onManageTeams when Manage Teams button is clicked", () => {
     const onManageTeams = vi.fn();
-    render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={onManageTeams} />);
+    render(
+      <HomeScreen
+        onNewGame={noop}
+        onLoadSaves={noop}
+        onManageTeams={onManageTeams}
+        onCareerStats={noop}
+      />,
+    );
     fireEvent.click(screen.getByTestId("home-manage-teams-button"));
     expect(onManageTeams).toHaveBeenCalled();
   });
@@ -73,6 +105,7 @@ describe("HomeScreen", () => {
         onNewGame={noop}
         onLoadSaves={noop}
         onManageTeams={noop}
+        onCareerStats={noop}
         onResumeCurrent={onResumeCurrent}
       />,
     );
@@ -81,35 +114,50 @@ describe("HomeScreen", () => {
   });
 
   it("does NOT show Help button when onHelp is not provided", () => {
-    render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} />);
+    render(
+      <HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} onCareerStats={noop} />,
+    );
     expect(screen.queryByTestId("home-help-button")).not.toBeInTheDocument();
   });
 
   it("shows Help button when onHelp is provided", () => {
-    render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} onHelp={noop} />);
+    render(
+      <HomeScreen
+        onNewGame={noop}
+        onLoadSaves={noop}
+        onManageTeams={noop}
+        onCareerStats={noop}
+        onHelp={noop}
+      />,
+    );
     expect(screen.getByTestId("home-help-button")).toBeInTheDocument();
   });
 
   it("calls onHelp when Help button is clicked", () => {
     const onHelp = vi.fn();
-    render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} onHelp={onHelp} />);
+    render(
+      <HomeScreen
+        onNewGame={noop}
+        onLoadSaves={noop}
+        onManageTeams={noop}
+        onCareerStats={noop}
+        onHelp={onHelp}
+      />,
+    );
     fireEvent.click(screen.getByTestId("home-help-button"));
     expect(onHelp).toHaveBeenCalled();
   });
 
-  it("does NOT show Career Stats button when onCareerStats is not provided", () => {
-    render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} />);
-    expect(screen.queryByTestId("home-career-stats-button")).not.toBeInTheDocument();
-  });
-
-  it("shows Career Stats button when onCareerStats is provided", () => {
+  it("always shows Career stats button (visible regardless of game history)", () => {
     render(
       <HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} onCareerStats={noop} />,
     );
-    expect(screen.getByTestId("home-career-stats-button")).toBeInTheDocument();
+    const btn = screen.getByTestId("home-career-stats-button");
+    expect(btn).toBeInTheDocument();
+    expect(btn).toHaveTextContent(/career stats/i);
   });
 
-  it("calls onCareerStats when Career Stats button is clicked", () => {
+  it("calls onCareerStats when Career stats button is clicked", () => {
     const onCareerStats = vi.fn();
     render(
       <HomeScreen
@@ -123,7 +171,7 @@ describe("HomeScreen", () => {
     expect(onCareerStats).toHaveBeenCalled();
   });
 
-  it("renders Career Stats above Manage Teams when available", () => {
+  it("renders Career stats above Manage Teams", () => {
     const { container } = render(
       <HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} onCareerStats={noop} />,
     );
@@ -140,13 +188,21 @@ describe("HomeScreen", () => {
   });
 
   it("does NOT show Contact button when onContact is not provided", () => {
-    render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} />);
+    render(
+      <HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} onCareerStats={noop} />,
+    );
     expect(screen.queryByTestId("home-contact-button")).not.toBeInTheDocument();
   });
 
   it("shows Contact button when onContact is provided", () => {
     render(
-      <HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} onContact={noop} />,
+      <HomeScreen
+        onNewGame={noop}
+        onLoadSaves={noop}
+        onManageTeams={noop}
+        onCareerStats={noop}
+        onContact={noop}
+      />,
     );
     expect(screen.getByTestId("home-contact-button")).toBeInTheDocument();
   });
@@ -154,21 +210,31 @@ describe("HomeScreen", () => {
   it("calls onContact when Contact button is clicked", () => {
     const onContact = vi.fn();
     render(
-      <HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} onContact={onContact} />,
+      <HomeScreen
+        onNewGame={noop}
+        onLoadSaves={noop}
+        onManageTeams={noop}
+        onCareerStats={noop}
+        onContact={onContact}
+      />,
     );
     fireEvent.click(screen.getByTestId("home-contact-button"));
     expect(onContact).toHaveBeenCalled();
   });
 
   it("shows creator attribution link", () => {
-    render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} />);
+    render(
+      <HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} onCareerStats={noop} />,
+    );
     const creatorLink = screen.getByRole("link", { name: /naftali.dev/i });
     expect(creatorLink).toBeInTheDocument();
     expect(creatorLink).toHaveAttribute("href", "https://naftali.dev");
   });
 
   it("always shows the League play coming soon teaser", () => {
-    render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} />);
+    render(
+      <HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} onCareerStats={noop} />,
+    );
     expect(screen.getByTestId("league-play-teaser")).toBeInTheDocument();
     expect(screen.getByText(/league play coming soon/i)).toBeInTheDocument();
   });
