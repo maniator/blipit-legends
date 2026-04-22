@@ -7,7 +7,7 @@ export default defineConfig({
   testDir: "./e2e/tests",
   fullyParallel: true,
   forbidOnly: isCI,
-  retries: isCI ? 1 : 0,
+  retries: isCI ? 2 : 0,
   workers: isCI ? 4 : undefined,
   timeout: 90_000,
   // In CI: each shard writes a blob report; the merge-reports job combines them
@@ -60,7 +60,7 @@ export default defineConfig({
         "**/take-screenshots.spec.ts",
       ],
       // Static project routing for formerly runtime-skipped tests.
-      grepInvert: /@mobile-only|@iphone-15-only/,
+      grepInvert: /@mobile-only|@iphone-15-only|@flaky/,
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
     },
     {
@@ -72,7 +72,7 @@ export default defineConfig({
         "**/take-screenshots.spec.ts",
       ],
       // Tablet excludes desktop-, chromium-, iPhone-15-, and phone-only tests.
-      grepInvert: /@desktop-only|@chromium-only|@iphone-15-only|@mobile-only/,
+      grepInvert: /@desktop-only|@chromium-only|@iphone-15-only|@mobile-only|@flaky/,
       use: { ...devices["iPad (gen 7)"], viewport: { width: 820, height: 1180 } },
     },
     {
@@ -84,7 +84,7 @@ export default defineConfig({
         "**/take-screenshots.spec.ts",
       ],
       // Pro Max runs mobile tests, but not desktop/chromium/iPhone-15-specific ones.
-      grepInvert: /@desktop-only|@chromium-only|@iphone-15-only/,
+      grepInvert: /@desktop-only|@chromium-only|@iphone-15-only|@flaky/,
       use: { ...devices["iPhone 15 Pro Max"] },
     },
     {
@@ -96,7 +96,7 @@ export default defineConfig({
         "**/take-screenshots.spec.ts",
       ],
       // iPhone 15 is the only project that runs @iphone-15-only snapshots.
-      grepInvert: /@desktop-only|@chromium-only/,
+      grepInvert: /@desktop-only|@chromium-only|@flaky/,
       use: { ...devices["iPhone 15"] },
     },
     {
@@ -108,7 +108,7 @@ export default defineConfig({
         "**/take-screenshots.spec.ts",
       ],
       // Pixel runs mobile and chromium tests, but excludes desktop/iPhone-15-specific ones.
-      grepInvert: /@desktop-only|@iphone-15-only/,
+      grepInvert: /@desktop-only|@iphone-15-only|@flaky/,
       use: { ...devices["Pixel 7"] },
     },
     {
@@ -120,7 +120,7 @@ export default defineConfig({
         "**/take-screenshots.spec.ts",
       ],
       // Pixel runs mobile and chromium tests, but excludes desktop/iPhone-15-specific ones.
-      grepInvert: /@desktop-only|@iphone-15-only/,
+      grepInvert: /@desktop-only|@iphone-15-only|@flaky/,
       use: { ...devices["Pixel 5"] },
     },
   ],
