@@ -3,6 +3,7 @@ import * as React from "react";
 import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
 import {
   DEFAULT_MANAGER_DECISION_VALUES,
+  getDefaultDecisionValues,
   STEAL_PCT_MAX,
   STEAL_PCT_MIN,
 } from "@feat/gameplay/context/managerDecisionValues";
@@ -10,10 +11,12 @@ import TouchTooltip from "@shared/components/TouchTooltip";
 
 import {
   DecisionPanelClose,
+  DecisionPanelFooter,
   DecisionPanelSection,
   DecisionPanelTitle,
   DecisionPanelTitleRow,
   DecisionResetButton,
+  DecisionResetConfirmRow,
   DecisionRow,
   DecisionRowLabel,
   DecisionRowValue,
@@ -43,6 +46,14 @@ interface Props {
  */
 const MODERN_DEADBAND = 4;
 
+/** Returns true when every field of `values` matches the current defaults. */
+const isAtDefaults = (values: ManagerDecisionValues): boolean => {
+  const defaults = getDefaultDecisionValues();
+  return (Object.keys(defaults) as Array<keyof ManagerDecisionValues>).every(
+    (key) => values[key] === defaults[key],
+  );
+};
+
 const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
   values,
   onChange,
@@ -50,13 +61,29 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
   onOpenChange,
 }) => {
   const [open, setOpen] = React.useState(false);
+  const [confirmReset, setConfirmReset] = React.useState(false);
   const toggleRef = React.useRef<HTMLButtonElement>(null);
+  const closeBtnRef = React.useRef<HTMLButtonElement>(null);
+  const resetBtnRef = React.useRef<HTMLButtonElement>(null);
   const titleId = React.useId();
+  const pitchingTicksHintId = React.useId();
 
   // Notify parent so it can pause/restore the sim while the panel is open.
   React.useEffect(() => {
     onOpenChange?.(open);
   }, [open, onOpenChange]);
+
+  // Move focus into the dialog when it opens (WCAG 2.1 APG dialog pattern).
+  // Focus the ✕ close button so keyboard users can dismiss immediately or Tab
+  // into the controls. Focus is restored to the toggle on close (see closePanel).
+  React.useEffect(() => {
+    if (open) closeBtnRef.current?.focus();
+  }, [open]);
+
+  // Clear confirm-reset state when the panel closes.
+  React.useEffect(() => {
+    if (!open) setConfirmReset(false);
+  }, [open]);
 
   // Close on Escape and restore focus to the toggle for keyboard users.
   React.useEffect(() => {
@@ -88,6 +115,12 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
     onChange({ ...values, [key]: val });
   };
 
+  /** First click on "Reset to defaults" enters confirmation mode. */
+  const handleResetClick = () => {
+    setConfirmReset(true);
+  };
+
+  const atDefaults = isAtDefaults(values);
   const stealDisabled = !values.stealEnabled;
 
   return (
@@ -99,7 +132,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
         aria-expanded={open}
         data-testid="manager-decision-tuning-toggle"
       >
-        ⚙️ Decision Tuning {open ? "▲" : "▼"}
+        ⚙️ Decision Tuning{atDefaults ? " · defaults" : ""} {open ? "▲" : "▼"}
       </DecisionTuningToggle>
 
       {open && (
@@ -110,6 +143,13 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             aria-label="Close Decision Tuning panel"
             onClick={closePanel}
           />
+          {/*
+           * TODO (accessibility): A full focus trap is recommended for aria-modal dialogs
+           * (WCAG APG dialog pattern). Currently focus is moved into the dialog on open
+           * and restored on close, but keyboard users can Tab out of the panel without
+           * dismissing it. A future pass should wrap the panel content in a focus-trap
+           * library or a custom useFocusTrap hook.
+           */}
           <DecisionTuningPanel
             role="dialog"
             aria-modal="true"
@@ -119,6 +159,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             <DecisionPanelTitleRow>
               <DecisionPanelTitle id={titleId}>Manager &amp; AI Decision Values</DecisionPanelTitle>
               <DecisionPanelClose
+                ref={closeBtnRef}
                 type="button"
                 aria-label="Close Decision Tuning panel"
                 onClick={closePanel}
@@ -160,7 +201,9 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                   value={values.stealMinOfferPct}
                   onChange={(e) => set("stealMinOfferPct", Number(e.target.value))}
                   aria-label="Steal offer threshold"
-                  aria-disabled={stealDisabled}
+                  // aria-disabled omitted: the `disabled` HTML attribute already communicates
+                  // disabled state to AT. aria-disabled is only needed when preserving keyboard
+                  // focus while visually indicating disabled state, which is not the intent here.
                   disabled={stealDisabled}
                   data-testid="manager-steal-min-pct-slider"
                 />
@@ -183,7 +226,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                   value={values.aiStealThreshold}
                   onChange={(e) => set("aiStealThreshold", Number(e.target.value))}
                   aria-label="AI steal threshold"
-                  aria-disabled={stealDisabled}
+                  // aria-disabled omitted: same reason as steal-min-offer-pct above.
                   disabled={stealDisabled}
                   data-testid="ai-steal-threshold-slider"
                 />
@@ -259,15 +302,51 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                   AI pitching aggressiveness
                   <TouchTooltip label="0 = old-school (complete games), 50 = modern MLB, 100 = bullpen-first." />
                 </DecisionRowLabel>
+                {/*
+                 * datalist provides semantic tick marks at the three named
+                 * positions (Old-school / Modern / Bullpen) without replacing
+                 * the free-range slider. Labels match the DecisionRowValue display so
+                 * users see consistent terminology at the tick anchors.
+                 * Browser support is ≥ Chrome 20, Firefox 4, Safari 12.1.
+                 */}
+                <datalist id="ai-pitching-aggressiveness-ticks">
+                  <option value="0" label="Old-school" />
+                  <option value="50" label="Modern" />
+                  <option value="100" label="Bullpen" />
+                </datalist>
+                {/*
+                 * Visually-hidden fallback description for the three anchor points.
+                 * datalist tick labels are not reliably exposed by all screen readers,
+                 * so aria-describedby on the slider references this text to ensure
+                 * the Old-school / Modern / Bullpen scale is always discoverable via AT.
+                 */}
+                <span
+                  id={pitchingTicksHintId}
+                  style={{
+                    position: "absolute",
+                    width: "1px",
+                    height: "1px",
+                    padding: 0,
+                    margin: "-1px",
+                    overflow: "hidden",
+                    clip: "rect(0,0,0,0)",
+                    whiteSpace: "nowrap",
+                    border: 0,
+                  }}
+                >
+                  Scale: 0 = Old-school (complete games), 50 = Modern MLB, 100 = Bullpen-first
+                </span>
                 <input
                   id="ai-pitching-aggressiveness"
                   type="range"
                   min={0}
                   max={100}
                   step={5}
+                  list="ai-pitching-aggressiveness-ticks"
                   value={values.aiPitchingChangeAggressiveness}
                   onChange={(e) => set("aiPitchingChangeAggressiveness", Number(e.target.value))}
                   aria-label="AI pitching change aggressiveness"
+                  aria-describedby={pitchingTicksHintId}
                   data-testid="ai-pitching-aggressiveness-slider"
                 />
                 <DecisionRowValue data-testid="ai-pitching-aggressiveness-value">
@@ -290,13 +369,55 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
               </DecisionRow>
             </DecisionPanelSection>
 
-            <DecisionResetButton
-              type="button"
-              onClick={onReset}
-              data-testid="manager-decision-tuning-reset"
-            >
-              Reset to defaults
-            </DecisionResetButton>
+            {/*
+             * Footer — contains the reset action. On mobile, safe-area-inset-bottom
+             * padding ensures the buttons sit above the home-indicator bar on
+             * notched/swipe-gesture iPhones.
+             */}
+            <DecisionPanelFooter>
+              {confirmReset ? (
+                <DecisionResetConfirmRow data-testid="manager-decision-tuning-reset-confirm-row">
+                  <span>Reset to defaults?</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onReset();
+                      setConfirmReset(false);
+                    }}
+                    data-testid="manager-decision-tuning-reset-confirm"
+                  >
+                    Yes, reset
+                  </button>
+                  {/* autoFocus so keyboard users land on the safe option when
+                       the confirm row mounts (WCAG 2.4.3 focus order).
+                       onClick restores focus to the reset button so the
+                       dismiss cycle completes cleanly for keyboard users. */}
+                  <button
+                    type="button"
+                    autoFocus
+                    onClick={() => {
+                      setConfirmReset(false);
+                      // Restore focus to the reset button after the confirm row
+                      // unmounts so keyboard users don't lose their place.
+                      // Use setTimeout(0) to let React re-render first.
+                      setTimeout(() => resetBtnRef.current?.focus(), 0);
+                    }}
+                    data-testid="manager-decision-tuning-reset-cancel"
+                  >
+                    Cancel
+                  </button>
+                </DecisionResetConfirmRow>
+              ) : (
+                <DecisionResetButton
+                  ref={resetBtnRef}
+                  type="button"
+                  onClick={handleResetClick}
+                  data-testid="manager-decision-tuning-reset"
+                >
+                  Reset to defaults
+                </DecisionResetButton>
+              )}
+            </DecisionPanelFooter>
           </DecisionTuningPanel>
         </>
       )}

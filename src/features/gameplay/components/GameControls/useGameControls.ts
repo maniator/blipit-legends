@@ -4,7 +4,7 @@ import type { PitchingRole } from "@feat/gameplay/components/SubstitutionPanel";
 import { ContextValue, Strategy, useGameContext } from "@feat/gameplay/context/index";
 import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
 import {
-  DEFAULT_MANAGER_DECISION_VALUES,
+  getDefaultDecisionValues,
   sanitizeManagerDecisionValues,
 } from "@feat/gameplay/context/managerDecisionValues";
 import { useAutoPlayScheduler } from "@feat/gameplay/hooks/useAutoPlayScheduler";
@@ -43,7 +43,7 @@ export const useGameControls = ({
   const [managedTeam, setManagedTeam] = useLocalStorage<0 | 1>("managedTeam", 0);
   const [rawDecisionValues, setRawDecisionValues] = useLocalStorage<Partial<ManagerDecisionValues>>(
     "managerDecisionValues",
-    DEFAULT_MANAGER_DECISION_VALUES,
+    getDefaultDecisionValues(),
   );
   // paused is session-only — no persistence needed. useState is guaranteed
   // reactive; useLocalStorage was unreliable here due to useSyncExternalStore
@@ -172,7 +172,7 @@ export const useGameControls = ({
   );
 
   const resetDecisionValues = React.useCallback(() => {
-    setRawDecisionValues(DEFAULT_MANAGER_DECISION_VALUES);
+    setRawDecisionValues(getDefaultDecisionValues());
   }, [setRawDecisionValues]);
 
   return {
