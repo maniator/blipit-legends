@@ -35,6 +35,10 @@ import { FieldPanel, GameBody, GameDiv, LogPanel, StealClampNotice } from "./sty
  * Module-level flag: set to `true` the first time the steal-clamp toast fires
  * so it never shows more than once per browser session.  Cleared only on a
  * full page reload (i.e. module re-evaluation).
+ *
+ * **Assumption:** only one `GameInner` instance exists in the React tree at a
+ * time (enforced by the app's single-game routing model).  In tests, use
+ * `vi.resetModules()` if you need to reset this flag between test cases.
  */
 let _stealClampToastShown = false;
 
