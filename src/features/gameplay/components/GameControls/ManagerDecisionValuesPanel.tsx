@@ -3,6 +3,7 @@ import * as React from "react";
 import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
 import {
   DEFAULT_MANAGER_DECISION_VALUES,
+  getDefaultDecisionValues,
   STEAL_PCT_MAX,
   STEAL_PCT_MIN,
 } from "@feat/gameplay/context/managerDecisionValues";
@@ -10,10 +11,12 @@ import TouchTooltip from "@shared/components/TouchTooltip";
 
 import {
   DecisionPanelClose,
+  DecisionPanelFooter,
   DecisionPanelSection,
   DecisionPanelTitle,
   DecisionPanelTitleRow,
   DecisionResetButton,
+  DecisionResetConfirmRow,
   DecisionRow,
   DecisionRowLabel,
   DecisionRowValue,
@@ -43,6 +46,14 @@ interface Props {
  */
 const MODERN_DEADBAND = 4;
 
+/** Returns true when every field of `values` matches the current defaults. */
+const isAtDefaults = (values: ManagerDecisionValues): boolean => {
+  const defaults = getDefaultDecisionValues();
+  return (Object.keys(defaults) as Array<keyof ManagerDecisionValues>).every(
+    (key) => values[key] === defaults[key],
+  );
+};
+
 const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
   values,
   onChange,
@@ -50,6 +61,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
   onOpenChange,
 }) => {
   const [open, setOpen] = React.useState(false);
+  const [confirmReset, setConfirmReset] = React.useState(false);
   const toggleRef = React.useRef<HTMLButtonElement>(null);
   const titleId = React.useId();
 
@@ -57,6 +69,11 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
   React.useEffect(() => {
     onOpenChange?.(open);
   }, [open, onOpenChange]);
+
+  // Clear confirm-reset state when the panel closes.
+  React.useEffect(() => {
+    if (!open) setConfirmReset(false);
+  }, [open]);
 
   // Close on Escape and restore focus to the toggle for keyboard users.
   React.useEffect(() => {
@@ -88,6 +105,16 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
     onChange({ ...values, [key]: val });
   };
 
+  const handleResetClick = () => {
+    if (!confirmReset) {
+      setConfirmReset(true);
+    } else {
+      onReset();
+      setConfirmReset(false);
+    }
+  };
+
+  const atDefaults = isAtDefaults(values);
   const stealDisabled = !values.stealEnabled;
 
   return (
@@ -99,7 +126,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
         aria-expanded={open}
         data-testid="manager-decision-tuning-toggle"
       >
-        ⚙️ Decision Tuning {open ? "▲" : "▼"}
+        ⚙️ Decision Tuning{atDefaults ? " · defaults" : ""} {open ? "▲" : "▼"}
       </DecisionTuningToggle>
 
       {open && (
@@ -259,12 +286,24 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                   AI pitching aggressiveness
                   <TouchTooltip label="0 = old-school (complete games), 50 = modern MLB, 100 = bullpen-first." />
                 </DecisionRowLabel>
+                {/*
+                 * datalist provides semantic tick marks at the three named
+                 * positions (Passive / Balanced / Aggressive) without replacing
+                 * the free-range slider. Browser support is ≥ Chrome 20,
+                 * Firefox 4, Safari 12.1.
+                 */}
+                <datalist id="ai-pitching-aggressiveness-ticks">
+                  <option value="0" label="Passive" />
+                  <option value="50" label="Balanced" />
+                  <option value="100" label="Aggressive" />
+                </datalist>
                 <input
                   id="ai-pitching-aggressiveness"
                   type="range"
                   min={0}
                   max={100}
                   step={5}
+                  list="ai-pitching-aggressiveness-ticks"
                   value={values.aiPitchingChangeAggressiveness}
                   onChange={(e) => set("aiPitchingChangeAggressiveness", Number(e.target.value))}
                   aria-label="AI pitching change aggressiveness"
@@ -290,13 +329,43 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
               </DecisionRow>
             </DecisionPanelSection>
 
-            <DecisionResetButton
-              type="button"
-              onClick={onReset}
-              data-testid="manager-decision-tuning-reset"
-            >
-              Reset to defaults
-            </DecisionResetButton>
+            {/*
+             * Footer — contains the reset action. On mobile, safe-area-inset-bottom
+             * padding ensures the buttons sit above the home-indicator bar on
+             * notched/swipe-gesture iPhones.
+             */}
+            <DecisionPanelFooter>
+              {confirmReset ? (
+                <DecisionResetConfirmRow data-testid="manager-decision-tuning-reset-confirm-row">
+                  <span>Reset to defaults?</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onReset();
+                      setConfirmReset(false);
+                    }}
+                    data-testid="manager-decision-tuning-reset-confirm"
+                  >
+                    Yes, reset
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmReset(false)}
+                    data-testid="manager-decision-tuning-reset-cancel"
+                  >
+                    Cancel
+                  </button>
+                </DecisionResetConfirmRow>
+              ) : (
+                <DecisionResetButton
+                  type="button"
+                  onClick={handleResetClick}
+                  data-testid="manager-decision-tuning-reset"
+                >
+                  Reset to defaults
+                </DecisionResetButton>
+              )}
+            </DecisionPanelFooter>
           </DecisionTuningPanel>
         </>
       )}
