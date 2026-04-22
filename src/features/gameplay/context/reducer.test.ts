@@ -1351,7 +1351,7 @@ describe("defensive_shift decision", () => {
 
   it("without defensive shift, same random does NOT produce a ground out", () => {
     // Without shift: threshold 650. roll=700 → 700 >= 650 → single.
-    vi.spyOn(rngModule, "random").mockReturnValue(0.70);
+    vi.spyOn(rngModule, "random").mockReturnValue(0.7);
     const { state: shiftOff } = dispatchAction(makeState({ defensiveShift: false }), "hit", {
       battedBallType: "hard_grounder",
       strategy: "balanced",
@@ -2038,7 +2038,11 @@ describe("steal success pct with runner speed", () => {
     // Use lower stealMinOfferPct so both fast and slow runner steals are detected.
     // aggressive from 1st: base_pct=65*1.3; fast (speedFactor=1.1)→93, slow (speedFactor=0.9)→76.
     // Both > 70 threshold → steal offered for both; fast > slow.
-    const customValues = { ...DEFAULT_MANAGER_DECISION_VALUES, stealMinOfferPct: 70, aiStealThreshold: 65 };
+    const customValues = {
+      ...DEFAULT_MANAGER_DECISION_VALUES,
+      stealMinOfferPct: 70,
+      aiStealThreshold: 65,
+    };
     const fastDecision = detectDecision(fastState, "aggressive", true, customValues);
     const slowDecision = detectDecision(slowState, "aggressive", true, customValues);
     expect(fastDecision?.kind).toBe("steal");

@@ -109,8 +109,8 @@ test.describe("Manager Mode — Decision Tuning panel", () => {
 
     // ── Mutate state away from defaults ────────────────────────────────────
     // Range inputs respond to `.fill()` with the desired numeric value.
-    await slider.fill("80");
-    await expect(sliderValue).toHaveText("80%");
+    await slider.fill("70");
+    await expect(sliderValue).toHaveText("70%");
 
     await expect(stealToggle).toBeChecked();
     await stealToggle.uncheck();
@@ -119,9 +119,9 @@ test.describe("Manager Mode — Decision Tuning panel", () => {
     // ── Reset and verify defaults restored ─────────────────────────────────
     await resetButton.click();
 
-    // Default `stealMinOfferPct` is 72 (see DEFAULT_MANAGER_DECISION_VALUES).
-    await expect(sliderValue).toHaveText("72%");
-    await expect(slider).toHaveValue("72");
+    // Default `stealMinOfferPct` is 80 (raised from 72 in realism-tuning pass).
+    await expect(sliderValue).toHaveText("80%");
+    await expect(slider).toHaveValue("80");
     await expect(stealToggle).toBeChecked();
   });
 });

@@ -357,12 +357,12 @@ describe("handleBallInPlay — strategy effects", () => {
     // Default hrThreshold=720: roll=700 → triple. Power: hrThreshold=690 → HR.
     const state = makeState({ score: [0, 0] });
 
-    vi.spyOn(rngModule, "random").mockReturnValue(0.70); // roll=700
+    vi.spyOn(rngModule, "random").mockReturnValue(0.7); // roll=700
     const { logs: balancedLogs } = makeLogs();
     handleBallInPlay("deep_fly", state, balancedLogs.push.bind(balancedLogs));
     const isTriple = balancedLogs.some((l) => l.includes("triple"));
 
-    vi.spyOn(rngModule, "random").mockReturnValue(0.70); // roll=700 again
+    vi.spyOn(rngModule, "random").mockReturnValue(0.7); // roll=700 again
     const { logs: powerLogs } = makeLogs();
     handleBallInPlay("deep_fly", state, powerLogs.push.bind(powerLogs), { strategy: "power" });
     const isHR = powerLogs.some((l) => l.includes("home run") || l.includes("GONE"));
