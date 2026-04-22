@@ -13,6 +13,7 @@ import {
   EmptyMsg,
   ErrorMsg,
   FileInput,
+  HelperText,
   ImportArea,
   Row,
   SavesButton,
@@ -49,6 +50,12 @@ const SavesModal: React.FunctionComponent<Props> = (props) => {
     handleExport,
     handleImportPaste,
     handleFileImport,
+    markBlurred,
+    notePaste,
+    canImport,
+    helperText,
+    helperTone,
+    importAnnouncement,
     resolveSaveName,
     handleExportHistory,
     handleImportHistoryFile,
@@ -56,6 +63,12 @@ const SavesModal: React.FunctionComponent<Props> = (props) => {
     historyImportSuccess,
     exportingHistory,
   } = useSavesModal(props);
+
+  const helperId = "saves-modal-import-helper";
+  // aria-invalid only appears once the field has been blurred OR pasted
+  // into AND the contents fail the cheap envelope-shape check. helperTone
+  // already encodes both gates, so we can mirror it for the textarea.
+  const importInvalid = helperTone === "error";
 
   const handleClose = close;
 
@@ -132,14 +145,27 @@ const SavesModal: React.FunctionComponent<Props> = (props) => {
           placeholder="…or paste exported JSON here"
           value={importText}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setImportText(e.target.value)}
+          onBlur={markBlurred}
+          onPaste={notePaste}
           aria-label="Import save JSON"
+          aria-describedby={helperId}
+          aria-invalid={importInvalid || undefined}
           data-testid="import-save-textarea"
         />
+        <HelperText
+          $tone={helperTone}
+          id={helperId}
+          data-testid="import-save-helper"
+          data-tone={helperTone}
+        >
+          <span role="status">{importAnnouncement ?? helperText}</span>
+        </HelperText>
         {importError && <ErrorMsg data-testid="import-error">{importError}</ErrorMsg>}
         <Row>
           <SmallButton
             onClick={handleImportPaste}
-            disabled={!importText.trim() || importing}
+            disabled={!canImport}
+            aria-describedby={helperId}
             data-testid="import-save-button"
           >
             {importing ? "Importing…" : "Import from text"}
