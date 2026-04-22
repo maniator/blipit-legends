@@ -107,8 +107,8 @@ Import-time writes to `customTeams` happen **before** any `seasons` doc is resto
 RxDB has no cross-collection transactions, so a process crash between steps 3 and 5 can leave imported `customTeams` written but no `seasons` doc referencing them. The contract:
 
 - Each step uses `bulkUpsert` per collection so a single collection's writes are atomic.
-- Before step 3, write a tombstone marker doc to a dedicated `importInProgress` collection containing `{ bundleSig, startedAt, completedSteps: [] }`. Update `completedSteps` after each step succeeds. Delete the tombstone after step 5.
-- On every app boot, scan for any leftover `importInProgress` docs older than 5 minutes. If found: surface a "previous import was interrupted" notification and offer the user (a) resume from `completedSteps[-1]` if the bundle is still in localStorage, or (b) wipe the partial import (delete the imported `customTeams` by `id` prefix and the tombstone). Never silently leave the partially-imported state.
+- Before step 3, write a tombstone marker doc to a dedicated `importInProgress` collection (schema documented in `data-model.md` §`importInProgress`) containing `{ id, bundleSig, startedAt, completedSteps: [] }`. Update `completedSteps` after each step succeeds. Delete the tombstone after step 5.
+- On every app boot, scan for any leftover `importInProgress` docs older than 5 minutes. If found: surface a "previous import was interrupted" notification and offer the user **"wipe partial import"** — delete the orphaned imported `customTeams` (matched by `id` prefix or by re-derivation from the persisted bundle if available) and the tombstone. (A "resume" branch is intentionally not part of v1: import bundles arrive via a file picker and aren't persisted across reboots, so resuming would always require the user to re-pick the source file anyway. Keeping the recovery path single-branch — wipe only — avoids a half-implemented resume affordance.) Never silently leave the partially-imported state.
 - This is documented as a v1 acceptance criterion (`agent-prompts/v1.md` testing surface) so the work doesn't regress as later phases extend the import path.
 
 ## Testing surface

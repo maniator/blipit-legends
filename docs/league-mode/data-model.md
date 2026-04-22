@@ -190,6 +190,19 @@ Compressed archive of one completed season's `seasonGames` + `seasonTransactions
 
 `seasons` and `seasonAwards` are **not** archived — they remain queryable for the seasons list & history UI.
 
+### `importInProgress` (v1, infrastructure-only)
+
+Tombstone collection backing the partial-write recovery contract for the SaveStore v2 import path (see `save-export.md` §Partial-write recovery). One doc per in-flight import; deleted on import success.
+
+| Field            | Type              | Notes                                                                                                                                                                                          |
+| ---------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`             | string (primary)  | UUID/short token generated at import start.                                                                                                                                                    |
+| `bundleSig`      | string            | The `sig` of the bundle being imported, so the boot-time scan can attribute the tombstone to a specific source bundle for diagnostics.                                                         |
+| `startedAt`      | number (ms epoch) | Used by the boot scan's "older than 5 minutes" filter to avoid racing a still-running import in another tab.                                                                                   |
+| `completedSteps` | `string[]`        | Append-only log of step names from `save-export.md` §Sanctioned-write interaction (e.g., `["customTeams"]`). Boot-time recovery reads this to know what was already written and needs cleanup. |
+
+Indexes: `startedAt`. No FK relationships; no migration concerns (collection is brand new in v1).
+
 ## Additive fields on existing collections
 
 ### `customTeams` (additive — schema bump only when these land)
