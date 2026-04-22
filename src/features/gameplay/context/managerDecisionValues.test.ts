@@ -160,9 +160,8 @@ describe("getDefaultDecisionValues — A/B experiment flag", () => {
     expect(DEFAULT_MANAGER_DECISION_VALUES.aiStealThreshold).toBe(67);
   });
 
-  it("DEFAULT_MANAGER_DECISION_VALUES has aiPitchingChangeAggressiveness = 50 (Variant A baseline)", () => {
-    expect(DEFAULT_MANAGER_DECISION_VALUES.aiPitchingChangeAggressiveness).toBe(50);
-  });
+  // aiPitchingChangeAggressiveness = 50 is already covered in describe("DEFAULT_MANAGER_DECISION_VALUES")
+  // above; no duplicate needed here.
 
   it("Variant B values differ from Variant A on the three changed fields", async () => {
     // Simulate module re-load with Variant B flag set by reimporting with the
