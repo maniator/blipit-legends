@@ -7,6 +7,7 @@ import { createTestDb } from "@test/helpers/db";
 
 import {
   type BallgameDb,
+  _resetDbSingletonForTests,
   eventsCollection,
   getDb,
   playersCollection,
@@ -23,7 +24,13 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  await db.close();
+  // Guard: db may already be closed by a nested beforeEach (e.g., savesCollection helpers
+  // close the test DB before opening the singleton to stay within the OSS collection limit).
+  try {
+    await db.close();
+  } catch {
+    // Already closed — ignore.
+  }
 });
 
 describe("db collections", () => {
@@ -131,6 +138,19 @@ describe("getDb schema recovery behavior", () => {
 });
 
 describe("savesCollection / eventsCollection helpers (singleton)", () => {
+  // RxDB's OSS build limits concurrent collections to 16. With 11 collections per
+  // DB (createTestDb) + 11 for the getDb() singleton = 22, we'd exceed the limit.
+  // Close the per-test DB before the singleton is opened, then reset the singleton
+  // after each test so the next test's beforeEach starts with OPEN_COLLECTIONS empty.
+  beforeEach(async () => {
+    await db.close();
+  });
+
+  afterEach(async () => {
+    // Close the singleton and reset dbPromise so the next getDb() call opens fresh.
+    await _resetDbSingletonForTests();
+  });
+
   it("savesCollection() resolves to the RxDB saves collection", async () => {
     // getDb() uses getRxStorageDexie() — fake-indexeddb polyfills IndexedDB for the test.
     const singletonDb = await getDb();
@@ -344,8 +364,8 @@ describe("schema version and reset flag", () => {
     expect(db.saves.schema.version).toBe(0);
   });
 
-  it("teams collection has schema version 0", () => {
-    expect(db.teams.schema.version).toBe(0);
+  it("teams collection has schema version 1", () => {
+    expect(db.teams.schema.version).toBe(1);
   });
 
   it("players collection has schema version 0", () => {
