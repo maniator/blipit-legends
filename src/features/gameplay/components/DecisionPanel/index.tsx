@@ -2,12 +2,21 @@ import * as React from "react";
 
 import { Strategy, useGameContext } from "@feat/gameplay/context/index";
 import { playDecisionChime } from "@feat/gameplay/utils/announce";
+import { useUIPause } from "@shared/contexts/UIPauseContext";
 import { appLog } from "@shared/utils/logger";
 
 import { DECISION_TIMEOUT_SEC } from "./constants";
 import DecisionButtons from "./DecisionButtons";
 import { closeManagerNotification, showManagerNotification } from "./notificationHelpers";
-import { CountdownFill, CountdownLabel, CountdownRow, CountdownTrack, Panel } from "./styles";
+import {
+  CountdownFill,
+  CountdownLabel,
+  CountdownRow,
+  CountdownTrack,
+  Panel,
+  PausePill,
+  ResumeAnnouncement,
+} from "./styles";
 
 type Props = {
   strategy: Strategy;
@@ -16,6 +25,28 @@ type Props = {
 const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
   const { dispatch, pendingDecision } = useGameContext();
   const [secondsLeft, setSecondsLeft] = React.useState(DECISION_TIMEOUT_SEC);
+  // UI-pause coordination: when a blocking modal (e.g. Saves) is open, freeze
+  // the auto-skip countdown at its current value and visually disable the
+  // decision buttons. Read via ref so the setInterval tick always sees the
+  // latest pause flag without re-creating the timer (which would otherwise
+  // skew the countdown on every pause toggle).
+  const { isPaused } = useUIPause();
+  const isPausedRef = React.useRef(isPaused);
+  isPausedRef.current = isPaused;
+  // Track whether the panel was paused on the previous render so we only
+  // announce "Resumed" when a real pause→resume transition occurs (and not
+  // on first mount when isPaused starts false).
+  const wasPausedRef = React.useRef(false);
+  const [showResumeAnnouncement, setShowResumeAnnouncement] = React.useState(false);
+  React.useEffect(() => {
+    if (wasPausedRef.current && !isPaused) {
+      setShowResumeAnnouncement(true);
+      const id = setTimeout(() => setShowResumeAnnouncement(false), 1500);
+      wasPausedRef.current = false;
+      return () => clearTimeout(id);
+    }
+    if (isPaused) wasPausedRef.current = true;
+  }, [isPaused]);
 
   // Listen for actions dispatched from the service worker (notification button taps).
   // Validate the message origin so only same-origin SW messages are processed.
@@ -113,6 +144,10 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
     document.addEventListener("visibilitychange", handleVisibility);
 
     const id = setInterval(() => {
+      // Freeze the countdown while a blocking modal is open. The interval
+      // continues to fire on its 1s cadence, but we skip the decrement and
+      // skip-dispatch — auto-skip therefore CANNOT fire while paused.
+      if (isPausedRef.current) return;
       setSecondsLeft((s) => {
         if (s <= 1) {
           dispatch({ type: "skip_decision" });
@@ -131,18 +166,42 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
 
   const skip = () => dispatch({ type: "skip_decision" });
   const pct = (secondsLeft / DECISION_TIMEOUT_SEC) * 100;
+  const pausePillId = "decision-panel-pause-pill";
 
   return (
     <Panel data-testid="manager-decision-panel">
+      {isPaused && (
+        <PausePill
+          id={pausePillId}
+          role="status"
+          aria-live="polite"
+          data-testid="decision-panel-pause-pill"
+        >
+          Paused while Saves is open
+        </PausePill>
+      )}
+      {showResumeAnnouncement && (
+        <ResumeAnnouncement role="status" aria-live="polite" data-testid="decision-panel-resumed">
+          Resumed
+        </ResumeAnnouncement>
+      )}
       <DecisionButtons
         pendingDecision={pendingDecision}
         strategy={strategy}
         onSkip={skip}
         onDispatch={dispatch}
+        paused={isPaused}
       />
-      <CountdownRow>
-        <CountdownTrack>
-          <CountdownFill $pct={pct} />
+      <CountdownRow $paused={isPaused}>
+        <CountdownTrack
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={DECISION_TIMEOUT_SEC}
+          aria-valuenow={secondsLeft}
+          aria-label="Auto-skip countdown"
+          aria-describedby={isPaused ? pausePillId : undefined}
+        >
+          <CountdownFill $pct={pct} $paused={isPaused} />
         </CountdownTrack>
         <CountdownLabel>auto-skip {secondsLeft}s</CountdownLabel>
       </CountdownRow>
