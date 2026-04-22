@@ -287,9 +287,10 @@ test.describe("Custom Team Editor — team abbreviation field", () => {
     await page.getByTestId("manage-teams-create-button").click();
     // Attempt save without any data
     await page.getByTestId("custom-team-save-button").click();
-    // Error hint near the save button area
-    const hint = page.getByTestId("custom-team-save-error-hint");
-    await expect(hint).toBeVisible({ timeout: 10_000 });
+    // Phase 2A: validation errors go to the canonical error summary block, not a
+    // per-button hint element.
+    const summary = page.getByTestId("custom-team-editor-error-summary");
+    await expect(summary).toBeVisible({ timeout: 10_000 });
   });
 
   test("Generate Random populates the abbreviation field automatically (abbreviation section)", async ({

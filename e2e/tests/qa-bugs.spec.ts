@@ -52,9 +52,10 @@ test.describe(
 
       await page.goto("/stats");
       await expect(page.getByTestId("career-stats-page")).toBeVisible({ timeout: 15_000 });
-      // Current behavior: without completed game history, stats view shows a
-      // no-teams guidance message and does not render tab/leader surfaces.
-      await expect(page.getByTestId("career-stats-no-teams")).toBeVisible({ timeout: 10_000 });
+      // Phase 2C: a team exists but has no completed game history, so noCompletedGames
+      // is true and the new accessible empty-state region is shown instead of the old
+      // career-stats-no-teams element.
+      await expect(page.getByTestId("career-stats-empty-state")).toBeVisible({ timeout: 10_000 });
       await expect(page.getByTestId("career-stats-team-select")).not.toBeVisible();
     });
 
@@ -68,7 +69,9 @@ test.describe(
       await page.goto("/stats");
       await expect(page.getByTestId("career-stats-page")).toBeVisible({ timeout: 15_000 });
 
-      await expect(page.getByTestId("career-stats-no-teams")).toBeVisible({ timeout: 10_000 });
+      // Phase 2C: team exists but has no completed game history → noCompletedGames is
+      // true → new accessible empty-state region shown, not career-stats-no-teams.
+      await expect(page.getByTestId("career-stats-empty-state")).toBeVisible({ timeout: 10_000 });
       await expect(page.getByTestId("career-stats-team-select")).not.toBeVisible();
     });
   },

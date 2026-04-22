@@ -140,7 +140,11 @@ test.describe("Stat Budget — over-cap save blocking", () => {
       await lineupSection.locator('input[type="range"]').nth(i).fill("100");
     }
     await page.getByTestId("custom-team-save-button").click();
-    await expect(page.getByTestId("custom-team-save-error-hint")).toBeVisible({ timeout: 3_000 });
+    // Phase 2A: validation errors are collected in a single summary block near the
+    // Save/Cancel buttons, replacing the old save-error-hint element.
+    await expect(page.getByTestId("custom-team-editor-error-summary")).toBeVisible({
+      timeout: 3_000,
+    });
   });
 });
 

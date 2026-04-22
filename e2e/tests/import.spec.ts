@@ -68,10 +68,12 @@ test.describe("Import Save", () => {
     await expect(page.getByTestId("saves-page")).toBeVisible({ timeout: 10_000 });
 
     await page.getByTestId("paste-save-textarea").fill("not valid json");
-    await page.getByTestId("paste-save-button").click();
 
-    // Increased from 5 s → 10 s: mobile WebKit on CI can be slow to propagate
-    // the synchronous JSON.parse error back through the React state update.
-    await expect(page.getByTestId("import-error")).toBeVisible({ timeout: 10_000 });
+    // Phase 2B: the import CTA is gated on a parseable export envelope.
+    // Invalid JSON keeps the button disabled (debounced 150 ms after last keystroke).
+    await expect(page.getByTestId("paste-save-button")).toBeDisabled({ timeout: 5_000 });
+    await expect(page.getByTestId("paste-save-helper")).toContainText(
+      /look like valid saves JSON/i,
+    );
   });
 });
