@@ -16,9 +16,9 @@ export const Trigger = styled.button`
   cursor: help;
   line-height: 1;
   /**
-   * WCAG 2.5.5 target-size: minimum 24 × 24 px (1.5 rem).
-   * We use 1.75 rem (28 px) to give a slightly more generous tap target on
-   * touch devices without changing the visual glyph size.
+   * WCAG 2.5.5 target-size: minimum 24 × 24 px (1.5 rem at base 16px).
+   * We set exactly 1.5 rem to satisfy the guideline without enlarging the
+   * visual glyph size beyond what's needed.
    */
   min-width: 1.5rem;
   min-height: 1.5rem;

@@ -105,13 +105,9 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
     onChange({ ...values, [key]: val });
   };
 
+  /** First click on "Reset to defaults" enters confirmation mode. */
   const handleResetClick = () => {
-    if (!confirmReset) {
-      setConfirmReset(true);
-    } else {
-      onReset();
-      setConfirmReset(false);
-    }
+    setConfirmReset(true);
   };
 
   const atDefaults = isAtDefaults(values);
