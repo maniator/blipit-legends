@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import {
+  fillAndDispatchInput,
   importSaveFromFixture,
   importTeamsFixture,
   openSavesModal,
@@ -57,8 +58,7 @@ test.describe("Import Save", () => {
 
     // Paste the fixture JSON into the textarea and click Import
     const pasteTextareaEl = page.getByTestId("paste-save-textarea");
-    await pasteTextareaEl.fill(fixtureJson);
-    await pasteTextareaEl.dispatchEvent("input");
+    await fillAndDispatchInput(pasteTextareaEl, fixtureJson);
     await page.getByTestId("paste-save-button").click();
 
     // The import auto-loads the save and navigates to /game
@@ -69,10 +69,9 @@ test.describe("Import Save", () => {
     await page.getByTestId("home-load-saves-button").click();
     await expect(page.getByTestId("saves-page")).toBeVisible({ timeout: 10_000 });
 
-    // dispatchEvent("input") ensures React's synthetic onChange fires on WebKit.
+    // fillAndDispatchInput ensures React's synthetic onChange fires on WebKit.
     const pasteInvalidTextarea = page.getByTestId("paste-save-textarea");
-    await pasteInvalidTextarea.fill("not valid json");
-    await pasteInvalidTextarea.dispatchEvent("input");
+    await fillAndDispatchInput(pasteInvalidTextarea, "not valid json");
     await page.getByTestId("paste-save-button").click();
 
     // Increased from 5 s → 10 s: mobile WebKit on CI can be slow to propagate
