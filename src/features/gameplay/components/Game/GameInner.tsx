@@ -209,6 +209,9 @@ const GameInner: React.FunctionComponent<Props> = ({
         ? sanitizeManagerDecisionValues(setup.decisionValues)
         : getDefaultDecisionValues(),
     );
+    rxSaveIdRef.current = rxAutoSave.id;
+    // If the restored save was already FINAL, mark it so history sync skips re-commit.
+    setWasAlreadyFinalOnLoad(snap.state.gameOver === true);
     setGameActive(true);
     onGameSessionStarted?.();
   }, [
