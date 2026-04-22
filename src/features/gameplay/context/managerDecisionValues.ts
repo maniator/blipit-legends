@@ -33,9 +33,11 @@
  * - Variant B tests more aggressive AI steal/pitching defaults with bunts off.
  * - The flag is read once at module load via `_abVariant`.
  * - Normal runtime code should call `getDefaultDecisionValues()` rather than
- *   importing `DEFAULT_MANAGER_DECISION_VALUES` directly so the variant is
- *   respected. The exported const is kept for backward-compat and for
- *   sanitization fallbacks that should not change per-variant.
+ *   importing `DEFAULT_MANAGER_DECISION_VALUES` directly so the active variant
+ *   is respected. The exported const is kept for backward-compat, tests, and
+ *   stable baseline comparisons; runtime fallbacks (including
+ *   `sanitizeManagerDecisionValues`) use `getDefaultDecisionValues()` so they
+ *   follow the active variant.
  */
 
 export interface ManagerDecisionValues {
