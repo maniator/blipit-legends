@@ -32,7 +32,7 @@ Every named sub-stream in the league system is listed here. **Implementers and r
 | Stream key                   | Phase | Seed expression                                                                      | Used by                                                                                         |
 | ---------------------------- | ----- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | `:schedule`                  | v1    | `mulberry32(parseInt(fnv1a(\`${masterSeed}:schedule\`), 16) >>> 0)`                  | Schedule generation (this file).                                                                |
-| `:autogen:${autogenSubSeed}` | v1    | `mulberry32(parseInt(fnv1a(\`${masterSeed}:${autogenSubSeed}\`), 16) >>> 0)`         | Team auto-generation (see [`team-autogeneration.md`](team-autogeneration.md)).                  |
+| `:autogen:${autogenSubSeed}` | v1    | `mulberry32(parseInt(fnv1a(\`${masterSeed}:autogen:${autogenSubSeed}\`), 16) >>> 0)` | Team auto-generation (see [`team-autogeneration.md`](team-autogeneration.md)).                  |
 | Per-game `derivedSeed`       | v1    | Cached on `seasonGames.derivedSeed`; consumed via `reinitSeed(derivedSeed)`          | The simulation entry point only.                                                                |
 | `:trades:day:${gameDay}`     | v3    | `mulberry32(parseInt(fnv1a(\`${masterSeed}:trades:day:${gameDay}\`), 16) >>> 0)`     | Trade scheduler / proposal generation (see [`playoffs-and-trades.md`](playoffs-and-trades.md)). |
 | `:tiebreak:${sortedTiedIds}` | v3    | `mulberry32(parseInt(fnv1a(\`${masterSeed}:tiebreak:${sortedTiedIds}\`), 16) >>> 0)` | Tiebreaker coin flip (decision #18; see [`playoffs-and-trades.md`](playoffs-and-trades.md)).    |
@@ -124,7 +124,7 @@ For each scheduled game in order:
 6. Inject modifiers into the existing simulation entry point (gameplay context). The injection contract is **frozen in v1** so v2/v3/v4 only add fields, never rename or remove them.
 7. Run the game to completion (existing reducer logic).
 8. v2+: run injury rolls (per [`fatigue-and-injuries.md`](fatigue-and-injuries.md)) **after** the box-score sim, in fixed iteration order.
-9. **Single RxDB bulk-write transaction** committing: `seasonGames` (boxscore + `status='completed'` + `completedAt`); `seasonPlayerState` updates for every affected player (recovery curve, wear, injury status); `seasonTransactions` rows (`il_in`/`il_out`) for the day's IL changes. **Aggregates on `seasonTeams` (`wins/losses/runDifferential`) are derived (recomputed by querying `seasonGames`), not incremented** — this eliminates the partial-write double-application class of bugs.
+9. **Single RxDB bulk-write transaction** committing: `seasonGames` (boxscore + `status='completed'` + `completedAt`); `seasonPlayerState` updates for every affected player (recovery curve, wear, injury status); **(v2+)** `seasonTransactions` rows (`il_in`/`il_out`) for the day's IL changes. **Aggregates on `seasonTeams` (`wins/losses/runDifferential`) are derived (recomputed by querying `seasonGames`), not incremented** — this eliminates the partial-write double-application class of bugs.
 10. Advance `seasons.currentGameDay` if all games for that day are complete.
 
 ### Idempotency contract

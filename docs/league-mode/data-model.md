@@ -118,15 +118,15 @@ One document per player-in-season. Holds rolling state — pitcher availability 
 
 **v1 fields:**
 
-| Field                     | Type             | Notes                                            |
-| ------------------------- | ---------------- | ------------------------------------------------ |
-| `id`                      | string (primary) | `${seasonId}:${playerId}`.                       |
-| `seasonId`                | string           | Indexed.                                         |
-| `seasonTeamId`            | string           | Indexed; updates on trade.                       |
-| `playerId`                | string           | References the player inside the rosterSnapshot. |
-| `pitcherDaysRest`         | number           | 0 = pitched today; only meaningful for SP/RP.    |
-| `pitcherAvailability`     | number (0..1)    | 1 = fully fresh; <0.5 = "Tired"; <0.2 = "Spent". |
-| `pitcherStartsThisSeason` | number           |                                                  |
+| Field                     | Type             | Notes                                                                                                                                                                |
+| ------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                      | string (primary) | `${seasonId}:${playerId}`.                                                                                                                                           |
+| `seasonId`                | string           | Indexed.                                                                                                                                                             |
+| `seasonTeamId`            | string           | Indexed; updates on trade.                                                                                                                                           |
+| `playerId`                | string           | References the player inside the rosterSnapshot.                                                                                                                     |
+| `pitcherDaysRest`         | number           | 0 = pitched today; only meaningful for SP/RP.                                                                                                                        |
+| `pitcherAvailability`     | number (0..1)    | 1 = fully fresh; ≥0.85 = "Fresh"; 0.50–0.84 = "Tired"; <0.50 = "Spent". See [`fatigue-and-injuries.md`](fatigue-and-injuries.md) for authoritative badge thresholds. |
+| `pitcherStartsThisSeason` | number           |                                                                                                                                                                      |
 
 **v2 additive fields (schema v2):**
 
@@ -169,11 +169,12 @@ One document per (season, award).
 
 Compressed archive of one completed season's `seasonGames` + `seasonTransactions` + `seasonPlayerState`.
 
-| Field        | Type                           |
-| ------------ | ------------------------------ |
-| `id`         | string (primary, = `seasonId`) |
-| `compressed` | base64 string (gzipped JSON)   |
-| `archivedAt` | number                         |
+| Field        | Type                           | Notes                                                                                                                              |
+| ------------ | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `id`         | string (primary, = `seasonId`) |                                                                                                                                    |
+| `compressed` | base64 string (gzipped JSON)   |                                                                                                                                    |
+| `checksum`   | string                         | FNV-1a hex of the raw JSON **before** gzip. Verified on every read; mismatch surfaces a corruption error without deleting the doc. |
+| `archivedAt` | number                         |                                                                                                                                    |
 
 `seasons` and `seasonAwards` are **not** archived — they remain queryable for the seasons list & history UI.
 

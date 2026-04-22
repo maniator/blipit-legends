@@ -83,7 +83,7 @@ generateLeagueTeams(options: {
 
 Implementation steps:
 
-1. **Seeded RNG.** Initialize `mulberry32(parseInt(fnv1a(\`${masterSeed}:${autogenSubSeed}\`), 16) >>> 0)`. The `parseInt(..., 16) >>> 0`step converts`fnv1a`'s hex-string output into the `uint32`that`mulberry32`requires. All randomness in this module flows through that one PRNG instance — no`Math.random()`.
+1. **Seeded RNG.** Initialize `mulberry32(parseInt(fnv1a(\`${masterSeed}:autogen:${autogenSubSeed}\`), 16) >>> 0)`. The `parseInt(..., 16) >>> 0`step converts`fnv1a`'s hex-string output into the `uint32`that`mulberry32`requires. The`:autogen:`infix namespaces the sub-stream from`:schedule`and`:tiebreak`streams sharing the same master seed. All randomness in this module flows through that one PRNG instance — no`Math.random()`.
 2. **Stat budget per team.** Allocate a total stat budget; spread across teams per the parity setting (Balanced narrow, Mixed moderate, Random wide).
 3. **Position archetypes.** For each team, distribute its budget across positions using fixed archetype weights (catchers favor defense and contact; SS favors defense; corner OF favor power; SP favor stamina/control). Each archetype yields position-appropriate batting/pitching block values within `customTeams` schema constraints.
 4. **Names.** Pull from the theme's word lists with the same PRNG; de-dupe within the league. Each player gets first + last name.
