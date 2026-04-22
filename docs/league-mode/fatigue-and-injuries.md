@@ -204,7 +204,7 @@ Per decision #19:
 - **Injury rate: ×0.5 of regular season** (0.0075 per active-lineup player-game vs 0.015). "Big games, fewer freak injuries but October tempo still matters" — protective by design without making injuries vanish.
 - **Position-player wear: unchanged.** Stars play through fatigue.
 
-Implementation: a single `playoffMode: boolean` flag on `seasons` flips the multipliers in the injury-roll function. No schema changes, no new modifier fields.
+Implementation: a single `playoffMode: boolean` flag on `seasons` (additive optional field, default `false`, identity migration on the brand-new `seasons` collection — no data transformation) flips the multipliers in the injury-roll function. No new modifier fields.
 
 ---
 
