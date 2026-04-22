@@ -109,3 +109,26 @@ const mockAudioCtx = {
     close: vi.fn(),
   })) as unknown as typeof Notification;
 (Notification as unknown as { permission: NotificationPermission }).permission = "granted";
+
+// ---------------------------------------------------------------------------
+// Mock window.matchMedia (used by usehooks-ts `useMediaQuery`).
+// jsdom does not implement matchMedia; default to "no match" so components
+// that branch on viewport size render their desktop/default layout.
+// Individual tests can override `window.matchMedia` to simulate mobile.
+// ---------------------------------------------------------------------------
+if (typeof window !== "undefined" && !window.matchMedia) {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    configurable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn().mockReturnValue(false),
+    })),
+  });
+}
