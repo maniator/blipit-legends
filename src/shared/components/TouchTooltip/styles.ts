@@ -17,7 +17,7 @@ export const Trigger = styled.button`
   cursor: help;
   line-height: 1;
   /**
-   * WCAG 2.5.5 target-size: minimum 24 × 24 px (1.5 rem at base 16px).
+   * WCAG 2.5.8 target-size: minimum 24 × 24 px (1.5 rem at base 16px).
    * We set exactly 1.5 rem to satisfy the guideline without enlarging the
    * visual glyph size beyond what's needed.
    */
@@ -130,7 +130,7 @@ export const BubbleCloseButton = styled.button`
     font: inherit;
     color: ${({ theme }) => theme.colors.textMuted};
     cursor: pointer;
-    /* WCAG 2.5.5: 24 × 24 px minimum tap target */
+    /* WCAG 2.5.8: 24 × 24 px minimum tap target */
     min-width: 1.5rem;
     min-height: 1.5rem;
     line-height: 1;
