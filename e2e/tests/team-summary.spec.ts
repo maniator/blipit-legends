@@ -37,56 +37,23 @@ test.describe("Team Summary and Leaders", () => {
     });
     await loadFixture(page, "sample-save.json");
     await importHistoryFixture(page, "team-summary-history.json");
-    const browserName = page.context().browser()?.browserType().name();
     await page.goto("/stats");
     await expect(page.getByTestId("career-stats-page")).toBeVisible({ timeout: 15_000 });
-    let teamSelect = page.getByTestId("career-stats-team-select");
+    const teamSelect = page.getByTestId("career-stats-team-select");
     await expect(teamSelect).toBeVisible({ timeout: 5_000 });
     // Wait for the e2e_summary_team option to appear in the dropdown before
-    // selecting it.  On slow CI/mobile WebKit runners the one-shot loadTeamIds
-    // effect that populates teamsWithHistory can still be in-flight when the
-    // page first renders, so calling selectOption before the option exists
-    // would throw a Playwright error rather than land at the data-ready guard.
+    // selecting it.  On slow CI/mobile WebKit runners the reactive teamsWithHistory
+    // subscription can still be in-flight when the page first renders, so calling
+    // selectOption before the option exists would throw a Playwright error.
     await expect(teamSelect.locator('option[value="e2e_summary_team"]')).toBeAttached({
       timeout: 15_000,
     });
     await teamSelect.selectOption("e2e_summary_team");
-    // Wait for the W-L record that is unique to the e2e_summary_team fixture
-    // (2 wins, 1 loss → "2-1") rather than just waiting for team-summary-section.
-    //
-    // team-summary-section renders for ANY selected team — even a custom team
-    // imported by startGameViaPlayBall that has zero history (getTeamCareerSummary
-    // always returns a non-null object, making the condition truthy immediately).
-    // The auto-select picks the first custom team from fixture-teams.json, so the
-    // old guard resolved instantly against the wrong team's empty summary section.
-    // The test then found saves-leader-card absent while e2e_summary_team was still
-    // loading — causing the flaky "[tablet]/[iphone-15-pro-max] saves leader card"
-    // failures.
-    //
-    // summary-wl is inside team-summary-section and is set in the SAME React batch
-    // as savesLeader (both come from the single loadStats async function), so when
-    // summary-wl shows "2-1", saves-leader-card is also rendered.  Using a specific
-    // text check makes this guard immune to the early-resolution race condition.
+    // With the RxDB reactive subscription fix in useCareerStatsData, the imported
+    // history rows are now guaranteed to be reflected in the query result.  Use a
+    // generous 45 s timeout to accommodate slow CI runners (iphone-15-pro-max WebKit
+    // can take longer than 30 s to process the RxDB subscription update and re-render).
     const summaryWL = page.getByTestId("summary-wl");
-    // WebKit CI runners are slower at reflecting imported fixture rows in the
-    // stats query path, so we give this first data-ready assertion extra budget.
-    const loaded = await summaryWL
-      .filter({ hasText: "2-1" })
-      .isVisible({ timeout: browserName === "webkit" ? 20_000 : 10_000 })
-      .catch(() => false);
-    if (!loaded) {
-      await page.goto("/game");
-      await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 10_000 });
-      await importHistoryFixture(page, "team-summary-history.json");
-      await page.goto("/stats");
-      await expect(page.getByTestId("career-stats-page")).toBeVisible({ timeout: 15_000 });
-      teamSelect = page.getByTestId("career-stats-team-select");
-      await expect(teamSelect).toBeVisible({ timeout: 10_000 });
-      await expect(teamSelect.locator('option[value="e2e_summary_team"]')).toBeAttached({
-        timeout: 15_000,
-      });
-      await teamSelect.selectOption("e2e_summary_team");
-    }
     await expect(summaryWL).toHaveText("2-1", { timeout: 45_000 });
   }
 

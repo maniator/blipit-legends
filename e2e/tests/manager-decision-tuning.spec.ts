@@ -120,8 +120,11 @@ test.describe("Manager Mode — Decision Tuning panel", () => {
     await resetButton.click();
 
     // Default `stealMinOfferPct` is 72 (see DEFAULT_MANAGER_DECISION_VALUES).
-    await expect(sliderValue).toHaveText("72%");
-    await expect(slider).toHaveValue("72");
-    await expect(stealToggle).toBeChecked();
+    // usehooks-ts useLocalStorage writes to localStorage and fires a storage
+    // event that React processes asynchronously, so allow up to 5 s for the
+    // re-render to complete on slow CI/WebKit runners.
+    await expect(sliderValue).toHaveText("72%", { timeout: 5_000 });
+    await expect(slider).toHaveValue("72", { timeout: 5_000 });
+    await expect(stealToggle).toBeChecked({ timeout: 5_000 });
   });
 });

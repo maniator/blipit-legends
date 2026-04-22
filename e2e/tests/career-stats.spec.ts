@@ -132,76 +132,30 @@ test.describe("Career Stats with seeded history", () => {
     // importHistoryFixture can open the SavesModal as needed.
     await loadFixture(page, "sample-save.json");
     await importHistoryFixture(page, "career-stats-history.json");
-    // On heavily loaded mobile WebKit workers, imported history rows can take
-    // an extra tick to become visible to the stats queries after modal close.
-    const browserName = page.context().browser()?.browserType().name();
-    if (browserName === "webkit") {
-      await page.waitForTimeout(2_000);
-    }
     await page.goto("/stats");
     await expect(page.getByTestId("career-stats-page")).toBeVisible({ timeout: 15_000 });
     // The seeded team ID is "e2e_home_team" (non-custom → appears as raw ID in selector).
-    let teamSelect = page.getByTestId("career-stats-team-select");
+    const teamSelect = page.getByTestId("career-stats-team-select");
     await expect(teamSelect).toBeVisible({ timeout: 5_000 });
     // Wait for the e2e_home_team option to appear in the dropdown before selecting
-    // it.  On slow CI/mobile WebKit runners the one-shot loadTeamIds effect that
-    // populates teamsWithHistory can still be in-flight when the page first
-    // renders, so the option may not yet be present when we call selectOption.
-    // selectOption throws if the option doesn't exist, which would cause the
-    // test to fail at that call rather than at the data-ready guard below.
+    // it.  On slow CI/mobile WebKit runners the reactive teamsWithHistory subscription
+    // can still be in-flight when the page first renders.
     await expect(teamSelect.locator('option[value="e2e_home_team"]')).toBeAttached({
       timeout: 15_000,
     });
     await teamSelect.selectOption("e2e_home_team");
     await page.getByTestId("career-stats-batting-tab").click();
-    // Wait for the batting stats to finish loading before returning.
-    // The async RxDB query fires when the team changes, but seedAndOpen returns
-    // immediately after selectOption — on slow CI/mobile runners the 10 s
-    // per-assertion timeouts in the individual tests can expire before the data
-    // arrives.  Mirroring seedSummaryAndOpen's data-ready guard prevents the
-    // race condition that caused:
-    //   [tablet]          career-stats.spec.ts:158  "A. Ace" not found
-    //   [iphone-15-pro-max] career-stats.spec.ts:204  "J. Slugger" not found
+    // With the RxDB reactive subscription fix, imported rows are reflected as soon
+    // as they are committed.  Give WebKit up to 45 s to hydrate the batting table
+    // on slow CI runners (iphone-15-pro-max is particularly slow to process the
+    // RxDB subscription update and re-render the stats table).
     const sluggerRowButton = playerRowButton(page, "J. Slugger");
-    const sluggerVisible = await sluggerRowButton.isVisible().catch(() => false);
-    if (!sluggerVisible) {
-      // If the first stats load missed freshly imported rows under heavy WebKit
-      // load, re-import once from the active game session and re-open /stats.
-      await page.goto("/game");
-      await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 10_000 });
-      await importHistoryFixture(page, "career-stats-history.json");
-      const browserName = page.context().browser()?.browserType().name();
-      if (browserName === "webkit") {
-        await page.waitForTimeout(2_000);
-      }
-      await page.goto("/stats");
-      await expect(page.getByTestId("career-stats-page")).toBeVisible({ timeout: 15_000 });
-      teamSelect = page.getByTestId("career-stats-team-select");
-      await expect(teamSelect).toBeVisible({ timeout: 10_000 });
-      await expect(teamSelect.locator('option[value="e2e_home_team"]')).toBeAttached({
-        timeout: 15_000,
-      });
-      await teamSelect.selectOption("e2e_home_team");
-      await page.getByTestId("career-stats-batting-tab").click();
-    }
     await expect(sluggerRowButton).toBeVisible({ timeout: 45_000 });
-    if (browserName === "webkit") {
-      // Give WebKit a short settle window after async stats hydration/re-render.
-      await page.waitForTimeout(500);
-    }
   }
 
   async function openPitchingTabAndWaitForRows(page: Page) {
     await page.getByTestId("career-stats-pitching-tab").click();
-    const aceButton = playerRowButton(page, "A. Ace");
-    const aceVisible = await aceButton.isVisible().catch(() => false);
-    if (!aceVisible) {
-      const teamSelect = page.getByTestId("career-stats-team-select");
-      await expect(teamSelect).toBeVisible({ timeout: 10_000 });
-      await teamSelect.selectOption("e2e_home_team");
-      await page.getByTestId("career-stats-pitching-tab").click();
-    }
-    await expect(aceButton).toBeVisible({ timeout: 30_000 });
+    await expect(playerRowButton(page, "A. Ace")).toBeVisible({ timeout: 30_000 });
   }
 
   test("Career Stats button navigates to Career Stats page when history exists", async ({
