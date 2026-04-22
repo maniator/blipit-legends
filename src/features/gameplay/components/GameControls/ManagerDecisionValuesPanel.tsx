@@ -64,7 +64,9 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
   const [confirmReset, setConfirmReset] = React.useState(false);
   const toggleRef = React.useRef<HTMLButtonElement>(null);
   const closeBtnRef = React.useRef<HTMLButtonElement>(null);
+  const resetBtnRef = React.useRef<HTMLButtonElement>(null);
   const titleId = React.useId();
+  const pitchingTicksHintId = React.useId();
 
   // Notify parent so it can pause/restore the sim while the panel is open.
   React.useEffect(() => {
@@ -312,6 +314,28 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                   <option value="50" label="Modern" />
                   <option value="100" label="Bullpen" />
                 </datalist>
+                {/*
+                 * Visually-hidden fallback description for the three anchor points.
+                 * datalist tick labels are not reliably exposed by all screen readers,
+                 * so aria-describedby on the slider references this text to ensure
+                 * the Old-school / Modern / Bullpen scale is always discoverable via AT.
+                 */}
+                <span
+                  id={pitchingTicksHintId}
+                  style={{
+                    position: "absolute",
+                    width: "1px",
+                    height: "1px",
+                    padding: 0,
+                    margin: "-1px",
+                    overflow: "hidden",
+                    clip: "rect(0,0,0,0)",
+                    whiteSpace: "nowrap",
+                    border: 0,
+                  }}
+                >
+                  Scale: 0 = Old-school (complete games), 50 = Modern MLB, 100 = Bullpen-first
+                </span>
                 <input
                   id="ai-pitching-aggressiveness"
                   type="range"
@@ -322,6 +346,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                   value={values.aiPitchingChangeAggressiveness}
                   onChange={(e) => set("aiPitchingChangeAggressiveness", Number(e.target.value))}
                   aria-label="AI pitching change aggressiveness"
+                  aria-describedby={pitchingTicksHintId}
                   data-testid="ai-pitching-aggressiveness-slider"
                 />
                 <DecisionRowValue data-testid="ai-pitching-aggressiveness-value">
@@ -364,11 +389,19 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                     Yes, reset
                   </button>
                   {/* autoFocus so keyboard users land on the safe option when
-                       the confirm row mounts (WCAG 2.4.3 focus order). */}
+                       the confirm row mounts (WCAG 2.4.3 focus order).
+                       onClick restores focus to the reset button so the
+                       dismiss cycle completes cleanly for keyboard users. */}
                   <button
                     type="button"
                     autoFocus
-                    onClick={() => setConfirmReset(false)}
+                    onClick={() => {
+                      setConfirmReset(false);
+                      // Restore focus to the reset button after the confirm row
+                      // unmounts so keyboard users don't lose their place.
+                      // Use setTimeout(0) to let React re-render first.
+                      setTimeout(() => resetBtnRef.current?.focus(), 0);
+                    }}
                     data-testid="manager-decision-tuning-reset-cancel"
                   >
                     Cancel
@@ -376,6 +409,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                 </DecisionResetConfirmRow>
               ) : (
                 <DecisionResetButton
+                  ref={resetBtnRef}
                   type="button"
                   onClick={handleResetClick}
                   data-testid="manager-decision-tuning-reset"
