@@ -6,11 +6,7 @@ import { MemoryRouter, Route, Routes, useOutletContext } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@storage/db", () => ({
-  getDb: vi.fn().mockResolvedValue({
-    completedGames: {
-      findOne: vi.fn(() => ({ exec: vi.fn().mockResolvedValue(null) })),
-    },
-  }),
+  getDb: vi.fn().mockResolvedValue({}),
 }));
 
 import type { AppShellOutletContext } from "./index";
@@ -38,11 +34,9 @@ function HomeRouteEl() {
       <button onClick={ctx.onContact} data-testid="contact-mock">
         Contact
       </button>
-      {ctx.hasCareerStats && (
-        <button onClick={ctx.onCareerStats} data-testid="career-stats-mock">
-          Career Stats
-        </button>
-      )}
+      <button onClick={ctx.onCareerStats} data-testid="career-stats-mock">
+        Career stats
+      </button>
     </div>
   );
 }
@@ -105,9 +99,17 @@ describe("AppShell", () => {
     localStorage.clear();
   });
 
-  it("does NOT show Career Stats on home when no completed games exist", () => {
+  it("always shows Career stats on home (regardless of completed games)", async () => {
     renderAppShell("/");
-    expect(screen.queryByTestId("career-stats-mock")).not.toBeInTheDocument();
+    expect(await screen.findByTestId("career-stats-mock")).toBeInTheDocument();
+  });
+
+  it("does NOT call getDb during AppShell mount on the home route", async () => {
+    const { getDb } = await import("@storage/db");
+    renderAppShell("/");
+    // Allow any microtasks to flush
+    await new Promise((r) => setTimeout(r, 0));
+    expect(getDb).not.toHaveBeenCalled();
   });
 
   it("does NOT call getDb when the initial route is not /", async () => {
@@ -118,23 +120,9 @@ describe("AppShell", () => {
     expect(getDb).not.toHaveBeenCalled();
   });
 
-  it("shows Career Stats on home when completed games exist", async () => {
-    const { getDb } = await import("@storage/db");
-    vi.mocked(getDb).mockResolvedValueOnce({
-      completedGames: {
-        findOne: vi.fn(() => ({ exec: vi.fn().mockResolvedValue({ id: "g1" }) })),
-      },
-    } as never);
-
-    renderAppShell("/");
-    expect(await screen.findByTestId("career-stats-mock")).toBeInTheDocument();
-  });
-
-  it("shows Career Stats after game over and navigates to /stats when clicked", async () => {
+  it("Career stats entry navigates to /stats when clicked from home", async () => {
     const user = userEvent.setup();
-    renderAppShell("/game");
-    await user.click(screen.getByTestId("game-over-mock"));
-    await user.click(screen.getByTestId("back-to-home-mock"));
+    renderAppShell("/");
     await user.click(await screen.findByTestId("career-stats-mock"));
     expect(screen.getByTestId("stats-page-mock")).toBeInTheDocument();
   });
