@@ -2,7 +2,7 @@ import * as React from "react";
 
 import type { Strategy } from "@feat/gameplay/context/index";
 import { GameContext } from "@feat/gameplay/context/index";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { downloadJson } from "@storage/saveIO";
@@ -273,8 +273,11 @@ describe("SavesModal", () => {
     renderModal();
     await openPanel();
     fireEvent.change(screen.getByRole("textbox", { name: /import save json/i }), {
-      target: { value: "not-json" },
+      target: { value: '{"version":1,"header":{}}' },
     });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /import from text/i })).not.toBeDisabled(),
+    );
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: /import from text/i }));
     });
@@ -288,12 +291,15 @@ describe("SavesModal", () => {
     renderModal();
     await openPanel();
     fireEvent.change(screen.getByRole("textbox", { name: /import save json/i }), {
-      target: { value: '{"valid":"json"}' },
+      target: { value: '{"version":1,"header":{}}' },
     });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /import from text/i })).not.toBeDisabled(),
+    );
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: /import from text/i }));
     });
-    expect(mockImport).toHaveBeenCalledWith('{"valid":"json"}');
+    expect(mockImport).toHaveBeenCalledWith('{"version":1,"header":{}}');
   });
 
   it("shows 'Failed to read file' when FileReader errors", async () => {
@@ -378,8 +384,11 @@ describe("SavesModal", () => {
     renderModal({ onLoadSave });
     await openPanel();
     fireEvent.change(screen.getByRole("textbox", { name: /import save json/i }), {
-      target: { value: '{"valid":"json"}' },
+      target: { value: '{"version":1,"header":{}}' },
     });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /import from text/i })).not.toBeDisabled(),
+    );
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: /import from text/i }));
       await vi.waitFor(() => expect(onLoadSave).toHaveBeenCalled());

@@ -11,6 +11,7 @@ import {
   DEFAULT_MANAGER_DECISION_VALUES,
   type ManagerDecisionValues,
 } from "@feat/gameplay/context/managerDecisionValues";
+import type { ImportParseState } from "@feat/saves/hooks/useImportSave";
 import { useImportSave } from "@feat/saves/hooks/useImportSave";
 import { useSaveSlotActions } from "@feat/saves/hooks/useSaveSlotActions";
 import { useSaveStore } from "@feat/saves/hooks/useSaveStore";
@@ -50,6 +51,19 @@ export interface SavesModalState {
   handleExport: (slot: SaveRecord) => void;
   handleImportPaste: () => void;
   handleFileImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  /** Cheap envelope-shape parse state, debounced 150ms after last keystroke. */
+  parseState: ImportParseState;
+  /** True after blur OR paste — gate `aria-invalid`/error helper-text visibility. */
+  showValidity: boolean;
+  markBlurred: () => void;
+  notePaste: () => void;
+  /** True when the textarea contents look like an export envelope and no import is in-flight. */
+  canImport: boolean;
+  /** Helper-text microcopy (always present; switches to error after blur/paste). */
+  helperText: string;
+  helperTone: "neutral" | "error";
+  /** Live-region announcement after a successful import (e.g. "Imported 1 saves"). */
+  importAnnouncement: string | null;
   /** Replaces any `ct_*` team ID fragment in a save name with the resolved display label. */
   resolveSaveName: (name: string) => string;
   /** Exports all game history as a signed JSON bundle and downloads it. */
@@ -211,6 +225,14 @@ export const useSavesModal = ({
     importing,
     handleFileImport,
     handlePasteImport: handleImportPaste,
+    parseState,
+    showValidity,
+    markBlurred,
+    notePaste,
+    canImport,
+    helperText,
+    helperTone,
+    importAnnouncement,
   } = useImportSave({
     importFn: importRxdbSave,
     onSuccess: (importedSave) => {
@@ -286,6 +308,14 @@ export const useSavesModal = ({
     handleExport,
     handleImportPaste,
     handleFileImport,
+    parseState,
+    showValidity,
+    markBlurred,
+    notePaste,
+    canImport,
+    helperText,
+    helperTone,
+    importAnnouncement,
     resolveSaveName,
     handleExportHistory,
     handleImportHistoryFile,

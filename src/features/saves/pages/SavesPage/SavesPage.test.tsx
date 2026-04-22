@@ -132,13 +132,10 @@ describe("SavesPage", () => {
     expect(screen.getByTestId("paste-save-button")).toBeInTheDocument();
   });
 
-  it("shows error when paste-save-button clicked with empty textarea", async () => {
-    const user = userEvent.setup();
+  it("disables the import button while the textarea is empty", async () => {
     renderSavesPage();
     await waitFor(() => expect(screen.getByTestId("paste-save-button")).toBeInTheDocument());
-    await user.click(screen.getByTestId("paste-save-button"));
-    await waitFor(() => expect(screen.getByTestId("import-error")).toBeInTheDocument());
-    expect(screen.getByText(/paste save json before importing/i)).toBeInTheDocument();
+    expect(screen.getByTestId("paste-save-button")).toBeDisabled();
   });
 
   it("calls onLoadSave after successful paste import", async () => {
@@ -148,8 +145,9 @@ describe("SavesPage", () => {
     renderSavesPage();
     await waitFor(() => expect(screen.getByTestId("paste-save-textarea")).toBeInTheDocument());
     fireEvent.change(screen.getByTestId("paste-save-textarea"), {
-      target: { value: '{"version":1}' },
+      target: { value: '{"version":1,"header":{}}' },
     });
+    await waitFor(() => expect(screen.getByTestId("paste-save-button")).not.toBeDisabled());
     await user.click(screen.getByTestId("paste-save-button"));
     await waitFor(() => expect(mockOnLoadSave).toHaveBeenCalledWith(importedSave));
   });
@@ -160,8 +158,9 @@ describe("SavesPage", () => {
     renderSavesPage();
     await waitFor(() => expect(screen.getByTestId("paste-save-textarea")).toBeInTheDocument());
     fireEvent.change(screen.getByTestId("paste-save-textarea"), {
-      target: { value: '{"bad":"data"}' },
+      target: { value: '{"version":1,"header":{}}' },
     });
+    await waitFor(() => expect(screen.getByTestId("paste-save-button")).not.toBeDisabled());
     await user.click(screen.getByTestId("paste-save-button"));
     await waitFor(() => expect(screen.getByTestId("import-error")).toBeInTheDocument());
     expect(screen.getByText(/not a valid BlipIt Baseball Legends save file/i)).toBeInTheDocument();

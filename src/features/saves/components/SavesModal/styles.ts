@@ -70,6 +70,11 @@ export const SmallButton = styled.button`
   &:hover {
     background: ${({ theme }) => theme.colors.bgFormAlpha40};
   }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 `;
 
 export const DangerButton = styled(SmallButton)`
@@ -100,6 +105,19 @@ export const ImportArea = styled.textarea`
   padding: ${({ theme }) => theme.spacing.s6} ${({ theme }) => theme.spacing.sm};
   resize: vertical;
   box-sizing: border-box;
+
+  &[aria-invalid="true"] {
+    border-color: ${({ theme }) => theme.colors.borderDanger};
+  }
+`;
+
+export const HelperText = styled.p<{ $tone: "neutral" | "error" }>`
+  margin: ${({ theme }) => theme.spacing.xs} 0 0;
+  font-size: ${({ theme }) => theme.fontSizes.tiny};
+  color: ${({ $tone, theme }) =>
+    $tone === "error" ? theme.colors.textError : theme.colors.textMuted};
+  background: ${({ theme }) => theme.colors.bgSurface};
+  min-height: 1em;
 `;
 
 export const ErrorMsg = styled.p`

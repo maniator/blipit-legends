@@ -75,6 +75,19 @@ export const PasteTextarea = styled.textarea`
     outline-offset: 2px;
     border-color: transparent;
   }
+
+  &[aria-invalid="true"] {
+    border-color: ${({ theme }) => theme.colors.borderDanger};
+  }
+`;
+
+export const HelperText = styled.p<{ $tone: "neutral" | "error" }>`
+  margin: ${({ theme }) => theme.spacing.xs} 0 0;
+  font-size: ${({ theme }) => theme.fontSizes.tiny};
+  color: ${({ $tone, theme }) =>
+    $tone === "error" ? theme.colors.textError : theme.colors.textMuted};
+  background: ${({ theme }) => theme.colors.bgSurface};
+  min-height: 1em;
 `;
 
 export const PasteActions = styled.div`
