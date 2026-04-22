@@ -141,6 +141,13 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             aria-label="Close Decision Tuning panel"
             onClick={closePanel}
           />
+          {/*
+           * TODO (accessibility): A full focus trap is recommended for aria-modal dialogs
+           * (WCAG APG dialog pattern). Currently focus is moved into the dialog on open
+           * and restored on close, but keyboard users can Tab out of the panel without
+           * dismissing it. A future pass should wrap the panel content in a focus-trap
+           * library or a custom useFocusTrap hook.
+           */}
           <DecisionTuningPanel
             role="dialog"
             aria-modal="true"
@@ -192,7 +199,9 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                   value={values.stealMinOfferPct}
                   onChange={(e) => set("stealMinOfferPct", Number(e.target.value))}
                   aria-label="Steal offer threshold"
-                  aria-disabled={stealDisabled}
+                  // aria-disabled omitted: the `disabled` HTML attribute already communicates
+                  // disabled state to AT. aria-disabled is only needed when preserving keyboard
+                  // focus while visually indicating disabled state, which is not the intent here.
                   disabled={stealDisabled}
                   data-testid="manager-steal-min-pct-slider"
                 />
@@ -215,7 +224,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                   value={values.aiStealThreshold}
                   onChange={(e) => set("aiStealThreshold", Number(e.target.value))}
                   aria-label="AI steal threshold"
-                  aria-disabled={stealDisabled}
+                  // aria-disabled omitted: same reason as steal-min-offer-pct above.
                   disabled={stealDisabled}
                   data-testid="ai-steal-threshold-slider"
                 />
