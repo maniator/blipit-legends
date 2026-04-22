@@ -131,10 +131,18 @@ On every read of a `seasonArchives` doc:
 - **Refcounted single-owner handle.** Both archive-UI mount and the "Start New Season" archive-write path acquire `seasonArchives` via a shared helper:
   - `acquireSeasonArchives(): Promise<RxCollection>` — if no in-process handle exists, calls `db.addCollections({ seasonArchives })` (using the existing `getDb()` singleton, never a new `RxDatabase`) and stores the handle. If a handle already exists, increments a refcount and returns the same handle. Idempotent: safe under React StrictMode dev-mode double-mount and against concurrent acquisitions racing.
   - `releaseSeasonArchives(): Promise<void>` — decrements the refcount. When it drops to zero, calls `collection.close()` (which decrements `OPEN_COLLECTIONS` per `rxdb@17.0.0-beta.7` `rx-collection.js:615`) and clears the handle.
+  - **Loading state.** While the first `acquireSeasonArchives()` call is in flight (cold-start `addCollections` against IndexedDB), the archive route renders the standard `LoadingState` from `docs/style-guide.md` §12.5 with copy **"Loading season history…"**. The route MUST NOT render a partial or empty list before the acquisition resolves — a false-empty would be misread as "no history exists."
 
 - **StrictMode + overlap safety.** With the refcount in place, archive-UI mount/unmount cycles and a concurrent "Start New Season" archive write share the same open collection — neither path can `close()` it out from under the other. Closing only fires after the last release.
 - **Wipe-and-recreate reset.** If `getDb()` triggers the `DB6`/`DM4` wipe-and-recreate path (`src/storage/db.ts:152-155`), the refcount and handle MUST be reset to zero/null without calling `close()` on the now-dead collection. The next `acquireSeasonArchives()` call will re-`addCollections` against the fresh DB.
 - **Never use a separate `RxDatabase`.** Lazy-opening into a second `RxDatabase` instance does NOT bypass the cap (the `OPEN_COLLECTIONS` Set in `rx-collection.js:21` is process-global). The lazy path always uses the existing `getDb()` singleton.
+- **Module location.** The helper lives at `src/features/league/storage/seasonArchivesStore.ts` and is the **single source of truth** for the refcount and the archive collection handle. Both the archive-UI route and the replay-bootstrap path import `acquireSeasonArchives` / `releaseSeasonArchives` from this module — they must NOT inline-`addCollections` or maintain their own refcounts. The collection's schema config (`seasonArchivesV1CollectionConfig`) lives next to the other league collection configs in `src/features/league/storage/schemaV1.ts` and is imported by the store. The store's exported handle is typed as `RxCollection<SeasonArchiveRecord>` and is intentionally not a member of `db.ts`'s static `DbCollections` type.
+
+### Corruption handling — UX surface
+
+Mismatch logs a `data-integrity` error and surfaces an **inline non-fatal error panel** (not a toast — the corrupted state is persistent until manual recovery) on the season's history card with the canonical copy **"Season history appears corrupted — historical detail unavailable."** The panel includes a secondary affordance **"Export raw archive"** that downloads the still-preserved (un-deleted) `seasonArchives` doc as JSON for diagnostics — this surfaces the existing "manual recovery path preserved" promise to the user. The corrupted archive doc is NEVER auto-deleted. (Pattern note: the inline non-fatal error panel reuses §12.1 form-error colors at panel scale; the ux-design-lead is adding this as a documented `docs/style-guide.md` pattern in a follow-up.)
+
+**Accessibility:** the inline corruption panel pairs the textual message with any warning glyph (no icon-only states); the "Export raw archive" affordance has an accessible name that includes the action target ("Export raw archive JSON for this season").
 
 ### Archived-season replay-bootstrap (v4, behind `featureFlags.allowReplay`)
 
@@ -144,9 +152,9 @@ The contract:
 
 1. **Open via the shared lazy handle.** Replay-bootstrap calls `acquireSeasonArchives()` (the same refcounted helper the archive UI uses — see §Lazy-open operational contract above). It does NOT call `db.addCollections({ seasonArchives })` directly. If the archive UI is concurrently mounted, both paths share the single open handle; neither can `close()` it while the other is still holding a reference.
 
-2. **`derivedSeed[]` from the decompressed archive is authoritative — never recomputed.** `seasonArchives` stores the season's compressed `seasonGames[]` (per `data-model.md` §`seasonArchives`), which includes each game's pre-computed `derivedSeed`. Replay bootstrap MUST read `derivedSeed` directly from the decompressed payload and pass it to `reinitSeed()` per game. Recomputing via `deriveScheduledGameSeed(seasonId, seasonGameId)` would in theory yield identical seeds today — but if `deriveScheduledGameSeed` ever changes (algorithm tweak, salting, hash family swap) the archive ↔ live derivation would silently diverge and replay would no longer reproduce the original season pitch-for-pitch. This is the same invariant as risk #3 (seeded-determinism) carried into the archived-season case.
+2. **`derivedSeed[]` from the decompressed archive is authoritative — never recomputed.** `seasonArchives` stores the season's compressed `seasonGames[]` (per `data-model.md` §`seasonArchives`), which includes each game's pre-computed `derivedSeed`. Replay bootstrap MUST read `derivedSeed` directly from the decompressed payload and pass it to `reinitSeed()` per game. Recomputing via `deriveScheduledGameSeed(seasonId, seasonGameId)` would in theory yield identical seeds today — but if `deriveScheduledGameSeed` ever changes (algorithm tweak, salting, hash family swap) the archive ↔ live derivation would silently diverge and replay would no longer reproduce the original season pitch-for-pitch. This is the same invariant as risk #3 (seeded-determinism) carried into the archived-season case. Replay also reads `rulesetVersion` from the still-live `seasons` doc (which is never archived per decision #22 / risk #17) and pins simulator constants accordingly. Seed determinism + ruleset pin together guarantee pitch-for-pitch reproduction; archived `derivedSeed` alone is necessary but not sufficient.
 
-3. **Decompress + checksum-verify before any read.** The archive's `checksum` field (FNV-1a of `canonicalJSON(archivedData)` pre-gzip) is verified BEFORE replay reads any field. Mismatch surfaces "archive corrupted — replay unavailable" without deleting the archive (manual recovery preserved per decision #22's existing contract).
+3. **Decompress + checksum-verify before any read.** The archive's `checksum` field (FNV-1a of `canonicalJSON(archivedData)` pre-gzip) is verified BEFORE replay reads any field. Mismatch surfaces "Season history appears corrupted — replay unavailable." without deleting the archive (manual recovery preserved per decision #22's existing contract).
 
 4. **Release on replay end.** The replay session calls `releaseSeasonArchives()` when the user exits replay or the season's last game finishes. If the archive UI was mounted throughout, the refcount stays >0 and the collection remains open — that's the desired behavior.
 
@@ -159,6 +167,12 @@ A "View Season History" feature on a completed season checks for the source docs
 ### Trigger criteria
 
 When v4 ships, instrument doc counts in dev tools. If a typical user with 5+ completed Full-preset seasons exceeds, say, 50,000 docs, archive automatically. Otherwise, leave it disabled.
+
+### IA + empty state + idempotency notes
+
+- **IA entry point.** "View Season History" lives on the seasons-list row for any season with `status === 'complete'`. Tapping it routes to the archive UI for that `seasonId` and triggers `acquireSeasonArchives()` (per §Lazy-open operational contract).
+- **First-time empty state.** When the user has no completed seasons yet, the archive route renders the §12.2 `EmptyState` from `docs/style-guide.md` with copy **"No archived seasons yet. Complete a season to see its history here."**
+- **Release idempotency.** `releaseSeasonArchives()` MUST be idempotent at refcount-zero: a release call when the refcount is already 0 is a no-op, never a throw. This handles the race where the user navigates away during the last pitch of a replay and both the "user exits" and "last game finishes" paths fire `release` (per §Archived-season replay-bootstrap step 4).
 
 ### Testing surface
 

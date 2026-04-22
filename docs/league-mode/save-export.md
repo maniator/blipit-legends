@@ -106,8 +106,25 @@ RxDB has no cross-collection transactions, so a process crash between steps 3 an
 
 - Each step uses `bulkUpsert` per collection so a single collection's writes are atomic.
 - Before step 3, write a tombstone to a **localStorage-backed** key `ballgame:import-in-progress:v1` (schema documented in `data-model.md` §`importInProgress`) containing `{ id, bundleSig, startedAt, completedSteps: [] }`. Update `completedSteps` after each step succeeds. Delete the tombstone after step 5. localStorage is used instead of an RxDB collection so the tombstone (a) does not consume an `OPEN_COLLECTIONS` slot — see the `data-model.md` §RxDB collection-count budget — and (b) is readable synchronously by the boot scan **before** RxDB initialization completes.
-- On every app boot, scan localStorage for `ballgame:import-in-progress:v1` older than 5 minutes. If the boot-scan finds a tombstone older than 5 minutes, surface a "previous import was interrupted" notification and offer **"wipe partial import"** — delete exactly the `customTeams` rows whose ids are in `tombstone.importedCustomTeamIds[]` and remove the tombstone. The earlier "match by id prefix" fallback is **prohibited**: prefix matching can over-wipe (deleting the user's pre-existing teams that share a prefix) or under-wipe (leaking orphans). The deterministic id-set is the only correct wipe input. (A "resume" branch is intentionally not part of v1: import bundles arrive via a file picker and aren't persisted across reboots, so resuming would always require the user to re-pick the source file anyway. Keeping the recovery path single-branch — wipe only — avoids a half-implemented resume affordance.) Never silently leave the partially-imported state.
+- On every app boot, scan localStorage for `ballgame:import-in-progress:v1` older than 5 minutes. If the boot-scan finds a tombstone older than 5 minutes, surface a "previous import was interrupted" notification (see UX contract below). The earlier "match by id prefix" fallback is **prohibited**: prefix matching can over-wipe (deleting the user's pre-existing teams that share a prefix) or under-wipe (leaking orphans). The deterministic id-set is the only correct wipe input. (A "resume" branch is intentionally not part of v1: import bundles arrive via a file picker and aren't persisted across reboots, so resuming would always require the user to re-pick the source file anyway. Keeping the recovery path single-branch — discard only — avoids a half-implemented resume affordance.) Never silently leave the partially-imported state.
 - This is documented as a v1 acceptance criterion (`agent-prompts/v1.md` testing surface) so the work doesn't regress as later phases extend the import path.
+
+**Recovery surface (UX contract).** The boot-scan-detected tombstone surfaces as a **persistent banner on the Saves page** (not a toast — the only recovery affordance for a destructive cleanup must not auto-dismiss; not a modal — the cleanup is recoverable and deferrable). Banner styling reuses the §12.4 DB-reset notice pattern from `docs/style-guide.md` (amber-brown `#7a3200`) at lower z-index than the DB-reset banner since this state is recoverable.
+
+**Buttons.** The banner exposes two affordances:
+
+- **"Discard partial import"** (primary, destructive) — opens a confirm dialog naming the count of orphaned rows: **"Discard {N} imported teams?"**. On confirm, deletes exactly the `customTeams` rows whose ids are in `tombstone.importedCustomTeamIds[]` and removes the tombstone. Sentence-case verb-first; do NOT label this "Wipe" (reserved for whole-DB §12.4 reset) or "Clean up" (too vague for a destructive action).
+- **"Not now"** (secondary) — dismisses the banner for the current session WITHOUT deleting the tombstone. The next boot's 5-minute scan re-surfaces it.
+
+**No "keep partial data" branch.** A partial import is by construction a set of orphaned `customTeams` rows with no parent `seasons` doc; "keep" has no coherent meaning. The only valid recoveries are **discard** or **re-run the import** (which will succeed because the same `bundleSig` re-import is idempotent). Implementers MUST NOT add a third "keep" button.
+
+**Cross-tab.** The localStorage tombstone is shared across browser tabs. The 5-minute staleness threshold on `tombstone.startedAt` is the only cross-tab guard in v1 — it suppresses the recovery banner against an in-progress import in another tab for the first 5 minutes. No `BroadcastChannel` coordination is required for v1, but the threshold MUST be re-evaluated if v4 introduces longer-running imports (e.g. season archives).
+
+**Accessibility (WCAG 2.2 AA).**
+
+- The banner uses `role="status"` (not `role="alert"` — this is informational with a recoverable action, not a time-sensitive failure).
+- The destructive-confirm dialog repeats the destructive verb on the confirm button ("Discard {N} imported teams"), never a generic "OK" or "Yes".
+- Any warning glyph in the banner is paired with the textual message — color or icon alone is insufficient (1.1.1 / 1.4.1).
 
 ## Testing surface
 
