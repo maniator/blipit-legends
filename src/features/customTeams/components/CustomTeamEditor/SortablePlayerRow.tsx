@@ -27,6 +27,13 @@ type Props = {
   player: EditorPlayer;
   isPitcher?: boolean;
   isExistingPlayer?: boolean;
+  /**
+   * True when this row was just added by the user via an "Add player" button.
+   * Triggers focus/select on the name input on next paint and a brief
+   * highlight animation. Honoured only for the initial mount that observes
+   * this flag — the animation is one-shot.
+   */
+  isNewlyAdded?: boolean;
   onChange: (patch: EditorPlayerPatch) => void;
   onRemove: () => void;
   /** Called when the user clicks the export button. Undefined = no export button shown. */
@@ -37,6 +44,7 @@ const SortablePlayerRow: React.FunctionComponent<Props> = ({
   player,
   isPitcher = false,
   isExistingPlayer = false,
+  isNewlyAdded = false,
   onChange,
   onRemove,
   onExport,
@@ -45,6 +53,23 @@ const SortablePlayerRow: React.FunctionComponent<Props> = ({
     id: player.id,
   });
 
+  const nameInputRef = React.useRef<HTMLInputElement>(null);
+  // Capture the "newly added" flag at first mount so subsequent re-renders
+  // (e.g. drag-reorder) don't re-trigger the focus/select behaviour.
+  const initialNewlyAddedRef = React.useRef(isNewlyAdded);
+
+  React.useEffect(() => {
+    if (!initialNewlyAddedRef.current) return;
+    if (isExistingPlayer) return; // existing players have a read-only name
+    const raf = requestAnimationFrame(() => {
+      const el = nameInputRef.current;
+      if (!el) return;
+      el.focus();
+      el.select();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [isExistingPlayer]);
+
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -52,9 +77,17 @@ const SortablePlayerRow: React.FunctionComponent<Props> = ({
   };
 
   const positionOptions = isPitcher ? PITCHER_POSITION_OPTIONS : BATTER_POSITION_OPTIONS;
+  const groupAriaLabel = `New ${isPitcher ? "pitcher" : "batter"}, position ${
+    player.position || "unset"
+  }`;
 
   return (
-    <PlayerCard ref={setNodeRef} style={style}>
+    <PlayerCard
+      ref={setNodeRef}
+      style={style}
+      $isNewlyAdded={initialNewlyAddedRef.current}
+      {...(initialNewlyAddedRef.current ? { role: "group", "aria-label": groupAriaLabel } : {})}
+    >
       <PlayerHeader>
         <span
           {...attributes}
@@ -82,6 +115,7 @@ const SortablePlayerRow: React.FunctionComponent<Props> = ({
           />
         ) : (
           <TextInput
+            ref={nameInputRef}
             value={player.name}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               onChange({ name: e.target.value })

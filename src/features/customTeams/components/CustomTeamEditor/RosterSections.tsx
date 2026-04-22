@@ -4,8 +4,8 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { closestCenter, DndContext, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
-import type { EditorAction, EditorPlayer } from "./editorState";
-import { makePlayerId } from "./editorState";
+import type { EditorAction, EditorPlayer, EditorState } from "./editorState";
+import { createDefaultBatter, createDefaultPitcher, makePlayerId } from "./editorState";
 import SortablePlayerRow from "./SortablePlayerRow";
 import {
   AddPlayerBtn,
@@ -20,6 +20,11 @@ import { BENCH_DROPPABLE_ID, LINEUP_DROPPABLE_ID } from "./useEditorDragHandlers
 import type { PendingPlayerImport } from "./useImportPlayerFile";
 
 // ── Blank-player factories ─────────────────────────────────────────────────────
+//
+// Retained for callers that explicitly want an empty row (e.g. tests). New
+// "Add player / Add pitcher" buttons in the editor use `createDefaultBatter` /
+// `createDefaultPitcher` from `editorState.ts` so the inserted row passes
+// validation immediately on first paint.
 
 export const makeBlankBatter = (): EditorPlayer => ({
   id: makePlayerId(),
@@ -99,6 +104,19 @@ type SectionSharedProps = {
   dispatch: React.Dispatch<EditorAction>;
   setPendingPlayerImport: React.Dispatch<React.SetStateAction<PendingPlayerImport | null>>;
   handleExportPlayer: (p: EditorPlayer) => void;
+  /** Player ID of the most recently added row (for highlight + focus). */
+  newlyAddedPlayerId: string | null;
+  /**
+   * Called by per-section "Add" buttons. Receives the section name and a
+   * factory that synthesizes a default-populated row from the current state
+   * snapshot. The container takes care of dispatching ADD_PLAYER, focusing
+   * the new row, announcing it to assistive tech, and triggering the
+   * highlight animation.
+   */
+  onAddPlayerWithDefaults: (
+    section: "lineup" | "bench" | "pitchers",
+    makePlayer: (state: EditorState) => EditorPlayer,
+  ) => void;
 };
 
 // ── LineupFormSection ──────────────────────────────────────────────────────────
@@ -118,6 +136,8 @@ export const LineupFormSection: React.FunctionComponent<LineupFormSectionProps> 
   lineupFileRef,
   onImportFile,
   handleExportPlayer,
+  newlyAddedPlayerId,
+  onAddPlayerWithDefaults,
 }) => {
   const { setNodeRef } = useDroppable({ id: LINEUP_DROPPABLE_ID });
   return (
@@ -141,6 +161,7 @@ export const LineupFormSection: React.FunctionComponent<LineupFormSectionProps> 
             key={p.id}
             player={p}
             isExistingPlayer={existingPlayerIds.has(p.id)}
+            isNewlyAdded={p.id === newlyAddedPlayerId}
             onChange={(patch) =>
               dispatch({ type: "UPDATE_PLAYER", section: "lineup", index: i, player: patch })
             }
@@ -153,7 +174,7 @@ export const LineupFormSection: React.FunctionComponent<LineupFormSectionProps> 
         type="button"
         data-testid="custom-team-add-lineup-player-button"
         onClick={() =>
-          dispatch({ type: "ADD_PLAYER", section: "lineup", player: makeBlankBatter() })
+          onAddPlayerWithDefaults("lineup", (state) => createDefaultBatter(state, "lineup"))
         }
       >
         + Add Player
@@ -191,6 +212,8 @@ export const BenchFormSection: React.FunctionComponent<BenchFormSectionProps> = 
   benchFileRef,
   onImportFile,
   handleExportPlayer,
+  newlyAddedPlayerId,
+  onAddPlayerWithDefaults,
 }) => {
   const { setNodeRef } = useDroppable({ id: BENCH_DROPPABLE_ID });
   return (
@@ -214,6 +237,7 @@ export const BenchFormSection: React.FunctionComponent<BenchFormSectionProps> = 
             key={p.id}
             player={p}
             isExistingPlayer={existingPlayerIds.has(p.id)}
+            isNewlyAdded={p.id === newlyAddedPlayerId}
             onChange={(patch) =>
               dispatch({ type: "UPDATE_PLAYER", section: "bench", index: i, player: patch })
             }
@@ -226,7 +250,7 @@ export const BenchFormSection: React.FunctionComponent<BenchFormSectionProps> = 
         type="button"
         data-testid="custom-team-add-bench-player-button"
         onClick={() =>
-          dispatch({ type: "ADD_PLAYER", section: "bench", player: makeBlankBatter() })
+          onAddPlayerWithDefaults("bench", (state) => createDefaultBatter(state, "bench"))
         }
       >
         + Add Player
@@ -268,6 +292,8 @@ export const PitchersSection: React.FunctionComponent<PitchersSectionProps> = ({
   handleExportPlayer,
   sensors,
   handlePitchersDragEnd,
+  newlyAddedPlayerId,
+  onAddPlayerWithDefaults,
 }) => (
   <FormSection data-testid="custom-team-pitchers-section">
     <SectionHeading>Pitchers (drag to reorder)</SectionHeading>
@@ -295,6 +321,7 @@ export const PitchersSection: React.FunctionComponent<PitchersSectionProps> = ({
             player={p}
             isPitcher
             isExistingPlayer={existingPlayerIds.has(p.id)}
+            isNewlyAdded={p.id === newlyAddedPlayerId}
             onChange={(patch) =>
               dispatch({ type: "UPDATE_PLAYER", section: "pitchers", index: i, player: patch })
             }
@@ -307,9 +334,7 @@ export const PitchersSection: React.FunctionComponent<PitchersSectionProps> = ({
     <AddPlayerBtn
       type="button"
       data-testid="custom-team-add-pitcher-button"
-      onClick={() =>
-        dispatch({ type: "ADD_PLAYER", section: "pitchers", player: makeBlankPitcher() })
-      }
+      onClick={() => onAddPlayerWithDefaults("pitchers", (state) => createDefaultPitcher(state))}
     >
       + Add Pitcher
     </AddPlayerBtn>
