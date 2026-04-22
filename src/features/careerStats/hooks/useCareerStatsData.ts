@@ -63,6 +63,7 @@ export function useCareerStatsData() {
       .then((db) => {
         if (cancelled) return;
         subscription = db.completedGames.find().$.subscribe((completedGames) => {
+          if (cancelled) return;
           const ids = new Set<string>();
           for (const game of completedGames) {
             const row = game.toJSON();

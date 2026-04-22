@@ -145,10 +145,9 @@ test.describe("Career Stats with seeded history", () => {
     });
     await teamSelect.selectOption("e2e_home_team");
     await page.getByTestId("career-stats-batting-tab").click();
-    // With the RxDB reactive subscription fix, imported rows are reflected as soon
-    // as they are committed.  Give WebKit up to 45 s to hydrate the batting table
-    // on slow CI runners (iphone-15-pro-max is particularly slow to process the
-    // RxDB subscription update and re-render the stats table).
+    // The RxDB reactive subscription ensures the stats page self-heals once imported
+    // rows propagate, but rendering the updated batting table can still be slow on
+    // CI WebKit runners (iphone-15-pro-max can take > 30 s).  Use a generous 45 s timeout.
     const sluggerRowButton = playerRowButton(page, "J. Slugger");
     await expect(sluggerRowButton).toBeVisible({ timeout: 45_000 });
   }
