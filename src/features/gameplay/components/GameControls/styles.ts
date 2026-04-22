@@ -81,6 +81,116 @@ export const AutoPlayGroup = styled.div`
   }
 `;
 
+// ── Mobile "More" disclosure (Phase 3 mobile header) ─────────────────────────
+
+/**
+ * Wrapper that hides the inline secondary controls on mobile.
+ * Desktop/tablet keep the existing AutoPlayGroup layout unchanged.
+ */
+export const InlineSecondaryGroup = styled.div`
+  display: contents;
+
+  ${mq.mobile} {
+    display: none;
+  }
+`;
+
+/**
+ * Mobile-only wrapper for the disclosure trigger; hidden on desktop/tablet.
+ */
+export const MoreMenuMobileSlot = styled.div`
+  display: none;
+
+  ${mq.mobile} {
+    display: inline-flex;
+    align-items: center;
+  }
+`;
+
+/**
+ * Compact secondary trigger button for the mobile "More" disclosure.
+ *
+ * Uses the compact-secondary variant documented in style-guide §11.4:
+ * - bg: bgFormAlpha15 (active: bgFormAlpha40)
+ * - border: 1px solid borderPanel
+ * - text: textBody, uppercase, label size, wide letter-spacing
+ * - height: sizes.inputSm; radius: radii.sm
+ */
+export const MoreTriggerButton = styled.button<{ $expanded?: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  background: ${({ $expanded, theme }) =>
+    $expanded ? theme.colors.bgFormAlpha40 : theme.colors.bgFormAlpha15};
+  border: 1px solid ${({ theme }) => theme.colors.borderPanel};
+  color: ${({ theme }) => theme.colors.textBody};
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.radii.sm};
+  height: ${({ theme }) => theme.sizes.inputSm};
+  font-family: inherit;
+  font-size: ${({ theme }) => theme.fontSizes.label};
+  letter-spacing: ${({ theme }) => theme.letterSpacing.wide};
+  text-transform: uppercase;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 2px;
+  }
+`;
+
+export const MoreTriggerChevron = styled.span<{ $expanded?: boolean }>`
+  display: inline-block;
+  transition: transform 160ms ease;
+  transform: rotate(${({ $expanded }) => ($expanded ? 180 : 0)}deg);
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  line-height: 1;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+
+/**
+ * Bottom-anchored, non-modal disclosure panel for the mobile "More" menu.
+ * Slides up from the bottom of the viewport; the game continues running
+ * underneath it (no backdrop, no focus trap).
+ */
+export const MoreMenuPanel = styled.div<{ $open?: boolean }>`
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 150;
+  background: ${({ theme }) => theme.colors.bgSurface};
+  border-top: 1px solid ${({ theme }) => theme.colors.borderPanel};
+  border-radius: ${({ theme }) => theme.radii.lg} ${({ theme }) => theme.radii.lg} 0 0;
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
+  max-height: min(70dvh, 520px);
+  overflow-y: auto;
+
+  transform: translateY(${({ $open }) => ($open ? "0" : "100%")});
+  transition: transform 200ms ease;
+  will-change: transform;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  ${mq.notMobile} {
+    display: none;
+  }
+`;
+
 export const ToggleLabel = styled.label`
   display: inline-flex;
   align-items: center;

@@ -11,9 +11,11 @@ import {
   DEFAULT_MANAGER_DECISION_VALUES,
   type ManagerDecisionValues,
 } from "@feat/gameplay/context/managerDecisionValues";
+import type { ImportParseState } from "@feat/saves/hooks/useImportSave";
 import { useImportSave } from "@feat/saves/hooks/useImportSave";
 import { useSaveSlotActions } from "@feat/saves/hooks/useSaveSlotActions";
 import { useSaveStore } from "@feat/saves/hooks/useSaveStore";
+import { useUIPauseScope } from "@shared/contexts/UIPauseContext";
 import { useCustomTeams } from "@shared/hooks/useCustomTeams";
 import { getRngState } from "@shared/utils/rng";
 import { currentSeedStr } from "@shared/utils/saves";
@@ -49,6 +51,19 @@ export interface SavesModalState {
   handleExport: (slot: SaveRecord) => void;
   handleImportPaste: () => void;
   handleFileImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  /** Cheap envelope-shape parse state, debounced 150ms after last keystroke. */
+  parseState: ImportParseState;
+  /** True after blur OR paste — gate `aria-invalid`/error helper-text visibility. */
+  showValidity: boolean;
+  markBlurred: () => void;
+  notePaste: () => void;
+  /** True when the textarea contents look like an export envelope and no import is in-flight. */
+  canImport: boolean;
+  /** Helper-text microcopy (always present; switches to error after blur/paste). */
+  helperText: string;
+  helperTone: "neutral" | "error";
+  /** Live-region announcement after a successful import (e.g. "Imported 1 saves"). */
+  importAnnouncement: string | null;
   /** Replaces any `ct_*` team ID fragment in a save name with the resolved display label. */
   resolveSaveName: (name: string) => string;
   /** Exports all game history as a signed JSON bundle and downloads it. */
@@ -92,8 +107,21 @@ export const useSavesModal = ({
   logRef.current = dispatchLog;
   const log = (msg: string) => logRef.current({ type: "log", payload: msg });
 
-  const open = () => ref.current?.showModal();
-  const close = () => ref.current?.close();
+  // Track dialog open state so the UI-pause scope can suspend the Manager
+  // Mode countdown and autoplay scheduler while the modal is open. This is a
+  // pure UI pause — no reducer dispatch, no PRNG calls — so determinism and
+  // seed-anchored regression tests are unaffected.
+  const [isOpen, setIsOpen] = React.useState(false);
+  useUIPauseScope(isOpen);
+
+  const open = () => {
+    ref.current?.showModal();
+    setIsOpen(true);
+  };
+  const close = () => {
+    ref.current?.close();
+    setIsOpen(false);
+  };
 
   const handleSave = () => {
     const teamLabel = (id: string) => resolveTeamLabel(id, customTeams);
@@ -197,6 +225,14 @@ export const useSavesModal = ({
     importing,
     handleFileImport,
     handlePasteImport: handleImportPaste,
+    parseState,
+    showValidity,
+    markBlurred,
+    notePaste,
+    canImport,
+    helperText,
+    helperTone,
+    importAnnouncement,
   } = useImportSave({
     importFn: importRxdbSave,
     onSuccess: (importedSave) => {
@@ -272,6 +308,14 @@ export const useSavesModal = ({
     handleExport,
     handleImportPaste,
     handleFileImport,
+    parseState,
+    showValidity,
+    markBlurred,
+    notePaste,
+    canImport,
+    helperText,
+    helperTone,
+    importAnnouncement,
     resolveSaveName,
     handleExportHistory,
     handleImportHistoryFile,

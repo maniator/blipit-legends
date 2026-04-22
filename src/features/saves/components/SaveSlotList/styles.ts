@@ -96,4 +96,9 @@ export const ActionBtn = styled.button<{ $variant?: ActionBtnVariant }>`
     outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
     outline-offset: 2px;
   }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 `;

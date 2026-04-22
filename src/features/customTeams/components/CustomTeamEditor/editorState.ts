@@ -7,6 +7,7 @@ import {
   DEFAULT_PITCHING_STAMINA,
 } from "@feat/customTeams/storage/customTeamSanitizers";
 
+import { generatePlayerId } from "@storage/generateId";
 import type {
   CreateCustomTeamInput,
   TeamBatterPlayer,
@@ -17,6 +18,14 @@ import type {
 
 import { DEFAULT_LINEUP_POSITIONS, REQUIRED_FIELD_POSITIONS } from "./playerConstants";
 import { HITTER_STAT_CAP, hitterStatTotal, PITCHER_STAT_CAP, pitcherStatTotal } from "./statBudget";
+
+/**
+ * Midpoint value used as the default for newly added player stat sliders.
+ * Keeps a fresh hitter at exactly the cap (50+50+50 = 150 = HITTER_STAT_CAP)
+ * and a fresh pitcher comfortably under (150 < PITCHER_STAT_CAP=160), so a
+ * just-added row passes editor validation immediately on first paint.
+ */
+export const DEFAULT_STAT_MIDPOINT = 50;
 
 /** A batter row as edited in the form. */
 export interface EditorBatterPlayer {
@@ -97,6 +106,129 @@ export type EditorAction =
 
 let playerIdCounter = 0;
 export const makePlayerId = (): string => `ep_${Date.now()}_${++playerIdCounter}`;
+
+/**
+ * Returns the next sequential default-name index for a given role within the
+ * team. Names already in use of the form `New batter N` / `New pitcher N` are
+ * skipped — we always pick the smallest positive integer that is not already
+ * taken in any section (so adding lineup, bench, and pitcher rows in any order
+ * yields `New batter 1`, `New batter 2`, `New pitcher 1`, …).
+ */
+export function nextDefaultNameIndex(
+  state: Pick<EditorState, "lineup" | "bench" | "pitchers">,
+  role: "batter" | "pitcher",
+): number {
+  const re = role === "batter" ? /^New batter (\d+)$/i : /^New pitcher (\d+)$/i;
+  const players: ReadonlyArray<EditorPlayer> =
+    role === "batter" ? [...state.lineup, ...state.bench] : state.pitchers;
+  const used = new Set<number>();
+  for (const p of players) {
+    const m = re.exec(p.name.trim());
+    if (m) {
+      const n = Number.parseInt(m[1], 10);
+      if (Number.isFinite(n) && n > 0) used.add(n);
+    }
+  }
+  let n = 1;
+  while (used.has(n)) n += 1;
+  return n;
+}
+
+/**
+ * Picks the default position for a newly added lineup row: the first
+ * DEFAULT_LINEUP_POSITIONS slot not already filled in the lineup, falling back
+ * to "DH" when every fielding slot is taken.
+ */
+export function pickDefaultLineupPosition(lineup: ReadonlyArray<EditorBatterPlayer>): string {
+  const filled = new Set(lineup.map((p) => p.position).filter(Boolean));
+  for (const pos of DEFAULT_LINEUP_POSITIONS) {
+    if (!filled.has(pos)) return pos;
+  }
+  return "DH";
+}
+
+/**
+ * Picks the default position for a newly added bench row.
+ *
+ * Spec deviation: the spec called for "BN", but no `BN` value exists in
+ * BATTER_POSITION_OPTIONS (the position select would render as "— select —").
+ * To keep the new row immediately valid (pickable from the dropdown and
+ * useful for satisfying REQUIRED_FIELD_POSITIONS coverage), we instead pick
+ * the first required field position that is not yet covered by lineup+bench,
+ * falling back to "DH" when every required position is already covered.
+ */
+export function pickDefaultBenchPosition(
+  lineup: ReadonlyArray<EditorBatterPlayer>,
+  bench: ReadonlyArray<EditorBatterPlayer>,
+): string {
+  const covered = new Set([...lineup, ...bench].map((p) => p.position).filter(Boolean));
+  for (const pos of REQUIRED_FIELD_POSITIONS) {
+    if (!covered.has(pos)) return pos;
+  }
+  return "DH";
+}
+
+/**
+ * Picks the default position for a newly added pitcher row: "SP" while the
+ * rotation has fewer than 5 starters, otherwise "RP".
+ */
+export function pickDefaultPitcherPosition(
+  pitchers: ReadonlyArray<EditorPitcherPlayer>,
+): "SP" | "RP" {
+  const starters = pitchers.filter((p) => p.position === "SP" || p.pitchingRole === "SP").length;
+  return starters < 5 ? "SP" : "RP";
+}
+
+/**
+ * Builds a new batter row populated with sensible defaults so the row passes
+ * editor validation (no over-cap warning, name non-empty, position pre-filled)
+ * the moment it is added.
+ */
+export function createDefaultBatter(
+  state: Pick<EditorState, "lineup" | "bench" | "pitchers">,
+  section: "lineup" | "bench",
+): EditorBatterPlayer {
+  const n = nextDefaultNameIndex(state, "batter");
+  const position =
+    section === "lineup"
+      ? pickDefaultLineupPosition(state.lineup)
+      : pickDefaultBenchPosition(state.lineup, state.bench);
+  return {
+    id: generatePlayerId(),
+    name: `New batter ${n}`,
+    role: "batter",
+    position,
+    handedness: "R",
+    contact: DEFAULT_STAT_MIDPOINT,
+    power: DEFAULT_STAT_MIDPOINT,
+    speed: DEFAULT_STAT_MIDPOINT,
+    stamina: DEFAULT_BATTING_STAMINA,
+  };
+}
+
+/**
+ * Builds a new pitcher row populated with sensible defaults so the row passes
+ * editor validation (no over-cap warning, name non-empty, position pre-filled)
+ * the moment it is added.
+ */
+export function createDefaultPitcher(
+  state: Pick<EditorState, "lineup" | "bench" | "pitchers">,
+): EditorPitcherPlayer {
+  const n = nextDefaultNameIndex(state, "pitcher");
+  const position = pickDefaultPitcherPosition(state.pitchers);
+  return {
+    id: generatePlayerId(),
+    name: `New pitcher ${n}`,
+    role: "pitcher",
+    position,
+    handedness: "R",
+    velocity: DEFAULT_STAT_MIDPOINT,
+    control: DEFAULT_STAT_MIDPOINT,
+    movement: DEFAULT_STAT_MIDPOINT,
+    pitchingRole: position,
+    stamina: DEFAULT_PITCHING_STAMINA,
+  };
+}
 
 const moveItem = <T>(arr: T[], from: number, to: number): T[] => {
   if (to < 0 || to >= arr.length) return arr;
@@ -256,15 +388,86 @@ export const initEditorState = (team?: TeamWithRoster): EditorState => ({
   error: "",
 });
 
-/** Validates the state and returns an error string or empty string if valid. */
-export function validateEditorState(state: EditorState): string {
-  if (!state.name.trim()) return "Team name is required.";
+/**
+ * Stable DOM ids for sections used as anchor targets when a validation
+ * issue does not have a single specific input element to point to.
+ *
+ * Phase 2A — keep IDs co-located with the validator that emits them so
+ * field-id ↔ DOM target stays in sync.
+ */
+export const LINEUP_SECTION_FIELD_ID = "custom-team-lineup-section";
+export const BENCH_SECTION_FIELD_ID = "custom-team-bench-section";
+export const PITCHERS_SECTION_FIELD_ID = "custom-team-pitchers-section";
+
+/** A single validation problem surfaced in the form error summary. */
+export interface ValidationIssue {
+  /**
+   * Anchor target id. Empty string means no scroll target — the issue is
+   * still listed in the summary but rendered as plain text rather than a
+   * link. Field-level inline errors only render when `fieldId` matches a
+   * known input id (e.g. `ct-name`, `ct-abbrev`).
+   */
+  fieldId: string;
+  /** Long-form copy shown inside the summary list. */
+  summaryMessage: string;
+  /**
+   * Short per-field copy shown inline beneath the offending input. MUST
+   * NOT duplicate {@link summaryMessage} verbatim — it is the field-local
+   * complement to the canonical summary copy.
+   */
+  inlineMessage?: string;
+}
+
+/**
+ * Returns every validation issue for the current editor state, in the
+ * order they should appear in the top-of-form summary.
+ *
+ * Phase 2A: collects problems across categories instead of bailing on the
+ * first one. Per-row issues (empty name, dup name, over-cap stats) are
+ * limited to one issue per row to keep the summary scannable.
+ */
+export function collectValidationIssues(state: EditorState): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+
+  if (!state.name.trim()) {
+    issues.push({
+      fieldId: "ct-name",
+      summaryMessage: "Team name is required.",
+      inlineMessage: "Required.",
+    });
+  }
+
   const abbrev = state.abbreviation.trim();
-  if (!abbrev) return "Team abbreviation is required (2–3 characters).";
-  if (abbrev.length < 2 || abbrev.length > 3) return "Team abbreviation must be 2–3 characters.";
-  if (state.lineup.length === 0) return "At least 1 lineup player is required.";
+  if (!abbrev) {
+    issues.push({
+      fieldId: "ct-abbrev",
+      summaryMessage: "Team abbreviation is required (2–3 characters).",
+      inlineMessage: "Required (2–3 characters).",
+    });
+  } else if (abbrev.length < 2 || abbrev.length > 3) {
+    issues.push({
+      fieldId: "ct-abbrev",
+      summaryMessage: "Team abbreviation must be 2–3 characters.",
+      inlineMessage: "Must be 2–3 characters.",
+    });
+  }
+
+  if (state.lineup.length === 0) {
+    issues.push({
+      fieldId: LINEUP_SECTION_FIELD_ID,
+      summaryMessage: "At least 1 lineup player is required.",
+    });
+  }
+
   for (const p of [...state.lineup, ...state.bench, ...state.pitchers]) {
-    if (!p.name.trim()) return "All players must have a name.";
+    if (!p.name.trim()) {
+      issues.push({
+        fieldId: `name-${p.id}`,
+        summaryMessage: "All players must have a name.",
+        inlineMessage: "Required.",
+      });
+      break;
+    }
   }
 
   // Enforce unique player names within the team (case-insensitive across all slots).
@@ -272,18 +475,26 @@ export function validateEditorState(state: EditorState): string {
     p.name.trim(),
   );
   const seenNamesMap = new Map<string, string>(); // lowercase → first-seen original-cased name
+  const seenIdsMap = new Map<string, string>(); // lowercase → first-seen player id
   const dupOriginals = new Set<string>();
+  let firstDupTargetId = "";
   for (const p of allPlayersForDup) {
     const lower = p.name.trim().toLowerCase();
     if (seenNamesMap.has(lower)) {
       dupOriginals.add(seenNamesMap.get(lower)!);
+      if (!firstDupTargetId) firstDupTargetId = `name-${p.id}`;
     } else {
       seenNamesMap.set(lower, p.name.trim());
+      seenIdsMap.set(lower, p.id);
     }
   }
   if (dupOriginals.size > 0) {
     const display = [...dupOriginals].map((n) => `"${n}"`).join(", ");
-    return `Duplicate player name(s) within this team: ${display}. Each player must have a unique name.`;
+    issues.push({
+      fieldId: firstDupTargetId,
+      summaryMessage: `Duplicate player name(s) within this team: ${display}. Each player must have a unique name.`,
+      inlineMessage: "Duplicate name.",
+    });
   }
 
   // Check starting lineup for duplicate or missing required positions.
@@ -296,10 +507,16 @@ export function validateEditorState(state: EditorState): string {
   );
   const missingLineupPos = DEFAULT_LINEUP_POSITIONS.filter((pos) => !lineupPosCounts.has(pos));
   if (duplicateLineupPos.length > 0) {
-    return `Starting lineup has duplicate position(s): ${duplicateLineupPos.join(", ")}. Each position must appear exactly once.`;
+    issues.push({
+      fieldId: LINEUP_SECTION_FIELD_ID,
+      summaryMessage: `Starting lineup has duplicate position(s): ${duplicateLineupPos.join(", ")}. Each position must appear exactly once.`,
+    });
   }
   if (missingLineupPos.length > 0) {
-    return `Starting lineup is missing position(s): ${missingLineupPos.join(", ")}.`;
+    issues.push({
+      fieldId: LINEUP_SECTION_FIELD_ID,
+      summaryMessage: `Starting lineup is missing position(s): ${missingLineupPos.join(", ")}.`,
+    });
   }
 
   // Check that all required field positions are covered in lineup + bench.
@@ -307,14 +524,21 @@ export function validateEditorState(state: EditorState): string {
   const coveredPositions = new Set(fieldPlayers.map((p) => p.position).filter(Boolean));
   const missingPositions = REQUIRED_FIELD_POSITIONS.filter((pos) => !coveredPositions.has(pos));
   if (missingPositions.length > 0) {
-    return `Roster must include at least one player at each of: ${missingPositions.join(", ")}.`;
+    issues.push({
+      fieldId: BENCH_SECTION_FIELD_ID,
+      summaryMessage: `Roster must include at least one player at each of: ${missingPositions.join(", ")}.`,
+    });
   }
 
   // Check hitter stat cap (contact + power + speed ≤ HITTER_STAT_CAP).
   for (const player of [...state.lineup, ...state.bench]) {
     const total = hitterStatTotal(player.contact, player.power, player.speed);
     if (total > HITTER_STAT_CAP) {
-      return `${player.name || "A hitter"} is over the stat cap (${total} / ${HITTER_STAT_CAP}).`;
+      issues.push({
+        fieldId: `name-${player.id}`,
+        summaryMessage: `${player.name || "A hitter"} is over the stat cap (${total} / ${HITTER_STAT_CAP}).`,
+      });
+      break;
     }
   }
 
@@ -325,15 +549,35 @@ export function validateEditorState(state: EditorState): string {
       player.control === undefined ||
       player.movement === undefined
     ) {
-      return `${player.name || "A pitcher"} is missing pitching stats.`;
+      issues.push({
+        fieldId: `name-${player.id}`,
+        summaryMessage: `${player.name || "A pitcher"} is missing pitching stats.`,
+      });
+      break;
     }
     const total = pitcherStatTotal(player.velocity, player.control, player.movement);
     if (total > PITCHER_STAT_CAP) {
-      return `${player.name || "A pitcher"} is over the stat cap (${total} / ${PITCHER_STAT_CAP}).`;
+      issues.push({
+        fieldId: `name-${player.id}`,
+        summaryMessage: `${player.name || "A pitcher"} is over the stat cap (${total} / ${PITCHER_STAT_CAP}).`,
+      });
+      break;
     }
   }
 
-  return "";
+  return issues;
+}
+
+/**
+ * Backward-compatible single-string validator. Returns the first issue's
+ * summary message, or an empty string when the state is valid.
+ *
+ * Prefer {@link collectValidationIssues} for new call sites that need to
+ * surface every issue at once (e.g. the form error summary block).
+ */
+export function validateEditorState(state: EditorState): string {
+  const issues = collectValidationIssues(state);
+  return issues.length > 0 ? issues[0].summaryMessage : "";
 }
 
 /** Maps EditorState to CreateCustomTeamInput. */
