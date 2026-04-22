@@ -17,10 +17,7 @@
  */
 
 import { selectPitchType } from "@feat/gameplay/constants/pitchTypes";
-import {
-  makeAiStrategyDecision,
-  makeAiTacticalDecision,
-} from "@feat/gameplay/context/aiManager";
+import { makeAiStrategyDecision, makeAiTacticalDecision } from "@feat/gameplay/context/aiManager";
 import type { GameAction, State } from "@feat/gameplay/context/index";
 import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
 import { DEFAULT_MANAGER_DECISION_VALUES } from "@feat/gameplay/context/managerDecisionValues";
@@ -99,10 +96,7 @@ const runGameWithAI = (seed: number, decisionValues: ManagerDecisionValues): Gam
 
   let state = makeState({
     teams: [awayTeam, homeTeam],
-    lineupOrder: [
-      awayRoster.batters.map((b) => b.id),
-      homeRoster.batters.map((b) => b.id),
-    ],
+    lineupOrder: [awayRoster.batters.map((b) => b.id), homeRoster.batters.map((b) => b.id)],
     rosterPitchers: [[awayRoster.pitcher.id], [homeRoster.pitcher.id]],
   });
 
@@ -229,8 +223,7 @@ describe.skip("gameSweep — 100-game baseline (run manually)", () => {
     // Per-game totals = sum across both teams for each game (= total events / #games)
     const avgHR = results.reduce((s, r) => s + r.hrs, 0) / NUM_GAMES;
     const avgBB = results.reduce((s, r) => s + r.bbs, 0) / NUM_GAMES;
-    const avgBBnoIBB =
-      results.reduce((s, r) => s + (r.bbs - r.ibbWalks), 0) / NUM_GAMES;
+    const avgBBnoIBB = results.reduce((s, r) => s + (r.bbs - r.ibbWalks), 0) / NUM_GAMES;
     const avgSB = results.reduce((s, r) => s + r.sbs, 0) / NUM_GAMES;
 
     // Per-TEAM averages (two teams per game)
@@ -257,9 +250,15 @@ describe.skip("gameSweep — 100-game baseline (run manually)", () => {
     const bbOk = Math.abs(perTeamBB - MLB_2023.bb) / MLB_2023.bb <= TOLERANCE;
     const sbOk = Math.abs(perTeamSB - MLB_2023.sb) / MLB_2023.sb <= TOLERANCE;
 
-    console.log(`  HR within 10%: ${hrOk ? "✓" : "✗"} (${(((perTeamHR - MLB_2023.hr) / MLB_2023.hr) * 100).toFixed(1)}% off)`);
-    console.log(`  BB within 10%: ${bbOk ? "✓" : "✗"} (${(((perTeamBB - MLB_2023.bb) / MLB_2023.bb) * 100).toFixed(1)}% off)`);
-    console.log(`  SB within 10%: ${sbOk ? "✓" : "✗"} (${(((perTeamSB - MLB_2023.sb) / MLB_2023.sb) * 100).toFixed(1)}% off)`);
+    console.log(
+      `  HR within 10%: ${hrOk ? "✓" : "✗"} (${(((perTeamHR - MLB_2023.hr) / MLB_2023.hr) * 100).toFixed(1)}% off)`,
+    );
+    console.log(
+      `  BB within 10%: ${bbOk ? "✓" : "✗"} (${(((perTeamBB - MLB_2023.bb) / MLB_2023.bb) * 100).toFixed(1)}% off)`,
+    );
+    console.log(
+      `  SB within 10%: ${sbOk ? "✓" : "✗"} (${(((perTeamSB - MLB_2023.sb) / MLB_2023.sb) * 100).toFixed(1)}% off)`,
+    );
     console.log("════════════════════════════════════════════\n");
 
     // Soft assertions — the test records data; hard failures are intentionally

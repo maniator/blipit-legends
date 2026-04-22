@@ -13,27 +13,27 @@
 
 ### 1a. Persistent preferences (survive across games, user-level config)
 
-| Control | localStorage key | Default |
-| --- | --- | --- |
-| Speed slider (`SPEED_STEPS`: Slow / Normal / Fast / Instant) | `speed` | `700` (Normal) |
-| Announcement volume range (0–1, mute toggle) | `announcementVolume` | `1` |
-| Music/alert volume range (0–1, mute toggle) | `alertVolume` | `1` |
-| Manager Decision Values tuning panel (`decisionValues`) | `managerDecisionValues` | `DEFAULT_MANAGER_DECISION_VALUES` |
+| Control                                                      | localStorage key        | Default                           |
+| ------------------------------------------------------------ | ----------------------- | --------------------------------- |
+| Speed slider (`SPEED_STEPS`: Slow / Normal / Fast / Instant) | `speed`                 | `700` (Normal)                    |
+| Announcement volume range (0–1, mute toggle)                 | `announcementVolume`    | `1`                               |
+| Music/alert volume range (0–1, mute toggle)                  | `alertVolume`           | `1`                               |
+| Manager Decision Values tuning panel (`decisionValues`)      | `managerDecisionValues` | `DEFAULT_MANAGER_DECISION_VALUES` |
 
 ### 1b. In-game session actions (contextual, tied to an active game)
 
-| Control | Notes |
-| --- | --- |
-| ← Home button | Shown when `onBackToHome` is provided |
-| New Game button | Shown when `gameOver` |
-| 💾 Saves modal trigger | Save/load during active game |
-| ? Help / InstructionsModal trigger | Contextual help |
-| ⏸/▶ Pause / Resume button | Shown when `gameStarted && !gameOver` |
-| Manager Mode checkbox | Shown when `gameStarted` |
-| Strategy selector (Balanced / Aggressive / …) | Shown inside `ManagerModeControls` |
-| Managed team selector | Shown inside `ManagerModeControls` |
-| Substitution trigger | Shown inside `ManagerModeControls` |
-| Decision Panel (steal/bunt/IBB/shift) | Shown when `managerMode` is active |
+| Control                                       | Notes                                 |
+| --------------------------------------------- | ------------------------------------- |
+| ← Home button                                 | Shown when `onBackToHome` is provided |
+| New Game button                               | Shown when `gameOver`                 |
+| 💾 Saves modal trigger                        | Save/load during active game          |
+| ? Help / InstructionsModal trigger            | Contextual help                       |
+| ⏸/▶ Pause / Resume button                     | Shown when `gameStarted && !gameOver` |
+| Manager Mode checkbox                         | Shown when `gameStarted`              |
+| Strategy selector (Balanced / Aggressive / …) | Shown inside `ManagerModeControls`    |
+| Managed team selector                         | Shown inside `ManagerModeControls`    |
+| Substitution trigger                          | Shown inside `ManagerModeControls`    |
+| Decision Panel (steal/bunt/IBB/shift)         | Shown when `managerMode` is active    |
 
 ### 1c. Problem statement
 
@@ -56,23 +56,23 @@ Persistent preferences (speed, volume, `decisionValues`) do not belong in the ga
 
 ### What moves to `/settings`
 
-| Setting | localStorage key | Notes |
-| --- | --- | --- |
-| Speed preference | `speed` | Default speed for new games |
-| Announcement volume | `announcementVolume` | Persisted across games |
-| Music / alert volume | `alertVolume` | Persisted across games |
+| Setting                          | localStorage key        | Notes                                                 |
+| -------------------------------- | ----------------------- | ----------------------------------------------------- |
+| Speed preference                 | `speed`                 | Default speed for new games                           |
+| Announcement volume              | `announcementVolume`    | Persisted across games                                |
+| Music / alert volume             | `alertVolume`           | Persisted across games                                |
 | Manager Decision Values defaults | `managerDecisionValues` | Tuning sliders for steal, bunt, IBB, shift thresholds |
 
 ### What stays in the game HUD
 
-| Control | Rationale |
-| --- | --- |
-| ⏸/▶ Pause / Resume | Per-pitch action; must be instantly reachable |
-| Manager Mode toggle | Activates during active game; meaningless before game start |
-| Strategy selector | Game-session scope; changes affect live AI decisions |
-| Managed team selector | Game-session scope |
-| Substitution panel trigger | In-game action |
-| ← Home / New Game / 💾 Saves / ? Help | Navigation and session actions |
+| Control                               | Rationale                                                   |
+| ------------------------------------- | ----------------------------------------------------------- |
+| ⏸/▶ Pause / Resume                    | Per-pitch action; must be instantly reachable               |
+| Manager Mode toggle                   | Activates during active game; meaningless before game start |
+| Strategy selector                     | Game-session scope; changes affect live AI decisions        |
+| Managed team selector                 | Game-session scope                                          |
+| Substitution panel trigger            | In-game action                                              |
+| ← Home / New Game / 💾 Saves / ? Help | Navigation and session actions                              |
 
 > **Speed in the HUD:** The Speed slider may remain in the HUD as a **quick-access override**
 > (read from and write to the same `speed` localStorage key), so the user can change tempo
@@ -152,15 +152,15 @@ is needed — the keys are identical.
 
 ### 4c. localStorage key registry (no rename needed)
 
-| Key | Current owner | Post-migration owner |
-| --- | --- | --- |
-| `speed` | `useGameControls` | `useSettings` (new hook); `useGameControls` reads same key |
-| `announcementVolume` | `useGameControls` | `useSettings`; `useGameControls` reads same key |
-| `alertVolume` | `useGameControls` | `useSettings`; `useGameControls` reads same key |
-| `managerDecisionValues` | `useGameControls` | `useSettings`; `useGameControls` reads same key |
-| `managerMode` | `useGameControls` | Stays in `useGameControls` (in-game only) |
-| `strategy` | `useGameControls` | Stays in `useGameControls` (in-game only) |
-| `managedTeam` | `useGameControls` | Stays in `useGameControls` (in-game only) |
+| Key                     | Current owner     | Post-migration owner                                       |
+| ----------------------- | ----------------- | ---------------------------------------------------------- |
+| `speed`                 | `useGameControls` | `useSettings` (new hook); `useGameControls` reads same key |
+| `announcementVolume`    | `useGameControls` | `useSettings`; `useGameControls` reads same key            |
+| `alertVolume`           | `useGameControls` | `useSettings`; `useGameControls` reads same key            |
+| `managerDecisionValues` | `useGameControls` | `useSettings`; `useGameControls` reads same key            |
+| `managerMode`           | `useGameControls` | Stays in `useGameControls` (in-game only)                  |
+| `strategy`              | `useGameControls` | Stays in `useGameControls` (in-game only)                  |
+| `managedTeam`           | `useGameControls` | Stays in `useGameControls` (in-game only)                  |
 
 **No backward-compatibility migration script is required.** All keys are identical. Any user
 visiting `/settings` before a game will read and write the same values that `GameControls`
@@ -190,15 +190,15 @@ Once `/settings` is live:
 
 ## 5. Risks
 
-| Risk | Severity | Mitigation |
-| --- | --- | --- |
-| **Discoverability regression** — users accustomed to adjusting volume in the HUD may not find `/settings` | P1 | Keep mute toggle icon (🔊/🔇) in HUD as a single-tap shortcut that writes to `announcementVolume`; full slider lives on `/settings` |
-| **Speed slider removal from HUD** — power users change speed mid-game frequently | P1 | Keep Speed slider in HUD (secondary affordance); `/settings` is canonical default |
-| **`managerDecisionValues` confusion** — users may not understand "defaults for new games" framing | P2 | Clear section header copy: "Manager Decisions (defaults for new games)" with tooltip/help text |
-| **Snapshot churn** — removing VolumeControls from HUD changes layout snapshots for all 6 viewports | P1 | Coordinate with `@e2e-test-runner` to regenerate baselines in the same PR as implementation |
-| **Self-heal loop** — `useGameControls` currently self-heals corrupt localStorage values on mount; `useSettings` must replicate this guard | P1 | Carry the sanitization + write-back pattern from `useGameControls` into the new `useSettings` hook |
-| **Speed=0 (Instant) and volume side-effects** — `setSpeechRate` and `setAnnouncementVolume` are called inside `useGameControls` effects; extracting to `useSettings` must not break these calls during active games | P0 | `useGameControls` retains the `useEffect` calls that call `setSpeechRate` / `setAnnouncementVolume`; it reads from localStorage directly. `useSettings` writes to localStorage; `usehooks-ts` `useLocalStorage` emits storage events that re-trigger `useGameControls` effects automatically |
-| **Mobile nav clutter** — adding a ⚙ Settings button to the already-compact Home screen | P2 | Use an icon-only button (⚙) with `aria-label="Settings"`; validate with `@user-casual-watcher` proxy interview before shipping |
+| Risk                                                                                                                                                                                                                | Severity | Mitigation                                                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Discoverability regression** — users accustomed to adjusting volume in the HUD may not find `/settings`                                                                                                           | P1       | Keep mute toggle icon (🔊/🔇) in HUD as a single-tap shortcut that writes to `announcementVolume`; full slider lives on `/settings`                                                                                                                                                          |
+| **Speed slider removal from HUD** — power users change speed mid-game frequently                                                                                                                                    | P1       | Keep Speed slider in HUD (secondary affordance); `/settings` is canonical default                                                                                                                                                                                                            |
+| **`managerDecisionValues` confusion** — users may not understand "defaults for new games" framing                                                                                                                   | P2       | Clear section header copy: "Manager Decisions (defaults for new games)" with tooltip/help text                                                                                                                                                                                               |
+| **Snapshot churn** — removing VolumeControls from HUD changes layout snapshots for all 6 viewports                                                                                                                  | P1       | Coordinate with `@e2e-test-runner` to regenerate baselines in the same PR as implementation                                                                                                                                                                                                  |
+| **Self-heal loop** — `useGameControls` currently self-heals corrupt localStorage values on mount; `useSettings` must replicate this guard                                                                           | P1       | Carry the sanitization + write-back pattern from `useGameControls` into the new `useSettings` hook                                                                                                                                                                                           |
+| **Speed=0 (Instant) and volume side-effects** — `setSpeechRate` and `setAnnouncementVolume` are called inside `useGameControls` effects; extracting to `useSettings` must not break these calls during active games | P0       | `useGameControls` retains the `useEffect` calls that call `setSpeechRate` / `setAnnouncementVolume`; it reads from localStorage directly. `useSettings` writes to localStorage; `usehooks-ts` `useLocalStorage` emits storage events that re-trigger `useGameControls` effects automatically |
+| **Mobile nav clutter** — adding a ⚙ Settings button to the already-compact Home screen                                                                                                                              | P2       | Use an icon-only button (⚙) with `aria-label="Settings"`; validate with `@user-casual-watcher` proxy interview before shipping                                                                                                                                                               |
 
 ---
 
@@ -215,14 +215,14 @@ Once `/settings` is live:
 
 ## Responsive behavior
 
-| Viewport | Layout |
-| --- | --- |
-| `desktop` 1280×800 | Two-column grid: Audio + Playback left, Manager Decisions right |
-| `tablet` 820×1180 | Single column, full-width sections |
-| `iphone-15-pro-max` 430×739 | Single column, full-width; sticky section headers |
-| `iphone-15` 393×659 | Single column; Reset button full-width |
-| `pixel-7` 412×839 | Single column |
-| `pixel-5` 393×727 | Single column |
+| Viewport                    | Layout                                                          |
+| --------------------------- | --------------------------------------------------------------- |
+| `desktop` 1280×800          | Two-column grid: Audio + Playback left, Manager Decisions right |
+| `tablet` 820×1180           | Single column, full-width sections                              |
+| `iphone-15-pro-max` 430×739 | Single column, full-width; sticky section headers               |
+| `iphone-15` 393×659         | Single column; Reset button full-width                          |
+| `pixel-7` 412×839           | Single column                                                   |
+| `pixel-5` 393×727           | Single column                                                   |
 
 ---
 
