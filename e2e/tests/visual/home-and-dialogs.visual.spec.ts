@@ -47,6 +47,12 @@ test.describe("Visual", () => {
   test("How to Play modal default state screenshot", async ({ page }) => {
     // Start a game so we're on /game where the How to Play button is available.
     await startGameViaPlayBall(page, { seed: "howtoplay1" });
+    // On mobile (≤ 768px) the How to Play button lives behind the
+    // GameControls "More" disclosure (Phase 3 mobile header density).
+    const moreTrigger = page.getByTestId("game-header-more-trigger");
+    if (await moreTrigger.isVisible().catch(() => false)) {
+      await moreTrigger.click();
+    }
     await page.getByRole("button", { name: /how to play/i }).click();
     await expect(page.getByTestId("instructions-modal")).toBeVisible();
     await expect(page.getByTestId("instructions-modal")).toHaveScreenshot(
