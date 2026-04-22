@@ -53,22 +53,25 @@ All collections below are introduced in v1 unless noted.
 
 One document per season — the top-level league/season record.
 
-| Field                  | Type                                                                                 | Notes                                                                           |
-| ---------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| `id`                   | string (primary)                                                                     | Generated via `generateSeasonId()` (new helper added in `@storage/generateId`). |
-| `name`                 | string                                                                               | User-supplied or default ("Spring 2026").                                       |
-| `status`               | `'active' \| 'complete' \| 'abandoned'`                                              | Only one `'active'` season at a time (decision #8).                             |
-| `createdAt`            | number (epoch ms)                                                                    | Indexed.                                                                        |
-| `completedAt`          | number \| null                                                                       |                                                                                 |
-| `preset`               | `'mini' \| 'standard' \| 'full'`                                                     | Decision #1.                                                                    |
-| `seasonLength`         | `'sprint' \| 'standard' \| 'marathon'`                                               | Decision #2.                                                                    |
-| `masterSeed`           | string (base-36)                                                                     | All in-season randomness derives from this.                                     |
-| `leagues`              | `Array<{ id; name; teamIds: string[]; dhEnabled: boolean; divisions?: Division[] }>` | One or more leagues per season; v1 ships 1 or 2 leagues, v2 adds divisions.     |
-| `tradeDeadlineGameDay` | number \| null                                                                       | `null` = "no deadline" (decision #14). v3+ field; reserved/null in v1–v2.       |
-| `playoffFormat`        | `'short' \| 'default' \| 'long' \| null`                                             | v3+ field; null in v1–v2.                                                       |
-| `featureFlags`         | `{ shareableSeasonSeeds?: boolean; allowReplay?: boolean }`                          | **Snapshot at creation time.** Flipping a flag mid-season is a no-op.           |
-| `currentGameDay`       | number                                                                               | Advances as games complete.                                                     |
-| `championTeamId`       | string \| null                                                                       | Set when `status` becomes `'complete'`.                                         |
+| Field                  | Type                                                                                    | Notes                                                                                                                                                                          |
+| ---------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `id`                   | string (primary)                                                                        | Generated via `generateSeasonId()` (new helper added in `@storage/generateId`).                                                                                                |
+| `name`                 | string                                                                                  | User-supplied or default ("Spring 2026").                                                                                                                                      |
+| `status`               | `'active' \| 'complete' \| 'abandoned'`                                                 | Only one `'active'` season at a time (decision #8).                                                                                                                            |
+| `createdAt`            | number (epoch ms)                                                                       | Indexed.                                                                                                                                                                       |
+| `completedAt`          | number \| null                                                                          |                                                                                                                                                                                |
+| `preset`               | `'mini' \| 'standard' \| 'full'`                                                        | Decision #1.                                                                                                                                                                   |
+| `seasonLength`         | `'sprint' \| 'standard' \| 'marathon'`                                                  | Decision #2.                                                                                                                                                                   |
+| `masterSeed`           | string (base-36)                                                                        | All in-season randomness derives from this.                                                                                                                                    |
+| `leagues`              | `Array<{ id; name; teamIds: string[]; dhEnabled: boolean; divisions?: Division[] }>`    | One or more leagues per season; v1 ships 1 or 2 leagues, v2 adds divisions.                                                                                                    |
+| `tradeDeadlineGameDay` | number \| null                                                                          | `null` = "no deadline" (decision #14). v3+ field; reserved/null in v1–v2.                                                                                                      |
+| `playoffFormat`        | `'short' \| 'default' \| 'long' \| null`                                                | v3+ field; null in v1–v2.                                                                                                                                                      |
+| `featureFlags`         | `{ shareableSeasonSeeds?: boolean; allowReplay?: boolean; multiTeamManager?: boolean }` | **Snapshot at creation time.** Flipping a flag mid-season is a no-op (decision #26).                                                                                           |
+| `currentGameDay`       | number                                                                                  | Advances as games complete.                                                                                                                                                    |
+| `championTeamId`       | string \| null                                                                          | Set when `status` becomes `'complete'`.                                                                                                                                        |
+| `rulesetVersion`       | number                                                                                  | Pinned at season creation. On resume, if mismatched the season runs under its original ruleset constants. See `src/features/league/ruleset/index.ts`.                          |
+| `playoffMode`          | boolean                                                                                 | **v3 field** (default `false`). Flips ×0.5 injury multiplier during playoff games. Schema v3 bump required; migration default `false`.                                         |
+| `expectedWins`         | number                                                                                  | **v4 field.** Snapshotted at season creation via `expectedWins = 0.500 + sigmoid(teamTalentZ − leagueMeanTalent) × 0.25 × seasonGames`. Used by Manager of the Year composite. |
 
 Indexes: `status`, `createdAt`.
 
@@ -157,13 +160,13 @@ One document per transaction (IL move, trade, call-up, demote). Introduced in **
 
 One document per (season, award).
 
-| Field            | Type                                                                |
-| ---------------- | ------------------------------------------------------------------- |
-| `id`             | string (primary) — `${seasonId}:${awardKey}`                        |
-| `seasonId`       | string (indexed)                                                    |
-| `awardKey`       | string — e.g. `'mvp_league_a'`, `'cy_young_league_b'`               |
-| `winnerPlayerId` | string                                                              |
-| `formula`        | object — composite breakdown so the awards screen can show the math |
+| Field            | Type                                                                                                                                                        |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`             | string (primary) — `${seasonId}:${awardKey}`                                                                                                                |
+| `seasonId`       | string (indexed)                                                                                                                                            |
+| `awardKey`       | string — e.g. `'mvp_league_a'`, `'cy_young_league_b'`, `'reliever_of_the_year_league_a'`, `'rookie_of_the_year_league_b'`, `'manager_of_the_year_league_a'` |
+| `winnerPlayerId` | string                                                                                                                                                      |
+| `formula`        | object — composite breakdown so the awards screen can show the math                                                                                         |
 
 ### `seasonArchives` (v4, only if measured doc count exceeds budget)
 
@@ -182,10 +185,10 @@ Compressed archive of one completed season's `seasonGames` + `seasonTransactions
 
 ### `customTeams` (additive — schema bump only when these land)
 
-| Field             | Type                                                                   | Version added | Notes                                                                                                                                                                             |
-| ----------------- | ---------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `activeLeagueIds` | `string[]`                                                             | v1            | Teams can sit in multiple historical seasons. v1 maintains "current active league" by filtering `seasons.leagues[].teamIds`. This field is denormalized cache for fast filtering. |
-| `autogen`         | `{ version: number; theme: string; parity: string; baseSeed: string }` | v1            | Present **only** on autogenerated teams. Powers regeneration for replay debugging (see autogen doc).                                                                              |
+| Field             | Type                                                                   | Version added | Notes                                                                                                                                                                                                                                                                                                                                                          |
+| ----------------- | ---------------------------------------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `activeLeagueIds` | `string[]`                                                             | v1            | Teams can sit in multiple historical seasons. This is a **denormalized cache** for fast filtering only — correctness-critical reads (e.g., edit-lock checks) MUST re-derive from `seasons.leagues[].teamIds`, never trust this cache. Written in the same transaction that activates a season; cleared when a season transitions to `complete` or `abandoned`. |
+| `autogen`         | `{ version: number; theme: string; parity: string; baseSeed: string }` | v1            | Present **only** on autogenerated teams. Powers regeneration for replay debugging (see autogen doc).                                                                                                                                                                                                                                                           |
 
 These fields are **optional** so existing customTeams docs continue to validate. Migration strategy v(N) → v(N+1) leaves the keys **omitted** on docs that don't have them (RxDB / persisted JSON cannot reliably round-trip an `undefined` value, so we never write the key with an `undefined` value — code that consumes these fields treats "key missing" as the absence signal).
 

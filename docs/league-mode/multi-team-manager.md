@@ -14,7 +14,7 @@ A setup-time toggle (off by default per decision #4) that lets the user receive 
 
 - Setup wizard, Step 5 (Seed & advanced) — checkbox: **"Manage every team in this league (advanced)"**.
 - Help text: _"You'll receive Manager Mode prompts for every team's games. Off by default — most users prefer to manage one team."_
-- Snapshotted onto the `seasons` doc as part of `featureFlags` (or a top-level `multiTeamManager: boolean` — decided at v4 phase planning, but **must** be snapshotted so mid-season toggles are no-ops per decision #26).
+- Snapshotted onto the `seasons` doc as `featureFlags.multiTeamManager: boolean` — part of the feature-flag snapshot per decision #26, so mid-season toggles are no-ops.
 
 ## Prompt routing rules (binding contract)
 
@@ -33,7 +33,7 @@ When N>1 teams have simultaneous Manager Mode decisions during the same game-day
 
 ## Persistence
 
-- `seasons.multiTeamManager: boolean` — snapshotted at season start.
+- `seasons.featureFlags.multiTeamManager: boolean` — snapshotted at season start (part of the feature-flag snapshot per decision #26).
 - The list of user-managed `seasonTeamId`s is derived: in single-team mode it is the user's pick; in multi-team mode it is **every** `seasonTeamId` in the season's leagues (no per-team opt-in granularity in v4).
 
 ## Determinism

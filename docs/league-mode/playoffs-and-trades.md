@@ -122,7 +122,7 @@ Three-way+ ties resolve highest-seed-first then recurse on the residual group wi
 - **Injury rate: ×0.5 of regular season** (0.0075 per active-lineup player-game vs 0.015 in the regular season).
 - **Position-player wear: unchanged.**
 
-Implementation: a single `playoffMode: boolean` flag on the `seasons` doc flips the injury multiplier in the roll function. No schema changes for v3 beyond what's already in v2.
+Implementation: a single `playoffMode: boolean` flag on the `seasons` doc flips the injury multiplier in the roll function. This field is added in the v3 schema bump for `seasons` (migration default `false`; see `data-model.md` for the full seasons schema including `playoffMode`).
 
 ### Bracket UI (decision #25)
 

@@ -54,7 +54,8 @@ The v1 `SaveStore` bundle envelope shape is `{ version, header, events, sig }` (
 
 - **Field-name alignment with v1.** `version` (not `format`) and `sig` (not `checksum`) match the existing `SaveStore` envelope; v1 importers can still read `version` to decide accept/reject. The v1 envelope's `events` array is preserved at the top level **only on v1 bundles**; in v2 envelopes the equivalent data lives under `header.collections.events`.
 - **Signature scope.** The `sig` is computed as `fnv1a(RXDB_EXPORT_KEY + JSON.stringify(header))` (same helper + key as v1). Because `header` now contains every league collection, league state is part of the signed payload — partial coverage would leave league data unverified.
-- **Canonical JSON.** Keys sorted lex at every level, no whitespace, before signing. Reuse the v1 `SaveStore` canonicalization helper (extract if currently inlined).
+- **Canonical JSON.** Keys sorted lex at every level, no whitespace, before signing. **There is no existing canonicalization helper in `saveStore.ts`** — v1 uses plain `JSON.stringify({ header, events })` (no key sorting). Write a new `canonicalJSON(obj: unknown): string` utility for v2 (suggested path: `src/features/saves/storage/canonicalJSON.ts`). The v1 verification path in `importRxdbSave` must remain unchanged — applying key-sorting to v1 sig verification would invalidate all existing exported saves.
+- **`RxdbExportedSave` discriminated union.** The existing `types.ts` has `version: 1` as a literal type. Adding v2 requires converting to a discriminated union: `type RxdbExportedSave = { version: 1; header: SaveRecord; events: EventRecord[]; sig: string } | { version: 2; header: V2BundleHeader; sig: string }`. The v1 branch is unchanged.
 
 ## Import behavior
 
