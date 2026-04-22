@@ -13,8 +13,9 @@ import { makeState } from "@test/testHelpers";
  * Module-private signing key used by `exportRxdbSave` / `importRxdbSave`.
  * Kept in sync with the production constant in `saveStore.ts`; centralized
  * here so signature-construction tests do not drift if the key ever changes.
- * If the production key changes, update this constant and all signature
- * tests will pick it up.
+ * If the production key changes, update this constant and re-run the tests —
+ * any test that manually builds a bundle will fail with "signature mismatch"
+ * until the constant below matches the new production value.
  */
 const RXDB_EXPORT_KEY = "ballgame:rxdb:v1";
 
@@ -954,7 +955,14 @@ describe("SaveStore export/import — decisionValues round-trip (#233-F3)", () =
     const store2 = makeSaveStore(() => Promise.resolve(db2));
     const restored = await store2.importRxdbSave(json);
 
+    // Verify the in-memory return value carries decisionValues from the bundle.
     expect(restored.setup.decisionValues).toEqual(decisionValues);
+
+    // Also verify DB persistence: the upsert must have stored decisionValues so
+    // that a subsequent listSaves() (the real load path) returns the correct value.
+    const saves = await store2.listSaves();
+    expect(saves).toHaveLength(1);
+    expect(saves[0].setup.decisionValues).toEqual(decisionValues);
     await db2.close();
   });
 
