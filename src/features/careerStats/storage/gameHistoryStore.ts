@@ -469,11 +469,16 @@ function buildStore(getDbFn: GetDb) {
       db.completedGames.find({ selector: { awayTeamId: teamId } }).exec(),
     ]);
 
-    // Merge and sort chronologically (playedAt asc) in memory.
-    const docs = [
+    // Merge, dedupe by id (imported/legacy records with homeTeamId === awayTeamId
+    // match both queries and would otherwise be double-counted), then sort
+    // chronologically (playedAt asc) in memory.
+    const mergedDocs = [
       ...homeRows.map((r) => r.toJSON() as CompletedGameRecord),
       ...awayRows.map((r) => r.toJSON() as CompletedGameRecord),
-    ].sort((a, b) => a.playedAt - b.playedAt);
+    ];
+    const docs = Array.from(
+      new Map(mergedDocs.map((doc) => [doc.id, doc] as const)).values(),
+    ).sort((a, b) => a.playedAt - b.playedAt);
 
     let wins = 0;
     let losses = 0;
