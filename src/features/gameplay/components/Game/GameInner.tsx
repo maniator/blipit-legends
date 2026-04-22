@@ -463,7 +463,8 @@ const GameInner: React.FunctionComponent<Props> = ({
   return (
     <>
       {showStealClampToast && (
-        <StealClampNotice role="status" aria-live="polite" data-testid="steal-clamp-notice">
+        /* role="status" implies aria-live="polite" — no need to add it explicitly */
+        <StealClampNotice role="status" data-testid="steal-clamp-notice">
           <span>Steal threshold updated to 65% (minimum)</span>
           <button
             type="button"
