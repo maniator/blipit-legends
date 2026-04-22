@@ -174,12 +174,12 @@ One document per (season, award).
 
 Compressed archive of one completed season's `seasonGames` + `seasonTransactions` + `seasonPlayerState`.
 
-| Field        | Type                           | Notes                                                                                                                              |
-| ------------ | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `id`         | string (primary, = `seasonId`) |                                                                                                                                    |
-| `compressed` | base64 string (gzipped JSON)   |                                                                                                                                    |
-| `checksum`   | string                         | FNV-1a hex of the raw JSON **before** gzip. Verified on every read; mismatch surfaces a corruption error without deleting the doc. |
-| `archivedAt` | number                         |                                                                                                                                    |
+| Field        | Type                           | Notes                                                                                                                                                                                                                                                                                  |
+| ------------ | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`         | string (primary, = `seasonId`) |                                                                                                                                                                                                                                                                                        |
+| `compressed` | base64 string (gzipped JSON)   |                                                                                                                                                                                                                                                                                        |
+| `checksum`   | string                         | FNV-1a hex of `canonicalJSON(archivedData)` (see `src/features/saves/storage/canonicalJSON.ts`) **before** gzip — plain `JSON.stringify` has no guaranteed key-order stability across runtimes. Verified on every read; mismatch surfaces a corruption error without deleting the doc. |
+| `archivedAt` | number                         |                                                                                                                                                                                                                                                                                        |
 
 `seasons` and `seasonAwards` are **not** archived — they remain queryable for the seasons list & history UI.
 
