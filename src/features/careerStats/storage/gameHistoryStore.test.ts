@@ -143,6 +143,7 @@ describe("GameHistoryStore export/import", () => {
 
     const json = await store.exportGameHistory();
 
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     const store2 = makeGameHistoryStore(() => Promise.resolve(db2));
     await store2.importGameHistory(json, new Set(["Yankees", "Mets"]));
@@ -584,6 +585,7 @@ describe("exportGameHistory / importGameHistory — pitcher stats", () => {
     const json = await store.exportGameHistory();
 
     // Fresh DB for import.
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     const store2 = makeGameHistoryStore(() => Promise.resolve(db2));
 
@@ -602,6 +604,7 @@ describe("exportGameHistory / importGameHistory — pitcher stats", () => {
     await store.commitCompletedGame(gameId, { ...gameMeta }, [], [makePitcherRow(gameId, "p1")]);
     const json = await store.exportGameHistory();
 
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     const store2 = makeGameHistoryStore(() => Promise.resolve(db2));
 

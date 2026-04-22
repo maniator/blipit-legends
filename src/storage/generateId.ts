@@ -36,3 +36,12 @@ export const generateSeed = (): string => nanoid(16);
  * to the same underlying game instance when committing history.
  */
 export const generateGameInstanceId = (): string => `game_${nanoid(12)}`;
+
+/** Generates a unique ID for a league season document. e.g. `s_V1StGXR8_Z5j` */
+export const generateSeasonId = (): string => `s_${nanoid(12)}`;
+
+/** Generates a unique ID for a season-team document (team snapshot within a season). e.g. `st_V1StGXR8_Z5j` */
+export const generateSeasonTeamId = (): string => `st_${nanoid(12)}`;
+
+/** Generates a unique ID for a season-game document (scheduled/played game within a season). e.g. `sg_V1StGXR8_Z5j` */
+export const generateSeasonGameId = (): string => `sg_${nanoid(12)}`;

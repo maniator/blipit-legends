@@ -9,6 +9,7 @@ import type {
   UpdateCustomTeamInput,
 } from "@storage/types";
 
+import { CustomTeamLockedError } from "./errors";
 import { buildNewTeamDoc } from "./customTeamDocBuilder";
 import {
   buildTeamFingerprint,
@@ -35,8 +36,64 @@ import {
   sanitizeAbbreviation,
 } from "./customTeamSanitizers";
 import { FREE_AGENT_TEAM_ID } from "./schemaV1";
+import type { SanctionedWriteContext } from "@feat/league/storage/sanctionedWrite";
+import { appLog } from "@shared/utils/logger";
 
 type GetDb = () => Promise<BallgameDb>;
+
+/**
+ * Module-level lock cache: a microtask-scoped Set of team IDs currently enrolled
+ * in active seasons. The cache is invalidated after one microtask tick so
+ * repeated writes within the same synchronous batch reuse the same DB query
+ * result, while writes in subsequent ticks always re-validate.
+ */
+let lockCache: Set<string> | null = null;
+let lockCacheInvalidation: Promise<void> | null = null;
+
+async function getLockedTeamIds(db: BallgameDb): Promise<Set<string>> {
+  if (lockCache !== null) return lockCache;
+
+  const activeSeasonsResult = await db.seasons.find({ selector: { status: "active" } }).exec();
+  const lockedIds = new Set<string>();
+  for (const season of activeSeasonsResult) {
+    const doc = season.toJSON() as unknown as {
+      leagues?: Array<{ teamIds?: string[] }>;
+    };
+    if (Array.isArray(doc.leagues)) {
+      for (const league of doc.leagues) {
+        if (Array.isArray(league.teamIds)) {
+          for (const tid of league.teamIds) lockedIds.add(tid);
+        }
+      }
+    }
+  }
+
+  lockCache = lockedIds;
+  // Invalidate after one microtask tick so the cache never persists across
+  // separate async operations.
+  if (!lockCacheInvalidation) {
+    lockCacheInvalidation = Promise.resolve().then(() => {
+      lockCache = null;
+      lockCacheInvalidation = null;
+    });
+  }
+  return lockedIds;
+}
+
+/** Checks whether a team is locked (enrolled in an active season). Throws CustomTeamLockedError if so. */
+async function assertTeamNotLocked(
+  db: BallgameDb,
+  teamId: string,
+  ctx?: SanctionedWriteContext,
+): Promise<void> {
+  // If a sanctioned context is provided, bypass the lock check.
+  if (ctx !== undefined) return;
+  const lockedIds = await getLockedTeamIds(db);
+  if (lockedIds.has(teamId)) {
+    appLog.warn(`[customTeamStore] Write blocked: team ${teamId} is in an active season.`);
+    throw new CustomTeamLockedError(teamId);
+  }
+}
 
 function buildStore(getDbFn: GetDb) {
   return {
@@ -109,11 +166,20 @@ function buildStore(getDbFn: GetDb) {
     /**
      * Updates an existing custom team.
      * Only provided fields are changed; omitted fields keep their current values.
+     * Throws `CustomTeamLockedError` if the team is enrolled in an active season
+     * unless a valid `SanctionedWriteContext` is provided.
      */
-    async updateCustomTeam(id: string, updates: UpdateCustomTeamInput): Promise<void> {
+    async updateCustomTeam(
+      id: string,
+      updates: UpdateCustomTeamInput,
+      ctx?: SanctionedWriteContext,
+    ): Promise<void> {
       const db = await getDbFn();
       const doc = await db.teams.findOne(id).exec();
       if (!doc) throw new Error(`Custom team not found: ${id}`);
+
+      // Enforce the roster-edit lock for teams in active seasons.
+      await assertTeamNotLocked(db, id, ctx);
 
       const patch: Partial<TeamRecord> = {
         updatedAt: new Date().toISOString(),
