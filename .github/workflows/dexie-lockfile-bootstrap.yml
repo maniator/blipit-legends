@@ -1,0 +1,47 @@
+name: Dexie Lockfile Bootstrap
+
+on:
+  push:
+    branches:
+      - storage/dexie-migration-foundation-v2
+    paths:
+      - .github/workflows/dexie-lockfile-bootstrap.yml
+      - package.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate-lockfile:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: storage/dexie-migration-foundation-v2
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Regenerate yarn.lock
+        run: yarn install --no-immutable
+
+      - name: Commit regenerated lockfile and remove bootstrap workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm .github/workflows/dexie-lockfile-bootstrap.yml
+          git add yarn.lock .github/workflows/dexie-lockfile-bootstrap.yml
+          if git diff --cached --quiet; then
+            echo "No lockfile changes to commit."
+          else
+            git commit -m "chore(storage): regenerate yarn lock for dexie"
+            git push
+          fi
