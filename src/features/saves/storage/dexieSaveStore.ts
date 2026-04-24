@@ -13,8 +13,8 @@ import type {
 const DOC_SCHEMA_VERSION = 1;
 const MAX_SAVES = 3;
 const PORTABLE_SAVE_EXPORT_VERSION = 1 as const;
-const PORTABLE_SAVE_EXPORT_KEY = "ballgame:save:v1";
-const LEGACY_RXDB_EXPORT_KEY = "ballgame:rxdb:v1";
+// Keep the existing v1 signature key unchanged so old and new v1 exports stay compatible.
+const PORTABLE_SAVE_EXPORT_KEY = "ballgame:rxdb:v1";
 
 type GetDexieDb = () => BallgameDexieDb;
 
@@ -168,10 +168,8 @@ function buildStore(getDbFn: GetDexieDb) {
         throw new Error("Invalid save data");
       }
 
-      const exportedData = JSON.stringify({ header, events });
-      const expectedSig = fnv1a(PORTABLE_SAVE_EXPORT_KEY + exportedData);
-      const legacyExpectedSig = fnv1a(LEGACY_RXDB_EXPORT_KEY + exportedData);
-      if (sig !== expectedSig && sig !== legacyExpectedSig) {
+      const expectedSig = fnv1a(PORTABLE_SAVE_EXPORT_KEY + JSON.stringify({ header, events }));
+      if (sig !== expectedSig) {
         throw new Error("Save signature mismatch: file may be corrupted or from a different app");
       }
 
