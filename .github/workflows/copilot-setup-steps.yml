@@ -30,4 +30,7 @@ jobs:
         run: corepack enable
 
       - name: Install dependencies
-        run: yarn install --immutable
+        # Copilot setup prepares the agent workspace, including tasks that may
+        # need to repair package.json/yarn.lock drift. Keep this non-immutable so
+        # the agent can start; immutable installs remain enforced by normal CI.
+        run: yarn install --no-immutable
