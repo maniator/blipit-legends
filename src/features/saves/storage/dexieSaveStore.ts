@@ -5,15 +5,16 @@ import type {
   EventRecord,
   GameEvent,
   GameSetup,
+  PortableSaveExport,
   ProgressSummary,
-  RxdbExportedSave,
   SaveRecord,
 } from "@storage/types";
 
 const DOC_SCHEMA_VERSION = 1;
 const MAX_SAVES = 3;
 const PORTABLE_SAVE_EXPORT_VERSION = 1 as const;
-const PORTABLE_SAVE_EXPORT_KEY = "ballgame:rxdb:v1";
+const PORTABLE_SAVE_EXPORT_KEY = "ballgame:save:v1";
+const LEGACY_RXDB_EXPORT_KEY = "ballgame:rxdb:v1";
 
 type GetDexieDb = () => BallgameDexieDb;
 
@@ -131,13 +132,13 @@ function buildStore(getDbFn: GetDexieDb) {
       return db.saves.orderBy("updatedAt").reverse().toArray();
     },
 
-    async exportRxdbSave(saveId: string): Promise<string> {
+    async exportSave(saveId: string): Promise<string> {
       const db = getDbFn();
       const header = await db.saves.get(saveId);
       if (!header) throw new Error(`Save not found: ${saveId}`);
       const events = await db.events.where("saveId").equals(saveId).sortBy("idx");
       const sig = fnv1a(PORTABLE_SAVE_EXPORT_KEY + JSON.stringify({ header, events }));
-      const payload: RxdbExportedSave = {
+      const payload: PortableSaveExport = {
         version: PORTABLE_SAVE_EXPORT_VERSION,
         header,
         events,
@@ -146,7 +147,7 @@ function buildStore(getDbFn: GetDexieDb) {
       return JSON.stringify(payload, null, 2);
     },
 
-    async importRxdbSave(json: string): Promise<SaveRecord> {
+    async importSave(json: string): Promise<SaveRecord> {
       let parsed: unknown;
       try {
         parsed = JSON.parse(json);
@@ -154,7 +155,7 @@ function buildStore(getDbFn: GetDexieDb) {
         throw new Error("Invalid JSON");
       }
       if (!parsed || typeof parsed !== "object") throw new Error("Invalid save file");
-      const { version, header, events, sig } = parsed as RxdbExportedSave;
+      const { version, header, events, sig } = parsed as PortableSaveExport;
       if (typeof version !== "number") {
         throw new Error(
           "Invalid save file: missing or unrecognized format. Please export a save from the app and try again.",
@@ -167,8 +168,10 @@ function buildStore(getDbFn: GetDexieDb) {
         throw new Error("Invalid save data");
       }
 
-      const expectedSig = fnv1a(PORTABLE_SAVE_EXPORT_KEY + JSON.stringify({ header, events }));
-      if (sig !== expectedSig) {
+      const exportedData = JSON.stringify({ header, events });
+      const expectedSig = fnv1a(PORTABLE_SAVE_EXPORT_KEY + exportedData);
+      const legacyExpectedSig = fnv1a(LEGACY_RXDB_EXPORT_KEY + exportedData);
+      if (sig !== expectedSig && sig !== legacyExpectedSig) {
         throw new Error("Save signature mismatch: file may be corrupted or from a different app");
       }
 
