@@ -161,7 +161,9 @@ describe("DexieSaveStore", () => {
     const events: unknown[] = [];
     const sig = fnv1a(LEGACY_RXDB_EXPORT_KEY + JSON.stringify({ header, events }));
 
-    await expect(store.importSave(JSON.stringify({ version: 1, header, events, sig }))).resolves.toMatchObject({
+    await expect(
+      store.importSave(JSON.stringify({ version: 1, header, events, sig })),
+    ).resolves.toMatchObject({
       id: "legacy-signed-save",
     });
   });
@@ -182,8 +184,8 @@ describe("DexieSaveStore", () => {
     const events: unknown[] = [];
     const sig = fnv1a(PORTABLE_SAVE_EXPORT_KEY + JSON.stringify({ header, events }));
 
-    await expect(store.importSave(JSON.stringify({ version: 1, header, events, sig }))).rejects.toThrow(
-      "not installed on this device",
-    );
+    await expect(
+      store.importSave(JSON.stringify({ version: 1, header, events, sig })),
+    ).rejects.toThrow("not installed on this device");
   });
 });
