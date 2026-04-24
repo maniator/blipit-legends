@@ -99,10 +99,13 @@ export interface ProgressSummary {
 }
 
 /** Portable export format: save header + full event log, signed for integrity. */
-export interface RxdbExportedSave {
+export interface PortableSaveExport {
   version: 1;
   header: SaveRecord;
   events: EventRecord[];
-  /** FNV-1a 32-bit signature of RXDB_EXPORT_KEY + JSON.stringify({header, events}) */
+  /** FNV-1a 32-bit signature of export key + JSON.stringify({header, events}) */
   sig: string;
 }
+
+/** @deprecated Use PortableSaveExport for new storage/export code. */
+export type RxdbExportedSave = PortableSaveExport;
