@@ -148,9 +148,9 @@ describe("DexieSaveStore", () => {
     const saveId = await store.createSave(makeSetup({ seed: "roundtrip" }));
     const exported = JSON.parse(await store.exportSave(saveId)) as { sig: string };
 
-    await expect(store.importSave(JSON.stringify({ ...exported, sig: "corrupted" }))).rejects.toThrow(
-      "signature mismatch",
-    );
+    await expect(
+      store.importSave(JSON.stringify({ ...exported, sig: "corrupted" })),
+    ).rejects.toThrow("signature mismatch");
   });
 
   it("imports an existing v1 signed save bundle for compatibility", async () => {
