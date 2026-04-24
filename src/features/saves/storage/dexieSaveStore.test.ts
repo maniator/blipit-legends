@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { createDexieDb, deleteDexieDb, type BallgameDexieDb } from "@storage/dexieDb";
+import { type BallgameDexieDb, createDexieDb, deleteDexieDb } from "@storage/dexieDb";
 import { fnv1a } from "@storage/hash";
 import type { GameSetup, TeamRecord } from "@storage/types";
 
