@@ -1,4 +1,4 @@
-import { getDexieDb, type BallgameDexieDb } from "@storage/dexieDb";
+import { type BallgameDexieDb, getDexieDb } from "@storage/dexieDb";
 import { generateSaveId } from "@storage/generateId";
 import { fnv1a } from "@storage/hash";
 import type {
