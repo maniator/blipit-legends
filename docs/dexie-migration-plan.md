@@ -27,13 +27,13 @@ The app currently uses RxDB with the Dexie storage adapter in
 The first Dexie schema should mirror the current indexed query patterns:
 
 ```ts
-saves: "id, updatedAt"
-events: "id, saveId, [saveId+idx]"
-teams: "id, updatedAt, nameLowercase"
-players: "id, teamId"
-completedGames: "id, playedAt, [homeTeamId+playedAt], [awayTeamId+playedAt]"
-batterGameStats: "id, gameId, [playerId+createdAt], [teamId+createdAt]"
-pitcherGameStats: "id, gameId, [playerId+createdAt], [teamId+createdAt]"
+saves: "id, updatedAt";
+events: "id, saveId, [saveId+idx]";
+teams: "id, updatedAt, nameLowercase";
+players: "id, teamId";
+completedGames: "id, playedAt, [homeTeamId+playedAt], [awayTeamId+playedAt]";
+batterGameStats: "id, gameId, [playerId+createdAt], [teamId+createdAt]";
+pitcherGameStats: "id, gameId, [playerId+createdAt], [teamId+createdAt]";
 ```
 
 ## Migration strategy
