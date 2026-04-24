@@ -1,3 +1,4 @@
+import { getDexieDb, type BallgameDexieDb } from "@storage/dexieDb";
 import { generateSaveId } from "@storage/generateId";
 import { fnv1a } from "@storage/hash";
 import type {
@@ -8,8 +9,6 @@ import type {
   RxdbExportedSave,
   SaveRecord,
 } from "@storage/types";
-import type { BallgameDexieDb } from "@storage/dexieDb";
-import { getDexieDb } from "@storage/dexieDb";
 
 const DOC_SCHEMA_VERSION = 1;
 const MAX_SAVES = 3;
