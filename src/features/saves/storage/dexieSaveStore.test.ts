@@ -84,6 +84,19 @@ describe("DexieSaveStore", () => {
     expect(await db.events.where("saveId").equals(id1).count()).toBe(0);
   });
 
+  it("deletes a save and its associated event log", async () => {
+    const saveId = await store.createSave(makeSetup());
+    await store.appendEvents(saveId, [
+      { type: "pitch", at: 0, payload: { result: "strike" } },
+      { type: "hit", at: 1, payload: { bases: 1 } },
+    ]);
+
+    await store.deleteSave(saveId);
+
+    expect(await db.saves.get(saveId)).toBeUndefined();
+    expect(await db.events.where("saveId").equals(saveId).count()).toBe(0);
+  });
+
   it("serializes concurrent event appends without index collisions", async () => {
     const saveId = await store.createSave(makeSetup());
 
