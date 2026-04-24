@@ -7,6 +7,8 @@ import type { GameSetup, TeamRecord } from "@storage/types";
 import { makeDexieSaveStore } from "./dexieSaveStore";
 
 const TEST_DB_NAME = "ballgame-dexie-save-store-test";
+const PORTABLE_SAVE_EXPORT_KEY = "ballgame:save:v1";
+const LEGACY_RXDB_EXPORT_KEY = "ballgame:rxdb:v1";
 
 const makeSetup = (overrides: Partial<GameSetup> = {}): GameSetup => ({
   homeTeamId: "ct_home",
@@ -126,13 +128,13 @@ describe("DexieSaveStore", () => {
     const saveId = await store.createSave(makeSetup({ seed: "roundtrip" }));
     await store.appendEvents(saveId, [{ type: "hit", at: 1, payload: { bases: 1 } }]);
 
-    const json = await store.exportRxdbSave(saveId);
+    const json = await store.exportSave(saveId);
 
     const targetDb = createDexieDb(`${TEST_DB_NAME}-target`);
     await targetDb.open();
     await targetDb.teams.bulkPut([makeTeam("ct_home"), makeTeam("ct_away")]);
     const targetStore = makeDexieSaveStore(() => targetDb);
-    const restored = await targetStore.importRxdbSave(json);
+    const restored = await targetStore.importSave(json);
 
     expect(restored.id).toBe(saveId);
     expect(restored.seed).toBe("roundtrip");
@@ -140,6 +142,28 @@ describe("DexieSaveStore", () => {
 
     targetDb.close();
     await deleteDexieDb(`${TEST_DB_NAME}-target`);
+  });
+
+  it("imports a legacy signed save bundle for compatibility", async () => {
+    await db.teams.bulkPut([makeTeam("ct_home"), makeTeam("ct_away")]);
+    const header = {
+      id: "legacy-signed-save",
+      name: "Legacy Signed Save",
+      seed: "abc",
+      homeTeamId: "ct_home",
+      awayTeamId: "ct_away",
+      createdAt: 0,
+      updatedAt: 0,
+      progressIdx: -1,
+      setup: makeSetup().setup,
+      schemaVersion: 1,
+    };
+    const events: unknown[] = [];
+    const sig = fnv1a(LEGACY_RXDB_EXPORT_KEY + JSON.stringify({ header, events }));
+
+    await expect(store.importSave(JSON.stringify({ version: 1, header, events, sig }))).resolves.toMatchObject({
+      id: "legacy-signed-save",
+    });
   });
 
   it("rejects save import when referenced teams are missing", async () => {
@@ -156,10 +180,10 @@ describe("DexieSaveStore", () => {
       schemaVersion: 1,
     };
     const events: unknown[] = [];
-    const sig = fnv1a("ballgame:rxdb:v1" + JSON.stringify({ header, events }));
+    const sig = fnv1a(PORTABLE_SAVE_EXPORT_KEY + JSON.stringify({ header, events }));
 
-    await expect(
-      store.importRxdbSave(JSON.stringify({ version: 1, header, events, sig })),
-    ).rejects.toThrow("not installed on this device");
+    await expect(store.importSave(JSON.stringify({ version: 1, header, events, sig }))).rejects.toThrow(
+      "not installed on this device",
+    );
   });
 });
