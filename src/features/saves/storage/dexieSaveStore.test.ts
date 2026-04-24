@@ -144,6 +144,16 @@ describe("DexieSaveStore", () => {
     await deleteDexieDb(`${TEST_DB_NAME}-target`);
   });
 
+  it("rejects a save bundle with a corrupted signature", async () => {
+    await db.teams.bulkPut([makeTeam("ct_home"), makeTeam("ct_away")]);
+    const saveId = await store.createSave(makeSetup({ seed: "roundtrip" }));
+    const exported = JSON.parse(await store.exportSave(saveId)) as { sig: string };
+
+    await expect(store.importSave(JSON.stringify({ ...exported, sig: "corrupted" }))).rejects.toThrow(
+      "signature mismatch",
+    );
+  });
+
   it("imports a legacy signed save bundle for compatibility", async () => {
     await db.teams.bulkPut([makeTeam("ct_home"), makeTeam("ct_away")]);
     const header = {
