@@ -3361,6 +3361,8 @@ __metadata:
     "@vercel/analytics": "npm:^2.0.1"
     "@vitejs/plugin-react": "npm:^5.1.4"
     "@vitest/coverage-v8": "npm:3.2.4"
+    dexie: "npm:^4.2.0"
+    dexie-react-hooks: "npm:^4.2.0"
     eslint: "npm:^9"
     eslint-config-prettier: "npm:^10"
     eslint-plugin-prettier: "npm:^5"
@@ -4118,10 +4120,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dexie-react-hooks@npm:^4.2.0":
+  version: 4.4.0
+  resolution: "dexie-react-hooks@npm:4.4.0"
+  peerDependencies:
+    dexie: ">=4.2.0-alpha.1 <5.0.0"
+    react: ">=16"
+  checksum: 10c0/78c8dfb294868e805efa888e2ea88fa3489f9883fcaaa3c744540f06f7d2d904dd2e0b9e616038fb366e4d2f3d9f80bf27442e2a702e3bbe8731ff7ecaedf3dc
+  languageName: node
+  linkType: hard
+
 "dexie@npm:4.0.10":
   version: 4.0.10
   resolution: "dexie@npm:4.0.10"
   checksum: 10c0/7e5cbc79947fd830918679f8621bceb4e543f139eb8ec73d5a9605927e5d659ea306a9649bbac7c37d55e623888daaf416f9868422badebc26049c9c2ebf1dfb
+  languageName: node
+  linkType: hard
+
+"dexie@npm:^4.2.0":
+  version: 4.4.2
+  resolution: "dexie@npm:4.4.2"
+  checksum: 10c0/b6171347e8d7579600cc4b2ab4b1e3422991451f8f69c926caa15bdf223be9ca8ae86da87e141a2f626fa5d4647c6a9b917ffaa3f878be17c37c4c7533d5eaa6
   languageName: node
   linkType: hard
 
