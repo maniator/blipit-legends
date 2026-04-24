@@ -7,8 +7,7 @@ import type { GameSetup, TeamRecord } from "@storage/types";
 import { makeDexieSaveStore } from "./dexieSaveStore";
 
 const TEST_DB_NAME = "ballgame-dexie-save-store-test";
-const PORTABLE_SAVE_EXPORT_KEY = "ballgame:save:v1";
-const LEGACY_RXDB_EXPORT_KEY = "ballgame:rxdb:v1";
+const PORTABLE_SAVE_EXPORT_KEY = "ballgame:rxdb:v1";
 
 const makeSetup = (overrides: Partial<GameSetup> = {}): GameSetup => ({
   homeTeamId: "ct_home",
@@ -154,7 +153,7 @@ describe("DexieSaveStore", () => {
     );
   });
 
-  it("imports a legacy signed save bundle for compatibility", async () => {
+  it("imports an existing v1 signed save bundle for compatibility", async () => {
     await db.teams.bulkPut([makeTeam("ct_home"), makeTeam("ct_away")]);
     const header = {
       id: "legacy-signed-save",
@@ -169,7 +168,7 @@ describe("DexieSaveStore", () => {
       schemaVersion: 1,
     };
     const events: unknown[] = [];
-    const sig = fnv1a(LEGACY_RXDB_EXPORT_KEY + JSON.stringify({ header, events }));
+    const sig = fnv1a(PORTABLE_SAVE_EXPORT_KEY + JSON.stringify({ header, events }));
 
     await expect(
       store.importSave(JSON.stringify({ version: 1, header, events, sig })),
