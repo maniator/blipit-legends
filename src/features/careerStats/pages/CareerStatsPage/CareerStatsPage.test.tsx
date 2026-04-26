@@ -6,9 +6,18 @@ import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock RxDB getDb so no real DB is needed.
+// Default: a single completed game is present (so noCompletedGames === false in
+// tests that expect tabs/tables to render). Tests that need the
+// "no completed games" empty state override this with empty completedGames.
 vi.mock("@storage/db", () => ({
   getDb: vi.fn().mockResolvedValue({
-    completedGames: { find: vi.fn(() => ({ exec: vi.fn().mockResolvedValue([]) })) },
+    completedGames: {
+      find: vi.fn(() => ({
+        exec: vi
+          .fn()
+          .mockResolvedValue([{ toJSON: () => ({ homeTeamId: "team1", awayTeamId: "team1" }) }]),
+      })),
+    },
   }),
 }));
 
@@ -101,8 +110,21 @@ function renderPage(initialEntry = "/stats/team1") {
 }
 
 describe("CareerStatsPage", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // Reset getDb to the default (one completed game for team1) so prior
+    // tests that overrode it via mockResolvedValue don't leak. clearAllMocks
+    // resets call counts but not mockResolvedValue implementations.
+    const { getDb } = await import("@storage/db");
+    vi.mocked(getDb).mockResolvedValue({
+      completedGames: {
+        find: vi.fn(() => ({
+          exec: vi
+            .fn()
+            .mockResolvedValue([{ toJSON: () => ({ homeTeamId: "team1", awayTeamId: "team1" }) }]),
+        })),
+      },
+    } as never);
     vi.mocked(useCustomTeams).mockReturnValue({
       teams: [],
       loading: false,
@@ -625,26 +647,44 @@ describe("CareerStatsPage", () => {
     });
   });
 
-  it("shows no-teams empty state when there are no teams and no history", async () => {
-    // Ensure getDb returns empty completedGames so the loadTeamIds effect
-    // doesn't populate teamsWithHistory with non-custom team IDs from a
-    // prior test's overridden mock (clearAllMocks only resets call counts,
-    // not persistent mockResolvedValue implementations).
+  it("shows accessible 'No games yet' empty state when no completed games exist anywhere", async () => {
+    // Override getDb so completedGames is empty → noCompletedGames === true.
     const { getDb } = await import("@storage/db");
     vi.mocked(getDb).mockResolvedValue({
       completedGames: { find: vi.fn(() => ({ exec: vi.fn().mockResolvedValue([]) })) },
-    } as any);
+    } as never);
     renderPage();
-    // Wait for the async loadTeamIds effect to settle (empty → noTeams = true).
-    await waitFor(
-      () => {
-        expect(screen.getByTestId("career-stats-no-teams")).toBeInTheDocument();
-      },
-      { timeout: 3000 },
-    );
-    expect(screen.getByText(/no teams yet/i)).toBeInTheDocument();
-    // The team selector must NOT be rendered in this state.
+    // Wait for the async loadTeamIds effect to settle (empty → noCompletedGames = true).
+    const region = await screen.findByTestId("career-stats-empty-state", {}, { timeout: 3000 });
+    expect(region).toHaveAttribute("role", "region");
+    expect(region).toHaveAttribute("aria-labelledby", "career-empty-heading");
+
+    const heading = screen.getByRole("heading", { name: /no games yet/i });
+    expect(heading).toHaveAttribute("id", "career-empty-heading");
+    expect(heading).toHaveAttribute("tabindex", "-1");
+    // Heading is focused on first paint so SR users land on the empty state context.
+    expect(heading).toHaveFocus();
+
+    expect(
+      screen.getByText(/play your first game to start tracking career stats/i),
+    ).toBeInTheDocument();
+
+    // The team selector and inline empty-state must NOT render in this state.
     expect(screen.queryByTestId("career-stats-team-select")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("career-stats-no-teams")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("career-stats-empty")).not.toBeInTheDocument();
+  });
+
+  it("Play Ball CTA in empty state navigates to /exhibition/new", async () => {
+    const user = userEvent.setup();
+    const { getDb } = await import("@storage/db");
+    vi.mocked(getDb).mockResolvedValue({
+      completedGames: { find: vi.fn(() => ({ exec: vi.fn().mockResolvedValue([]) })) },
+    } as never);
+    renderPage();
+    const cta = await screen.findByTestId("career-stats-empty-play-ball", {}, { timeout: 3000 });
+    await user.click(cta);
+    expect(mockNavigate).toHaveBeenCalledWith("/exhibition/new");
   });
 
   // ── Team Summary + Leader cards ─────────────────────────────────────────────

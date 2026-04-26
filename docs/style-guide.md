@@ -911,6 +911,62 @@ CountdownFill: transition: width 0.95s linear, background 0.5s ease;
 ![In-game mobile view](screenshots/style-guide/game-mobile.png)
 _Mobile game view: compact line score, BSO row, diamond field, and bottom log panel_
 
+### 11.4 Mobile game header disclosure (`More` menu)
+
+**Source files:** `src/features/gameplay/components/GameControls/MoreMenu.tsx`, `src/features/gameplay/components/GameControls/styles.ts`
+
+On mobile (`mq.mobile`, ≤ 768px), non-critical game-header controls (sim speed,
+sound, manager mode, save game…, share, etc.) collapse behind a single **More**
+disclosure trigger. The mobile header keeps only: scoreboard, inning indicator,
+BSO row, pause/play (when a game is active), and the **More** trigger. Desktop
+and tablet layouts are unchanged.
+
+**Compact-secondary trigger variant** (reusable):
+
+| Property       | Token                                                             |
+| -------------- | ----------------------------------------------------------------- |
+| Background     | `bgFormAlpha15` → `bgFormAlpha40` when `aria-expanded="true"`     |
+| Border         | `1px solid borderPanel`                                           |
+| Text color     | `textBody`                                                        |
+| Padding        | `spacing.xs spacing.sm`                                           |
+| Border radius  | `radii.sm`                                                        |
+| Height         | `sizes.inputSm` (30px)                                            |
+| Font size      | `fontSizes.label` (12px)                                          |
+| Letter spacing | `letterSpacing.wide` (0.6px)                                      |
+| Text transform | `uppercase`                                                       |
+| Chevron        | Rotates 180° on expand; respects `prefers-reduced-motion: reduce` |
+| Focus ring     | Universal (`2px solid accentPrimary`, `outline-offset: 2px`)      |
+
+**Bottom-anchored disclosure region:**
+
+| Property      | Value                                                                      |
+| ------------- | -------------------------------------------------------------------------- |
+| Position      | `fixed; left: 0; right: 0; bottom: 0; z-index: 150`                        |
+| Background    | `bgSurface`                                                                |
+| Top border    | `1px solid borderPanel`                                                    |
+| Border radius | `radii.lg radii.lg 0 0` (top corners only)                                 |
+| Padding       | `spacing.md spacing.lg`                                                    |
+| Gap           | `spacing.md`                                                               |
+| Max height    | `min(70dvh, 520px)` — uses `dvh`, never `vh`                               |
+| Animation     | `transform: translateY(...)` 200ms ease; respects `prefers-reduced-motion` |
+| Visibility    | Hidden on `mq.notMobile` (desktop/tablet keep inline layout)               |
+
+**ARIA / focus contract:**
+
+- Trigger is a `<button>` with `aria-expanded`, `aria-controls="game-header-more"`,
+  `aria-haspopup="true"`, `aria-label="More game controls"`. Visible label
+  toggles `More` ↔ `Less`.
+- Panel uses `id="game-header-more"`, `role="region"`,
+  `aria-label="Additional game controls"`. **Not** `role="dialog"` — the game
+  continues to play and focus is **not** trapped.
+- On open, focus moves to the first focusable control inside the panel.
+  On close, focus returns to the trigger. Escape and click-outside close.
+- While a manager decision is awaiting input the trigger is `aria-disabled="true"`
+  with tooltip `Available after the decision`, and an open panel auto-collapses.
+
+No new design tokens are introduced — the trigger composes existing color,
+spacing, radius, size, font-size, and letter-spacing tokens.
+
 ---
 
 ## 12. Status & Feedback
@@ -926,6 +982,67 @@ _Mobile game view: compact line score, BSO row, diamond field, and bottom log pa
 
 Always set `aria-invalid="true"` on the input element — do not use a separate CSS class.
 
+#### 12.1.a Form error summary
+
+Forms with multiple validators MUST surface a single canonical error
+summary block at the top of the form. Inline per-field messages MUST
+NOT duplicate the summary copy verbatim — the summary lists every
+issue (long-form), and the inline message shows only the short
+per-field complement.
+
+**Source file:** `src/features/customTeams/components/CustomTeamEditor/styles.ts` →
+`ErrorSummary`, `ErrorSummaryHeading`, `ErrorSummaryList`,
+`ErrorSummaryLink`, `InlineFieldError`.
+
+| Element                         | Token / value                                                            |
+| ------------------------------- | ------------------------------------------------------------------------ |
+| Summary container bg            | `colors.errorBgTransparent`                                              |
+| Summary container border        | `1px solid colors.borderExhibitionError`                                 |
+| Summary container radius        | `radii.md`                                                               |
+| Summary container padding       | `spacing.md spacing.lg`                                                  |
+| Summary container margin-bottom | `spacing.lg`                                                             |
+| Summary heading color           | `colors.textError`                                                       |
+| Summary heading font-size       | `fontSizes.md` (weight 600, `letterSpacing.wide`)                        |
+| Summary list item color         | `colors.textWarn`                                                        |
+| Summary list item font-size     | `fontSizes.sub` (line-height 1.4)                                        |
+| Anchor link color               | `colors.textLink` (underlined); hover/focus → `colors.textSecondaryLink` |
+| Inline field error color        | `colors.textError`                                                       |
+| Inline field error font-size    | `fontSizes.tiny` (margin-top `spacing.xxs`)                              |
+| Invalid input border            | via `[aria-invalid="true"]` selector → `colors.borderDanger`             |
+| Anchor scroll offset            | `scroll-margin-top: spacing.s40`                                         |
+
+**ARIA & focus rules:**
+
+- Summary container: `role="alert"` + `aria-labelledby="form-error-heading"`.
+- Summary heading: `tabindex="-1"` and programmatically focused on a
+  failed submit attempt (so screen readers and keyboard users land on
+  the canonical error region).
+- Each summary list item is an `<a href="#fieldId">` whose click/Enter
+  handler calls `focus()` on the target input (`document.getElementById`)
+  without polluting browser history with a hash.
+- Invalid inputs set `aria-invalid="true"` and
+  `aria-describedby="err-{fieldId}"`. The inline message element MUST
+  use the `id="err-{fieldId}"` pattern.
+- A polite `aria-live="polite"` region announces
+  `"All errors resolved"` when the issue count transitions to 0.
+- Submit controls are `disabled` (and `aria-disabled="true"` with
+  `title="Fix the errors above to save"`) only AFTER a failed submit
+  attempt. Before the first submit attempt the control remains
+  enabled so users can attempt and trigger the summary.
+
+**Microcopy:**
+
+- Heading (singular): `1 issue to fix before saving`
+- Heading (plural): `{N} issues to fix before saving`
+- Disabled-submit tooltip: `Fix the errors above to save`
+- Live "resolved" announcement: `All errors resolved`
+
+**Inline copy rule:** the inline `InlineFieldError` MUST be the
+short, field-local complement of the summary (e.g. summary says
+`Team name is required.` → inline says `Required.`). Inline messages
+that simply repeat the summary line are a regression — render only
+one or the other for that field, never both with identical copy.
+
 ---
 
 ### 12.2 Empty state
@@ -934,10 +1051,19 @@ Always set `aria-invalid="true"` on the input element — do not use a separate 
 
 ```css
 text-align: center;
-padding: 40px;
-color: #666;
-font-size: 14px;
+padding: spacing.s40;
+color: textSubdued;
+font-size: fontSizes.md;
 ```
+
+The accessible "no completed games" empty state on the Career Stats page
+(`src/features/careerStats/pages/CareerStatsPage/styles.ts` →
+`CareerEmptyStateRegion`, `CareerEmptyHeading`, `CareerEmptyBody`,
+`CareerEmptyCtaBtn`) layers on top of these tokens with an `<h2>` headline
+(`textBody` / `fontSizes.h3`), a body paragraph (`textMuted` / `fontSizes.sub`,
+`max-width: 38ch`), and a §4.4 Play Ball CTA. The region is wrapped in
+`role="region" aria-labelledby="career-empty-heading"` and the heading carries
+`tabindex="-1"` so it can receive focus on first paint for screen-reader users.
 
 ![Saves page — empty state](screenshots/style-guide/saves-empty-state.png)
 _Saves page empty state and page layout_

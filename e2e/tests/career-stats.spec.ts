@@ -35,11 +35,9 @@ test.describe("Career Stats smoke", () => {
     await resetAppState(page);
   });
 
-  test("Career Stats button is not present on the Home screen on a fresh install", async ({
-    page,
-  }) => {
+  test("Career Stats button is visible on the Home screen on a fresh install", async ({ page }) => {
     await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId("home-career-stats-button")).not.toBeAttached();
+    await expect(page.getByTestId("home-career-stats-button")).toBeVisible();
   });
 
   test("Career Stats page loads at /stats", async ({ page }) => {
@@ -47,13 +45,16 @@ test.describe("Career Stats smoke", () => {
     await expect(page.getByTestId("career-stats-page")).toBeVisible({ timeout: 15_000 });
   });
 
-  test("Career Stats page shows no-teams empty state on fresh install", async ({ page }) => {
-    await page.goto("/stats");
+  test("Career Stats page shows the no-games empty state on fresh install", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId("home-career-stats-button").click();
     await expect(page.getByTestId("career-stats-page")).toBeVisible({ timeout: 15_000 });
-    // Fresh install → no teams, no history → explicit no-teams message
-    await expect(page.getByTestId("career-stats-no-teams")).toBeVisible({ timeout: 5_000 });
+    await expect(page).toHaveURL(/\/stats/);
+    await expect(page.getByTestId("career-stats-empty-state")).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByTestId("career-stats-empty-play-ball")).toBeVisible();
     // The team selector must NOT appear in this state.
-    await expect(page.getByTestId("career-stats-team-select")).not.toBeVisible();
+    await expect(page.getByTestId("career-stats-team-select")).not.toBeAttached();
   });
 
   test("Career Stats page has Batting and Pitching tab buttons", async ({ page }) => {
@@ -118,6 +119,22 @@ test.describe("Career Stats with seeded history", () => {
    * the seeded team from the dropdown.
    */
   async function seedAndOpen(page: Page) {
+    const selectSeededTeamAndOpenBatting = async (teamSelectVisibleTimeoutMs: number) => {
+      const teamSelect = page.getByTestId("career-stats-team-select");
+      await expect(teamSelect).toBeVisible({ timeout: teamSelectVisibleTimeoutMs });
+      // Wait for the e2e_home_team option to appear in the dropdown before selecting
+      // it. On slow CI/mobile WebKit runners the one-shot loadTeamIds effect that
+      // populates teamsWithHistory can still be in-flight when the page first
+      // renders, so the option may not yet be present when we call selectOption.
+      // selectOption throws if the option doesn't exist, which would cause the
+      // test to fail at that call rather than at the data-ready guard below.
+      await expect(teamSelect.locator('option[value="e2e_home_team"]')).toBeAttached({
+        timeout: 15_000,
+      });
+      await teamSelect.selectOption("e2e_home_team");
+      await page.getByTestId("career-stats-batting-tab").click();
+    };
+
     // Pre-seed an effectively-paused autoplay speed (9999999 ms/pitch) so the
     // game never auto-advances during the importHistoryFixture flow. Without
     // this, rapid re-renders on mobile WebKit detach the saves-button from the
@@ -141,19 +158,8 @@ test.describe("Career Stats with seeded history", () => {
     await page.goto("/stats");
     await expect(page.getByTestId("career-stats-page")).toBeVisible({ timeout: 15_000 });
     // The seeded team ID is "e2e_home_team" (non-custom → appears as raw ID in selector).
-    let teamSelect = page.getByTestId("career-stats-team-select");
-    await expect(teamSelect).toBeVisible({ timeout: 5_000 });
-    // Wait for the e2e_home_team option to appear in the dropdown before selecting
-    // it.  On slow CI/mobile WebKit runners the one-shot loadTeamIds effect that
-    // populates teamsWithHistory can still be in-flight when the page first
-    // renders, so the option may not yet be present when we call selectOption.
-    // selectOption throws if the option doesn't exist, which would cause the
-    // test to fail at that call rather than at the data-ready guard below.
-    await expect(teamSelect.locator('option[value="e2e_home_team"]')).toBeAttached({
-      timeout: 15_000,
-    });
-    await teamSelect.selectOption("e2e_home_team");
-    await page.getByTestId("career-stats-batting-tab").click();
+    const sluggerRowButton = playerRowButton(page, "J. Slugger");
+    await selectSeededTeamAndOpenBatting(5_000);
     // Wait for the batting stats to finish loading before returning.
     // The async RxDB query fires when the team changes, but seedAndOpen returns
     // immediately after selectOption — on slow CI/mobile runners the 10 s
@@ -162,7 +168,6 @@ test.describe("Career Stats with seeded history", () => {
     // race condition that caused:
     //   [tablet]          career-stats.spec.ts:158  "A. Ace" not found
     //   [iphone-15-pro-max] career-stats.spec.ts:204  "J. Slugger" not found
-    const sluggerRowButton = playerRowButton(page, "J. Slugger");
     const sluggerVisible = await sluggerRowButton.isVisible().catch(() => false);
     if (!sluggerVisible) {
       // If the first stats load missed freshly imported rows under heavy WebKit
@@ -176,13 +181,7 @@ test.describe("Career Stats with seeded history", () => {
       }
       await page.goto("/stats");
       await expect(page.getByTestId("career-stats-page")).toBeVisible({ timeout: 15_000 });
-      teamSelect = page.getByTestId("career-stats-team-select");
-      await expect(teamSelect).toBeVisible({ timeout: 10_000 });
-      await expect(teamSelect.locator('option[value="e2e_home_team"]')).toBeAttached({
-        timeout: 15_000,
-      });
-      await teamSelect.selectOption("e2e_home_team");
-      await page.getByTestId("career-stats-batting-tab").click();
+      await selectSeededTeamAndOpenBatting(10_000);
     }
     await expect(sluggerRowButton).toBeVisible({ timeout: 45_000 });
     if (browserName === "webkit") {

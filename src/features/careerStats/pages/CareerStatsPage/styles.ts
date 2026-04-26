@@ -248,3 +248,70 @@ export const LeaderPlaceholderText = styled.span`
   color: ${({ theme }) => theme.colors.textMuted};
   font-size: ${({ theme }) => theme.fontSizes.sm};
 `;
+
+// ── Accessible "no completed games" empty state ──────────────────────────────
+
+/**
+ * Container for the accessible empty state shown on the career stats page
+ * when no games have ever been completed. Matches style-guide §12.2 token set.
+ */
+export const CareerEmptyStateRegion = styled.section`
+  text-align: center;
+  padding: ${({ theme }) => theme.spacing.s40};
+  color: ${({ theme }) => theme.colors.textSubdued};
+  font-size: ${({ theme }) => theme.fontSizes.md};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+`;
+
+export const CareerEmptyHeading = styled.h2`
+  color: ${({ theme }) => theme.colors.textBody};
+  font-size: ${({ theme }) => theme.fontSizes.h3};
+  font-weight: 600;
+  margin: 0 0 ${({ theme }) => theme.spacing.md};
+
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 2px;
+    border-radius: ${({ theme }) => theme.radii.sm};
+  }
+
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+`;
+
+export const CareerEmptyBody = styled.p`
+  color: ${({ theme }) => theme.colors.textMuted};
+  font-size: ${({ theme }) => theme.fontSizes.sub};
+  line-height: 1.5;
+  max-width: 38ch;
+  margin: 0 auto;
+`;
+
+/**
+ * Reuses the §4.4 Play Ball button visual treatment from the Exhibition Setup
+ * page, sized for the empty-state CTA. Rendered as a `<button>` so a
+ * navigation handler (not a raw anchor) can call `useNavigate`.
+ */
+export const CareerEmptyCtaBtn = styled.button`
+  display: inline-block;
+  background: ${({ theme }) => theme.colors.accentPrimary};
+  color: ${({ theme }) => theme.colors.btnPrimaryText};
+  border: none;
+  border-radius: ${({ theme }) => theme.radii.pill};
+  padding: ${({ theme }) => theme.spacing.s10} ${({ theme }) => theme.spacing.xxl};
+  font-family: inherit;
+  font-size: ${({ theme }) => theme.fontSizes.lg};
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: ${({ theme }) => theme.spacing.md};
+  min-height: ${({ theme }) => theme.sizes.btnLg};
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 2px;
+  }
+`;

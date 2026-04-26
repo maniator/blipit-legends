@@ -10,6 +10,7 @@ import {
   FormSection,
   GenerateBtn,
   IdentityLockHint,
+  InlineFieldError,
   ReadOnlyInput,
   SectionHeading,
   TeamInfoGrid,
@@ -25,12 +26,23 @@ type Props = {
   state: EditorState;
   isEditMode: boolean;
   dispatch: React.Dispatch<EditorAction>;
+  /**
+   * Field-id → inline error message map computed by the parent. Only
+   * fields whose user has either blurred or attempted-to-submit will
+   * appear in this map. Inline copy is the SHORT per-field complement
+   * to the canonical summary copy — never duplicates it verbatim.
+   */
+  inlineErrors?: Record<string, string>;
+  /** Called when an input fires `onBlur`; parent records it so an inline message can render. */
+  onFieldBlur?: (fieldId: string) => void;
 };
 
 export const TeamInfoSection: React.FunctionComponent<Props> = ({
   state,
   isEditMode,
   dispatch,
+  inlineErrors,
+  onFieldBlur,
 }) => {
   const handleGenerate = () => {
     dispatch({ type: "APPLY_DRAFT", draft: generateDefaultCustomTeamDraft(++_generateCounter) });
@@ -38,6 +50,8 @@ export const TeamInfoSection: React.FunctionComponent<Props> = ({
 
   const cityTrimmed = state.city.trim();
   const nameTrimmed = state.name.trim();
+  const nameError = inlineErrors?.["ct-name"];
+  const abbrevError = inlineErrors?.["ct-abbrev"];
 
   return (
     <FormSection>
@@ -61,11 +75,17 @@ export const TeamInfoSection: React.FunctionComponent<Props> = ({
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   dispatch({ type: "SET_FIELD", field: "name", value: e.target.value })
                 }
+                onBlur={() => onFieldBlur?.("ct-name")}
                 placeholder="e.g. Eagles"
-                aria-invalid={!state.name.trim() && !!state.error ? "true" : undefined}
-                aria-describedby="ct-name-hint"
+                aria-invalid={nameError ? "true" : undefined}
+                aria-describedby={nameError ? "err-ct-name ct-name-hint" : "ct-name-hint"}
                 data-testid="custom-team-name-input"
               />
+              {nameError && (
+                <InlineFieldError id="err-ct-name" data-testid="err-ct-name">
+                  {nameError}
+                </InlineFieldError>
+              )}
               <FieldHint id="ct-name-hint">
                 Short name only — displayed as{" "}
                 {cityTrimmed || nameTrimmed ? (
@@ -93,28 +113,30 @@ export const TeamInfoSection: React.FunctionComponent<Props> = ({
                 data-testid="custom-team-abbreviation-input"
               />
             ) : (
-              <TextInput
-                id="ct-abbrev"
-                value={state.abbreviation}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  dispatch({
-                    type: "SET_FIELD",
-                    field: "abbreviation",
-                    value: e.target.value.toUpperCase(),
-                  })
-                }
-                placeholder="e.g. EAG"
-                maxLength={3}
-                aria-invalid={
-                  !!state.error &&
-                  (!state.abbreviation.trim() ||
-                    state.abbreviation.trim().length < 2 ||
-                    state.abbreviation.trim().length > 3)
-                    ? "true"
-                    : undefined
-                }
-                data-testid="custom-team-abbreviation-input"
-              />
+              <>
+                <TextInput
+                  id="ct-abbrev"
+                  value={state.abbreviation}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    dispatch({
+                      type: "SET_FIELD",
+                      field: "abbreviation",
+                      value: e.target.value.toUpperCase(),
+                    })
+                  }
+                  onBlur={() => onFieldBlur?.("ct-abbrev")}
+                  placeholder="e.g. EAG"
+                  maxLength={3}
+                  aria-invalid={abbrevError ? "true" : undefined}
+                  aria-describedby={abbrevError ? "err-ct-abbrev" : undefined}
+                  data-testid="custom-team-abbreviation-input"
+                />
+                {abbrevError && (
+                  <InlineFieldError id="err-ct-abbrev" data-testid="err-ct-abbrev">
+                    {abbrevError}
+                  </InlineFieldError>
+                )}
+              </>
             )}
           </FieldGroup>
           <FieldGroup>
