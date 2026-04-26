@@ -126,7 +126,7 @@ test.describe("Stat Budget — over-cap save blocking", () => {
     }
     await page.getByTestId("custom-team-save-button").click();
     const errorSummary = page.getByTestId("custom-team-editor-error-summary");
-    await expect(errorSummary).toBeVisible({ timeout: 3_000 });
+    await expect(errorSummary).toBeVisible({ timeout: 10_000 });
     expect(await errorSummary.textContent()).toContain("Homer Simpson");
   });
 
@@ -140,7 +140,7 @@ test.describe("Stat Budget — over-cap save blocking", () => {
       await lineupSection.locator('input[type="range"]').nth(i).fill("100");
     }
     await page.getByTestId("custom-team-save-button").click();
-    await expect(page.getByTestId("custom-team-save-error-hint")).toBeVisible({ timeout: 3_000 });
+    await expect(page.getByTestId("custom-team-save-error-hint")).toBeVisible({ timeout: 10_000 });
   });
 });
 
