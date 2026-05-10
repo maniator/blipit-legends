@@ -37,17 +37,17 @@ Pre-commit hooks (Husky + lint-staged) auto-run ESLint fix, Prettier, and Vitest
 
 ## Detailed Reference Docs
 
-| Doc | Contents |
-| --- | --- |
-| `docs/repo-layout.md` | Full directory tree, path aliases, feature ownership |
-| `docs/architecture.md` | Route architecture, auto-play scheduler, Manager Mode, notifications |
-| `docs/rxdb-persistence.md` | RxDB setup, schema versioning/migrations, SaveStore/CustomTeamStore APIs |
-| `docs/e2e-testing.md` | Playwright projects, helpers, `data-testid` reference, visual snapshots, CI |
-| `docs/style-guide.md` | **Consult before any new color, font size, or component** — owned by Sally (`bmad-agent-ux-designer`); color palette, typography, breakpoints, all button variants, forms, modals, tables |
-| `docs/project-context.md` | **bmad persistent facts** — loaded by all bmad agents; routing table, critical code rules |
-| `.github/copilot-instructions.md` | Technical gotchas, code conventions, full agent routing table |
-| `.github/agents/README.md` | Agent routing guide — bmad agents + 3 operational specialists |
-| `AGENTS.md` | Thin routing pointer to all canonical agent sources |
+| Doc                               | Contents                                                                                                                                                                                  |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/repo-layout.md`             | Full directory tree, path aliases, feature ownership                                                                                                                                      |
+| `docs/architecture.md`            | Route architecture, auto-play scheduler, Manager Mode, notifications                                                                                                                      |
+| `docs/rxdb-persistence.md`        | RxDB setup, schema versioning/migrations, SaveStore/CustomTeamStore APIs                                                                                                                  |
+| `docs/e2e-testing.md`             | Playwright projects, helpers, `data-testid` reference, visual snapshots, CI                                                                                                               |
+| `docs/style-guide.md`             | **Consult before any new color, font size, or component** — owned by Sally (`bmad-agent-ux-designer`); color palette, typography, breakpoints, all button variants, forms, modals, tables |
+| `docs/project-context.md`         | **bmad persistent facts** — loaded by all bmad agents; routing table, critical code rules                                                                                                 |
+| `.github/copilot-instructions.md` | Technical gotchas, code conventions, full agent routing table                                                                                                                             |
+| `.github/agents/README.md`        | Agent routing guide — bmad agents + 3 operational specialists                                                                                                                             |
+| `AGENTS.md`                       | Thin routing pointer to all canonical agent sources                                                                                                                                       |
 
 ## Architecture
 

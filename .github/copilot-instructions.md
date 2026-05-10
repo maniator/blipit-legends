@@ -12,17 +12,17 @@
 
 This file is the quick-reference index. For deeper detail, see:
 
-| Doc | Contents |
-| --- | --- |
-| [docs/repo-layout.md](../docs/repo-layout.md) | Full directory tree, file descriptions, path aliases |
-| [docs/rxdb-persistence.md](../docs/rxdb-persistence.md) | RxDB setup, schema versioning, collections, SaveStore/CustomTeamStore APIs, fingerprints, export/import bundles, game-loop integration |
-| [docs/architecture.md](../docs/architecture.md) | Route architecture, auto-play scheduler, Manager Mode, notification system, shared logger |
-| [docs/e2e-testing.md](../docs/e2e-testing.md) | Playwright projects, E2E helpers, `data-testid` reference, visual snapshots, CI workflows, save fixtures |
-| [docs/style-guide.md](../docs/style-guide.md) | **UI Style Guide** — color palette, typography, breakpoints, all button variants, form elements, modals, cards, tables, game UI, and status patterns. **Consult before introducing any new color, font size, or component.** |
-| [docs/project-context.md](../docs/project-context.md) | **bmad persistent facts** — loaded by all bmad agents as ground truth |
-| [agents/README.md](agents/README.md) | Agent routing guide — bmad agents + 3 operational specialists, routing table, common gotchas |
-| [docs/agent/baseball-rules-delta.md](../docs/agent/baseball-rules-delta.md) | MLB Official Rules vs Ballgame simulator delta table — always consult before answering baseball-rule questions |
-| [docs/agent/pm-agent-knowledge-map.md](../docs/agent/pm-agent-knowledge-map.md) | Knowledge map — authoritative source index, ownership, and refresh cadence for PM/baseball-rules questions |
+| Doc                                                                             | Contents                                                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [docs/repo-layout.md](../docs/repo-layout.md)                                   | Full directory tree, file descriptions, path aliases                                                                                                                                                                         |
+| [docs/rxdb-persistence.md](../docs/rxdb-persistence.md)                         | RxDB setup, schema versioning, collections, SaveStore/CustomTeamStore APIs, fingerprints, export/import bundles, game-loop integration                                                                                       |
+| [docs/architecture.md](../docs/architecture.md)                                 | Route architecture, auto-play scheduler, Manager Mode, notification system, shared logger                                                                                                                                    |
+| [docs/e2e-testing.md](../docs/e2e-testing.md)                                   | Playwright projects, E2E helpers, `data-testid` reference, visual snapshots, CI workflows, save fixtures                                                                                                                     |
+| [docs/style-guide.md](../docs/style-guide.md)                                   | **UI Style Guide** — color palette, typography, breakpoints, all button variants, form elements, modals, cards, tables, game UI, and status patterns. **Consult before introducing any new color, font size, or component.** |
+| [docs/project-context.md](../docs/project-context.md)                           | **bmad persistent facts** — loaded by all bmad agents as ground truth                                                                                                                                                        |
+| [agents/README.md](agents/README.md)                                            | Agent routing guide — bmad agents + 3 operational specialists, routing table, common gotchas                                                                                                                                 |
+| [docs/agent/baseball-rules-delta.md](../docs/agent/baseball-rules-delta.md)     | MLB Official Rules vs Ballgame simulator delta table — always consult before answering baseball-rule questions                                                                                                               |
+| [docs/agent/pm-agent-knowledge-map.md](../docs/agent/pm-agent-knowledge-map.md) | Knowledge map — authoritative source index, ownership, and refresh cadence for PM/baseball-rules questions                                                                                                                   |
 
 ---
 
@@ -57,32 +57,32 @@ Before starting any task, check whether it belongs to a specialist agent. The ta
 
 ### Agent Architecture
 
-| Layer | Agents | Purpose |
-| --- | --- | --- |
-| **bmad agents** (`.agents/skills/`) | John 📋 `bmad-agent-pm`, Buck ⚾ `bmad-agent-baseball-manager`, Winston 🏗️ `bmad-agent-architect`, Amelia 💻 `bmad-agent-dev`, Sally 🎨 `bmad-agent-ux-designer`, Mary 📊 `bmad-agent-analyst`, Paige 📚 `bmad-agent-tech-writer` | Planning, PRD, baseball rules, design, code review, story implementation, architecture, engineering sign-off, user personas, realism review. All load `docs/project-context.md` as persistent facts. |
-| **Operational specialists** (`.github/agents/`) | `e2e-test-runner`, `ci-workflow`, `playwright-prod` | Kept because they carry non-obvious operational setup steps whose failure is silent or catastrophic. All other former specialists have been folded into bmad agents. |
+| Layer                                           | Agents                                                                                                                                                                                                                            | Purpose                                                                                                                                                                                              |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **bmad agents** (`.agents/skills/`)             | John 📋 `bmad-agent-pm`, Buck ⚾ `bmad-agent-baseball-manager`, Winston 🏗️ `bmad-agent-architect`, Amelia 💻 `bmad-agent-dev`, Sally 🎨 `bmad-agent-ux-designer`, Mary 📊 `bmad-agent-analyst`, Paige 📚 `bmad-agent-tech-writer` | Planning, PRD, baseball rules, design, code review, story implementation, architecture, engineering sign-off, user personas, realism review. All load `docs/project-context.md` as persistent facts. |
+| **Operational specialists** (`.github/agents/`) | `e2e-test-runner`, `ci-workflow`, `playwright-prod`                                                                                                                                                                               | Kept because they carry non-obvious operational setup steps whose failure is silent or catastrophic. All other former specialists have been folded into bmad agents.                                 |
 
 ### Routing Table
 
-| Trigger / task type | Route to |
-| --- | --- |
-| Feature planning, PRD creation, sprint planning, epics and stories | `bmad-agent-pm` (John) → M1 menu |
-| "How does [baseball rule] work?" or "How does the sim implement X rule?" | `bmad-agent-pm` (John) → M2 menu |
-| "What files change for X?" / "What could break if I do Y?" | `bmad-agent-pm` (John) → M1 menu |
-| Any request mentioning: inning, batter, runner, pitch, steal, bunt, walk, extra innings, tiebreak runner, IBB, manager mode, defensive shift, pinch hitter, PRNG replay, save compatibility | `bmad-agent-pm` (John) |
-| Behavior-preserving refactor, rename, extract, modularization | `bmad-agent-dev` (Amelia) → SR menu |
-| Net-new screen, modal, dialog, copy, design-system addition, accessibility audit, wireframe, "how should this feel / look" | `bmad-agent-ux-designer` (Sally) → HR or SD menu |
-| UI / layout / styled-components / responsive implementation | `bmad-agent-dev` (Amelia) → UI menu |
-| Deterministic simulation bug, impossible game state, stat inconsistency — **something is broken** | `bmad-agent-dev` (Amelia) → SC menu |
-| Gameplay realism review — **something feels wrong** (outcomes look unrealistic in logs, hit/walk/HR rates are off) | `bmad-agent-baseball-manager` (Buck) → RL menu |
-| Code review on any change | `bmad-agent-dev` (Amelia) → invoke `bmad-code-review` skill |
-| High-value change engineering sign-off (P0/P1, PRNG, RxDB schema, broad refactor) | `bmad-agent-architect` (Winston) → CR menu |
-| RxDB schema change, save/load, export/import, `SaveStore` API | `bmad-agent-dev` (Amelia) → RX menu → Winston CR sign-off |
-| GitHub Actions workflow change — CI, Playwright, sharding, artifact uploads | `ci-workflow` (operational specialist) |
-| E2E test authoring, fixture creation, **visual snapshot baseline regen** | `e2e-test-runner` (operational specialist) |
-| Live QA against production site (blipit.net) | `playwright-prod` (operational specialist) |
-| User persona interview (Casual Watcher, Strategist, Team Builder, Save Curator, Stats Fan, Power User) | `bmad-agent-ux-designer` (Sally) → P1–P6 menus |
-| Multi-agent deliberation on a cross-cutting question | `bmad-party-mode` skill |
+| Trigger / task type                                                                                                                                                                         | Route to                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Feature planning, PRD creation, sprint planning, epics and stories                                                                                                                          | `bmad-agent-pm` (John) → M1 menu                            |
+| "How does [baseball rule] work?" or "How does the sim implement X rule?"                                                                                                                    | `bmad-agent-pm` (John) → M2 menu                            |
+| "What files change for X?" / "What could break if I do Y?"                                                                                                                                  | `bmad-agent-pm` (John) → M1 menu                            |
+| Any request mentioning: inning, batter, runner, pitch, steal, bunt, walk, extra innings, tiebreak runner, IBB, manager mode, defensive shift, pinch hitter, PRNG replay, save compatibility | `bmad-agent-pm` (John)                                      |
+| Behavior-preserving refactor, rename, extract, modularization                                                                                                                               | `bmad-agent-dev` (Amelia) → SR menu                         |
+| Net-new screen, modal, dialog, copy, design-system addition, accessibility audit, wireframe, "how should this feel / look"                                                                  | `bmad-agent-ux-designer` (Sally) → HR or SD menu            |
+| UI / layout / styled-components / responsive implementation                                                                                                                                 | `bmad-agent-dev` (Amelia) → UI menu                         |
+| Deterministic simulation bug, impossible game state, stat inconsistency — **something is broken**                                                                                           | `bmad-agent-dev` (Amelia) → SC menu                         |
+| Gameplay realism review — **something feels wrong** (outcomes look unrealistic in logs, hit/walk/HR rates are off)                                                                          | `bmad-agent-baseball-manager` (Buck) → RL menu              |
+| Code review on any change                                                                                                                                                                   | `bmad-agent-dev` (Amelia) → invoke `bmad-code-review` skill |
+| High-value change engineering sign-off (P0/P1, PRNG, RxDB schema, broad refactor)                                                                                                           | `bmad-agent-architect` (Winston) → CR menu                  |
+| RxDB schema change, save/load, export/import, `SaveStore` API                                                                                                                               | `bmad-agent-dev` (Amelia) → RX menu → Winston CR sign-off   |
+| GitHub Actions workflow change — CI, Playwright, sharding, artifact uploads                                                                                                                 | `ci-workflow` (operational specialist)                      |
+| E2E test authoring, fixture creation, **visual snapshot baseline regen**                                                                                                                    | `e2e-test-runner` (operational specialist)                  |
+| Live QA against production site (blipit.net)                                                                                                                                                | `playwright-prod` (operational specialist)                  |
+| User persona interview (Casual Watcher, Strategist, Team Builder, Save Curator, Stats Fan, Power User)                                                                                      | `bmad-agent-ux-designer` (Sally) → P1–P6 menus              |
+| Multi-agent deliberation on a cross-cutting question                                                                                                                                        | `bmad-party-mode` skill                                     |
 
 **E2E execution rule:** All Playwright test execution and visual baseline regeneration routes to `e2e-test-runner` — never regenerate baselines locally. Baselines must be generated inside `mcr.microsoft.com/playwright:v1.58.2-noble`.
 
