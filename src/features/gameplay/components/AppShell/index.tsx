@@ -47,10 +47,11 @@ const AppShell: React.FunctionComponent = () => {
     async function loadCareerStatsAvailability() {
       try {
         const db = await getDb();
-        const anyCompletedGame = await db.completedGames.findOne().exec();
+        const completedGames = await db.completedGames.find().exec();
+        const anyCompletedGame = completedGames.length > 0;
         if (!cancelled) {
           // Use functional update so a true set by handleGameOver is never cleared.
-          setHasCareerStats((prev) => prev || Boolean(anyCompletedGame));
+          setHasCareerStats((prev) => prev || anyCompletedGame);
         }
       } catch {
         // On DB error, leave hasCareerStats unchanged (don't hide it if it was already true).

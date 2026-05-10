@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@storage/db", () => ({
   getDb: vi.fn().mockResolvedValue({
     completedGames: {
-      findOne: vi.fn(() => ({ exec: vi.fn().mockResolvedValue(null) })),
+      find: vi.fn(() => ({ exec: vi.fn().mockResolvedValue([]) })),
     },
   }),
 }));
@@ -122,7 +122,7 @@ describe("AppShell", () => {
     const { getDb } = await import("@storage/db");
     vi.mocked(getDb).mockResolvedValueOnce({
       completedGames: {
-        findOne: vi.fn(() => ({ exec: vi.fn().mockResolvedValue({ id: "g1" }) })),
+        find: vi.fn(() => ({ exec: vi.fn().mockResolvedValue([{ id: "g1" }]) })),
       },
     } as never);
 
