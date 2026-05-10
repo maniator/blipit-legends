@@ -533,19 +533,45 @@ function buildStore(getDbFn: GetDb) {
         };
 
         // ── 3. seasonTeams, seasonGames, seasonPlayerState ───────────────────
-        const incomingTeams = Array.isArray(collections.seasonTeams)
-          ? (collections.seasonTeams as unknown as Array<Record<string, unknown>>).map((d) =>
-              rewriteChildDoc(d),
-            )
+        const originalTeamDocs = Array.isArray(collections.seasonTeams)
+          ? (collections.seasonTeams as unknown as Array<Record<string, unknown>>)
           : [];
+        const incomingTeams = originalTeamDocs.map((d) => rewriteChildDoc(d));
+
+        // Build a seasonTeamId remap from original IDs to post-rewrite IDs.
+        // This is needed to fix FK references in seasonGames and seasonPlayerState
+        // that point to seasonTeam.id values which were also rewritten above.
+        const seasonTeamIdRemap = new Map<string, string>();
+        originalTeamDocs.forEach((orig, i) => {
+          const origId = orig["id"] as string | undefined;
+          const newId = incomingTeams[i]?.["id"] as string | undefined;
+          if (origId && newId && origId !== newId) {
+            seasonTeamIdRemap.set(origId, newId);
+          }
+        });
+
         const incomingGames = Array.isArray(collections.seasonGames)
-          ? (collections.seasonGames as unknown as Array<Record<string, unknown>>).map((d) =>
-              rewriteChildDoc(d),
-            )
+          ? (collections.seasonGames as unknown as Array<Record<string, unknown>>).map((d) => {
+              const rewritten = rewriteChildDoc(d);
+              const homeId = rewritten["homeSeasonTeamId"] as string | undefined;
+              const awayId = rewritten["awaySeasonTeamId"] as string | undefined;
+              return {
+                ...rewritten,
+                homeSeasonTeamId: (homeId && seasonTeamIdRemap.get(homeId)) ?? homeId,
+                awaySeasonTeamId: (awayId && seasonTeamIdRemap.get(awayId)) ?? awayId,
+              };
+            })
           : [];
         const incomingPlayerStates = Array.isArray(collections.seasonPlayerState)
-          ? (collections.seasonPlayerState as unknown as Array<Record<string, unknown>>).map((d) =>
-              rewriteChildDoc(d),
+          ? (collections.seasonPlayerState as unknown as Array<Record<string, unknown>>).map(
+              (d) => {
+                const rewritten = rewriteChildDoc(d);
+                const stId = rewritten["seasonTeamId"] as string | undefined;
+                return {
+                  ...rewritten,
+                  seasonTeamId: (stId && seasonTeamIdRemap.get(stId)) ?? stId,
+                };
+              },
             )
           : [];
 

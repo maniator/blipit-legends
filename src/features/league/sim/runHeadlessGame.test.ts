@@ -102,7 +102,13 @@ beforeEach(async () => {
     seriesId: "ser_1",
     status: "scheduled",
     boxscore: null,
-    derivedSeed: deriveScheduledGameSeed(SEASON_ID, GAME_ID),
+    derivedSeed: deriveScheduledGameSeed({
+      seasonId: SEASON_ID,
+      seasonRoundIdx: 0,
+      gameInSeriesIdx: 0,
+      homeSeasonTeamId: HOME_ST_ID,
+      awaySeasonTeamId: AWAY_ST_ID,
+    }),
     completedAt: null,
     claimedBy: null,
   });
@@ -143,9 +149,16 @@ afterEach(async () => {
 });
 
 describe("deriveScheduledGameSeed — DB integration", () => {
-  it("produces a deterministic seed from seasonId + gameId", () => {
-    const s1 = deriveScheduledGameSeed(SEASON_ID, GAME_ID);
-    const s2 = deriveScheduledGameSeed(SEASON_ID, GAME_ID);
+  it("produces a deterministic seed from season and schedule coordinates", () => {
+    const input = {
+      seasonId: SEASON_ID,
+      seasonRoundIdx: 0,
+      gameInSeriesIdx: 0,
+      homeSeasonTeamId: HOME_ST_ID,
+      awaySeasonTeamId: AWAY_ST_ID,
+    };
+    const s1 = deriveScheduledGameSeed(input);
+    const s2 = deriveScheduledGameSeed(input);
     expect(s1).toBe(s2);
     expect(s1).toMatch(/^[0-9a-z]+$/);
   });
@@ -185,8 +198,20 @@ describe("SeasonGame claim flow", () => {
     // Verify that deriveScheduledGameSeed is deterministic.
     // The actual PRNG consumption in runHeadlessGameSim() is tested via
     // the snapshot test in deriveScheduledGameSeed.test.ts.
-    const seed1 = deriveScheduledGameSeed(SEASON_ID, GAME_ID);
-    const seed2 = deriveScheduledGameSeed(SEASON_ID, GAME_ID);
+    const seed1 = deriveScheduledGameSeed({
+      seasonId: SEASON_ID,
+      seasonRoundIdx: 0,
+      gameInSeriesIdx: 0,
+      homeSeasonTeamId: HOME_ST_ID,
+      awaySeasonTeamId: AWAY_ST_ID,
+    });
+    const seed2 = deriveScheduledGameSeed({
+      seasonId: SEASON_ID,
+      seasonRoundIdx: 0,
+      gameInSeriesIdx: 0,
+      homeSeasonTeamId: HOME_ST_ID,
+      awaySeasonTeamId: AWAY_ST_ID,
+    });
     expect(seed1).toBe(seed2);
   });
 });

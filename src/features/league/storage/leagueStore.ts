@@ -61,6 +61,8 @@ export interface CreateSeasonInput {
     teamIds: string[];
     dhEnabled: boolean;
   }>;
+  /** The custom team ID the user will manage. Null means observer mode. */
+  userCustomTeamId?: string | null;
 }
 
 export interface QuickStartInput {
@@ -159,7 +161,7 @@ function buildStore(getDbFn: GetDb) {
      */
     async createSeason(input: CreateSeasonInput): Promise<SeasonRecord> {
       const db = await getDbFn();
-      const { name, masterSeed, preset, seasonLength, leagues } = input;
+      const { name, masterSeed, preset, seasonLength, leagues, userCustomTeamId } = input;
       const { gamesPerTeam, seriesLength } = resolveScheduleParams(preset, seasonLength);
 
       const seasonId = generateSeasonId();
@@ -282,6 +284,7 @@ function buildStore(getDbFn: GetDb) {
         leagues: leagueRecords,
         currentGameDay: 0,
         rulesetVersion: RULESET_VERSION,
+        userCustomTeamId: userCustomTeamId ?? null,
       };
       await db.seasons.upsert(seasonDoc);
 
@@ -562,7 +565,7 @@ function buildStore(getDbFn: GetDb) {
 
       for (const game of sorted) {
         const outcome = await runHeadlessGame({ seasonGameId: game.id, claimToken });
-        if (outcome.status === "completed" || outcome.status === "already_complete") {
+        if (outcome.status === "completed") {
           gamesSimulated++;
         }
       }

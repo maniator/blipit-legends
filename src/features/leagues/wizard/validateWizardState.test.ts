@@ -72,19 +72,29 @@ describe("validateWizardState", () => {
   });
 
   it("step 3: always valid", () => {
-    const state = { ...makeInitialState(), step: 3 as const };
+    const state = { ...makeInitialState(), step: 3 as const, teamMode: "allAutogen" as const };
     expect(validateWizardState(state)).toHaveLength(0);
   });
 
   it("step 5: errors when masterSeed is empty", () => {
-    const state = { ...makeInitialState(), step: 5 as const, masterSeed: "" };
+    const state = {
+      ...makeInitialState(),
+      step: 5 as const,
+      teamMode: "allAutogen" as const,
+      masterSeed: "",
+    };
     const errors = validateWizardState(state);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0]).toMatch(/seed/i);
   });
 
   it("step 5: valid when masterSeed is non-empty", () => {
-    const state = { ...makeInitialState(), step: 5 as const, masterSeed: "abc123" };
+    const state = {
+      ...makeInitialState(),
+      step: 5 as const,
+      teamMode: "allAutogen" as const,
+      masterSeed: "abc123",
+    };
     expect(validateWizardState(state)).toHaveLength(0);
   });
 

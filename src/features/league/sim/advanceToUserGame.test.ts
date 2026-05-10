@@ -65,7 +65,13 @@ async function insertGame(
     seriesId: `ser_${id}`,
     status,
     boxscore: status === "completed" ? { homeScore: 3, awayScore: 1 } : null,
-    derivedSeed: deriveScheduledGameSeed(SEASON_ID, id),
+    derivedSeed: deriveScheduledGameSeed({
+      seasonId: SEASON_ID,
+      seasonRoundIdx: 0,
+      gameInSeriesIdx: 0,
+      homeSeasonTeamId: homeId,
+      awaySeasonTeamId: awayId,
+    }),
     completedAt: status === "completed" ? Date.now() : null,
     claimedBy: null,
   });

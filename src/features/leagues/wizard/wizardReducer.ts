@@ -19,6 +19,8 @@ export interface WizardState {
   autogenParity: number;
   autogenSeed: string;
   masterSeed: string;
+  /** The custom team ID the user will manage. Null means observer mode (allAutogen). */
+  userCustomTeamId: string | null;
 }
 
 export type WizardAction =
@@ -35,6 +37,7 @@ export type WizardAction =
   | { type: "GO_TO_STEP"; step: WizardState["step"] }
   | { type: "NEXT_STEP" }
   | { type: "PREV_STEP" }
+  | { type: "SET_USER_TEAM"; customTeamId: string | null }
   | { type: "RESET" };
 
 const STEP_ORDER: Array<WizardState["step"]> = [1, 2, 3, 5, 6];
@@ -49,12 +52,13 @@ export function makeInitialState(): WizardState {
     seasonLength: "sprint",
     leagueCount: 1,
     leagues: DEFAULT_LEAGUES,
-    teamMode: "allAutogen",
+    teamMode: "mixed",
     selectedTeamIds: [],
     autogenTheme: "classic",
     autogenParity: 50,
     autogenSeed: generateSeed(),
     masterSeed: generateSeed(),
+    userCustomTeamId: null,
   };
 }
 
@@ -132,6 +136,9 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     }
     case "PREV_STEP": {
       return { ...state, step: prevStep(state.step) };
+    }
+    case "SET_USER_TEAM": {
+      return { ...state, userCustomTeamId: action.customTeamId };
     }
     case "RESET": {
       return makeInitialState();

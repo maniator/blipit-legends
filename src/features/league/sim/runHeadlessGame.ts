@@ -199,6 +199,9 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
     homeScore > awayScore ? homeRotation.startingPitcherId : awayRotation.startingPitcherId;
   const loserStartingPitcherId =
     homeScore > awayScore ? awayRotation.startingPitcherId : homeRotation.startingPitcherId;
+  const winnerRelieverId =
+    homeScore > awayScore ? homeRotation.relieverId : awayRotation.relieverId;
+  const loserRelieverId = homeScore > awayScore ? awayRotation.relieverId : homeRotation.relieverId;
 
   const rosterSnapshotBySeasonTeamId: Record<string, Record<string, unknown>> = {
     [liveGameDoc.homeSeasonTeamId]: homeTeamDoc.rosterSnapshot,
@@ -212,6 +215,8 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
     loserSeasonTeamId,
     winnerStartingPitcherId: winnerStartingPitcherId ?? "",
     loserStartingPitcherId: loserStartingPitcherId ?? "",
+    winnerRelieverId: winnerRelieverId ?? "",
+    loserRelieverId: loserRelieverId ?? "",
     allPlayerStates: playerStates.map((d) => d.toJSON()),
     rosterSnapshotBySeasonTeamId,
   });
