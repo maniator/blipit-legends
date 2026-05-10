@@ -60,9 +60,13 @@ function HomeRoute() {
           );
         } else {
           setActiveSeasonId(null);
+          setActiveSeasonLabel(null);
         }
       })
-      .catch(() => setActiveSeasonId(null));
+      .catch(() => {
+        setActiveSeasonId(null);
+        setActiveSeasonLabel(null);
+      });
   }, []);
 
   return (

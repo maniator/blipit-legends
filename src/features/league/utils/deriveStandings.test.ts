@@ -6,13 +6,15 @@ import { describe, expect, it } from "vitest";
 
 import { deriveStandings } from "./deriveStandings";
 
+let _gameIdCounter = 0;
+
 const makeGame = (
   overrides: Partial<SeasonGameRecord> & {
     homeScore: number;
     awayScore: number;
   },
 ): SeasonGameRecord => ({
-  id: `sg_${Math.random().toString(36).slice(2)}`,
+  id: `sg_test_${++_gameIdCounter}`,
   seasonId: "s_season01",
   gameDay: 0,
   homeSeasonTeamId: "st_a",
