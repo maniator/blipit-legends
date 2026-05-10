@@ -298,7 +298,7 @@ const HelpContent: React.FunctionComponent = () => (
       </List>
     </Section>
 
-    <Section title="Live Batting Stats">
+    <Section title="Live batting stats">
       <List>
         <Li>
           The <strong>Batting Stats</strong> panel shows AB, H, BB, K, and RBI for every batter.
