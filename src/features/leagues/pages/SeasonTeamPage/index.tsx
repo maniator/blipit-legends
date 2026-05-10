@@ -119,7 +119,9 @@ const SeasonTeamPageInner: React.FunctionComponent = () => {
   }
 
   const snap = teamRecord.rosterSnapshot as Record<string, unknown>;
-  const teamName = typeof snap.name === "string" ? snap.name : teamRecord.customTeamId;
+  const snapCity = typeof snap.city === "string" && snap.city ? snap.city : "";
+  const snapName = typeof snap.name === "string" ? snap.name : teamRecord.customTeamId;
+  const teamName = snapCity ? `${snapCity} ${snapName}` : snapName;
 
   const completedGames = games.filter((g) => g.status === "completed");
 
