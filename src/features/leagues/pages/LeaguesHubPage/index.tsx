@@ -61,8 +61,8 @@ const LeaguesHubPageInner: React.FunctionComponent = () => {
     return (
       <PageContainer data-testid="leagues-hub">
         <PageHeader>
-          <BackBtn type="button" onClick={() => navigate(-1)} aria-label="Go back">
-            ← Back
+          <BackBtn type="button" onClick={() => navigate("/")} aria-label="Back to home">
+            ← Home
           </BackBtn>
         </PageHeader>
         <PageTitle>Leagues</PageTitle>
@@ -76,8 +76,8 @@ const LeaguesHubPageInner: React.FunctionComponent = () => {
     return (
       <PageContainer data-testid="leagues-hub">
         <PageHeader>
-          <BackBtn type="button" onClick={() => navigate(-1)} aria-label="Go back">
-            ← Back
+          <BackBtn type="button" onClick={() => navigate("/")} aria-label="Back to home">
+            ← Home
           </BackBtn>
         </PageHeader>
         <PageTitle>Leagues</PageTitle>
@@ -116,8 +116,8 @@ const LeaguesHubPageInner: React.FunctionComponent = () => {
     return (
       <PageContainer data-testid="leagues-hub">
         <PageHeader>
-          <BackBtn type="button" onClick={() => navigate(-1)} aria-label="Go back">
-            ← Back
+          <BackBtn type="button" onClick={() => navigate("/")} aria-label="Back to home">
+            ← Home
           </BackBtn>
         </PageHeader>
         <PageTitle>Leagues</PageTitle>
@@ -154,8 +154,8 @@ const LeaguesHubPageInner: React.FunctionComponent = () => {
     return (
       <PageContainer data-testid="leagues-hub">
         <PageHeader>
-          <BackBtn type="button" onClick={() => navigate(-1)} aria-label="Go back">
-            ← Back
+          <BackBtn type="button" onClick={() => navigate("/")} aria-label="Back to home">
+            ← Home
           </BackBtn>
         </PageHeader>
         <PageTitle>Leagues</PageTitle>
@@ -195,8 +195,8 @@ const LeaguesHubPageInner: React.FunctionComponent = () => {
     return (
       <PageContainer data-testid="leagues-hub">
         <PageHeader>
-          <BackBtn type="button" onClick={() => navigate(-1)} aria-label="Go back">
-            ← Back
+          <BackBtn type="button" onClick={() => navigate("/")} aria-label="Back to home">
+            ← Home
           </BackBtn>
         </PageHeader>
         <PageTitle>Leagues</PageTitle>
@@ -261,8 +261,8 @@ const LeaguesHubPageInner: React.FunctionComponent = () => {
   return (
     <PageContainer data-testid="leagues-hub">
       <PageHeader>
-        <BackBtn type="button" onClick={() => navigate(-1)} aria-label="Go back">
-          ← Back
+        <BackBtn type="button" onClick={() => navigate("/")} aria-label="Back to home">
+          ← Home
         </BackBtn>
       </PageHeader>
       <PageTitle>Leagues</PageTitle>
@@ -285,7 +285,7 @@ const LeaguesHubPage: React.FunctionComponent = () => {
       <PageContainer data-testid="leagues-hub">
         <PageHeader>
           <BackBtn type="button" disabled aria-label="Go back">
-            ← Back
+            ← Home
           </BackBtn>
         </PageHeader>
         <PageTitle>Leagues</PageTitle>
