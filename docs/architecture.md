@@ -28,6 +28,8 @@ The app uses **React Router v7** (`react-router` package — not `react-router-d
 
 Auto-play is implemented in `src/features/gameplay/hooks/useAutoPlayScheduler.ts`:
 
+> **Note:** The game is always auto-play unless paused. There is **no step-by-step pitch mode**. The scheduler runs continuously at the selected speed and only pauses when: (a) the user presses the pause button, (b) a Manager Mode decision is pending, or (c) `GamePage` unmounts.
+
 - Speech-gated `setTimeout` scheduler (`tick`) that calls `handlePitch()`. Receives `inning` and `atBat` as direct values for proper React dependency tracking.
 - **Route-aware pause** — `GamePage` unmounts when the user navigates away from `/game`, which cancels the scheduler's cleanup function. No `isRouteActive` flag needed — the component lifecycle handles it.
 - Manager Mode pausing — when `pendingDecision` is set, the scheduler returns early and restarts once the decision resolves.

@@ -260,6 +260,8 @@ _(Project type: Progressive Web App — offline-capable, installable)_
 
 ## Functional Requirements
 
+> **Note:** All FRs in this section describe **shipped behaviour** — features that are implemented and live at blipit.net. This is not a forward-looking feature list; speculative requirements must not appear here.
+
 ### FR-01: Game Simulation Engine
 
 - **FR-01.1** The system shall simulate a complete 9-inning baseball game using the seeded PRNG.

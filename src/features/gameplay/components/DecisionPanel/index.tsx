@@ -43,9 +43,13 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
         payload?: ManagerNotificationData["decision"];
         pitchKey?: number;
       };
-      if (sourcePitchKey !== pitchKey) return;
-      if (sourceGameInstanceId !== gameInstanceId) return;
-      if (!payload || payload.kind !== pendingDecision.kind) return;
+      if (
+        sourcePitchKey !== pitchKey ||
+        sourceGameInstanceId !== gameInstanceId ||
+        !payload ||
+        payload.kind !== pendingDecision.kind
+      )
+        return;
       switch (action) {
         case "steal":
           dispatch({ type: "steal_attempt", payload });

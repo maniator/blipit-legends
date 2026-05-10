@@ -22,6 +22,16 @@ type GetDb = () => Promise<BallgameDb>;
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 
+/**
+ * Validate event records from an imported save bundle.
+ *
+ * Checks that every entry is a well-typed object whose `saveId` matches the
+ * parent save, whose `id` matches the `${saveId}:${idx}` pattern, and that
+ * all indices are non-negative, unique, and form a contiguous sequence starting
+ * at 0. Throws a descriptive Error on the first violation.
+ *
+ * @returns A sorted (ascending by `idx`) array of validated EventRecord objects.
+ */
 const validateImportedEvents = (events: unknown, saveId: string): EventRecord[] => {
   if (!Array.isArray(events)) throw new Error("Invalid save data: events must be an array");
 
