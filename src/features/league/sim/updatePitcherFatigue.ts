@@ -90,7 +90,7 @@ export interface PitcherFatigueUpdateInput {
 /** Partial patches keyed by player state id — safe to bulkUpsert into RxDB. */
 export type PitcherFatiguePatches = Pick<
   SeasonPlayerStateRecord,
-  "id" | "pitcherDaysRest" | "pitcherAvailability"
+  "id" | "pitcherDaysRest" | "pitcherAvailability" | "pitcherStartsThisSeason"
 >[];
 
 /**
@@ -110,7 +110,11 @@ export function computePitcherFatigueUpdates(
   } = input;
 
   const constants = getPitcherFatigueConstants(rulesetVersion);
-  const pitched = new Set([winnerStartingPitcherId, loserStartingPitcherId]);
+  // Exclude empty-string sentinel values — null pitcher IDs (no eligible
+  // pitcher found) should not trigger fatigue updates for a ghost player.
+  const pitched = new Set(
+    [winnerStartingPitcherId, loserStartingPitcherId].filter((id) => id !== ""),
+  );
 
   return allPlayerStates.map((ps) => {
     const snapshot = rosterSnapshotBySeasonTeamId[ps.seasonTeamId] ?? {};
@@ -118,11 +122,21 @@ export function computePitcherFatigueUpdates(
 
     let newDaysRest: number;
     let newAvailability: number;
+    let newStartsThisSeason = ps.pitcherStartsThisSeason;
 
     if (pitched.has(ps.playerId)) {
       // Appeared in this game — reset rest counter.
+      // Back-to-back-to-back floor: if this pitcher ALSO appeared yesterday
+      // (pitcherDaysRest === 0 entering this game), clamp availability to 0.0
+      // so they are ineligible tomorrow regardless of the recovery curve.
+      // This prevents an RP from pitching every game indefinitely.
+      const isBackToBack = ps.pitcherDaysRest === 0;
       newDaysRest = 0;
-      newAvailability = lookupRecovery(role, 0, constants);
+      newAvailability = isBackToBack ? 0.0 : lookupRecovery(role, 0, constants);
+      // Increment start count for SPs only (tracks rotation cycle order).
+      if (role === "SP") {
+        newStartsThisSeason += 1;
+      }
     } else {
       // Did not appear — rest counter increments.
       newDaysRest = ps.pitcherDaysRest + 1;
@@ -133,6 +147,7 @@ export function computePitcherFatigueUpdates(
       id: ps.id,
       pitcherDaysRest: newDaysRest,
       pitcherAvailability: newAvailability,
+      pitcherStartsThisSeason: newStartsThisSeason,
     };
   });
 }
