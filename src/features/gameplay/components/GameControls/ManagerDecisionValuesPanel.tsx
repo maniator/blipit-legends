@@ -65,6 +65,14 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
   const toggleRef = React.useRef<HTMLButtonElement>(null);
   const closeBtnRef = React.useRef<HTMLButtonElement>(null);
   const resetBtnRef = React.useRef<HTMLButtonElement>(null);
+  const focusTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cancel any pending focus-restore timer on unmount.
+  React.useEffect(() => {
+    return () => {
+      if (focusTimerRef.current !== null) clearTimeout(focusTimerRef.current);
+    };
+  }, []);
   const titleId = React.useId();
   const pitchingTicksHintId = React.useId();
 
@@ -399,8 +407,13 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                       setConfirmReset(false);
                       // Restore focus to the reset button after the confirm row
                       // unmounts so keyboard users don't lose their place.
-                      // Use setTimeout(0) to let React re-render first.
-                      setTimeout(() => resetBtnRef.current?.focus(), 0);
+                      // Track the timer so it can be cancelled if the panel
+                      // unmounts before the 0 ms delay fires.
+                      if (focusTimerRef.current !== null) clearTimeout(focusTimerRef.current);
+                      focusTimerRef.current = setTimeout(() => {
+                        focusTimerRef.current = null;
+                        resetBtnRef.current?.focus();
+                      }, 0);
                     }}
                     data-testid="manager-decision-tuning-reset-cancel"
                   >

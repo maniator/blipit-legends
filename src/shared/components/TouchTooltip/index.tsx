@@ -54,7 +54,13 @@ const TouchTooltip: React.FunctionComponent<Props> = ({ label, children = "ⓘ",
       }
     };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        // stopImmediatePropagation prevents other document-level Escape
+        // handlers (e.g. a parent panel) from firing when the tooltip itself
+        // is what the user intends to dismiss.
+        e.stopImmediatePropagation();
+        setOpen(false);
+      }
     };
 
     document.addEventListener("pointerdown", onPointerDown);
