@@ -2,7 +2,7 @@
  * SeasonModifiers — typed modifier payload injected into the headless sim entry point.
  *
  * Shape is FROZEN in v1. v2/v3/v4 may only ADD fields — never rename or remove.
- * The injection contract is defined in docs/league-mode/schedule-and-sim.md.
+ * The injection contract is defined in _bmad-output/planning-artifacts/league-mode-distillate/02-data-model-routing-schedule.md.
  *
  * RC3 (Winston CR): pitcher.availability is a per-player map, not a scalar.
  * A single scalar cannot represent a bullpen where pitcher A is at 0.9 and B at 0.2.

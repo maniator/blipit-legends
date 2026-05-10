@@ -11,7 +11,7 @@
  * Back-to-back-to-back floor: an RP that appeared in both of the previous two
  * consecutive game-days has pitcherAvailability clamped to 0.0. Tracked via
  * pitcherDaysRest === 0 on two consecutive days — no new schema field needed.
- * (v1 — see docs/league-mode/fatigue-and-injuries.md)
+ * (v1 — see _bmad-output/planning-artifacts/league-mode-distillate/03-setup-wizard-autogen-fatigue-hub.md)
  */
 import { getPitcherFatigueConstants } from "@feat/league/ruleset/pitcherFatigueConstants";
 import type { SeasonPlayerStateRecord } from "@feat/league/storage/types";
@@ -126,13 +126,20 @@ export function computePitcherFatigueUpdates(
 
     if (pitched.has(ps.playerId)) {
       // Appeared in this game — reset rest counter.
-      // Back-to-back-to-back floor: if this pitcher ALSO appeared yesterday
-      // (pitcherDaysRest === 0 entering this game), clamp availability to 0.0
-      // so they are ineligible tomorrow regardless of the recovery curve.
-      // This prevents an RP from pitching every game indefinitely.
+      // Back-to-back floor: if this pitcher ALSO appeared yesterday
+      // (pitcherDaysRest === 0 entering this game), clamp availability to
+      // rpBackToBackFloor so they remain available in high-leverage situations
+      // but at significantly reduced capacity.
+      // Design decision (locked in decisions.md §12 / distillate §03): real bullpen
+      // arms do go back-to-back; a 0.0 clamp (full unavailability) is too aggressive
+      // and produces anemic bullpens over a sprint season. 0.20 floor keeps the arm
+      // below the RP eligibility threshold (0.41) so they won't be *preferred*, but
+      // a desperate manager-mode override can still reach them.
       const isBackToBack = ps.pitcherDaysRest === 0;
       newDaysRest = 0;
-      newAvailability = isBackToBack ? 0.0 : lookupRecovery(role, 0, constants);
+      newAvailability = isBackToBack
+        ? constants.rpBackToBackFloor
+        : lookupRecovery(role, 0, constants);
       // Increment start count for SPs only (tracks rotation cycle order).
       if (role === "SP") {
         newStartsThisSeason += 1;

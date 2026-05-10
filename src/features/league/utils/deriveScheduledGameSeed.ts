@@ -1,7 +1,7 @@
 /**
  * Derives a deterministic per-game seed from a season ID and season-game ID.
  *
- * Contract (binding — do not change without bumping docs/league-mode/schedule-and-sim.md):
+ * Contract (binding — do not change without bumping _bmad-output/planning-artifacts/league-mode-distillate/02-data-model-routing-schedule.md):
  *   1. input  = `${seasonId}:${seasonGameId}`
  *   2. hash   = fnv1a(input)          // 8-char hex string
  *   3. uint32 = parseInt(hash, 16) >>> 0

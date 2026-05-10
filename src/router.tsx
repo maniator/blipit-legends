@@ -5,6 +5,7 @@ import AppLoadingFallback from "@feat/gameplay/components/AppLoadingFallback";
 import AppShell from "@feat/gameplay/components/AppShell";
 import HomeScreen from "@feat/gameplay/components/HomeScreen";
 import RootLayout from "@feat/gameplay/components/RootLayout";
+import { resetStaleInProgressGames } from "@feat/league/sim/resetStaleGames";
 import { getTotalGameDays } from "@feat/leagues/utils/seasonPresets";
 import {
   createBrowserRouter,
@@ -206,6 +207,12 @@ export const router = createBrowserRouter([
           },
           {
             path: "leagues",
+            loader: async () => {
+              // Reset any stale in_progress games before the hub renders its
+              // "Continue" CTA — ensures the advance button never sees a stuck row.
+              await resetStaleInProgressGames();
+              return null;
+            },
             element: (
               <React.Suspense fallback={null}>
                 <LeaguesHubPage />

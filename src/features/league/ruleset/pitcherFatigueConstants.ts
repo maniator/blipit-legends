@@ -36,6 +36,13 @@ export interface PitcherFatigueConstants {
    * Expressed as a fraction (0.12 = 12% penalty on relevant stat modifiers).
    */
   maxFatigueEffect: number;
+  /**
+   * Availability floor applied to a reliever who pitches on back-to-back game days.
+   * Set below `rpEligibilityThreshold` to ensure the pitcher can still appear in
+   * high-leverage situations, but at reduced capacity.
+   * Real relievers do go back-to-back; full unavailability (0.0) is too aggressive.
+   */
+  rpBackToBackFloor: number;
 }
 
 const V1_CONSTANTS: PitcherFatigueConstants = {
@@ -46,6 +53,10 @@ const V1_CONSTANTS: PitcherFatigueConstants = {
   spEligibilityThreshold: 0.7,
   rpEligibilityThreshold: 0.41,
   maxFatigueEffect: 0.12,
+  // Back-to-back floor: below eligibility threshold so the RP is reduced but still
+  // available in a pinch. Real bullpen arms CAN go back-to-back; a full 0.0 clamp
+  // is too aggressive and produces anemic bullpens over a season.
+  rpBackToBackFloor: 0.2,
 };
 
 /**
