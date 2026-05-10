@@ -88,9 +88,9 @@ const HomeScreen: React.FunctionComponent<Props> = ({
     <SectionLabel>Exhibition</SectionLabel>
     <MenuGroup>
       {onResumeCurrent && (
-        <SecondaryBtn onClick={onResumeCurrent} data-testid="home-resume-current-game-button">
+        <PrimaryBtn onClick={onResumeCurrent} data-testid="home-resume-current-game-button">
           ▶ Resume Current Game
-        </SecondaryBtn>
+        </PrimaryBtn>
       )}
       <SecondaryBtn onClick={onNewGame} data-testid="home-new-game-button">
         New Exhibition Game
