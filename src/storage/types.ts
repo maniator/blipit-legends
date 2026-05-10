@@ -31,6 +31,13 @@ export type {
   UpdateCustomTeamInput,
 } from "@feat/customTeams/storage/types";
 export type {
+  SeasonGameRecord,
+  SeasonLeague,
+  SeasonPlayerStateRecord,
+  SeasonRecord,
+  SeasonTeamRecord,
+} from "@feat/league/storage/types";
+export type {
   EventRecord,
   GameEvent,
   GameSaveSetup,
@@ -41,6 +48,8 @@ export type {
   SaveRecord,
   ScoreSnapshot,
   StateSnapshot,
+  V2BundleCollections,
+  V2BundleHeader,
 } from "@feat/saves/storage/types";
 
 // Cross-feature / app-shell types (genuinely shared)

@@ -62,3 +62,17 @@ export const List = styled.ul`
 export const Li = styled.li`
   margin-bottom: ${({ theme }) => theme.spacing.xs};
 `;
+
+/** Label that visually groups related accordion sections (e.g. "Exhibition"). */
+export const GroupLabel = styled.p`
+  color: ${({ theme }) => theme.colors.textAccent};
+  font-size: ${({ theme }) => theme.fontSizes.sub};
+  font-weight: 700;
+  letter-spacing: ${({ theme }) => theme.letterSpacing.widest};
+  text-transform: uppercase;
+  margin: ${({ theme }) => theme.spacing.md} 0 ${({ theme }) => theme.spacing.xs};
+
+  &:first-child {
+    margin-top: 0;
+  }
+`;
