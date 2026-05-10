@@ -136,7 +136,7 @@ function buildStore(getDbFn: GetDb) {
     });
   }
 
-  return {
+  const store = {
     /**
      * Creates a full season with schedule + team enrollments in one batch.
      *
@@ -310,7 +310,7 @@ function buildStore(getDbFn: GetDb) {
       const leagueId = fnv1a(`${masterSeed}:league:0`);
       const seasonName = `Quick Start Season`;
 
-      return this.createSeason({
+      return store.createSeason({
         name: seasonName,
         masterSeed,
         preset: "mini",
@@ -492,6 +492,8 @@ function buildStore(getDbFn: GetDb) {
       return docs.map((d) => d.toJSON() as unknown as SeasonGameRecord);
     },
   };
+
+  return store;
 }
 
 // ---------------------------------------------------------------------------

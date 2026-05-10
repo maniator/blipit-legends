@@ -197,6 +197,23 @@ describe("recordResult", () => {
 });
 
 describe("quickStart", () => {
+  it("works when quickStart is called as a detached function reference", async () => {
+    const { quickStart } = store;
+    const result = await quickStart({
+      masterSeed: "qs_master_seed_detached",
+      dhEnabled: true,
+      autogenOptions: {
+        count: MINI_TEAM_COUNT,
+        theme: "mix",
+        parity: "mixed",
+      },
+    });
+
+    expect(result.status).toBe("active");
+    const seasonTeams = await store.getSeasonTeams(result.id);
+    expect(seasonTeams).toHaveLength(MINI_TEAM_COUNT);
+  });
+
   it("creates autogen teams in customTeams and creates an active season", async () => {
     const result = await store.quickStart({
       masterSeed: "qs_master_seed_01",
