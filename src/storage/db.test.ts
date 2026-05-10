@@ -6,8 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestDb } from "@test/helpers/db";
 
 import {
-  type BallgameDb,
   _resetDbSingletonForTests,
+  type BallgameDb,
   eventsCollection,
   getDb,
   playersCollection,

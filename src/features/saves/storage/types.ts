@@ -1,12 +1,12 @@
 import type { TeamRecord } from "@feat/customTeams/storage/types";
+import type { State, Strategy } from "@feat/gameplay/context/index";
+import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
 import type {
   SeasonGameRecord,
   SeasonPlayerStateRecord,
   SeasonRecord,
   SeasonTeamRecord,
 } from "@feat/league/storage/types";
-import type { State, Strategy } from "@feat/gameplay/context/index";
-import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
 
 /** Typed setup stored on the save header for deterministic game restore. */
 export interface GameSaveSetup {

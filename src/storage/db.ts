@@ -22,8 +22,8 @@ import {
   type RxDatabase,
   type RxStorage,
 } from "rxdb";
-import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
 import { RxDBMigrationSchemaPlugin } from "rxdb/plugins/migration-schema";
+import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
 
 // Register the migration-schema plugin once at module load.
 // Required for any collection that specifies `migrationStrategies`.

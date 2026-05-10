@@ -420,13 +420,12 @@ function buildStore(getDbFn: GetDb) {
 
       const rawHeader = bundle["header"] as V2BundleHeader | undefined;
       const sig = bundle["sig"] as string | undefined;
-      if (!rawHeader || typeof sig !== "string") throw new Error("Invalid save file: missing header or sig");
+      if (!rawHeader || typeof sig !== "string")
+        throw new Error("Invalid save file: missing header or sig");
 
       const expectedSig = fnv1a(RXDB_EXPORT_KEY_V2 + canonicalJSON(rawHeader));
       if (sig !== expectedSig)
-        throw new Error(
-          "This save file appears corrupted. Try re-exporting from the source.",
-        );
+        throw new Error("This save file appears corrupted. Try re-exporting from the source.");
 
       // Import CURRENT_RULESET_VERSION lazily to avoid circular deps.
       let currentRulesetVersion = 1;
@@ -440,9 +439,7 @@ function buildStore(getDbFn: GetDb) {
       }
 
       if (rawHeader.rulesetVersion > currentRulesetVersion)
-        throw new Error(
-          "This save was created with a newer ruleset. Update the app first.",
-        );
+        throw new Error("This save was created with a newer ruleset. Update the app first.");
 
       const importStartedAt = Date.now();
 
@@ -505,11 +502,9 @@ function buildStore(getDbFn: GetDb) {
         for (const season of incomingSeasons) {
           const originalId = season["id"] as string;
           const rewrittenId = idRemap.get(originalId) ?? originalId;
-          await db.seasons.upsert(
-            ({ ...season, id: rewrittenId }) as unknown as Parameters<
-              typeof db.seasons.upsert
-            >[0],
-          );
+          await db.seasons.upsert({ ...season, id: rewrittenId } as unknown as Parameters<
+            typeof db.seasons.upsert
+          >[0]);
         }
 
         // ── 3. seasonTeams, seasonGames, seasonPlayerState ───────────────────
@@ -560,9 +555,7 @@ function buildStore(getDbFn: GetDb) {
 
         // ── 4. saves + events ────────────────────────────────────────────────
         if (Array.isArray(collections.saves) && collections.saves.length > 0) {
-          await db.saves.bulkUpsert(
-            collections.saves as Parameters<typeof db.saves.bulkUpsert>[0],
-          );
+          await db.saves.bulkUpsert(collections.saves as Parameters<typeof db.saves.bulkUpsert>[0]);
         }
         if (Array.isArray(collections.events) && collections.events.length > 0) {
           await db.events.bulkUpsert(

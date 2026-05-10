@@ -1,3 +1,6 @@
+import type { SanctionedWriteContext } from "@feat/league/storage/sanctionedWrite";
+import { appLog } from "@shared/utils/logger";
+
 import { type BallgameDb, getDb } from "@storage/db";
 import { generateTeamId } from "@storage/generateId";
 import type {
@@ -9,7 +12,6 @@ import type {
   UpdateCustomTeamInput,
 } from "@storage/types";
 
-import { CustomTeamLockedError } from "./errors";
 import { buildNewTeamDoc } from "./customTeamDocBuilder";
 import {
   buildTeamFingerprint,
@@ -35,9 +37,8 @@ import {
   ROSTER_SCHEMA_VERSION,
   sanitizeAbbreviation,
 } from "./customTeamSanitizers";
+import { CustomTeamLockedError } from "./errors";
 import { FREE_AGENT_TEAM_ID } from "./schemaV1";
-import type { SanctionedWriteContext } from "@feat/league/storage/sanctionedWrite";
-import { appLog } from "@shared/utils/logger";
 
 type GetDb = () => Promise<BallgameDb>;
 

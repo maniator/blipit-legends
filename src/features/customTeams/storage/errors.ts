@@ -8,9 +8,7 @@
  */
 export class CustomTeamLockedError extends Error {
   constructor(teamId: string) {
-    super(
-      `Team ${teamId} is locked (in an active season). Use a sanctioned write path.`,
-    );
+    super(`Team ${teamId} is locked (in an active season). Use a sanctioned write path.`);
     this.name = "CustomTeamLockedError";
   }
 }

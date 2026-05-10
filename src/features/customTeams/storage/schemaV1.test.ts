@@ -15,9 +15,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { TeamRecord } from "./types";
 
 // ── v0 schema (no activeLeagueIds / autogen) ─────────────────────────────────
-const teamsSchemaV0: RxJsonSchema<
-  Omit<TeamRecord, "activeLeagueIds" | "autogen">
-> = {
+const teamsSchemaV0: RxJsonSchema<Omit<TeamRecord, "activeLeagueIds" | "autogen">> = {
   version: 0,
   primaryKey: "id",
   type: "object",
