@@ -209,8 +209,8 @@ export function generateSchedule(input: GenerateScheduleInput): GenerateSchedule
             seasonId,
             seasonRoundIdx,
             gameInSeriesIdx: g,
-            homeSeasonTeamId: homeCtId,
-            awaySeasonTeamId: awayCtId,
+            homeCustomTeamId: homeCtId,
+            awayCustomTeamId: awayCtId,
           });
           games.push({
             id: gameId,
