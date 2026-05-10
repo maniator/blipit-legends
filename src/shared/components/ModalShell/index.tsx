@@ -57,7 +57,7 @@ const ModalShell: React.FunctionComponent<ModalShellProps> = ({
     <ModalDialog ref={dialogRef} className={className}>
       <ModalHeader>
         <ModalTitle>{title}</ModalTitle>
-        <ModalCloseButton onClick={onClose} aria-label="Close dialog">
+        <ModalCloseButton type="button" onClick={onClose} aria-label="Close dialog">
           ×
         </ModalCloseButton>
       </ModalHeader>

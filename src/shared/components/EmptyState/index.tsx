@@ -30,7 +30,9 @@ const EmptyState: React.FunctionComponent<EmptyStateProps> = ({
     <EmptyStateTitle>{title}</EmptyStateTitle>
     <EmptyStateBody>{body}</EmptyStateBody>
     {onAction !== undefined && actionLabel !== undefined && (
-      <EmptyStateAction onClick={onAction}>{actionLabel}</EmptyStateAction>
+      <EmptyStateAction type="button" onClick={onAction}>
+        {actionLabel}
+      </EmptyStateAction>
     )}
   </EmptyStateRoot>
 );
