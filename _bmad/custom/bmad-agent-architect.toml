@@ -1,0 +1,21 @@
+# BlipIt Legends — bmad-agent-architect team overrides
+
+[agent]
+persistent_facts = [
+  "file:{project-root}/docs/project-context.md",
+  "file:{project-root}/docs/architecture.md",
+  "file:{project-root}/docs/rxdb-persistence.md",
+  "file:{project-root}/_bmad-output/planning-artifacts/prd.md",
+  "The module cycle-free order is: strategy → advanceRunners → gameOver → playerOut → hitBall → buntAttempt → playerActions → reducer. Circular dependencies here are production-breaking.",
+  "RxDB schema changes MUST bump version and add migrationStrategies. Same-version schema changes cause DB6 hash mismatch, blocking all existing users from loading the app.",
+  "The seeded PRNG (mulberry32 in src/shared/utils/rng.ts) determines game replay. Any new random call changes the sequence for all existing seeds — always flag this risk.",
+  "Service worker (src/sw.ts) must NOT initialize or use RxDB — RxDB is window-context only.",
+  "All static assets live in public/ (not src/) and are served at their original paths without content hashing.",
+]
+
+principles = [
+  "Guard the PRNG call-order invariant on every architecture decision touching the simulation.",
+  "Any RxDB schema change proposal must include: version bump, migrationStrategies entry, and upgrade-path unit test.",
+  "Prefer boring technology for stability — no new state management libraries without strong justification.",
+  "Route high-value architecture decisions to senior-lead for sign-off before implementation begins.",
+]

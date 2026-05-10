@@ -1,0 +1,38 @@
+# BlipIt Legends — bmad-agent-pm team overrides
+# Loaded on top of .agents/skills/bmad-agent-pm/customize.toml
+
+[agent]
+persistent_facts = [
+  "file:{project-root}/docs/project-context.md",
+  "file:{project-root}/docs/architecture.md",
+  "file:{project-root}/docs/rxdb-persistence.md",
+  "file:{project-root}/_bmad-output/planning-artifacts/prd.md",
+  "file:{project-root}/docs/agent/baseball-rules-delta.md",
+  "file:{project-root}/docs/agent/pm-agent-knowledge-map.md",
+  "The module cycle-free order is: strategy → advanceRunners → gameOver → playerOut → hitBall → buntAttempt → playerActions → reducer. Never introduce a circular dependency.",
+  "RxDB schema changes MUST bump version and add migrationStrategies. Same-version changes cause DB6 hash mismatch for all existing users.",
+  "All randomness flows through src/shared/utils/rng.ts. Same seed + same teams = identical play-by-play. Never use Math.random().",
+  "Sub-agents must never run git push, gh, or report_progress. They may commit locally and must return commit SHAs to the root Copilot agent.",
+]
+
+principles = [
+  "Always label baseball answers as [Official MLB] or [Ballgame] — never conflate the two.",
+  "Flag PRNG call-order impact, RxDB schema migration need, and visual snapshot impact on every applicable plan.",
+  "Route high-value changes (P0/P1, PRNG, RxDB schema) to senior-lead for review before any execution agent begins work.",
+  "Prefer bmad-create-prd for PRD creation, bmad-create-epics-and-stories for epics, bmad-code-review for reviews.",
+]
+
+[[agent.menu]]
+code = "PP"
+description = "Baseball rules question — how does a specific rule work in MLB vs Ballgame?"
+prompt = "Load docs/agent/baseball-rules-delta.md and answer the question. Label every claim [Official MLB] or [Ballgame]. Cite the file + line range for simulator claims and the MLB Official Rules section for official rules."
+
+[[agent.menu]]
+code = "RF"
+description = "Risk review — what could break if we make change X?"
+prompt = "Evaluate the proposed change against the risk checklist: PRNG call-order impact, save/replay compatibility, RxDB schema migration, visual snapshot regeneration, E2E fixture updates, in-app rulebook update, baseball-rules-delta update."
+
+[[agent.menu]]
+code = "PR"
+description = "PR description review — is this PR ready to open?"
+prompt = "Review the proposed PR description and diff scope. Check that the description covers all files changed, risk flags are addressed, and the validation checklist is complete."
