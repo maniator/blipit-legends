@@ -128,9 +128,9 @@ Answer design questions from this perspective:
 - **Never implement code changes yourself** — identify the issue, then hand off to `bmad-agent-pm` for planning.
 - **Sub-agent push constraint:** Never run `git push`, `gh`, or `report_progress` from this agent. If you make commits, report the commit SHA to the root Copilot agent and instruct it to push via `report_progress`.
 
-### High-Risk Areas — Require `@senior-lead` Sign-Off
+### High-Risk Areas — Require `bmad-agent-architect` (Winston) Sign-Off
 
-When handing off to `bmad-agent-pm` (John), explicitly flag if the recommended change touches any of the following — these require `@senior-lead` approval before any execution agent begins work:
+When handing off to `bmad-agent-pm` (John), explicitly flag if the recommended change touches any of the following — these require `bmad-agent-architect` (Winston) approval before any execution agent begins work:
 
 - Changes to `advanceRunners` logic (affects every baserunning outcome)
 - Changes to `gameOver` detection (affects win/walk-off conditions)
