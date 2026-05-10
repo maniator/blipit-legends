@@ -32,9 +32,9 @@ test.describe("Team Summary and Leaders", () => {
    * Pitching: A.Starter (36 outs, qualifies), R.Reliever (3 outs, does not qualify).
    */
   async function seedSummaryAndOpen(page: Page) {
-    await page.addInitScript(() => {
-      localStorage.setItem("speed", EFFECTIVELY_PAUSED_SPEED);
-    });
+    await page.addInitScript((speed: string) => {
+      localStorage.setItem("speed", speed);
+    }, EFFECTIVELY_PAUSED_SPEED);
     await loadFixture(page, "sample-save.json");
     await importHistoryFixture(page, "team-summary-history.json");
     await page.goto("/stats");
@@ -136,9 +136,9 @@ test.describe("Team Summary and Leaders", () => {
 
 test.describe("Role-aware Player Career tabs", () => {
   async function seedForRoleAware(page: Page) {
-    await page.addInitScript(() => {
-      localStorage.setItem("speed", EFFECTIVELY_PAUSED_SPEED);
-    });
+    await page.addInitScript((speed: string) => {
+      localStorage.setItem("speed", speed);
+    }, EFFECTIVELY_PAUSED_SPEED);
     await startGameViaPlayBall(page);
     await importHistoryFixture(page, "team-summary-history.json");
   }

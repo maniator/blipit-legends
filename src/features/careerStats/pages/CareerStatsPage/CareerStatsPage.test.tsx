@@ -10,8 +10,7 @@ vi.mock("@storage/db", () => ({
   getDb: vi.fn().mockResolvedValue({
     completedGames: {
       find: vi.fn(() => ({
-        exec: vi.fn().mockResolvedValue([]),
-        // Reactive observable: subscribe fires immediately with empty array.
+        // Production code uses find().$; exec is not called on this path.
         $: {
           subscribe: (fn: (docs: unknown[]) => void) => {
             fn([]);
@@ -644,16 +643,25 @@ describe("CareerStatsPage", () => {
   });
 
   it("shows no-teams empty state when there are no teams and no history", async () => {
-    // Ensure getDb returns empty completedGames so the loadTeamIds effect
-    // doesn't populate teamsWithHistory with non-custom team IDs from a
-    // prior test's overridden mock (clearAllMocks only resets call counts,
-    // not persistent mockResolvedValue implementations).
+    // Ensure getDb returns empty completedGames so the reactive teamsWithHistory
+    // subscription emits an empty array, preventing non-custom team IDs from a
+    // prior test's overridden mock from leaking into this test.
     const { getDb } = await import("@storage/db");
     vi.mocked(getDb).mockResolvedValue({
-      completedGames: { find: vi.fn(() => ({ exec: vi.fn().mockResolvedValue([]) })) },
+      completedGames: {
+        find: vi.fn(() => ({
+          // Production code uses find().$; exec is not called on this path.
+          $: {
+            subscribe: (fn: (docs: unknown[]) => void) => {
+              fn([]);
+              return { unsubscribe: vi.fn() };
+            },
+          },
+        })),
+      },
     } as any);
     renderPage();
-    // Wait for the async loadTeamIds effect to settle (empty → noTeams = true).
+    // Wait for the reactive subscription to settle (empty → noTeams = true).
     await waitFor(
       () => {
         expect(screen.getByTestId("career-stats-no-teams")).toBeInTheDocument();

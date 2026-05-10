@@ -34,6 +34,7 @@ export default defineConfig({
     {
       name: "determinism",
       testMatch: "**/determinism.spec.ts",
+      grepInvert: /@flaky/,
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
     },
 

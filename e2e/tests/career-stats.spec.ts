@@ -122,9 +122,9 @@ test.describe("Career Stats with seeded history", () => {
     // game never auto-advances during the importHistoryFixture flow. Without
     // this, rapid re-renders on mobile WebKit detach the saves-button from the
     // DOM while importHistoryFixture tries to click it.
-    await page.addInitScript(() => {
-      localStorage.setItem("speed", EFFECTIVELY_PAUSED_SPEED);
-    });
+    await page.addInitScript((speed: string) => {
+      localStorage.setItem("speed", speed);
+    }, EFFECTIVELY_PAUSED_SPEED);
     // Use loadFixture (loads a pre-built save snapshot) instead of
     // startGameViaPlayBall to avoid the Play Ball → /game navigation
     // timing-out on slow CI tablet/mobile WebKit runners.
