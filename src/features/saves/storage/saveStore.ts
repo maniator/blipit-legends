@@ -455,21 +455,16 @@ function buildStore(getDbFn: GetDb) {
         const db = await getDbFn();
         const { collections } = rawHeader;
 
-        // ── 1. customTeams (teams) ──────────────────────────────────────────
-        if (Array.isArray(collections.customTeams) && collections.customTeams.length > 0) {
-          await db.teams.bulkUpsert(
-            collections.customTeams as Parameters<typeof db.teams.bulkUpsert>[0],
-          );
-        }
-
-        // ── 2. seasons ──────────────────────────────────────────────────────
-        // Check for active-season collisions before writing anything.
+        // ── 1. seasons — collision check FIRST (before any writes) ─────────
+        // The app assumes at most one active season exists at a time.
+        // Reject the import as soon as we detect that it would create a second
+        // active season, regardless of whether the IDs match.
         const localActiveSeasonsResult = await db.seasons
           .find({ selector: { status: "active" } })
           .exec();
         const localActiveSeasonIds = new Set(localActiveSeasonsResult.map((d) => d.id));
+        const localHasActiveSeason = localActiveSeasonIds.size > 0;
 
-        // Separate imported seasons by collision type.
         const incomingSeasons: Array<Record<string, unknown>> = Array.isArray(collections.seasons)
           ? (collections.seasons as unknown as Array<Record<string, unknown>>)
           : [];
@@ -479,24 +474,30 @@ function buildStore(getDbFn: GetDb) {
           const seasonId = season["id"] as string;
           const isActive = season["status"] === "active";
 
-          if (localActiveSeasonIds.has(seasonId) && isActive) {
+          if (isActive && localHasActiveSeason) {
+            // Any incoming active season is rejected when one already exists locally —
+            // regardless of whether the IDs match. The app treats "first active season"
+            // as the current one; importing a second would make selection non-deterministic.
             throw new Error(
-              `You already have an active season with id "${seasonId}". ` +
-                "Complete or abandon it before importing this bundle.",
+              "You already have an active season. Complete or abandon it before importing a bundle " +
+                "that contains an active season.",
             );
           }
 
-          // Completed/abandoned collision: rename the incoming season so it
-          // can coexist with the local one. Active incoming seasons cannot
-          // collide with active local seasons (thrown above) or with completed
-          // local seasons (no active ID appears in a completed season's key).
-          if (!isActive) {
-            const existsLocally = !!(await db.seasons.findOne(seasonId).exec());
-            if (existsLocally) {
-              const shortToken = Math.random().toString(36).slice(2, 8);
-              idRemap.set(seasonId, `${seasonId}-imported-${shortToken}`);
-            }
+          // Any season (active or completed) whose ID already exists locally gets
+          // remapped to avoid overwriting local history on repeated imports.
+          const existsLocally = !!(await db.seasons.findOne(seasonId).exec());
+          if (existsLocally) {
+            const shortToken = Math.random().toString(36).slice(2, 8);
+            idRemap.set(seasonId, `${seasonId}-imported-${shortToken}`);
           }
+        }
+
+        // ── 2. customTeams (teams) — written after collision check ──────────
+        if (Array.isArray(collections.customTeams) && collections.customTeams.length > 0) {
+          await db.teams.bulkUpsert(
+            collections.customTeams as Parameters<typeof db.teams.bulkUpsert>[0],
+          );
         }
 
         // Write seasons with potential id rewrites.
@@ -508,50 +509,43 @@ function buildStore(getDbFn: GetDb) {
           >[0]);
         }
 
-        // Rewrite seasonId field (and composite primary key for seasonPlayerState).
-        const rewriteSeasonId = (
-          docs: Array<Record<string, unknown>>,
-        ): Array<Record<string, unknown>> =>
-          docs.map((doc) => {
-            const sid = doc["seasonId"] as string | undefined;
-            if (sid && idRemap.has(sid)) {
-              return { ...doc, seasonId: idRemap.get(sid)! };
-            }
-            return doc;
-          });
-
-        // seasonPlayerState uses composite primary key: "${seasonId}:${playerId}".
-        // When the seasonId is remapped, the `id` field must also be rewritten so
-        // the composite key invariant is preserved — otherwise queries by playerId
-        // under the new seasonId find nothing, and bulkUpsert silently overwrites
-        // the original season's player-state docs.
-        const rewritePlayerStateSeasonId = (
-          docs: Array<Record<string, unknown>>,
-        ): Array<Record<string, unknown>> =>
-          docs.map((doc) => {
-            const sid = doc["seasonId"] as string | undefined;
-            if (sid && idRemap.has(sid)) {
-              const newSeasonId = idRemap.get(sid)!;
-              const oldId = doc["id"] as string | undefined;
-              // Rewrite composite id: replace the old seasonId prefix.
-              const newId = oldId?.startsWith(sid + ":")
-                ? newSeasonId + oldId.slice(sid.length)
-                : oldId;
-              return { ...doc, id: newId, seasonId: newSeasonId };
-            }
-            return doc;
-          });
+        // Rewrites seasonId AND id fields for all child collections.
+        // seasonTeams and seasonGames use a plain id (not composite), but must
+        // still be remapped so that re-importing the same bundle twice doesn't
+        // silently overwrite the first import's child rows.
+        const rewriteChildDoc = (
+          doc: Record<string, unknown>,
+          idSuffix?: string,
+        ): Record<string, unknown> => {
+          const sid = doc["seasonId"] as string | undefined;
+          if (!sid || !idRemap.has(sid)) return doc;
+          const newSeasonId = idRemap.get(sid)!;
+          const oldId = doc["id"] as string | undefined;
+          // For docs whose id starts with the old seasonId prefix, rewrite it.
+          // Otherwise append the remap suffix to keep uniqueness.
+          let newId: string | undefined;
+          if (oldId?.startsWith(sid + ":")) {
+            newId = newSeasonId + oldId.slice(sid.length);
+          } else if (oldId) {
+            newId = `${oldId}-${idSuffix ?? newSeasonId.slice(-6)}`;
+          }
+          return { ...doc, id: newId, seasonId: newSeasonId };
+        };
 
         // ── 3. seasonTeams, seasonGames, seasonPlayerState ───────────────────
         const incomingTeams = Array.isArray(collections.seasonTeams)
-          ? rewriteSeasonId(collections.seasonTeams as unknown as Array<Record<string, unknown>>)
+          ? (collections.seasonTeams as unknown as Array<Record<string, unknown>>).map((d) =>
+              rewriteChildDoc(d),
+            )
           : [];
         const incomingGames = Array.isArray(collections.seasonGames)
-          ? rewriteSeasonId(collections.seasonGames as unknown as Array<Record<string, unknown>>)
+          ? (collections.seasonGames as unknown as Array<Record<string, unknown>>).map((d) =>
+              rewriteChildDoc(d),
+            )
           : [];
         const incomingPlayerStates = Array.isArray(collections.seasonPlayerState)
-          ? rewritePlayerStateSeasonId(
-              collections.seasonPlayerState as unknown as Array<Record<string, unknown>>,
+          ? (collections.seasonPlayerState as unknown as Array<Record<string, unknown>>).map((d) =>
+              rewriteChildDoc(d),
             )
           : [];
 

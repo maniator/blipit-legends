@@ -66,6 +66,8 @@ export interface CreateSeasonInput {
 export interface QuickStartInput {
   masterSeed: string;
   dhEnabled: boolean;
+  /** Optional explicit seed for autogen team generation. Defaults to fnv1a(masterSeed+":autogen:qs"). */
+  autogenSeed?: string;
   autogenOptions: {
     count: number;
     theme: AutogenTheme;
@@ -242,6 +244,31 @@ function buildStore(getDbFn: GetDb) {
       const gameDocs: SeasonGameRecord[] = allGames.map((g) => ({ ...g, claimedBy: null }));
       await db.seasonGames.bulkInsert(gameDocs);
 
+      // ── 5b. Initialize seasonPlayerState for every pitcher on every team ──
+      // Fatigue tracking in recordResult skips entirely when no player-state
+      // docs exist. Pre-populate all pitchers at season-start so SP rotation
+      // and RP availability progress from the very first game day.
+      const playerStateDocs: SeasonPlayerStateRecord[] = [];
+      for (const teamDoc of seasonTeamDocs) {
+        const rosterSnap = teamDoc.rosterSnapshot as {
+          pitchers?: Array<{ id: string }>;
+        };
+        for (const pitcher of rosterSnap.pitchers ?? []) {
+          playerStateDocs.push({
+            id: `${seasonId}:${teamDoc.id}:${pitcher.id}`,
+            seasonId,
+            seasonTeamId: teamDoc.id,
+            playerId: pitcher.id,
+            pitcherDaysRest: 3,
+            pitcherAvailability: 1.0,
+            pitcherStartsThisSeason: 0,
+          });
+        }
+      }
+      if (playerStateDocs.length > 0) {
+        await db.seasonPlayerState.bulkInsert(playerStateDocs);
+      }
+
       // ── 6. Upsert season header (last — reliable "fully initialised" signal)
       const seasonDoc: SeasonRecord = {
         id: seasonId,
@@ -267,11 +294,13 @@ function buildStore(getDbFn: GetDb) {
      * containing all generated teams.
      */
     async quickStart(input: QuickStartInput): Promise<SeasonRecord> {
-      const { masterSeed, dhEnabled, autogenOptions } = input;
+      const { masterSeed, dhEnabled, autogenOptions, autogenSeed } = input;
       const db = await getDbFn();
 
-      // Derive a stable autogen sub-seed from the master seed.
-      const autogenSubSeed = fnv1a(`${masterSeed}:autogen:qs`);
+      // Use the caller-supplied autogenSeed when provided; otherwise derive a
+      // stable sub-seed from the master seed so the same masterSeed always
+      // produces the same teams when autogenSeed is omitted.
+      const autogenSubSeed = autogenSeed ?? fnv1a(`${masterSeed}:autogen:qs`);
 
       const generated = generateLeagueTeams({
         count: autogenOptions.count,
