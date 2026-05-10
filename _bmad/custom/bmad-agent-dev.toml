@@ -1,24 +1,129 @@
 # BlipIt Legends — bmad-agent-dev team overrides
-# Loaded on top of .agents/skills/bmad-agent-dev/customize.toml
 
 [agent]
 persistent_facts = [
   "file:{project-root}/docs/project-context.md",
-  "file:{project-root}/docs/repo-layout.md",
-  "The module cycle-free order is: strategy → advanceRunners → gameOver → playerOut → hitBall → buntAttempt → playerActions → reducer. Never introduce a circular dependency.",
-  "All randomness flows through src/shared/utils/rng.ts (mulberry32). Never use Math.random() — PRNG call order determines replay fidelity.",
-  "RxDB schema changes MUST bump version and add migrationStrategies entries. Same-version schema changes cause DB6 hash mismatch for all users.",
-  "Always use dvh (not vh) for modal max-height — vh ignores mobile browser chrome.",
-  "Always use mq helpers from @shared/utils/mediaQueries — never write raw @media strings.",
-  "Run yarn lint:fix after adding imports to auto-sort them. Run yarn format before every commit.",
-  "Never use GameContext directly — always use the useGameContext() hook from @feat/gameplay/context/index.",
-  "DB IDs come from src/storage/generateId.ts only — never Date.now() or Math.random() for IDs.",
-  "Sub-agents must never run git push, gh, or report_progress. Report commit SHAs to root Copilot agent instead.",
+  "file:{project-root}/docs/architecture.md",
+  "file:{project-root}/docs/rxdb-persistence.md",
+  "The module cycle-free order is: strategy → advanceRunners → gameOver → playerOut → hitBall → buntAttempt → playerActions → reducer. Never introduce a circular import.",
+  "All randomness in the simulation must flow through src/shared/utils/rng.ts (mulberry32). Never use Math.random() in simulation code.",
+  "Same seed + same teams = identical play-by-play. Any new rng() call added, removed, or reordered in the simulation breaks replay for all existing seeds.",
+  "RxDB schema changes MUST bump version and add migrationStrategies that never throw. Same-version changes cause DB6 hash mismatch for all existing users.",
+  "styled-components non-HTML props must use the $propName transient prefix and be typed via generics.",
+  "Always use dvh (not vh) for modal max-height. Always use mq helpers from src/shared/utils/mediaQueries.ts — never raw @media strings.",
+  "The Function type is banned — use explicit function signatures: (action: GameAction) => void.",
+  "No IIFEs in JSX — compute values as const before return; extract non-trivial blocks into named sub-components.",
+  "import * as React from 'react' — not the default import.",
+  "Run yarn lint:fix after adding imports to auto-sort them. Run yarn format before every report_progress commit.",
+  "Sub-agents must never run git push, gh, or report_progress. They may commit locally and must return commit SHAs to the root Copilot agent.",
+  "Simulation invariants: batting line totals must equal scoreboard runs; lineup indices must wrap 0-8; home/away team mapping must be consistent throughout a game; scoreboard inning totals must sum to final score.",
+  "Validation commands: yarn lint && yarn format:check && yarn typecheck && yarn test:coverage && yarn build",
 ]
 
 principles = [
-  "Run yarn lint, yarn typecheck, and yarn test before opening any PR.",
-  "Use bmad-code-review to review changes before marking a story done.",
-  "Use bmad-qa-generate-e2e-tests to generate E2E tests for new features.",
-  "Use bmad-dev-story to implement approved stories with full test-first discipline.",
+  "Test-first: write the unit test before implementing the feature.",
+  "Before touching any simulation handler, capture a seed + event index to anchor regression testing.",
+  "Any fix that alters PRNG call order requires bmad-agent-architect (Winston) sign-off via the CR menu before merging.",
+  "Any RxDB schema change requires Winston CR sign-off and a migration upgrade-path unit test.",
+  "Prefer extracting shared logic over duplication. When duplication is found, extract first, then wire both consumers.",
+  "Make small focused commits — one logical change per commit. Never batch unrelated changes.",
 ]
+
+[[agent.menu]]
+code = "SC"
+description = "Simulation correctness — investigate a deterministic bug, impossible state, or stat inconsistency"
+prompt = """Investigate the reported simulation correctness issue using this protocol:
+
+**Step 1 — Capture the anchor**
+Record: seed value, event index where the bug first appears, exact game state (score, inning, outs, bases, batter index).
+
+**Step 2 — Classify the symptom**
+- Impossible state (e.g. 3 hits in 1 AB, negative outs, runner on a non-existent base) → invariant violation
+- Stat inconsistency (batting line totals ≠ scoreboard runs, lineup index out of 0–8 range) → accounting error
+- PRNG/seed replay mismatch (same seed produces different output) → call-order change
+- Home/away mapping error (wrong team credited) → team index error
+
+**Step 3 — Locate the source**
+Check in order: src/features/gameplay/context/reducer.ts → the relevant handler (hitBall, advanceRunners, gameOver, playerOut, buntAttempt, strategy) → src/shared/utils/rng.ts for call-order issues.
+
+**Step 4 — Fix and validate**
+Write a seed-anchored regression test BEFORE fixing. Confirm the same seed now produces the correct output. Confirm no other seeds are affected (run yarn test and the determinism E2E project).
+
+**Step 5 — Flag if high-risk**
+If the fix touches advanceRunners, gameOver, hitBall, or PRNG call order — flag for bmad-agent-architect (Winston) CR sign-off before merging.
+
+Correctness vs realism rule: if the engine is technically correct but outcomes feel unrealistic → that is bmad-agent-baseball-manager (Coach), not this workflow."""
+
+[[agent.menu]]
+code = "RX"
+description = "RxDB change — plan and implement a schema change, migration, or SaveStore update"
+prompt = """For any RxDB collection schema change, follow this checklist:
+
+1. **Bump version** — increment the collection's version number in the schema definition.
+2. **Add migrationStrategies** — add an entry for every version from 1 to the new version. The strategy must never throw; return null to delete the document if migration is impossible.
+3. **Preserve FNV-1a signatures** — any change to the save export envelope {version, header, events, sig} format requires bmad-agent-architect (Winston) CR sign-off.
+4. **Write an upgrade-path unit test** — create a test that starts with a v(N-1) document and verifies the migration produces a valid v(N) document.
+5. **Flag for Winston CR** — any schema change must pass bmad-agent-architect (Winston) sign-off before merge.
+
+Key file paths: src/storage/db.ts (collection definitions), docs/rxdb-persistence.md (full schema reference)."""
+
+[[agent.menu]]
+code = "SR"
+description = "Safe refactor — behavior-preserving code reorganization, extraction, or rename"
+prompt = """Execute a behavior-preserving refactor with these invariants:
+
+**Must preserve:**
+- PRNG call order — same seed must produce identical output before and after. Verify with: yarn playwright test --project=determinism
+- Reducer cycle order — no new import from a later module: strategy → advanceRunners → gameOver → playerOut → hitBall → buntAttempt → playerActions → reducer
+- Reducer routing and debug output — no observable behavior change at the root dispatch level
+- All existing tests pass — yarn test:coverage must pass with no regressions
+
+**Process:**
+1. Confirm scope — list every file that will change
+2. Run baseline tests and capture seed replay output
+3. Make the refactor in small, atomic commits (one logical change per commit)
+4. Run tests after each commit, not just at the end
+5. If the refactor spans ≥5 files in src/features/gameplay/context/ — flag for bmad-agent-architect (Winston) CR before merging
+
+No opportunistic rewrites. Scope is locked to the stated refactor goal."""
+
+[[agent.menu]]
+code = "UI"
+description = "Visual snapshot implementation — styled-components/layout change that may affect Playwright visual baselines"
+prompt = """Implement the approved UI/layout/styled-components change with these invariants:
+
+**Before touching any code:**
+- Confirm the design has been approved by bmad-agent-ux-designer (Sally). If not, route there first.
+- Identify which of the 6 Playwright projects (chromium-desktop, chromium-mobile, webkit-iphone15, firefox-desktop, chromium-tablet, determinism) are affected.
+
+**Implementation rules:**
+- Always use dvh (not vh) for modal max-height — 100vh on mobile ignores browser chrome.
+- Always use mq helpers from src/shared/utils/mediaQueries.ts — never raw @media strings inline.
+- styled-components non-HTML props must use the $propName transient prefix and be typed via generics: styled.div<{ $active: boolean }>.
+- No IIFEs in JSX — compute values as const before return.
+
+**After implementation:**
+- Run yarn build and yarn typecheck to confirm no TS errors.
+- If visual baselines need updating, route to e2e-test-runner agent — NEVER regenerate snapshots locally. Baselines must be generated inside mcr.microsoft.com/playwright:v1.58.2-noble only."""
+
+[[agent.menu]]
+code = "E2E"
+description = "E2E test authoring — write or update Playwright tests and fixture files"
+prompt = """Author or update Playwright E2E tests with these rules:
+
+**Test setup:**
+- Use loadFixture(page, 'name.json') for instant game-state setup — never use test.setTimeout() to wait for autoplay.
+- Use data-testid selectors from docs/e2e-testing.md — never CSS selectors or text content.
+- Import helpers from e2e/helpers/ — never reimplement shared setup inline.
+
+**Visual snapshot baselines:**
+- NEVER regenerate visual baselines locally. Always route baseline regen to e2e-test-runner agent.
+- Baselines MUST be generated inside mcr.microsoft.com/playwright:v1.58.2-noble — font/rendering differences from the host machine cause false diffs.
+
+**Fixture files:**
+- Fixture JSON files live in e2e/fixtures/. Follow the existing StateSnapshot shape.
+- Any fixture format change that alters the StateSnapshot shape requires bmad-agent-architect (Winston) CR sign-off.
+
+**After authoring:**
+- Run yarn typecheck:e2e to confirm no type errors in test files.
+- Route execution to e2e-test-runner agent for the full Docker container run."""

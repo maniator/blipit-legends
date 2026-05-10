@@ -127,9 +127,21 @@ Answer design questions from this perspective:
 - **Never implement code changes yourself** — identify the issue, then hand off to `bmad-agent-pm` for planning.
 - **Sub-agent push constraint:** Never run `git push`, `gh`, or `report_progress` from this agent. If you make commits, report the commit SHA to the root Copilot agent and instruct it to push via `report_progress`.
 
+### High-Risk Areas — Require `@senior-lead` Sign-Off
+
+When handing off to `bmad-agent-pm` (John), explicitly flag if the recommended change touches any of the following — these require `@senior-lead` approval before any execution agent begins work:
+
+- Changes to `advanceRunners` logic (affects every baserunning outcome)
+- Changes to `gameOver` detection (affects win/walk-off conditions)
+- Changes to `hitBall` pipeline (affects all hit-type outcomes)
+- Any change to PRNG call order (adds, removes, or reorders a `rng()` call in the simulation)
+- Any RxDB collection schema change (`properties`, `required`, or `indexes`)
+- Any change to the save export signature format (`fnv1a` envelope)
+
 ## Key Source Files
 
 - `docs/agent/baseball-rules-delta.md` — MLB vs Ballgame deviations; always cross-reference before recommending a rules-level fix.
+- `docs/agent/pm-agent-knowledge-map.md` — Layer A2: index of all simulator source files relevant to gameplay rules; use when authoring a handoff brief for John to name the correct file and function.
 - `src/features/gameplay/context/pitchResolutionPipeline.ts` — hit/miss probability weights, fatigue factor, pitch outcome pipeline.
 - `src/features/gameplay/context/handlers/sim.ts` — low-level pitch simulation dispatcher.
 - `src/shared/utils/rng.ts` — all randomness must flow through this module.

@@ -12,18 +12,17 @@
 
 This file is the quick-reference index. For deeper detail, see:
 
-| Doc                                                                             | Contents                                                                                                                                                                                                                     |
-| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [docs/repo-layout.md](../docs/repo-layout.md)                                   | Full directory tree, file descriptions, path aliases                                                                                                                                                                         |
-| [docs/rxdb-persistence.md](../docs/rxdb-persistence.md)                         | RxDB setup, schema versioning, collections, SaveStore/CustomTeamStore APIs, fingerprints, export/import bundles, game-loop integration                                                                                       |
-| [docs/architecture.md](../docs/architecture.md)                                 | Route architecture, auto-play scheduler, Manager Mode, notification system, shared logger                                                                                                                                    |
-| [docs/e2e-testing.md](../docs/e2e-testing.md)                                   | Playwright projects, E2E helpers, `data-testid` reference, visual snapshots, CI workflows, save fixtures                                                                                                                     |
-| [docs/style-guide.md](../docs/style-guide.md)                                   | **UI Style Guide** — color palette, typography, breakpoints, all button variants, form elements, modals, cards, tables, game UI, and status patterns. **Consult before introducing any new color, font size, or component.** |
-| [agents/README.md](agents/README.md)                                            | Agent routing guide — which specialized agent to use for each task type, common gotchas for multi-session PRs                                                                                                                |
-| [agents/prompt-examples.md](agents/prompt-examples.md)                          | Copy-paste prompt templates for each agent type                                                                                                                                                                              |
-| [agents/pm-agent.md](agents/pm-agent.md)                                        | **PM Agent** — system prompt + behavior contract for the Project Manager Agent (planning, baseball rules, risk review)                                                                                                       |
-| [docs/agent/baseball-rules-delta.md](../docs/agent/baseball-rules-delta.md)     | MLB Official Rules vs Ballgame simulator delta table — always consult before answering baseball-rule questions                                                                                                               |
-| [docs/agent/pm-agent-knowledge-map.md](../docs/agent/pm-agent-knowledge-map.md) | Knowledge map — authoritative source index, ownership, and refresh cadence for all PM Agent sources                                                                                                                          |
+| Doc | Contents |
+| --- | --- |
+| [docs/repo-layout.md](../docs/repo-layout.md) | Full directory tree, file descriptions, path aliases |
+| [docs/rxdb-persistence.md](../docs/rxdb-persistence.md) | RxDB setup, schema versioning, collections, SaveStore/CustomTeamStore APIs, fingerprints, export/import bundles, game-loop integration |
+| [docs/architecture.md](../docs/architecture.md) | Route architecture, auto-play scheduler, Manager Mode, notification system, shared logger |
+| [docs/e2e-testing.md](../docs/e2e-testing.md) | Playwright projects, E2E helpers, `data-testid` reference, visual snapshots, CI workflows, save fixtures |
+| [docs/style-guide.md](../docs/style-guide.md) | **UI Style Guide** — color palette, typography, breakpoints, all button variants, form elements, modals, cards, tables, game UI, and status patterns. **Consult before introducing any new color, font size, or component.** |
+| [docs/project-context.md](../docs/project-context.md) | **bmad persistent facts** — loaded by all bmad agents as ground truth |
+| [agents/README.md](agents/README.md) | Agent routing guide — bmad agents + 3 operational specialists, routing table, common gotchas |
+| [docs/agent/baseball-rules-delta.md](../docs/agent/baseball-rules-delta.md) | MLB Official Rules vs Ballgame simulator delta table — always consult before answering baseball-rule questions |
+| [docs/agent/pm-agent-knowledge-map.md](../docs/agent/pm-agent-knowledge-map.md) | Knowledge map — authoritative source index, ownership, and refresh cadence for PM/baseball-rules questions |
 
 ---
 
@@ -54,30 +53,42 @@ Copilot-specific policy that remains in this file:
 
 ## Agent Auto-Routing
 
-Before starting any task, check whether it belongs to a specialist agent. The table below is the authoritative routing guide. When in doubt, **start with `@pm-agent`** for planning, then hand off to the execution agent.
+Before starting any task, check whether it belongs to a specialist agent. The table below is the authoritative routing guide.
 
-| Trigger / task type                                                                                                                                                                         | Route to                                                                                                                     |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Feature planning, scoping, risk review, PR description for gameplay/rules/persistence                                                                                                       | `@pm-agent`                                                                                                                  |
-| "How does [baseball rule] work?" or "How does the sim implement X rule?"                                                                                                                    | `@pm-agent`                                                                                                                  |
-| "What files change for X?" / "What could break if I do Y?"                                                                                                                                  | `@pm-agent`                                                                                                                  |
-| Any request mentioning: inning, batter, runner, pitch, steal, bunt, walk, extra innings, tiebreak runner, IBB, manager mode, defensive shift, pinch hitter, PRNG replay, save compatibility | `@pm-agent`                                                                                                                  |
-| Behavior-preserving refactor, rename, extract, modularization                                                                                                                               | `@safe-refactor`                                                                                                             |
-| Net-new screen, modal, dialog, copy string, design-system addition, accessibility audit, wireframe, mockup, "how should this feel / look"                                                   | `@ux-design-lead` (then `@ui-visual-snapshot` for implementation)                                                            |
-| UI / layout / typography / styled-components / responsive change implementing an **approved design**                                                                                        | `@ui-visual-snapshot`                                                                                                        |
-| Deterministic simulation bug, impossible game state, stat inconsistency, lineup mapping error — **something is broken** (wrong counts, wrong logic, PRNG/replay mismatch)                   | `@simulation-correctness`                                                                                                    |
-| Gameplay realism review — **something feels wrong** (outcomes look unrealistic in logs, hit/walk/HR rates are off, probability parameters need tuning, post-change realism validation)      | `@baseball-manager`                                                                                                          |
-| RxDB schema change, save/load, export/import, `SaveStore` API, `stateSnapshot` format                                                                                                       | `@rxdb-save-integrity`                                                                                                       |
-| GitHub Actions workflow change — CI, Playwright, sharding, artifact uploads                                                                                                                 | `@ci-workflow`                                                                                                               |
-| E2E test authoring, fixture creation, visual snapshot regeneration                                                                                                                          | `@e2e-test-runner`                                                                                                           |
-| Live QA against production site (blipit.net)                                                                                                                                                | `@playwright-prod`                                                                                                           |
-| User perspective validation — casual experience, manager decisions, team builder, saves, stats                                                                                              | `@user-casual-watcher` / `@user-manager-strategist` / `@user-custom-team-builder` / `@user-save-curator` / `@user-stats-fan` |
+### Agent Architecture
 
-**Workflow + E2E execution rule:** If a `@ci-workflow` task includes running or validating Playwright tests, route execution to `@e2e-test-runner` and keep `@ci-workflow` focused on workflow/YAML changes.
+| Layer | Agents | Purpose |
+| --- | --- | --- |
+| **bmad agents** (`.agents/skills/`) | John 📋 `bmad-agent-pm`, Coach ⚾ `bmad-agent-baseball-manager`, Winston 🏗️ `bmad-agent-architect`, Amelia 💻 `bmad-agent-dev`, Sally 🎨 `bmad-agent-ux-designer`, Mary 📊 `bmad-agent-analyst`, Paige 📚 `bmad-agent-tech-writer` | Planning, PRD, baseball rules, design, code review, story implementation, architecture, engineering sign-off, user personas, realism review. All load `docs/project-context.md` as persistent facts. |
+| **Operational specialists** (`.github/agents/`) | `e2e-test-runner`, `ci-workflow`, `playwright-prod` | Kept because they carry non-obvious operational setup steps whose failure is silent or catastrophic. All other former specialists have been folded into bmad agents. |
 
-**Routing sequence for mixed tasks:** route to `@pm-agent` first for a plan + risk review, then route to the specialist execution agent named in the plan.
+### Routing Table
 
-**Design system ownership:** `@ux-design-lead` owns `docs/style-guide.md`. Before adding any new color, font size, spacing token, or component variant, route to `@ux-design-lead` — it is the only agent that proposes additions to the design system.
+| Trigger / task type | Route to |
+| --- | --- |
+| Feature planning, PRD creation, sprint planning, epics and stories | `bmad-agent-pm` (John) → M1 menu |
+| "How does [baseball rule] work?" or "How does the sim implement X rule?" | `bmad-agent-pm` (John) → M2 menu |
+| "What files change for X?" / "What could break if I do Y?" | `bmad-agent-pm` (John) → M1 menu |
+| Any request mentioning: inning, batter, runner, pitch, steal, bunt, walk, extra innings, tiebreak runner, IBB, manager mode, defensive shift, pinch hitter, PRNG replay, save compatibility | `bmad-agent-pm` (John) |
+| Behavior-preserving refactor, rename, extract, modularization | `bmad-agent-dev` (Amelia) → SR menu |
+| Net-new screen, modal, dialog, copy, design-system addition, accessibility audit, wireframe, "how should this feel / look" | `bmad-agent-ux-designer` (Sally) → HR or SD menu |
+| UI / layout / styled-components / responsive implementation | `bmad-agent-dev` (Amelia) → UI menu |
+| Deterministic simulation bug, impossible game state, stat inconsistency — **something is broken** | `bmad-agent-dev` (Amelia) → SC menu |
+| Gameplay realism review — **something feels wrong** (outcomes look unrealistic in logs, hit/walk/HR rates are off) | `bmad-agent-baseball-manager` (Coach) → RL menu |
+| Code review on any change | `bmad-agent-dev` (Amelia) → invoke `bmad-code-review` skill |
+| High-value change engineering sign-off (P0/P1, PRNG, RxDB schema, broad refactor) | `bmad-agent-architect` (Winston) → CR menu |
+| RxDB schema change, save/load, export/import, `SaveStore` API | `bmad-agent-dev` (Amelia) → RX menu → Winston CR sign-off |
+| GitHub Actions workflow change — CI, Playwright, sharding, artifact uploads | `ci-workflow` (operational specialist) |
+| E2E test authoring, fixture creation, **visual snapshot baseline regen** | `e2e-test-runner` (operational specialist) |
+| Live QA against production site (blipit.net) | `playwright-prod` (operational specialist) |
+| User persona interview (Casual Watcher, Strategist, Team Builder, Save Curator, Stats Fan, Power User) | `bmad-agent-ux-designer` (Sally) → P1–P6 menus |
+| Multi-agent deliberation on a cross-cutting question | `bmad-party-mode` skill |
+
+**E2E execution rule:** All Playwright test execution and visual baseline regeneration routes to `e2e-test-runner` — never regenerate baselines locally. Baselines must be generated inside `mcr.microsoft.com/playwright:v1.58.2-noble`.
+
+**Routing sequence for mixed tasks:** bmad agent plans (John M1) → Winston CR sign-off if high-value → Amelia implements → `e2e-test-runner` validates.
+
+**Design system ownership:** Sally (`bmad-agent-ux-designer`) owns `docs/style-guide.md`. Route to Sally before introducing any new color, font size, spacing token, or component variant.
 
 ---
 
