@@ -1,6 +1,10 @@
 import * as React from "react";
 
+import { CustomTeamStore } from "@feat/customTeams/storage/customTeamStore";
+import { generateLeagueTeams } from "@feat/league/autogen/generateLeagueTeams";
 import { createSeason, quickStart } from "@feat/league/storage/leagueStore";
+import { generateTeamId } from "@storage/generateId";
+import { fnv1a } from "@storage/hash";
 import { useActiveSeason } from "@feat/leagues/hooks/useActiveSeason";
 import ModalShell from "@shared/components/ModalShell";
 import StatusBanner from "@shared/components/StatusBanner";
@@ -405,6 +409,55 @@ export default function LeagueSetupWizard(): React.ReactElement {
           },
         });
       } else {
+        let teamIds = state.selectedTeamIds;
+
+        if (state.teamMode === "mixed") {
+          const remainingCount = 8 - state.selectedTeamIds.length;
+          const autogenSubSeed = fnv1a(`${state.masterSeed}:autogen:mixed`);
+          const generated = generateLeagueTeams({
+            count: remainingCount,
+            theme: state.autogenTheme,
+            parity:
+              state.autogenParity <= 25
+                ? "random"
+                : state.autogenParity <= 75
+                  ? "balanced"
+                  : "mixed",
+            masterSeed: state.masterSeed,
+            autogenSubSeed,
+            rosterMinimums: {
+              lineup: 9,
+              bench: 3,
+              startingPitchers: 5,
+              reliefPitchers: 3,
+            },
+            idFactory: { teamId: () => generateTeamId() },
+          });
+
+          for (const gen of generated) {
+            await CustomTeamStore.createCustomTeam(
+              {
+                name: gen.name,
+                abbreviation: gen.abbreviation,
+                nickname: gen.nickname,
+                city: gen.city,
+                slug: gen.slug,
+                roster: {
+                  lineup: gen.roster.lineup,
+                  bench: gen.roster.bench,
+                  pitchers: gen.roster.pitchers,
+                },
+                metadata: gen.metadata,
+                autogen: gen.autogen,
+                statsProfile: gen.statsProfile,
+              },
+              { id: gen.id },
+            );
+          }
+
+          teamIds = [...state.selectedTeamIds, ...generated.map((g) => g.id)];
+        }
+
         season = await createSeason({
           name: "New Season",
           masterSeed: state.masterSeed,
@@ -413,7 +466,7 @@ export default function LeagueSetupWizard(): React.ReactElement {
           leagues: state.leagues.map((l) => ({
             id: l.id,
             name: l.name,
-            teamIds: state.selectedTeamIds,
+            teamIds,
             dhEnabled: l.dhEnabled,
           })),
         });

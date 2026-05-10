@@ -200,7 +200,8 @@ export function generateSchedule(input: GenerateScheduleInput): GenerateSchedule
           // Game day: each season round occupies seriesLength consecutive days.
           const gameDay = seasonRoundIdx * seriesLength + g;
           const gameId = generateSeasonGameId();
-          const derivedSeed = deriveScheduledGameSeed(seasonId, gameId);
+          const seedKey = `${seriesId}:g${g}:d${gameDay}`;
+          const derivedSeed = deriveScheduledGameSeed(seasonId, seedKey);
           games.push({
             id: gameId,
             seasonId,
