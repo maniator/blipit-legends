@@ -29,6 +29,8 @@ export interface SeasonRecord {
   /** 0-based index of the current game day. Advances as the schedule progresses. */
   currentGameDay: number;
   championTeamId?: string | null;
+  /** The season-team ID of the team the user is managing. Null means observer mode. */
+  userCustomTeamId?: string | null;
   /** Monotonic ruleset version used for this season — checked on import. */
   rulesetVersion: number;
 }

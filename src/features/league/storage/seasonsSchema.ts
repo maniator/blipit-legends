@@ -47,6 +47,8 @@ const seasonsSchema: RxJsonSchema<SeasonRecord> = {
     championTeamId: { type: ["string", "null"], maxLength: 128 },
     /** Monotonic version number of the ruleset used for this season. */
     rulesetVersion: { type: "number" },
+    /** Custom team ID of the human-managed team, or null for observer mode. */
+    userCustomTeamId: { type: ["string", "null"], maxLength: 128 },
   },
   required: [
     "id",
