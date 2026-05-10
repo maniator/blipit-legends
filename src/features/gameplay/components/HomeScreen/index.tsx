@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Attribution, AttributionLink, GhostBtn, HomeContainer, HomeLogo, HomeSubtitle, LeagueTeaserBox, LeagueTeaserSub, LeagueTeaserTitle, MenuDivider, MenuGroup, PrimaryBtn, SecondaryBtn, SecondaryQuietBtn } from "./styles"; // prettier-ignore
+import { Attribution, AttributionLink, GhostBtn, HomeContainer, HomeLogo, HomeSubtitle, LeagueTeaserBox, LeagueTeaserSub, LeagueTeaserTitle, MenuDivider, MenuGroup, PrimaryBtn, SecondaryBtn, SecondaryQuietBtn, SectionLabel } from "./styles"; // prettier-ignore
 
 type Props = {
   onNewGame: () => void;
@@ -42,15 +42,59 @@ const HomeScreen: React.FunctionComponent<Props> = ({
       <img src="/images/blipit.svg" alt="BlipIt Baseball Legends" />
     </HomeLogo>
     <HomeSubtitle>Self-playing baseball simulator</HomeSubtitle>
+
+    {/* ── League Mode — hero section ── */}
+    {activeSeasonId != null && onContinueSeason != null ? (
+      <LeagueTeaserBox data-testid="league-play-teaser">
+        <LeagueTeaserTitle>
+          <span aria-hidden="true">🏆</span> Continue Season
+        </LeagueTeaserTitle>
+        <LeagueTeaserSub>{activeSeasonLabel}</LeagueTeaserSub>
+        <PrimaryBtn
+          onClick={onContinueSeason}
+          data-testid="home-continue-season-button"
+          style={{ marginTop: "8px" }}
+        >
+          Continue
+        </PrimaryBtn>
+      </LeagueTeaserBox>
+    ) : (
+      <LeagueTeaserBox data-testid="league-play-teaser">
+        <LeagueTeaserTitle>
+          <span aria-hidden="true">🏆</span> League Mode
+        </LeagueTeaserTitle>
+        {onStartLeague != null ? (
+          <>
+            <LeagueTeaserSub>
+              Create a season, track standings, and crown a champion.
+            </LeagueTeaserSub>
+            <PrimaryBtn
+              onClick={onStartLeague}
+              data-testid="home-browse-leagues-button"
+              style={{ marginTop: "8px" }}
+            >
+              Start a Season
+            </PrimaryBtn>
+          </>
+        ) : (
+          <LeagueTeaserSub>
+            Season schedules, standings, and playoffs are on the roadmap.
+          </LeagueTeaserSub>
+        )}
+      </LeagueTeaserBox>
+    )}
+
+    {/* ── Exhibition & utility section ── */}
+    <SectionLabel>Exhibition</SectionLabel>
     <MenuGroup>
       {onResumeCurrent && (
-        <PrimaryBtn onClick={onResumeCurrent} data-testid="home-resume-current-game-button">
+        <SecondaryBtn onClick={onResumeCurrent} data-testid="home-resume-current-game-button">
           ▶ Resume Current Game
-        </PrimaryBtn>
+        </SecondaryBtn>
       )}
-      <PrimaryBtn onClick={onNewGame} data-testid="home-new-game-button">
-        New Game
-      </PrimaryBtn>
+      <SecondaryBtn onClick={onNewGame} data-testid="home-new-game-button">
+        New Exhibition Game
+      </SecondaryBtn>
       <SecondaryBtn onClick={onLoadSaves} data-testid="home-load-saves-button">
         Load Saved Game
       </SecondaryBtn>
@@ -76,45 +120,7 @@ const HomeScreen: React.FunctionComponent<Props> = ({
         </>
       )}
     </MenuGroup>
-    {activeSeasonId != null && onContinueSeason != null ? (
-      <LeagueTeaserBox data-testid="league-play-teaser">
-        <LeagueTeaserTitle>
-          <span aria-hidden="true">🏆</span> Continue Season
-        </LeagueTeaserTitle>
-        <LeagueTeaserSub>{activeSeasonLabel}</LeagueTeaserSub>
-        <SecondaryBtn
-          onClick={onContinueSeason}
-          data-testid="home-continue-season-button"
-          style={{ marginTop: "8px" }}
-        >
-          Continue
-        </SecondaryBtn>
-      </LeagueTeaserBox>
-    ) : (
-      <LeagueTeaserBox data-testid="league-play-teaser">
-        <LeagueTeaserTitle>
-          <span aria-hidden="true">🏆</span> League Mode
-        </LeagueTeaserTitle>
-        {onStartLeague != null ? (
-          <>
-            <LeagueTeaserSub>
-              Create a season, track standings, and crown a champion.
-            </LeagueTeaserSub>
-            <SecondaryBtn
-              onClick={onStartLeague}
-              data-testid="home-browse-leagues-button"
-              style={{ marginTop: "8px" }}
-            >
-              Browse Leagues
-            </SecondaryBtn>
-          </>
-        ) : (
-          <LeagueTeaserSub>
-            Season schedules, standings, and playoffs are on the roadmap.
-          </LeagueTeaserSub>
-        )}
-      </LeagueTeaserBox>
-    )}
+
     <Attribution>
       Created by <AttributionLink href="https://naftali.dev">naftali.dev</AttributionLink>
     </Attribution>

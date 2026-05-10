@@ -183,15 +183,26 @@ export const MenuDivider = styled.hr`
   margin: ${({ theme }) => theme.spacing.xs} 0 0;
 `;
 
-/** Non-interactive teaser box for upcoming League mode. */
+/** League Mode card — hero section at the top of the home screen. */
 export const LeagueTeaserBox = styled.div`
-  margin-top: ${({ theme }) => theme.spacing.sm};
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
   background: ${({ theme }) => theme.colors.bgSurface};
   border: 1px solid ${({ theme }) => theme.colors.borderPanel};
   border-radius: ${({ theme }) => theme.radii.lg};
   width: min(100%, 300px);
   text-align: center;
+`;
+
+/** Small muted label that visually groups the exhibition buttons below the league card. */
+export const SectionLabel = styled.p`
+  color: ${({ theme }) => theme.colors.textSubdued};
+  font-size: ${({ theme }) => theme.fontSizes.sub};
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0;
+  width: min(100%, 300px);
+  text-align: left;
 `;
 
 export const LeagueTeaserTitle = styled.p`

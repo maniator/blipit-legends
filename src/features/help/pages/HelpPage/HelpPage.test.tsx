@@ -57,19 +57,25 @@ describe("HelpPage", () => {
     // Manager Mode appears as a section header and in body text — use getAllBy
     expect(screen.getAllByText(/manager mode/i).length).toBeGreaterThan(0);
     expect(screen.getByText("Saves")).toBeInTheDocument();
+    // League Mode sections
+    expect(screen.getByText("Getting started with League Mode")).toBeInTheDocument();
+    expect(screen.getByText("Advancing and tracking your season")).toBeInTheDocument();
   });
 
-  it("renders all 11 accordion sections", () => {
+  it("renders all 13 accordion sections", () => {
     renderHelpPage();
     const helpPage = screen.getByTestId("help-page");
     // <details> elements have implicit ARIA role "group" — scope to the container.
     const details = within(helpPage).getAllByRole("group");
-    expect(details).toHaveLength(11);
+    expect(details).toHaveLength(13);
     // Spot-check section titles via <summary> scoped to the container.
     const rawSummaries = Array.from(helpPage.querySelectorAll("summary")).map((s) =>
       s.textContent?.trim(),
     );
     expect(rawSummaries).toContain("Basics");
+    expect(rawSummaries).toContain("Getting started with League Mode");
+    expect(rawSummaries).toContain("Advancing and tracking your season");
+    expect(rawSummaries).toContain("Pre-game setup");
     expect(rawSummaries).toContain("Game Flow");
     expect(rawSummaries).toContain("Manager Mode");
     expect(rawSummaries).toContain("Decision Tuning");
