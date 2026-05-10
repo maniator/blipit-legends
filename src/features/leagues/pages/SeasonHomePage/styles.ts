@@ -206,3 +206,20 @@ export const NavCardSub = styled.p`
   color: ${({ theme }) => theme.colors.textHint};
   margin: 0;
 `;
+
+export const ChampionBanner = styled.div`
+  background: ${({ theme }) => theme.colors.chipWarnBg};
+  border: 1px solid ${({ theme }) => theme.colors.chipWarnBorder};
+  border-radius: ${({ theme }) => theme.radii.card};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  font-size: ${({ theme }) => theme.fontSizes.h3};
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.textWarnBold};
+`;
+
+export const AdvanceReadyMsg = styled.p`
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.textBody};
+  margin: ${({ theme }) => theme.spacing.xs} 0 0;
+`;

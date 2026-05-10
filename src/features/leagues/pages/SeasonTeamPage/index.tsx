@@ -151,6 +151,14 @@ const SeasonTeamPageInner: React.FunctionComponent = () => {
   const playerStateById = new Map(playerStates.map((ps) => [ps.playerId, ps]));
   const fatigueConstants = getPitcherFatigueConstants(season.rulesetVersion ?? 1);
 
+  // Lineup and bench from rosterSnapshot.
+  const rosterLineup = Array.isArray(snap.lineup)
+    ? (snap.lineup as Array<Record<string, unknown>>)
+    : [];
+  const rosterBench = Array.isArray(snap.bench)
+    ? (snap.bench as Array<Record<string, unknown>>)
+    : [];
+
   return (
     <PageContainer data-testid="season-team">
       <PageHeader>
@@ -168,6 +176,42 @@ const SeasonTeamPageInner: React.FunctionComponent = () => {
         {wins}–{losses}
         {ties > 0 ? `–${ties}` : ""}
       </RecordLine>
+
+      {rosterLineup.length > 0 && (
+        <>
+          <SectionHeading>Lineup</SectionHeading>
+          <PitcherList aria-label="Starting lineup">
+            {rosterLineup.map((player, i) => {
+              const playerName = typeof player.name === "string" ? player.name : `Player ${i + 1}`;
+              const position = typeof player.position === "string" ? player.position : "";
+              return (
+                <PitcherRow key={`lineup-${i}`}>
+                  <PitcherName>{playerName}</PitcherName>
+                  <PitcherRole>{position}</PitcherRole>
+                </PitcherRow>
+              );
+            })}
+          </PitcherList>
+        </>
+      )}
+
+      {rosterBench.length > 0 && (
+        <>
+          <SectionHeading>Bench</SectionHeading>
+          <PitcherList aria-label="Bench players">
+            {rosterBench.map((player, i) => {
+              const playerName = typeof player.name === "string" ? player.name : `Player ${i + 1}`;
+              const position = typeof player.position === "string" ? player.position : "";
+              return (
+                <PitcherRow key={`bench-${i}`}>
+                  <PitcherName>{playerName}</PitcherName>
+                  <PitcherRole>{position}</PitcherRole>
+                </PitcherRow>
+              );
+            })}
+          </PitcherList>
+        </>
+      )}
 
       {rosterPitchers.length > 0 && (
         <>

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { simulateNextDay } from "@feat/league/storage/leagueStore";
+import { advanceSeason, simulateNextDay } from "@feat/league/storage/leagueStore";
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
 import { deriveStandings } from "@feat/league/utils/deriveStandings";
 import { SeasonContextProvider, useSeasonContext } from "@feat/leagues/context/SeasonContext";
@@ -12,6 +12,8 @@ import { useNavigate, useParams } from "react-router";
 import { useLiveRxQuery } from "rxdb/plugins/react";
 
 import {
+  AdvanceReadyMsg,
+  ChampionBanner,
   GameDayRow,
   NavCard,
   NavCardGrid,
@@ -43,22 +45,37 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
 
   const [simulating, setSimulating] = React.useState(false);
   const [simError, setSimError] = React.useState<string | null>(null);
+  const [nextGameReady, setNextGameReady] = React.useState(false);
+
+  // Find the user's season team if one is configured.
+  const userSeasonTeamId = React.useMemo(() => {
+    if (!season?.userCustomTeamId) return null;
+    return seasonTeams.find((t) => t.customTeamId === season.userCustomTeamId)?.id ?? null;
+  }, [season, seasonTeams]);
 
   const handleSimulateDay = React.useCallback(async () => {
     if (!seasonId) return;
     setSimError(null);
+    setNextGameReady(false);
     setSimulating(true);
     try {
-      await simulateNextDay(seasonId);
+      if (userSeasonTeamId) {
+        const result = await advanceSeason({ seasonId, userSeasonTeamId });
+        if (result.nextGameId !== null) {
+          setNextGameReady(true);
+        }
+      } else {
+        await simulateNextDay(seasonId);
+      }
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "Unable to simulate games. Please try again.";
-      appLog.error("[SeasonHomePage] simulateNextDay error:", err);
+      appLog.error("[SeasonHomePage] simulate error:", err);
       setSimError(msg);
     } finally {
       setSimulating(false);
     }
-  }, [seasonId]);
+  }, [seasonId, userSeasonTeamId]);
 
   const gamesQuery = React.useMemo(
     () => ({
@@ -128,6 +145,11 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
   const statusLabel =
     season.status === "active" ? "Active" : season.status === "complete" ? "Complete" : "Abandoned";
 
+  const championName =
+    season.status === "complete" && season.championTeamId
+      ? (teamNameById[season.championTeamId] ?? null)
+      : null;
+
   return (
     <PageContainer data-testid="season-home">
       <PageHeader>
@@ -139,6 +161,12 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
       <SeasonTitle>
         {season.name} <StatusChip $status={season.status}>{statusLabel}</StatusChip>
       </SeasonTitle>
+
+      {championName !== null && (
+        <ChampionBanner role="status" aria-label="Season champion">
+          🏆 Champion: {championName}
+        </ChampionBanner>
+      )}
 
       <SeasonMeta>
         <GameDayRow>
@@ -207,8 +235,26 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
             disabled={simulating}
             data-testid="simulate-day-button"
           >
-            {simulating ? "Simulating…" : "▶ Simulate Next Day"}
+            {simulating
+              ? "Simulating…"
+              : userSeasonTeamId
+                ? "▶ Advance Season"
+                : "▶ Simulate Next Day"}
           </SimulateButton>
+          {nextGameReady && (
+            <AdvanceReadyMsg>
+              Your next game is ready —{" "}
+              <a
+                href="/game"
+                onClick={(e: React.MouseEvent) => {
+                  e.preventDefault();
+                  navigate("/game");
+                }}
+              >
+                click to play it in Manager Mode
+              </a>
+            </AdvanceReadyMsg>
+          )}
           {simError !== null && <SimulateError>{simError}</SimulateError>}
         </SimulateSection>
       )}

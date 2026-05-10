@@ -42,6 +42,13 @@ export function validateWizardState(state: WizardState): string[] {
     }
   }
 
+  // Step 6: for handpick/mixed, user must select which team they manage.
+  if (state.step >= 6) {
+    if (state.teamMode !== "allAutogen" && state.userCustomTeamId === null) {
+      errors.push("Please select which team you will manage.");
+    }
+  }
+
   return errors;
 }
 
@@ -70,6 +77,11 @@ export function validateAllSteps(state: WizardState): string[] {
   // Step 5
   if (!state.masterSeed || state.masterSeed.trim() === "") {
     errors.push("Master seed must not be empty.");
+  }
+
+  // Step 6: for handpick/mixed, user must select which team they manage.
+  if (state.teamMode !== "allAutogen" && state.userCustomTeamId === null) {
+    errors.push("Please select which team you will manage.");
   }
 
   return errors;
