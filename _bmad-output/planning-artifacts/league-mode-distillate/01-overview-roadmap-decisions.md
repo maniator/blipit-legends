@@ -8,7 +8,9 @@
 
 ## Version Deliverables
 
-### v1 — Foundation + Pitcher Fatigue
+### v1 — Foundation + Pitcher Fatigue ✅ COMPLETE (2026-05-10)
+
+**Summary:** Mini Sprint season (8 teams × 14 game days), autogen rosters, fatigue, standings, headless sim, season hub UI
 
 - Goal: complete Mini-preset season loop (create → watch 14 game days → standings → champion)
 - Setup wizard: Mini preset only (8 teams); 14-game-day sprint season (7 rounds × 2-game series); per-league DH toggle; master seed (random default)
@@ -20,7 +22,7 @@
 - Manager Mode: user team only; all other teams use existing AI strategy
 - Roster minimum v1: 9 lineup + 3 bench + 5 SP + 3 RP = 20 active
 
-### v2 — Realism: Full Rosters, Wear, Injuries
+### v2 — Realism: Full Rosters, Wear, Injuries 🚧 NEXT
 
 - Standard preset (16 teams, 2 leagues × 2 divisions, 60 games)
 - Position-player wear added to seasonPlayerState (~5% effect); injury system: 1.5% per active-lineup player-game; IL collection; bench-fill replacement
