@@ -3,12 +3,13 @@ import * as React from "react";
 import { createSeason, quickStart } from "@feat/league/storage/leagueStore";
 import { useActiveSeason } from "@feat/leagues/hooks/useActiveSeason";
 import ModalShell from "@shared/components/ModalShell";
-import { appLog } from "@shared/utils/logger";
-import { getDb, type BallgameDb } from "@storage/db";
 import StatusBanner from "@shared/components/StatusBanner";
+import { useCustomTeams } from "@shared/hooks/useCustomTeams";
+import { appLog } from "@shared/utils/logger";
 import { useNavigate } from "react-router";
 import { RxDatabaseProvider } from "rxdb/plugins/react";
-import { useCustomTeams } from "@shared/hooks/useCustomTeams";
+
+import { type BallgameDb, getDb } from "@storage/db";
 
 import { validateAllSteps } from "../../wizard/validateWizardState";
 import type { WizardState } from "../../wizard/wizardReducer";
