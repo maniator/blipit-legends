@@ -12,6 +12,42 @@ export const RecordLine = styled.p`
   margin: 0 0 ${({ theme }) => theme.spacing.xl};
 `;
 
+export const SectionHeading = styled.h2`
+  font-size: ${({ theme }) => theme.fontSizes.h3};
+  color: ${({ theme }) => theme.colors.textPrimary};
+  margin: 0 0 ${({ theme }) => theme.spacing.sm};
+`;
+
+export const PitcherList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0 0 ${({ theme }) => theme.spacing.xl};
+`;
+
+export const PitcherRow = styled.li`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: ${({ theme }) => theme.spacing.xs} 0;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.borderFormAlpha30};
+  font-size: ${({ theme }) => theme.fontSizes.body};
+  color: ${({ theme }) => theme.colors.textBody};
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+export const PitcherName = styled.span`
+  flex: 1;
+`;
+
+export const PitcherRole = styled.span`
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.textHint};
+  margin-right: ${({ theme }) => theme.spacing.sm};
+`;
+
 export const ResultsTable = styled.table`
   width: 100%;
   border-collapse: collapse;

@@ -203,7 +203,7 @@ describe("computePitcherFatigueUpdates", () => {
     expect(patch?.pitcherStartsThisSeason).toBe(2);
   });
 
-  it("RP who pitched on back-to-back days gets availability clamped to 0.0", () => {
+  it("RP who pitched on back-to-back days gets availability clamped to rpBackToBackFloor (0.2)", () => {
     // pitcherDaysRest=0 means the RP appeared yesterday; appearing today = back-to-back.
     const states = [
       makePlayerState({
@@ -221,10 +221,12 @@ describe("computePitcherFatigueUpdates", () => {
     });
     const patch = patches.find((p) => p.id === "sps_p_rp_home");
     expect(patch?.pitcherDaysRest).toBe(0);
-    expect(patch?.pitcherAvailability).toBe(0.0);
+    // Clamped to rpBackToBackFloor (0.2) — below eligibility threshold but not
+    // zero, preserving the recovery trajectory for subsequent games.
+    expect(patch?.pitcherAvailability).toBe(0.2);
   });
 
-  it("SP who pitched on back-to-back days (short rest) also gets floor at 0.0", () => {
+  it("SP who pitched on back-to-back days (short rest) also gets floor at rpBackToBackFloor (0.2)", () => {
     const states = [
       makePlayerState({
         playerId: "p_sp_home",
@@ -236,7 +238,7 @@ describe("computePitcherFatigueUpdates", () => {
     ];
     const patches = computePitcherFatigueUpdates({ ...BASE_INPUT, allPlayerStates: states });
     const patch = patches.find((p) => p.id === "sps_p_sp_home");
-    expect(patch?.pitcherAvailability).toBe(0.0);
+    expect(patch?.pitcherAvailability).toBe(0.2);
     // Starts still incremented for SPs even on back-to-back (they did start).
     expect(patch?.pitcherStartsThisSeason).toBe(2);
   });

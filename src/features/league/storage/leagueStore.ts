@@ -14,21 +14,19 @@ import { generateLeagueTeams } from "@feat/league/autogen/generateLeagueTeams";
 import { generateSchedule } from "@feat/league/schedule/generateSchedule";
 import { advanceToUserGame } from "@feat/league/sim/advanceToUserGame";
 import { computePitcherFatigueUpdates } from "@feat/league/sim/updatePitcherFatigue";
-import {
-  SANCTIONED_WRITE_CTX,
-  withSanctionedCustomTeamWrite,
-} from "@feat/league/storage/sanctionedWrite";
 import type {
   SeasonGameRecord,
   SeasonPlayerStateRecord,
   SeasonRecord,
   SeasonTeamRecord,
 } from "@feat/league/storage/types";
+import { deriveStandings } from "@feat/league/utils/deriveStandings";
 
 import type { BallgameDb } from "@storage/db";
 import { getDb } from "@storage/db";
 import { generateSeasonId, generateSeasonTeamId, generateTeamId } from "@storage/generateId";
 import { fnv1a } from "@storage/hash";
+import { SANCTIONED_WRITE_CTX, withSanctionedCustomTeamWrite } from "@storage/sanctionedWrite";
 
 // ---------------------------------------------------------------------------
 // Season constants
@@ -346,7 +344,23 @@ function buildStore(getDbFn: GetDb) {
         const db = await getDbFn();
         const seasonDoc = await db.seasons.findOne(seasonId).exec();
         if (seasonDoc) {
-          await seasonDoc.patch({ status: "complete", completedAt: Date.now() });
+          // Determine champion: derive standings from all completed games, pick the leader.
+          // deriveStandings sorts by winPct DESC → runDifferential DESC → seasonTeamId ASC,
+          // so the result is always deterministic even when two teams finish with identical
+          // records — the ASCII sort on seasonTeamId acts as a final stable tiebreaker.
+          // See _bmad-output/planning-artifacts/league-mode-distillate/02-data-model-routing-schedule.md
+          // and decisions.md §18 for the full tiebreak chain (which operationalises in v3 playoffs).
+          const completedGames = await db.seasonGames
+            .find({ selector: { seasonId, status: "completed" } })
+            .exec();
+          const allTeamDocs = await db.seasonTeams.find({ selector: { seasonId } }).exec();
+          const allSeasonTeamIds = allTeamDocs.map((d) => d.id);
+          const standings = deriveStandings(
+            completedGames.map((d) => d.toJSON() as unknown as SeasonGameRecord),
+            allSeasonTeamIds,
+          );
+          const championTeamId = standings[0]?.seasonTeamId ?? null;
+          await seasonDoc.patch({ status: "complete", completedAt: Date.now(), championTeamId });
         }
       }
 

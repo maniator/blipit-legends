@@ -1,6 +1,13 @@
 /**
  * RxDB schema for the `seasonPlayerState` collection — tracks pitcher fatigue and availability
- * per player per season. One doc per player per season; primary key is composite `${seasonId}:${playerId}`.
+ * per player per season team. One doc per (season, seasonTeam, player) triple.
+ * Primary key is composite `${seasonId}:${seasonTeamId}:${playerId}`.
+ *
+ * `seasonTeamId` is included in the PK as a forward-compatibility measure: in v2, the trade
+ * engine allows a player to move between teams mid-season, creating two distinct docs for the
+ * same player — one for each team they pitched on. In v1 (no trades) this case cannot arise,
+ * but aligning the PK now avoids a breaking schema change when v2 ships.
+ *
  * version: 0 (initial schema; no migration strategies needed)
  */
 import type { RxJsonSchema } from "rxdb";
@@ -12,7 +19,7 @@ const seasonPlayerStateSchema: RxJsonSchema<SeasonPlayerStateRecord> = {
   primaryKey: "id",
   type: "object",
   properties: {
-    /** Composite primary key: `${seasonId}:${playerId}` */
+    /** Composite primary key: `${seasonId}:${seasonTeamId}:${playerId}` */
     id: { type: "string", maxLength: 256 },
     /** FK → SeasonRecord.id — indexed for per-season queries. */
     seasonId: { type: "string", maxLength: 128 },

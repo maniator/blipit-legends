@@ -3,9 +3,9 @@ import * as React from "react";
 import { PillSpan, PillVariant } from "./styles";
 
 const defaultLabels: Record<PillVariant, string> = {
-  fresh: "Fresh",
-  tired: "Tired",
-  spent: "Spent",
+  fresh: "✓ Fresh",
+  tired: "! Tired",
+  spent: "✕ Spent",
   il: "IL",
   auto: "Auto",
 };

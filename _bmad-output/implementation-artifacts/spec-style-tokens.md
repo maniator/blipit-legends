@@ -5,8 +5,8 @@ created: "2026-05-10"
 status: "ready-for-dev"
 baseline_commit: "8d9318a"
 context:
-  - "{project-root}/docs/league-mode/style-guide-additions.md"
-  - "{project-root}/docs/league-mode/ui-reuse.md"
+  - "{project-root}/_bmad-output/planning-artifacts/league-mode-distillate/05-ui-reuse-style-risks.md"
+  - "{project-root}/_bmad-output/planning-artifacts/league-mode-distillate/05-ui-reuse-style-risks.md"
 ---
 
 <frozen-after-approval reason="human-owned intent — do not modify unless human renegotiates">
@@ -15,7 +15,7 @@ context:
 
 **Problem:** League Mode v1 UI components (LeaguesHubPage, SeasonTeamPage, CustomTeamEditor lock, etc.) need shared primitive components — StatusPill, StatusBanner, EmptyState, ModalShell — that don't exist yet in `src/shared/components/`.
 
-**Approach:** Extract and create four shared components following patterns established in `docs/league-mode/style-guide-additions.md` and `ui-reuse.md`, using only existing theme tokens. No new hex colors — all colors pulled from `src/shared/theme.ts`.
+**Approach:** Extract and create four shared components following patterns established in `_bmad-output/planning-artifacts/league-mode-distillate/05-ui-reuse-style-risks.md` and `ui-reuse.md`, using only existing theme tokens. No new hex colors — all colors pulled from `src/shared/theme.ts`.
 
 ## Boundaries & Constraints
 

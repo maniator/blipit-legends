@@ -4,7 +4,7 @@
  * Determines which SP starts and which RP is available for a given game,
  * based on pitcher availability from seasonPlayerState and the roster snapshot.
  *
- * Policy (per docs/league-mode/fatigue-and-injuries.md §v1 AI rotation/lineup):
+ * Policy (per _bmad-output/planning-artifacts/league-mode-distillate/03-setup-wizard-autogen-fatigue-hub.md §v1 AI rotation/lineup):
  *   SP: cycle through pitchers[] order; skip any with availability < spEligibilityThreshold.
  *       If ALL SPs are below threshold, pick the highest-availability SP.
  *       Cycle is implemented via pitcherStartsThisSeason as tiebreaker (fewest starts first).

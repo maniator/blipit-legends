@@ -6,7 +6,7 @@
  * sub-PRNG so that the schedule is reproducible and decoupled from any other
  * PRNG consumer in the app.
  *
- * Determinism contracts (binding — see docs/league-mode/schedule-and-sim.md):
+ * Determinism contracts (binding — see _bmad-output/planning-artifacts/league-mode-distillate/02-data-model-routing-schedule.md):
  *   - teamIds are lex-sorted before any iteration (never use Set/Map iteration).
  *   - Sub-PRNG key: `${masterSeed}:schedule`, seeded as:
  *       mulberry32(parseInt(fnv1a(`${masterSeed}:schedule`), 16) >>> 0)

@@ -5,11 +5,11 @@
  */
 import "fake-indexeddb/auto";
 
-import { SANCTIONED_WRITE_CTX } from "@feat/league/storage/sanctionedWrite";
 import { getRxStorageMemory } from "rxdb/plugins/storage-memory";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import type { BallgameDb } from "@storage/db";
+import { SANCTIONED_WRITE_CTX } from "@storage/sanctionedWrite";
 import type { CreateCustomTeamInput } from "@storage/types";
 import { makePlayer } from "@test/helpers/customTeams";
 import { createTestDb } from "@test/helpers/db";
