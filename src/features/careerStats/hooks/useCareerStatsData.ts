@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { GameHistoryStore } from "@feat/careerStats/storage/gameHistoryStore";
 import { useCustomTeams } from "@shared/hooks/useCustomTeams";
+import { appLog } from "@shared/utils/logger";
 import { useNavigate, useParams } from "react-router";
 
 import { getDb } from "@storage/db";
@@ -74,8 +75,7 @@ export function useCareerStatsData() {
         });
       })
       .catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error("[useCareerStatsData] Failed to subscribe to completedGames:", err);
+        appLog.error("[useCareerStatsData] Failed to subscribe to completedGames:", err);
       });
 
     return () => {
@@ -132,8 +132,7 @@ export function useCareerStatsData() {
         setStrikeoutsLeader(pitchingLeaders.strikeoutsLeader);
       } catch (err) {
         if (!cancelled) {
-          // eslint-disable-next-line no-console
-          console.error("[useCareerStatsData] Failed to load stats for team:", selectedTeamId, err);
+          appLog.error("[useCareerStatsData] Failed to load stats for team:", selectedTeamId, err);
           setBattingRows([]);
           setPitchingRows([]);
           setTeamSummary(null);

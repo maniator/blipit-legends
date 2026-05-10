@@ -357,7 +357,7 @@ describe("CareerStatsPage", () => {
   it("loads teams from game history (non-custom teamIds) into the selector", async () => {
     const { getDb } = await import("@storage/db");
     // Return completed games with non-custom team IDs.
-    vi.mocked(getDb).mockResolvedValue({
+    vi.mocked(getDb).mockResolvedValueOnce({
       completedGames: {
         find: vi.fn(() => ({
           // Production code uses find().$; exec is not called on this path.
@@ -644,7 +644,7 @@ describe("CareerStatsPage", () => {
     // subscription emits an empty array, preventing non-custom team IDs from a
     // prior test's overridden mock from leaking into this test.
     const { getDb } = await import("@storage/db");
-    vi.mocked(getDb).mockResolvedValue({
+    vi.mocked(getDb).mockResolvedValueOnce({
       completedGames: {
         find: vi.fn(() => ({
           // Production code uses find().$; exec is not called on this path.

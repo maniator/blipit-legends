@@ -89,7 +89,7 @@ describe("useCareerStatsData", () => {
 
   it("redirects /stats deterministically when only history team IDs exist", async () => {
     vi.mocked(useCustomTeams).mockReturnValue({ teams: [], loading: false } as any);
-    vi.mocked(getDb).mockResolvedValue({
+    vi.mocked(getDb).mockResolvedValueOnce({
       completedGames: {
         find: vi.fn(() => ({
           // Reactive observable: subscribe fires immediately with the game docs.
