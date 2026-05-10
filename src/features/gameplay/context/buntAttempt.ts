@@ -32,11 +32,13 @@ export const buntAttempt = (
     const newBase: [number, number, number] = [1, 0, 0];
     let runsScored = 0;
     if (oldBase[0]) {
-      if (oldBase[1] && oldBase[2]) runsScored++;
+      // Lead runner on 1st is out; 2nd runner (if any) advances to 3rd;
+      // 3rd runner always scores while defense focuses the throw to 2nd.
       if (oldBase[1]) newBase[2] = 1;
-      if (oldBase[2] && !oldBase[1]) newBase[2] = 1;
+      if (oldBase[2]) runsScored++;
     } else if (oldBase[1]) {
-      if (oldBase[2]) newBase[2] = 1;
+      // Lead runner on 2nd is out; 3rd runner scores while defense throws.
+      if (oldBase[2]) runsScored++;
     }
     const newScore: [number, number] = [stateWithPitch.score[0], stateWithPitch.score[1]];
     newScore[stateWithPitch.atBat] += runsScored;
@@ -49,11 +51,10 @@ export const buntAttempt = (
     if (oldBase[0]) {
       // lead runner on 1st is out; if runner on 2nd, they move to 3rd
       if (oldBase[1]) fcNewRunnerIds[2] = fcOldIds[1];
-      if (oldBase[2] && !oldBase[1]) fcNewRunnerIds[2] = fcOldIds[2];
+      // runner on 3rd always scores (ID drops); no entry needed
       // with bases loaded, runner on 3rd is forced home and scores (ID drops)
     } else if (oldBase[1]) {
-      // lead runner on 2nd is out; runner on 3rd was not forced and stays
-      if (oldBase[2]) fcNewRunnerIds[2] = fcOldIds[2];
+      // lead runner on 2nd is out; runner on 3rd scores (ID drops)
     }
     // batter goes to 1st — ID unknown here (null)
     // Track pitcher: runs scored only. battersFaced is incremented by playerOut(…, true) below.
