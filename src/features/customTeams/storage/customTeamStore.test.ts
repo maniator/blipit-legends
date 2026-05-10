@@ -5,17 +5,17 @@
  */
 import "fake-indexeddb/auto";
 
+import { SANCTIONED_WRITE_CTX } from "@feat/league/storage/sanctionedWrite";
 import { getRxStorageMemory } from "rxdb/plugins/storage-memory";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import type { BallgameDb } from "@storage/db";
-import { createTestDb } from "@test/helpers/db";
-import { makePlayer } from "@test/helpers/customTeams";
 import type { CreateCustomTeamInput } from "@storage/types";
+import { makePlayer } from "@test/helpers/customTeams";
+import { createTestDb } from "@test/helpers/db";
 
-import { CustomTeamLockedError } from "./errors";
 import { makeCustomTeamStore } from "./customTeamStore";
-import { SANCTIONED_WRITE_CTX } from "@feat/league/storage/sanctionedWrite";
+import { CustomTeamLockedError } from "./errors";
 
 const makeTeamInput = (name = "Test Team"): CreateCustomTeamInput => ({
   name,
@@ -68,9 +68,7 @@ describe("customTeamStore lock — active season guard", () => {
     const teamId = await store.createCustomTeam(makeTeamInput("Another Team"));
     await insertActiveSeason(teamId);
 
-    await expect(store.updateCustomTeam(teamId, { name: "Changed" })).rejects.toThrow(
-      teamId,
-    );
+    await expect(store.updateCustomTeam(teamId, { name: "Changed" })).rejects.toThrow(teamId);
   });
 
   it("write succeeds when SANCTIONED_WRITE_CTX is passed", async () => {
@@ -90,9 +88,7 @@ describe("customTeamStore lock — active season guard", () => {
     const teamId = await store.createCustomTeam(makeTeamInput("Free Team"));
     // No season inserted — team is not locked.
 
-    await expect(
-      store.updateCustomTeam(teamId, { name: "Free Change" }),
-    ).resolves.toBeUndefined();
+    await expect(store.updateCustomTeam(teamId, { name: "Free Change" })).resolves.toBeUndefined();
 
     const updated = await store.getCustomTeam(teamId);
     expect(updated?.name).toBe("Free Change");

@@ -48,7 +48,10 @@ describe("canonicalJSON", () => {
     });
 
     it("sorts keys within each element of an id-object array", () => {
-      const input = [{ id: "b", z: 2, a: 1 }, { id: "a", z: 4, a: 3 }];
+      const input = [
+        { id: "b", z: 2, a: 1 },
+        { id: "a", z: 4, a: 3 },
+      ];
       const result = canonicalJSON(input);
       expect(result).toBe('[{"a":3,"id":"a","z":4},{"a":1,"id":"b","z":2}]');
     });
@@ -82,7 +85,10 @@ describe("canonicalJSON", () => {
 
   describe("nested recursion", () => {
     it("recursively processes nested objects inside arrays", () => {
-      const input = [{ id: "b", props: { z: 1, a: 2 } }, { id: "a", props: { z: 3, a: 4 } }];
+      const input = [
+        { id: "b", props: { z: 1, a: 2 } },
+        { id: "a", props: { z: 3, a: 4 } },
+      ];
       const result = canonicalJSON(input);
       // Sorted by id: a first, then b. Keys inside props sorted.
       expect(result).toBe('[{"id":"a","props":{"a":4,"z":3}},{"id":"b","props":{"a":2,"z":1}}]');
@@ -117,7 +123,13 @@ describe("canonicalJSON", () => {
 
   describe("determinism", () => {
     it("produces identical output on repeated calls with the same input", () => {
-      const input = { z: [{ id: "b", x: 1 }, { id: "a", y: 2 }], a: { q: true, p: false } };
+      const input = {
+        z: [
+          { id: "b", x: 1 },
+          { id: "a", y: 2 },
+        ],
+        a: { q: true, p: false },
+      };
       const first = canonicalJSON(input);
       const second = canonicalJSON(input);
       expect(first).toBe(second);

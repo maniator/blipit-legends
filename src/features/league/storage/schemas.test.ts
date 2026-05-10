@@ -19,8 +19,7 @@ import type {
   SeasonTeamRecord,
 } from "./types";
 
-const makeDbName = () =>
-  `test_league_schemas_${Math.random().toString(36).slice(2, 10)}`;
+const makeDbName = () => `test_league_schemas_${Math.random().toString(36).slice(2, 10)}`;
 
 describe("seasons collection (v0)", () => {
   it("inserts and retrieves a SeasonRecord with all required fields", async () => {
@@ -284,9 +283,7 @@ describe("seasonPlayerState collection (v0)", () => {
     };
 
     await db.seasonPlayerState.insert(record);
-    const doc = await db.seasonPlayerState
-      .findOne("s_season01:p_player01")
-      .exec();
+    const doc = await db.seasonPlayerState.findOne("s_season01:p_player01").exec();
     expect(doc).not.toBeNull();
 
     const retrieved = doc!.toJSON() as unknown as SeasonPlayerStateRecord;
@@ -330,9 +327,7 @@ describe("seasonPlayerState collection (v0)", () => {
       },
     ]);
 
-    const results = await db.seasonPlayerState
-      .find({ selector: { seasonId: "s_001" } })
-      .exec();
+    const results = await db.seasonPlayerState.find({ selector: { seasonId: "s_001" } }).exec();
     expect(results).toHaveLength(1);
     expect(results[0].playerId).toBe("p_a");
 

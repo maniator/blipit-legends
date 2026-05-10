@@ -19,7 +19,15 @@
  * `id` property that is a string.  An empty array returns false (no sort needed).
  */
 function isIdObjectArray(arr: unknown[]): arr is Array<{ id: string } & Record<string, unknown>> {
-  return arr.length > 0 && arr.every((item) => item !== null && typeof item === "object" && typeof (item as Record<string, unknown>)["id"] === "string");
+  return (
+    arr.length > 0 &&
+    arr.every(
+      (item) =>
+        item !== null &&
+        typeof item === "object" &&
+        typeof (item as Record<string, unknown>)["id"] === "string",
+    )
+  );
 }
 
 /**
