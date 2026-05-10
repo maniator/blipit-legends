@@ -18,6 +18,7 @@ persistent_facts = [
   "Sub-agents must never run git push, gh, or report_progress. They may commit locally and must return commit SHAs to the root Copilot agent.",
   "Simulation invariants: batting line totals must equal scoreboard runs; lineup indices must wrap 0-8; home/away team mapping must be consistent throughout a game; scoreboard inning totals must sum to final score.",
   "Validation commands: yarn lint && yarn format:check && yarn typecheck && yarn test:coverage && yarn build",
+  "PR descriptions (the prDescription passed to report_progress) MUST follow .github/pull_request_template.md: include ## Summary, ## Changes, ## Testing, ## Risks H2 sections with prose content — not just checklists. Checklist-only bodies fail the pr-description-check CI workflow.",
 ]
 
 principles = [

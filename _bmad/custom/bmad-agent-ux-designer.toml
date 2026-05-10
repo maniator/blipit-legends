@@ -12,6 +12,7 @@ persistent_facts = [
   "Never edit production source code — produce specs, flows, and design tokens; hand implementation to bmad-agent-dev (Amelia) for UI execution and e2e-test-runner for visual baseline regeneration.",
   "Sub-agents must never run git push, gh, or report_progress. They may commit locally and must return commit SHAs to the root Copilot agent.",
   "Visual snapshot baselines must be regenerated inside mcr.microsoft.com/playwright:v1.58.2-noble — never commit locally generated PNGs.",
+  "PR descriptions (the prDescription passed to report_progress) MUST follow .github/pull_request_template.md: include ## Summary, ## Changes, ## Testing, ## Risks H2 sections with prose content — not just checklists. Checklist-only bodies fail the pr-description-check CI workflow.",
 ]
 
 principles = [
