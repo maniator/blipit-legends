@@ -3,7 +3,7 @@ import * as React from "react";
 import { createSeason, quickStart } from "@feat/league/storage/leagueStore";
 import { useActiveSeason } from "@feat/leagues/hooks/useActiveSeason";
 import ModalShell from "@shared/components/ModalShell";
-import { appLog } from "@shared/utils/log";
+import { appLog } from "@shared/utils/logger";
 import { getDb, type BallgameDb } from "@storage/db";
 import StatusBanner from "@shared/components/StatusBanner";
 import { useNavigate } from "react-router";
