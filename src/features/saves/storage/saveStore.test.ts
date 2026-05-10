@@ -9,6 +9,8 @@ import type { EventRecord, GameSetup, RxdbExportedSave } from "@storage/types";
 import { createTestDb } from "@test/helpers/db";
 import { makeState } from "@test/testHelpers";
 
+import { canonicalJSON } from "./canonicalJSON";
+
 /**
  * Module-private signing key used by `exportRxdbSave` / `importRxdbSave`.
  * Kept in sync with the production constant in `saveStore.ts`; centralized
@@ -1163,5 +1165,366 @@ describe("decisionValues migration path (#233-F5) — legacy save without stealE
     // Must default stealEnabled to true (matches production default).
     expect(result.stealEnabled).toBe(DEFAULT_MANAGER_DECISION_VALUES.stealEnabled);
     expect(result.stealEnabled).toBe(true);
+  });
+});
+
+/**
+ * V2 bundle export/import tests — covers lines 309-628, 638-704
+ */
+describe("SaveStore.exportRxdbSaveV2", () => {
+  it("exports a v2 bundle with all collections", async () => {
+    const saveId = await store.createSave(makeSetup());
+    await store.appendEvents(saveId, [
+      { type: "GAME_STARTED", at: 0, payload: {} },
+      { type: "PITCH", at: 1, payload: { result: "strike" } },
+    ]);
+
+    const json = await store.exportRxdbSaveV2();
+    const bundle = JSON.parse(json);
+
+    expect(bundle.version).toBe(2);
+    expect(bundle.header).toBeDefined();
+    expect(bundle.header.collections).toBeDefined();
+    expect(bundle.sig).toBeDefined();
+    expect(typeof bundle.sig).toBe("string");
+    expect(bundle.header.collections.saves).toHaveLength(1);
+    expect(bundle.header.collections.events).toHaveLength(2);
+  });
+
+  it("exports includes rulesetVersion from league module if available", async () => {
+    await store.createSave(makeSetup());
+    const json = await store.exportRxdbSaveV2();
+    const bundle = JSON.parse(json);
+
+    expect(bundle.header.rulesetVersion).toBeDefined();
+    expect(typeof bundle.header.rulesetVersion).toBe("number");
+  });
+
+  it("exports empty collections when no data exists", async () => {
+    const json = await store.exportRxdbSaveV2();
+    const bundle = JSON.parse(json);
+
+    expect(bundle.header.collections.saves).toHaveLength(0);
+    expect(bundle.header.collections.events).toHaveLength(0);
+  });
+
+  it("exports includes appVersion from environment", async () => {
+    await store.createSave(makeSetup());
+    const json = await store.exportRxdbSaveV2();
+    const bundle = JSON.parse(json);
+
+    expect(bundle.header.appVersion).toBeDefined();
+    expect(typeof bundle.header.appVersion).toBe("string");
+  });
+});
+
+describe("SaveStore.importRxdbSaveV2", () => {
+  const RXDB_EXPORT_KEY_V2 = "ballgame:rxdb:v2";
+
+  const makeV2Bundle = async (collections: Record<string, unknown>) => {
+    const header = {
+      exportedAt: Date.now(),
+      appVersion: "test",
+      rulesetVersion: 1,
+      collections,
+    };
+    const sig = fnv1a(RXDB_EXPORT_KEY_V2 + canonicalJSON(header));
+    return JSON.stringify({ version: 2, header, sig });
+  };
+
+  it("imports a valid v2 bundle successfully", async () => {
+    await insertMinimalTeam(db, "ct_rt_home");
+    await insertMinimalTeam(db, "ct_rt_away");
+
+    const saveId = await store.createSave(makeCustomFormatSetup());
+    await store.appendEvents(saveId, [{ type: "GAME_STARTED", at: 0, payload: {} }]);
+
+    const json = await store.exportRxdbSaveV2();
+    await db.saves.find().remove();
+    await db.events.find().remove();
+
+    const importedHeader = await store.importRxdbSaveV2(json);
+    expect(importedHeader).toBeDefined();
+    expect(importedHeader.collections.saves).toHaveLength(1);
+  });
+
+  it("throws on invalid JSON", async () => {
+    await expect(store.importRxdbSaveV2("not json")).rejects.toThrow("Invalid JSON");
+  });
+
+  it("throws on wrong version field", async () => {
+    const badBundle = JSON.stringify({ version: 1, header: {}, sig: "abc" });
+    await expect(store.importRxdbSaveV2(badBundle)).rejects.toThrow("wrong version field");
+  });
+
+  it("throws on signature mismatch", async () => {
+    const header = {
+      exportedAt: Date.now(),
+      appVersion: "test",
+      rulesetVersion: 1,
+      collections: { saves: [], events: [], customTeams: [] },
+    };
+    const badSig = "wrongsig";
+    const bundle = JSON.stringify({ version: 2, header, sig: badSig });
+
+    await expect(store.importRxdbSaveV2(bundle)).rejects.toThrow("corrupted");
+  });
+
+  it("throws when importing active season when one already exists", async () => {
+    await db.seasons.insert({
+      id: "s_local",
+      name: "Local Season",
+      status: "active",
+      createdAt: Date.now(),
+      preset: "mini",
+      seasonLength: "sprint",
+      masterSeed: "ms_local",
+      leagues: [],
+      currentGameDay: 0,
+      rulesetVersion: 1,
+    });
+
+    const collections = {
+      saves: [],
+      events: [],
+      customTeams: [],
+      seasons: [
+        {
+          id: "s_imported",
+          name: "Imported Season",
+          status: "active",
+          createdAt: Date.now(),
+          preset: "mini",
+          seasonLength: "sprint",
+          masterSeed: "ms_imported",
+          leagues: [],
+          currentGameDay: 0,
+          rulesetVersion: 1,
+        },
+      ],
+      seasonTeams: [],
+      seasonGames: [],
+      seasonPlayerState: [],
+      seasonTransactions: [],
+      gameHistory: [],
+    };
+
+    const json = await makeV2Bundle(collections);
+    await expect(store.importRxdbSaveV2(json)).rejects.toThrow("already have an active season");
+  });
+
+  it("remaps season IDs when importing completed season with existing ID", async () => {
+    await db.seasons.insert({
+      id: "s_existing",
+      name: "Existing Season",
+      status: "complete",
+      createdAt: Date.now(),
+      preset: "mini",
+      seasonLength: "sprint",
+      masterSeed: "ms_existing",
+      leagues: [],
+      currentGameDay: 10,
+      rulesetVersion: 1,
+    });
+
+    const collections = {
+      saves: [],
+      events: [],
+      customTeams: [],
+      seasons: [
+        {
+          id: "s_existing",
+          name: "Imported Season",
+          status: "complete",
+          createdAt: Date.now(),
+          preset: "mini",
+          seasonLength: "sprint",
+          masterSeed: "ms_imported",
+          leagues: [],
+          currentGameDay: 10,
+          rulesetVersion: 1,
+        },
+      ],
+      seasonTeams: [],
+      seasonGames: [],
+      seasonPlayerState: [],
+      seasonTransactions: [],
+      gameHistory: [],
+    };
+
+    const json = await makeV2Bundle(collections);
+    await store.importRxdbSaveV2(json);
+
+    const allSeasons = await db.seasons.find().exec();
+    expect(allSeasons).toHaveLength(2);
+    const importedSeason = allSeasons.find((s) => s.id.includes("imported"));
+    expect(importedSeason).toBeDefined();
+  });
+
+  it("imports and upserts custom teams", async () => {
+    const collections = {
+      saves: [],
+      events: [],
+      customTeams: [
+        {
+          id: "ct_import_test",
+          schemaVersion: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          name: "Imported Team",
+          nameLowercase: "imported team",
+          metadata: { archived: false },
+        },
+      ],
+      seasons: [],
+      seasonTeams: [],
+      seasonGames: [],
+      seasonPlayerState: [],
+      seasonTransactions: [],
+      gameHistory: [],
+    };
+
+    const json = await makeV2Bundle(collections);
+    await store.importRxdbSaveV2(json);
+
+    const team = await db.teams.findOne("ct_import_test").exec();
+    expect(team).toBeDefined();
+    expect(team?.name).toBe("Imported Team");
+  });
+
+  it("imports saves and events from v2 bundle", async () => {
+    await insertMinimalTeam(db, "ct_rt_home");
+    await insertMinimalTeam(db, "ct_rt_away");
+
+    const saveId = await store.createSave(makeCustomFormatSetup());
+    const eventId1 = `${saveId}:0`;
+    const eventId2 = `${saveId}:1`;
+
+    const collections = {
+      saves: [
+        {
+          id: saveId,
+          homeTeamId: "ct_rt_home",
+          awayTeamId: "ct_rt_away",
+          seed: "abc123",
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          progressIdx: 1,
+          schemaVersion: 1,
+        },
+      ],
+      events: [
+        { id: eventId1, saveId, idx: 0, at: 0, type: "GAME_STARTED", payload: {}, ts: 0, schemaVersion: 1 },
+        { id: eventId2, saveId, idx: 1, at: 1, type: "PITCH", payload: {}, ts: 1, schemaVersion: 1 },
+      ],
+      customTeams: [],
+      seasons: [],
+      seasonTeams: [],
+      seasonGames: [],
+      seasonPlayerState: [],
+      seasonTransactions: [],
+      gameHistory: [],
+    };
+
+    await db.saves.find().remove();
+    await db.events.find().remove();
+
+    const json = await makeV2Bundle(collections);
+    await store.importRxdbSaveV2(json);
+
+    const importedSave = await db.saves.findOne(saveId).exec();
+    expect(importedSave).toBeDefined();
+
+    const importedEvents = await db.events.find({ selector: { saveId } }).exec();
+    expect(importedEvents).toHaveLength(2);
+  });
+});
+
+describe("SaveStore.checkAndCleanupInterruptedImport", () => {
+  it("removes orphaned teams created during interrupted import", async () => {
+    const startedAt = Date.now();
+    localStorage.setItem("ballgame:import-in-progress:v1", "1");
+    localStorage.setItem(`ballgame:import-started-at:${startedAt}`, "1");
+
+    await db.teams.insert({
+      id: "ct_orphan",
+      schemaVersion: 0,
+      createdAt: new Date(startedAt + 100).toISOString(),
+      updatedAt: new Date().toISOString(),
+      name: "Orphan Team",
+      nameLowercase: "orphan team",
+      metadata: { archived: false },
+    });
+
+    await store.checkAndCleanupInterruptedImport();
+
+    const orphan = await db.teams.findOne("ct_orphan").exec();
+    expect(orphan).toBeNull();
+
+    expect(localStorage.getItem("ballgame:import-in-progress:v1")).toBeNull();
+  });
+
+  it("preserves teams referenced by seasons during cleanup", async () => {
+    const startedAt = Date.now();
+    localStorage.setItem("ballgame:import-in-progress:v1", "1");
+    localStorage.setItem(`ballgame:import-started-at:${startedAt}`, "1");
+
+    await db.teams.insert({
+      id: "ct_referenced",
+      schemaVersion: 0,
+      createdAt: new Date(startedAt + 100).toISOString(),
+      updatedAt: new Date().toISOString(),
+      name: "Referenced Team",
+      nameLowercase: "referenced team",
+      metadata: { archived: false },
+    });
+
+    await db.seasons.insert({
+      id: "s_ref",
+      name: "Referencing Season",
+      status: "complete",
+      createdAt: Date.now(),
+      preset: "mini",
+      seasonLength: "sprint",
+      masterSeed: "ms_ref",
+      leagues: [{ id: "lg_ref", name: "League", teamIds: ["ct_referenced"], dhEnabled: false }],
+      currentGameDay: 10,
+      rulesetVersion: 1,
+    });
+
+    await store.checkAndCleanupInterruptedImport();
+
+    const referenced = await db.teams.findOne("ct_referenced").exec();
+    expect(referenced).toBeDefined();
+  });
+
+  it("does nothing when no import-in-progress tombstone exists", async () => {
+    await db.teams.insert({
+      id: "ct_normal",
+      schemaVersion: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      name: "Normal Team",
+      nameLowercase: "normal team",
+      metadata: { archived: false },
+    });
+
+    await store.checkAndCleanupInterruptedImport();
+
+    const normal = await db.teams.findOne("ct_normal").exec();
+    expect(normal).toBeDefined();
+  });
+
+  it("clears all import-started-at keys on cleanup", async () => {
+    const startedAt1 = Date.now() - 1000;
+    const startedAt2 = Date.now();
+    localStorage.setItem("ballgame:import-in-progress:v1", "1");
+    localStorage.setItem(`ballgame:import-started-at:${startedAt1}`, "1");
+    localStorage.setItem(`ballgame:import-started-at:${startedAt2}`, "1");
+
+    await store.checkAndCleanupInterruptedImport();
+
+    expect(localStorage.getItem(`ballgame:import-started-at:${startedAt1}`)).toBeNull();
+    expect(localStorage.getItem(`ballgame:import-started-at:${startedAt2}`)).toBeNull();
   });
 });
