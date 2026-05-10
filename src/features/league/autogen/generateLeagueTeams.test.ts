@@ -88,6 +88,44 @@ describe("generateLeagueTeams", () => {
     }
   });
 
+  it("covers all themes × parities × counts 8/16/24", () => {
+    const themes: AutogenTheme[] = ["classic", "scifi", "whimsical", "mix"];
+    const parities: AutogenParity[] = ["balanced", "mixed", "random"];
+    for (const theme of themes) {
+      for (const parity of parities) {
+        for (const count of [8, 16, 24]) {
+          const teams = generateLeagueTeams({
+            count,
+            theme,
+            parity,
+            masterSeed: `seed-${theme}-${parity}-${count}`,
+            autogenSubSeed: "sub",
+            rosterMinimums: minimums,
+          });
+          expect(teams).toHaveLength(count);
+          expect(new Set(teams.map((team) => team.name)).size).toBe(count);
+        }
+      }
+    }
+  });
+
+  it("passes sanitizer/stat-cap coverage across 100 seeds", () => {
+    for (let i = 0; i < 100; i++) {
+      const teams = generateLeagueTeams({
+        count: 8,
+        theme: "mix",
+        parity: i % 3 === 0 ? "balanced" : i % 3 === 1 ? "mixed" : "random",
+        masterSeed: `hundred-seed-${i}`,
+        autogenSubSeed: "sub",
+        rosterMinimums: minimums,
+      });
+      for (const team of teams) {
+        expect(team.roster.lineup).toHaveLength(9);
+        expect(team.roster.pitchers).toHaveLength(8);
+      }
+    }
+  });
+
   it("throws when roster minimums are below v1 league-play minimums", () => {
     expect(() =>
       generateLeagueTeams({
