@@ -66,7 +66,15 @@ self.addEventListener("notificationclick", (event) => {
         const windowClients = clientList as WindowClient[];
         log.log(`matchAll found ${windowClients.length} window client(s)`);
 
-        const client = windowClients[0];
+        const gameClients = windowClients.filter((client) => {
+          try {
+            return new URL(client.url).pathname === "/game";
+          } catch {
+            return false;
+          }
+        });
+        const deliveryClients = gameClients.length > 0 ? gameClients : windowClients;
+        const client = deliveryClients[0];
         if (!client) {
           log.warn(
             "No window clients found — cannot deliver NOTIFICATION_ACTION; user may need to re-open the tab",
@@ -74,12 +82,21 @@ self.addEventListener("notificationclick", (event) => {
           return;
         }
 
-        log.log(`Posting NOTIFICATION_ACTION action="${action}" to client — url="${client.url}"`);
-        client.postMessage({
-          type: "NOTIFICATION_ACTION",
-          action,
-          payload: ne.notification.data,
-        });
+        const data = ne.notification.data as
+          | { decision?: unknown; gameInstanceId?: string; pitchKey?: number }
+          | undefined;
+        log.log(
+          `Posting NOTIFICATION_ACTION action="${action}" to ${deliveryClients.length} client(s)`,
+        );
+        for (const deliveryClient of deliveryClients) {
+          deliveryClient.postMessage({
+            type: "NOTIFICATION_ACTION",
+            action,
+            payload: data?.decision,
+            gameInstanceId: data?.gameInstanceId,
+            pitchKey: data?.pitchKey,
+          });
+        }
 
         return client
           .focus()

@@ -6,7 +6,11 @@ import { appLog } from "@shared/utils/logger";
 
 import { DECISION_TIMEOUT_SEC } from "./constants";
 import DecisionButtons from "./DecisionButtons";
-import { closeManagerNotification, showManagerNotification } from "./notificationHelpers";
+import {
+  closeManagerNotification,
+  type ManagerNotificationData,
+  showManagerNotification,
+} from "./notificationHelpers";
 import { CountdownFill, CountdownLabel, CountdownRow, CountdownTrack, Panel } from "./styles";
 
 type Props = {
@@ -14,20 +18,49 @@ type Props = {
 };
 
 const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
-  const { dispatch, pendingDecision } = useGameContext();
+  const { dispatch, gameInstanceId, pendingDecision, pitchKey } = useGameContext();
   const [secondsLeft, setSecondsLeft] = React.useState(DECISION_TIMEOUT_SEC);
+
+  // Keep refs current so the SW message handler (registered once) always reads
+  // the latest values without being torn down and re-added every pitch.
+  const pendingDecisionRef = React.useRef(pendingDecision);
+  pendingDecisionRef.current = pendingDecision;
+  const pitchKeyRef = React.useRef(pitchKey);
+  pitchKeyRef.current = pitchKey;
+  const gameInstanceIdRef = React.useRef(gameInstanceId);
+  gameInstanceIdRef.current = gameInstanceId;
 
   // Listen for actions dispatched from the service worker (notification button taps).
   // Validate the message origin so only same-origin SW messages are processed.
   // SW-to-page postMessages have event.origin === "" (empty string), so we only
   // reject messages whose origin is explicitly a different, non-empty origin.
+  // Registered once with [dispatch] (stable) — reads pitchKey/pendingDecision from refs.
   React.useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     const handler = (event: MessageEvent) => {
       if (event.origin && typeof window !== "undefined" && event.origin !== window.location.origin)
         return;
       if (event.data?.type !== "NOTIFICATION_ACTION") return;
-      const { action, payload } = event.data;
+      const currentPendingDecision = pendingDecisionRef.current;
+      if (!currentPendingDecision) return;
+      const {
+        action,
+        gameInstanceId: sourceGameInstanceId,
+        payload,
+        pitchKey: sourcePitchKey,
+      } = event.data as {
+        action?: string;
+        gameInstanceId?: string;
+        payload?: ManagerNotificationData["decision"];
+        pitchKey?: number;
+      };
+      if (
+        sourcePitchKey !== pitchKeyRef.current ||
+        sourceGameInstanceId !== gameInstanceIdRef.current ||
+        !payload ||
+        payload.kind !== currentPendingDecision.kind
+      )
+        return;
       switch (action) {
         case "steal":
           dispatch({ type: "steal_attempt", payload });
@@ -95,9 +128,9 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
     // Sound alert (respects mute)
     playDecisionChime();
 
-    // Browser notification — always send immediately so the user is alerted
-    // whether they are on the tab or have switched away.
-    showManagerNotification(pendingDecision);
+    if (document.hidden) {
+      showManagerNotification(pendingDecision, { gameInstanceId, pitchKey });
+    }
 
     // Re-send if the user switches away while the decision is still pending
     // (e.g. they saw the in-page panel but then tabbed away).
@@ -107,7 +140,7 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
           "visibilitychange — tab hidden, re-sending notification for:",
           pendingDecision.kind,
         );
-        showManagerNotification(pendingDecision);
+        showManagerNotification(pendingDecision, { gameInstanceId, pitchKey });
       }
     };
     document.addEventListener("visibilitychange", handleVisibility);
@@ -125,7 +158,7 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
       clearInterval(id);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [pendingDecision, dispatch]);
+  }, [pendingDecision, dispatch, gameInstanceId, pitchKey]);
 
   if (!pendingDecision) return null;
 
@@ -141,7 +174,14 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
         onDispatch={dispatch}
       />
       <CountdownRow>
-        <CountdownTrack>
+        <CountdownTrack
+          role="progressbar"
+          aria-label="Decision countdown until auto-skip"
+          aria-valuemin={0}
+          aria-valuemax={DECISION_TIMEOUT_SEC}
+          aria-valuenow={secondsLeft}
+          aria-valuetext={`${secondsLeft} seconds remaining`}
+        >
           <CountdownFill $pct={pct} />
         </CountdownTrack>
         <CountdownLabel>auto-skip {secondsLeft}s</CountdownLabel>

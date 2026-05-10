@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { BallgameDb } from "@storage/db";
 import { fnv1a } from "@storage/hash";
-import type { GameSetup } from "@storage/types";
+import type { EventRecord, GameSetup, RxdbExportedSave } from "@storage/types";
 import { createTestDb } from "@test/helpers/db";
 import { makeState } from "@test/testHelpers";
 
@@ -60,6 +60,13 @@ async function insertMinimalTeam(targetDb: BallgameDb, id: string): Promise<void
     metadata: { archived: false },
   });
 }
+
+const resignSaveEnvelope = (envelope: RxdbExportedSave): string => {
+  envelope.sig = fnv1a(
+    RXDB_EXPORT_KEY + JSON.stringify({ header: envelope.header, events: envelope.events }),
+  );
+  return JSON.stringify(envelope);
+};
 
 let db: BallgameDb;
 let store: ReturnType<typeof makeSaveStore>;
@@ -512,6 +519,72 @@ describe("SaveStore.appendEvents — counter initialisation from existing events
     const events = await db.events.find({ selector: { saveId } }).exec();
     expect(events).toHaveLength(1);
     expect(events[0].idx).toBe(0);
+  });
+});
+
+describe("SaveStore.importRxdbSave — event replacement and validation", () => {
+  it("replaces existing events for the imported save instead of leaving stale rows", async () => {
+    await insertMinimalTeam(db, "ct_rt_home");
+    await insertMinimalTeam(db, "ct_rt_away");
+    const saveId = await store.createSave(makeCustomFormatSetup());
+    await store.appendEvents(saveId, [
+      { type: "old-a", at: 0, payload: {} },
+      { type: "old-b", at: 1, payload: {} },
+    ]);
+    const envelope = JSON.parse(await store.exportRxdbSave(saveId)) as RxdbExportedSave;
+    envelope.events = [
+      {
+        ...envelope.events[0],
+        type: "replacement",
+        payload: { replaced: true },
+      },
+    ];
+
+    await store.importRxdbSave(resignSaveEnvelope(envelope));
+
+    const events = await db.events.find({ selector: { saveId }, sort: [{ idx: "asc" }] }).exec();
+    expect(events).toHaveLength(1);
+    expect(events[0].idx).toBe(0);
+    expect(events[0].type).toBe("replacement");
+    expect(events[0].payload).toEqual({ replaced: true });
+  });
+
+  it("rejects imported events that belong to a different save", async () => {
+    await insertMinimalTeam(db, "ct_rt_home");
+    await insertMinimalTeam(db, "ct_rt_away");
+    const saveId = await store.createSave(makeCustomFormatSetup());
+    await store.appendEvents(saveId, [{ type: "pitch", at: 0, payload: {} }]);
+    const envelope = JSON.parse(await store.exportRxdbSave(saveId)) as RxdbExportedSave;
+    envelope.events = [
+      {
+        ...envelope.events[0],
+        id: `${saveId}:0`,
+        saveId: "other-save",
+      } as EventRecord,
+    ];
+
+    await expect(store.importRxdbSave(resignSaveEnvelope(envelope))).rejects.toThrow(
+      "Invalid save data: event log is malformed",
+    );
+  });
+
+  it("rejects imported event logs with non-contiguous indices", async () => {
+    await insertMinimalTeam(db, "ct_rt_home");
+    await insertMinimalTeam(db, "ct_rt_away");
+    const saveId = await store.createSave(makeCustomFormatSetup());
+    await store.appendEvents(saveId, [{ type: "pitch", at: 0, payload: {} }]);
+    const envelope = JSON.parse(await store.exportRxdbSave(saveId)) as RxdbExportedSave;
+    envelope.events = [
+      {
+        ...envelope.events[0],
+        id: `${saveId}:1`,
+        idx: 1,
+      },
+    ];
+
+    await expect(store.importRxdbSave(resignSaveEnvelope(envelope))).rejects.toThrow(
+      "Invalid save data: event log indices must be contiguous",
+    );
   });
 });
 

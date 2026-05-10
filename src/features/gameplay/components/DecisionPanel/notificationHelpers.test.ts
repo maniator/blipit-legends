@@ -96,7 +96,7 @@ describe("showManagerNotification", () => {
       value: { ready: { then: swReadySpy } },
       configurable: true,
     });
-    showManagerNotification({ kind: "bunt" });
+    showManagerNotification({ kind: "bunt" }, { pitchKey: 0 });
     expect(swReadySpy).not.toHaveBeenCalled();
   });
 
@@ -108,11 +108,15 @@ describe("showManagerNotification", () => {
       value: { ready: Promise.resolve(mockReg) },
       configurable: true,
     });
-    showManagerNotification({ kind: "bunt" });
+    showManagerNotification({ kind: "bunt" }, { pitchKey: 0 });
     await new Promise((r) => setTimeout(r, 10));
     expect(showNotification).toHaveBeenCalledWith(
       "⚾ Your turn, Manager!",
-      expect.objectContaining({ body: "Sacrifice bunt opportunity", tag: "manager-decision" }),
+      expect.objectContaining({
+        body: "Sacrifice bunt opportunity",
+        data: { decision: { kind: "bunt" }, pitchKey: 0 },
+        tag: "manager-decision",
+      }),
     );
   });
   it("falls back to plain Notification when SW showNotification rejects", async () => {
@@ -123,7 +127,7 @@ describe("showManagerNotification", () => {
       value: { ready: Promise.resolve(mockReg) },
       configurable: true,
     });
-    showManagerNotification({ kind: "bunt" });
+    showManagerNotification({ kind: "bunt" }, { pitchKey: 0 });
     await new Promise((r) => setTimeout(r, 20));
     // Notification constructor (plain fallback) should have been called
     expect(Notification).toHaveBeenCalled();
@@ -138,7 +142,7 @@ describe("showManagerNotification", () => {
       configurable: true,
     });
     // Just verify no throw — the fallback fires asynchronously
-    expect(() => showManagerNotification({ kind: "ibb" })).not.toThrow();
+    expect(() => showManagerNotification({ kind: "ibb" }, { pitchKey: 0 })).not.toThrow();
   });
 });
 

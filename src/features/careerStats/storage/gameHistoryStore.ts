@@ -370,9 +370,49 @@ function buildStore(getDbFn: GetDb) {
       );
     }
 
-    // Validate that all required team IDs exist locally.
-    const requiredTeamIds = bundle.payload.requiredTeamIds ?? [];
-    const missingTeamIds = requiredTeamIds.filter((id) => !existingTeamIds.has(id));
+    const games = bundle.payload.games ?? [];
+    const stats = bundle.payload.playerGameStats ?? [];
+    const pitcherStats = bundle.payload.pitcherGameStats ?? [];
+
+    // Validates that a team-ID field is a non-empty string; throws a descriptive error
+    // if the value is missing or has an unexpected type (e.g. in a hand-crafted bundle
+    // that has passed signature validation but contains malformed row data).
+    const requireStringTeamId = (value: unknown, field: string): string => {
+      if (typeof value !== "string" || value.length === 0) {
+        throw new Error(
+          `Invalid game history bundle: expected non-empty string for ${field}, got ${JSON.stringify(value)}.`,
+        );
+      }
+      return value;
+    };
+
+    // Validate custom team IDs from the actual rows, not just the advisory requiredTeamIds list.
+    // Only ct_* IDs are persisted in the local custom-teams store; built-in team IDs (those
+    // without the ct_ prefix) are always available and must not be checked against the store.
+    // The advisory list is type-guarded (non-strings silently skipped); row-level IDs throw.
+    const requiredTeamIds = new Set<string>();
+    for (const id of bundle.payload.requiredTeamIds ?? []) {
+      if (typeof id === "string" && id.length > 0) requiredTeamIds.add(id);
+    }
+    for (const game of games) {
+      requiredTeamIds.add(requireStringTeamId(game.homeTeamId as unknown, "game.homeTeamId"));
+      requiredTeamIds.add(requireStringTeamId(game.awayTeamId as unknown, "game.awayTeamId"));
+    }
+    for (const stat of stats) {
+      requiredTeamIds.add(requireStringTeamId(stat.teamId as unknown, "playerGameStat.teamId"));
+      requiredTeamIds.add(
+        requireStringTeamId(stat.opponentTeamId as unknown, "playerGameStat.opponentTeamId"),
+      );
+    }
+    for (const stat of pitcherStats) {
+      requiredTeamIds.add(requireStringTeamId(stat.teamId as unknown, "pitcherGameStat.teamId"));
+      requiredTeamIds.add(
+        requireStringTeamId(stat.opponentTeamId as unknown, "pitcherGameStat.opponentTeamId"),
+      );
+    }
+    const missingTeamIds = Array.from(requiredTeamIds)
+      .filter((id) => id.startsWith("ct_"))
+      .filter((id) => !existingTeamIds.has(id));
     if (missingTeamIds.length > 0) {
       throw new Error(
         `Cannot import game history: the following teams are missing from your local install. ` +
@@ -382,10 +422,6 @@ function buildStore(getDbFn: GetDb) {
     }
 
     const db = await getDbFn();
-
-    const games = bundle.payload.games ?? [];
-    const stats = bundle.payload.playerGameStats ?? [];
-    const pitcherStats = bundle.payload.pitcherGameStats ?? [];
 
     // Games.
     const gameIds = games.map((g) => g.id);

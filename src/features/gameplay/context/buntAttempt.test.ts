@@ -41,7 +41,7 @@ describe("buntAttempt — fielder's choice", () => {
     vi.spyOn(rngModule, "random").mockReturnValueOnce(0.15);
     const { log } = makeLogs();
     const next = buntAttempt(makeState({ baseLayout: [1, 0, 1], score: [0, 0] }), log);
-    expect(next.score[0]).toBe(1); // 3rd runner scored
+    expect(next.score[0]).toBe(1); // 3rd runner scored while defense threw to 2nd
     expect(next.baseLayout[0]).toBe(1); // batter safe at 1st
     expect(next.baseLayout[2]).toBe(0); // 3rd base now empty
   });
@@ -73,11 +73,21 @@ describe("buntAttempt — fielder's choice", () => {
 });
 
 describe("buntAttempt — fielder's choice extras", () => {
-  it("FC: runner on 2nd + 3rd — 3rd scores", () => {
+  it("FC: runner on 2nd + 3rd — 3rd scores, batter safe", () => {
     vi.spyOn(rngModule, "random").mockReturnValueOnce(0.15);
     const { log } = makeLogs();
     const next = buntAttempt(makeState({ baseLayout: [0, 1, 1], score: [0, 0] }), log);
+    expect(next.score[0]).toBe(1); // 3rd runner scored while defense threw to get lead runner
+    expect(next.baseLayout[0]).toBe(1); // batter safe at 1st
+    expect(next.baseLayout[2]).toBe(0); // 3rd base now empty
+  });
+
+  it("FC: bases loaded — forced runner from 3rd scores", () => {
+    vi.spyOn(rngModule, "random").mockReturnValueOnce(0.15);
+    const { log } = makeLogs();
+    const next = buntAttempt(makeState({ baseLayout: [1, 1, 1], score: [0, 0] }), log);
     expect(next.score[0]).toBe(1);
+    expect(next.baseLayout).toEqual([1, 0, 1]);
   });
 });
 

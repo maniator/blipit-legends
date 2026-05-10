@@ -156,6 +156,68 @@ describe("hitBall — handleGrounder (ground ball out paths)", () => {
     expect(logs.some((l) => l.includes("fielder's choice"))).toBe(true);
   });
 
+  it("fielder's choice: runner on 2nd is forced to 3rd when 1st is occupied", () => {
+    vi.spyOn(rngModule, "random")
+      .mockReturnValueOnce(0.999)
+      .mockReturnValueOnce(0.2)
+      .mockReturnValueOnce(0.7);
+    const next = hitBall(
+      Hit.Single,
+      makeState({
+        baseLayout: [1, 1, 0],
+        baseRunnerIds: ["runner_1st", "runner_2nd", null],
+        lineupOrder: [["batter_fc"], []],
+      }),
+      noop,
+    );
+    expect(next.baseLayout).toEqual([1, 0, 1]);
+    expect(next.baseRunnerIds).toEqual(["batter_fc", null, "runner_2nd"]);
+  });
+
+  it("fielder's choice: runner on 3rd is not forced home with only 1st occupied", () => {
+    vi.spyOn(rngModule, "random")
+      .mockReturnValueOnce(0.999)
+      .mockReturnValueOnce(0.2)
+      .mockReturnValueOnce(0.7);
+    const next = hitBall(
+      Hit.Single,
+      makeState({
+        baseLayout: [1, 0, 1],
+        baseRunnerIds: ["runner_1st", null, "runner_3rd"],
+        lineupOrder: [["batter_fc"], []],
+        score: [0, 0],
+      }),
+      noop,
+    );
+    expect(next.score[0]).toBe(0);
+    expect(next.baseLayout).toEqual([1, 0, 1]);
+    expect(next.baseRunnerIds).toEqual(["batter_fc", null, "runner_3rd"]);
+  });
+
+  it("fielder's choice: bases loaded forces in one run and advances runner from 2nd", () => {
+    vi.spyOn(rngModule, "random")
+      .mockReturnValueOnce(0.999)
+      .mockReturnValueOnce(0.2)
+      .mockReturnValueOnce(0.7);
+    const { logs, log } = makeLogs();
+    const next = hitBall(
+      Hit.Single,
+      makeState({
+        baseLayout: [1, 1, 1],
+        baseRunnerIds: ["runner_1st", "runner_2nd", "runner_3rd"],
+        inning: 2,
+        lineupOrder: [["batter_fc"], []],
+        score: [0, 0],
+      }),
+      log,
+    );
+    expect(next.score[0]).toBe(1);
+    expect(next.inningRuns[0][1]).toBe(1);
+    expect(next.baseLayout).toEqual([1, 0, 1]);
+    expect(next.baseRunnerIds).toEqual(["batter_fc", null, "runner_2nd"]);
+    expect(logs).toContain("One run scores!");
+  });
+
   it("simple ground out: no runner on 1st → out at first", () => {
     vi.spyOn(rngModule, "random")
       .mockReturnValueOnce(0.999) // main roll → pop-out zone

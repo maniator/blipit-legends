@@ -19,6 +19,61 @@ const RXDB_EXPORT_KEY = "ballgame:rxdb:v1";
 
 type GetDb = () => Promise<BallgameDb>;
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+
+/**
+ * Validate event records from an imported save bundle.
+ *
+ * Checks that every entry is a well-typed object whose `saveId` matches the
+ * parent save, whose `id` matches the `${saveId}:${idx}` pattern, and that
+ * all indices are non-negative, unique, and form a contiguous sequence starting
+ * at 0. Throws a descriptive Error on the first violation.
+ *
+ * @returns A sorted (ascending by `idx`) array of validated EventRecord objects.
+ */
+const validateImportedEvents = (events: unknown, saveId: string): EventRecord[] => {
+  if (!Array.isArray(events)) throw new Error("Invalid save data: events must be an array");
+
+  const seenIdx = new Set<number>();
+  const seenIds = new Set<string>();
+  const eventRecords: EventRecord[] = [];
+
+  for (const event of events) {
+    if (!isRecord(event)) throw new Error("Invalid save data: event entries must be objects");
+    const { id, saveId: eventSaveId, idx, at, type, payload, ts, schemaVersion } = event;
+    if (
+      typeof id !== "string" ||
+      eventSaveId !== saveId ||
+      !Number.isInteger(idx) ||
+      (idx as number) < 0 ||
+      typeof at !== "number" ||
+      typeof type !== "string" ||
+      !isRecord(payload) ||
+      typeof ts !== "number" ||
+      typeof schemaVersion !== "number"
+    ) {
+      throw new Error("Invalid save data: event log is malformed");
+    }
+    if (id !== `${saveId}:${idx}`) {
+      throw new Error("Invalid save data: event id does not match save and index");
+    }
+    if (seenIdx.has(idx as number) || seenIds.has(id)) {
+      throw new Error("Invalid save data: duplicate event log entry");
+    }
+    seenIdx.add(idx as number);
+    seenIds.add(id);
+    eventRecords.push(event as unknown as EventRecord);
+  }
+
+  for (let idx = 0; idx < eventRecords.length; idx++) {
+    if (!seenIdx.has(idx))
+      throw new Error("Invalid save data: event log indices must be contiguous");
+  }
+
+  return eventRecords.sort((a, b) => a.idx - b.idx);
+};
+
 function buildStore(getDbFn: GetDb) {
   // Per-save promise chain: serializes all appendEvents calls for the same save
   // so index allocation never races even under rapid fire-and-forget writes.
@@ -239,11 +294,15 @@ function buildStore(getDbFn: GetDb) {
         );
       }
 
+      const importedEvents = validateImportedEvents(events, header.id);
+
       const { matchupMode: _drop, ...headerRest } = header as unknown as Record<string, unknown>;
       const cleanHeader = { ...headerRest } as unknown as SaveRecord;
       await db.saves.upsert(cleanHeader);
-      if (Array.isArray(events) && events.length > 0) {
-        await db.events.bulkUpsert(events);
+      const existingEvents = await db.events.find({ selector: { saveId: cleanHeader.id } }).exec();
+      await Promise.all(existingEvents.map((event) => event.remove()));
+      if (importedEvents.length > 0) {
+        await db.events.bulkInsert(importedEvents);
       }
       const cleanId = (cleanHeader as unknown as Record<string, unknown>).id as string;
       nextIdxMap.delete(cleanId);

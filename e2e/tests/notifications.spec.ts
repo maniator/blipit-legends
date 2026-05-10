@@ -42,10 +42,20 @@ test.describe("Notifications smoke — decision panel", { tag: "@chromium-only" 
     page.on("console", (msg) => consoleMsgs.push(msg.text()));
 
     // Load a fixture with pendingDecision=defensive_shift and managerMode=true.
-    // The DecisionPanel mounts immediately on restore, triggering
-    // showManagerNotification — no autoplay wait needed.
+    // The DecisionPanel mounts immediately on restore.
     await loadFixture(page, "pending-decision.json");
     await expect(page.getByTestId("manager-decision-panel")).toBeVisible({ timeout: 10_000 });
+
+    // Notifications are only sent when the tab is hidden (document.hidden === true).
+    // Simulate the user switching away so the visibilitychange handler fires and
+    // showManagerNotification is called — this is the in-process signal we verify.
+    await page.evaluate(() => {
+      Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    // Give the async notification code path a moment to run.
+    await page.waitForTimeout(500);
 
     // The app logs the notification attempt via appLog.log before sending it.
     // This is a reliable in-process signal that the notification code path ran.

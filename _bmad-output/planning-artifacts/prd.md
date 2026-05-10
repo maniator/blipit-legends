@@ -260,6 +260,8 @@ _(Project type: Progressive Web App — offline-capable, installable)_
 
 ## Functional Requirements
 
+> **Note:** All FRs in this section describe **shipped behaviour** — features that are implemented and live at blipit.net. This is not a forward-looking feature list; speculative requirements must not appear here.
+
 ### FR-01: Game Simulation Engine
 
 - **FR-01.1** The system shall simulate a complete 9-inning baseball game using the seeded PRNG.
@@ -273,7 +275,7 @@ _(Project type: Progressive Web App — offline-capable, installable)_
 ### FR-02: Auto-Play & Controls
 
 - **FR-02.1** The system shall support three auto-play speeds: Slow, Normal, Fast.
-- **FR-02.2** The system shall support step-by-step mode (one pitch per user action).
+- **FR-02.2** The system shall support autoplay with pause/resume controls. There is no step-by-step pitch mode; when unpaused, the game advances automatically.
 - **FR-02.3** The system shall gate auto-play advancement until the current TTS announcement completes.
 - **FR-02.4** The system shall persist speed, volume, and mode settings to localStorage.
 
