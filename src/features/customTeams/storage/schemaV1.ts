@@ -14,7 +14,7 @@ import type { PlayerRecord, TeamRecord } from "./types";
 export const FREE_AGENT_TEAM_ID = "team_free_agents";
 
 const teamsSchemaV1: RxJsonSchema<TeamRecord> = {
-  version: 1,
+  version: 2,
   primaryKey: "id",
   type: "object",
   properties: {
@@ -50,7 +50,8 @@ const teamsSchemaV1: RxJsonSchema<TeamRecord> = {
       properties: {
         version: { type: "number" },
         theme: { type: "string" },
-        paritySeed: { type: "string" },
+        parity: { type: "string" },
+        baseSeed: { type: "string" },
       },
     },
   },
@@ -64,6 +65,8 @@ export const teamsV1CollectionConfig = {
   migrationStrategies: {
     // v0 → v1: adds optional fields activeLeagueIds and autogen — identity migration is safe.
     1: (oldDoc: Record<string, unknown>) => oldDoc,
+    // v1 → v2: autogen marker shape changes from paritySeed to parity/baseSeed.
+    2: (oldDoc: Record<string, unknown>) => oldDoc,
   },
 };
 

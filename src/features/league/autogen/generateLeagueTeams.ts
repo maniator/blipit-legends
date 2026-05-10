@@ -1,6 +1,5 @@
 import { buildRoster } from "@feat/customTeams/storage/customTeamSanitizers";
 
-import { generatePlayerId, generateTeamId } from "@storage/generateId";
 import { fnv1a } from "@storage/hash";
 import type { TeamRoster } from "@storage/types";
 
@@ -24,8 +23,8 @@ export interface GenerateLeagueTeamsOptions {
   autogenSubSeed: string;
   rosterMinimums: RosterMinimums;
   idFactory?: {
-    teamId?: () => string;
-    playerId?: () => string;
+    teamId?: (index?: number) => string;
+    playerId?: (index?: number) => string;
   };
 }
 
@@ -316,9 +315,24 @@ function slugify(value: string): string {
 export function generateLeagueTeams(options: GenerateLeagueTeamsOptions): GeneratedLeagueTeam[] {
   const { count, theme, parity, masterSeed, autogenSubSeed, rosterMinimums } = options;
   if (!Number.isInteger(count) || count < 1) throw new Error("count must be a positive integer");
+  if (
+    rosterMinimums.lineup < 9 ||
+    rosterMinimums.bench < 3 ||
+    rosterMinimums.startingPitchers < 5 ||
+    rosterMinimums.reliefPitchers < 3
+  ) {
+    throw new Error("rosterMinimums must meet v1 minimums: lineup 9, bench 3, 5 SP, 3 RP");
+  }
   const rng = seededRng(masterSeed, autogenSubSeed);
-  const teamId = options.idFactory?.teamId ?? generateTeamId;
-  const playerId = options.idFactory?.playerId ?? generatePlayerId;
+  const baseSeed = `${masterSeed}:autogen:${autogenSubSeed}`;
+  const teamId =
+    options.idFactory?.teamId ??
+    ((index?: number) => `ct_auto_${fnv1a(`${baseSeed}:team:${index ?? 0}`)}`);
+  const playerId =
+    options.idFactory?.playerId ??
+    ((index?: number) => `p_auto_${fnv1a(`${baseSeed}:player:${index ?? 0}`)}`);
+  let playerIndex = 0;
+  const nextPlayerId = () => playerId(playerIndex++);
   const usedTeamNames = new Set<string>();
 
   return Array.from({ length: count }, (_, teamIndex) => {
@@ -342,7 +356,7 @@ export function generateLeagueTeams(options: GenerateLeagueTeamsOptions): Genera
     const lineup = Array.from({ length: rosterMinimums.lineup }, (_, i) => {
       const position = LINEUP_POSITIONS[i % LINEUP_POSITIONS.length];
       return {
-        id: playerId(),
+        id: nextPlayerId(),
         role: "batter" as const,
         name: playerName(rng, usedPlayerNames),
         position,
@@ -353,7 +367,7 @@ export function generateLeagueTeams(options: GenerateLeagueTeamsOptions): Genera
     const bench = Array.from({ length: rosterMinimums.bench }, (_, i) => {
       const position = BENCH_POSITIONS[i % BENCH_POSITIONS.length];
       return {
-        id: playerId(),
+        id: nextPlayerId(),
         role: "batter" as const,
         name: playerName(rng, usedPlayerNames),
         position,
@@ -364,7 +378,7 @@ export function generateLeagueTeams(options: GenerateLeagueTeamsOptions): Genera
     });
     const pitchers = [
       ...Array.from({ length: rosterMinimums.startingPitchers }, () => ({
-        id: playerId(),
+        id: nextPlayerId(),
         role: "pitcher" as const,
         name: playerName(rng, usedPlayerNames),
         position: "P",
@@ -374,7 +388,7 @@ export function generateLeagueTeams(options: GenerateLeagueTeamsOptions): Genera
         pitching: pitcherStats(rng, strength, "SP"),
       })),
       ...Array.from({ length: rosterMinimums.reliefPitchers }, () => ({
-        id: playerId(),
+        id: nextPlayerId(),
         role: "pitcher" as const,
         name: playerName(rng, usedPlayerNames),
         position: "P",
@@ -388,7 +402,7 @@ export function generateLeagueTeams(options: GenerateLeagueTeamsOptions): Genera
     const roster = buildRoster({ lineup, bench, pitchers });
     const abbreviation = nickname.slice(0, 3).toUpperCase();
     return {
-      id: teamId(),
+      id: teamId(teamIndex),
       name,
       abbreviation,
       city,
@@ -401,7 +415,7 @@ export function generateLeagueTeams(options: GenerateLeagueTeamsOptions): Genera
         version: AUTOGEN_VERSION,
         theme,
         parity,
-        baseSeed: `${masterSeed}:autogen:${autogenSubSeed}`,
+        baseSeed,
       },
     };
   });

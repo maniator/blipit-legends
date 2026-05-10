@@ -364,8 +364,8 @@ describe("schema version and reset flag", () => {
     expect(db.saves.schema.version).toBe(0);
   });
 
-  it("teams collection has schema version 1", () => {
-    expect(db.teams.schema.version).toBe(1);
+  it("teams collection has schema version 2", () => {
+    expect(db.teams.schema.version).toBe(2);
   });
 
   it("players collection has schema version 0", () => {

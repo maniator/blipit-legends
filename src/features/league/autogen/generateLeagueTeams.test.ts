@@ -29,6 +29,18 @@ describe("generateLeagueTeams", () => {
     expect(generate()).toEqual(generate());
   });
 
+  it("is deterministic with the default seeded ID generation", () => {
+    const options = {
+      count: 2,
+      theme: "classic" as const,
+      parity: "mixed" as const,
+      masterSeed: "phase3-master-seed",
+      autogenSubSeed: "subseed-default-id",
+      rosterMinimums: minimums,
+    };
+    expect(generateLeagueTeams(options)).toEqual(generateLeagueTeams(options));
+  });
+
   it("generates the v1 roster minimums", () => {
     const [team] = generate();
     expect(team.roster.lineup).toHaveLength(9);
@@ -74,6 +86,19 @@ describe("generateLeagueTeams", () => {
         expect(velocity + control + movement).toBeLessThanOrEqual(160);
       }
     }
+  });
+
+  it("throws when roster minimums are below v1 league-play minimums", () => {
+    expect(() =>
+      generateLeagueTeams({
+        count: 1,
+        theme: "classic",
+        parity: "mixed",
+        masterSeed: "seed",
+        autogenSubSeed: "sub",
+        rosterMinimums: { lineup: 8, bench: 3, startingPitchers: 5, reliefPitchers: 3 },
+      }),
+    ).toThrow(/rosterMinimums must meet v1 minimums/);
   });
 
   it("throws for invalid counts", () => {
