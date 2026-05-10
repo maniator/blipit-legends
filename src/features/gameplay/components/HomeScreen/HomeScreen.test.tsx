@@ -167,9 +167,9 @@ describe("HomeScreen", () => {
     expect(creatorLink).toHaveAttribute("href", "https://naftali.dev");
   });
 
-  it("always shows the League play coming soon teaser", () => {
+  it("always shows the League Mode teaser", () => {
     render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} />);
     expect(screen.getByTestId("league-play-teaser")).toBeInTheDocument();
-    expect(screen.getByText(/league play coming soon/i)).toBeInTheDocument();
+    expect(screen.getByText(/league mode/i)).toBeInTheDocument();
   });
 });
