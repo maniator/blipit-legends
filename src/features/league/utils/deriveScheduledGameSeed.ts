@@ -25,15 +25,10 @@ interface DeriveScheduledGameSeedInput {
   awaySeasonTeamId: string;
 }
 
-export function deriveScheduledGameSeed(
-  inputOrSeasonId: DeriveScheduledGameSeedInput | string,
-  seasonGameId?: string,
-): string {
+export function deriveScheduledGameSeed(input: DeriveScheduledGameSeedInput): string {
   const seedInput =
-    typeof inputOrSeasonId === "string"
-      ? `${inputOrSeasonId}:${seasonGameId ?? ""}`
-      : `${inputOrSeasonId.seasonId}:r${inputOrSeasonId.seasonRoundIdx}:g${inputOrSeasonId.gameInSeriesIdx}:` +
-        `${inputOrSeasonId.homeSeasonTeamId}:${inputOrSeasonId.awaySeasonTeamId}`;
+    `${input.seasonId}:r${input.seasonRoundIdx}:g${input.gameInSeriesIdx}:` +
+    `${input.homeSeasonTeamId}:${input.awaySeasonTeamId}`;
   const hash = fnv1a(seedInput);
   const uint32 = parseInt(hash, 16) >>> 0;
   return uint32.toString(36);
