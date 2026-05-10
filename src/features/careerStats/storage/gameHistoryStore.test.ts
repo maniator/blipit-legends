@@ -234,6 +234,46 @@ describe("GameHistoryStore export/import", () => {
     );
   });
 
+  it("rejects imports when actual payload rows reference teams omitted from requiredTeamIds", async () => {
+    const gameDoc: CompletedGameRecord = {
+      id: "game_missing_actual_team",
+      playedAt: Date.now(),
+      seed: "actual",
+      rngState: null,
+      homeTeamId: "ct_actual_home",
+      awayTeamId: "ct_actual_away",
+      homeScore: 4,
+      awayScore: 2,
+      innings: 9,
+      schemaVersion: 1,
+    };
+    const payload = {
+      games: [gameDoc],
+      playerGameStats: [
+        {
+          ...makeStatRow("game_missing_actual_team", "p1"),
+          id: "game_missing_actual_team:ct_actual_home:p1",
+          teamId: "ct_actual_home",
+          opponentTeamId: "ct_actual_away",
+          createdAt: Date.now(),
+          schemaVersion: 1,
+        },
+      ],
+      pitcherGameStats: [],
+      requiredTeamIds: [],
+    };
+    const sig = fnv1a(GAME_HISTORY_EXPORT_KEY + JSON.stringify(payload));
+    const bundle = JSON.stringify({
+      type: "gameHistory",
+      formatVersion: 1,
+      exportedAt: "x",
+      payload,
+      sig,
+    });
+
+    await expect(store.importGameHistory(bundle, new Set())).rejects.toThrow("ct_actual_home");
+  });
+
   it("rejects tampered bundles", async () => {
     const bundle = JSON.stringify({
       type: "gameHistory",

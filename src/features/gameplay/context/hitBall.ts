@@ -90,20 +90,40 @@ const handleGrounder = (state: State, log: (msg: string) => void, pitchKey: numb
       return playerOut(afterFirst, log, true);
     }
     log("Ground ball to the infield — fielder's choice.");
-    const fcBase: [number, number, number] = [1, baseLayout[1], baseLayout[2]];
+    const fcBase: [number, number, number] = [1, 0, 0];
+    let runsScored = 0;
+    if (baseLayout[1] && baseLayout[2]) runsScored = 1;
+    if (baseLayout[1]) fcBase[2] = 1;
+    if (baseLayout[2] && !baseLayout[1]) fcBase[2] = 1;
+    const newScore: [number, number] = [state.score[0], state.score[1]];
+    newScore[state.atBat] += runsScored;
+    if (runsScored > 0) log("One run scores!");
     // Lead runner (1st) is forced out; batter reaches 1st safely — place batter's ID there.
-    const fcRunnerIds = [...(state.baseRunnerIds ?? [null, null, null])] as [
-      string | null,
-      string | null,
-      string | null,
-    ];
-    fcRunnerIds[0] = batterId; // batter takes 1st; old runner ID (forced out) is replaced
-    // Batter reaches 1st safely; at-bat complete, so advance lineup.
-    return playerOut(
-      { ...groundedState, baseLayout: fcBase, baseRunnerIds: fcRunnerIds },
-      log,
-      true,
+    const oldRunnerIds =
+      state.baseRunnerIds ?? ([null, null, null] as [string | null, string | null, string | null]);
+    const fcRunnerIds: [string | null, string | null, string | null] = [batterId, null, null];
+    if (baseLayout[1]) fcRunnerIds[2] = oldRunnerIds[1];
+    if (baseLayout[2] && !baseLayout[1]) fcRunnerIds[2] = oldRunnerIds[2];
+    const pitchingTeam = (1 - (state.atBat as number)) as 0 | 1;
+    const pitcherGameLog =
+      runsScored > 0
+        ? updateActivePitcherLog(state.pitcherGameLog ?? [[], []], pitchingTeam, (entry) => ({
+            ...entry,
+            runsAllowed: entry.runsAllowed + runsScored,
+          }))
+        : state.pitcherGameLog;
+    const afterRuns = addInningRuns(
+      {
+        ...groundedState,
+        baseLayout: fcBase,
+        baseRunnerIds: fcRunnerIds,
+        score: newScore,
+        pitcherGameLog,
+      },
+      runsScored,
     );
+    // Batter reaches 1st safely; at-bat complete, so advance lineup.
+    return playerOut(afterRuns, log, true);
   }
 
   log("Ground ball to the infield — out at first.");

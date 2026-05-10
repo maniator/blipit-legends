@@ -27,6 +27,10 @@ vi.mock("@feat/gameplay/utils/announce", () => ({
 const renderWithContext = (ui: React.ReactElement, ctx: ContextValue = makeContextValue()) =>
   render(<GameContext.Provider value={ctx}>{ui}</GameContext.Provider>);
 
+const setDocumentHidden = (hidden: boolean) => {
+  Object.defineProperty(document, "hidden", { value: hidden, configurable: true });
+};
+
 describe("DecisionPanel", () => {
   it("renders nothing when pendingDecision is null", () => {
     const { container } = renderWithContext(
@@ -100,6 +104,14 @@ describe("DecisionPanel", () => {
       makeContextValue({ pendingDecision: { kind: "bunt" } }),
     );
     expect(screen.getByText(/auto-skip/i)).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: /decision countdown/i })).toHaveAttribute(
+      "aria-valuenow",
+      "10",
+    );
+    expect(screen.getByRole("progressbar", { name: /decision countdown/i })).toHaveAttribute(
+      "aria-valuetext",
+      "10 seconds remaining",
+    );
   });
 
   it("dispatches steal_attempt when Yes clicked", () => {
@@ -228,6 +240,8 @@ describe("DecisionPanel — service worker notification paths", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    (Notification as unknown as { permission: NotificationPermission }).permission = "granted";
+    setDocumentHidden(false);
     mockSW.ready = Promise.resolve(mockReg) as unknown as typeof mockSW.ready;
   });
 
@@ -255,7 +269,23 @@ describe("DecisionPanel — service worker notification paths", () => {
     expect(mockSW.removeEventListener).toHaveBeenCalledWith("message", expect.any(Function));
   });
 
-  it("calls showNotification via SW when pendingDecision is set", async () => {
+  const notificationMessage = (
+    action: string,
+    decision: DecisionType,
+    { gameInstanceId, pitchKey = 0 }: { gameInstanceId?: string; pitchKey?: number } = {},
+  ) =>
+    ({
+      data: {
+        type: "NOTIFICATION_ACTION",
+        action,
+        payload: decision,
+        gameInstanceId,
+        pitchKey,
+      },
+    }) as MessageEvent;
+
+  it("calls showNotification via SW when pendingDecision is set while tab is hidden", async () => {
+    setDocumentHidden(true);
     await act(async () => {
       renderWithContext(
         <DecisionPanel strategy="balanced" />,
@@ -264,7 +294,10 @@ describe("DecisionPanel — service worker notification paths", () => {
     });
     expect(mockReg.showNotification).toHaveBeenCalledWith(
       expect.stringContaining("Manager"),
-      expect.objectContaining({ tag: "manager-decision" }),
+      expect.objectContaining({
+        data: expect.objectContaining({ decision: { kind: "bunt" }, pitchKey: 0 }),
+        tag: "manager-decision",
+      }),
     );
   });
 
@@ -278,11 +311,7 @@ describe("DecisionPanel — service worker notification paths", () => {
     const handler = getRegisteredMessageHandler();
     act(() => {
       handler({
-        data: {
-          type: "NOTIFICATION_ACTION",
-          action: "steal",
-          payload: { base: 0, successPct: 80 },
-        },
+        data: notificationMessage("steal", decision).data,
       } as MessageEvent);
     });
     expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: "steal_attempt" }));
@@ -297,7 +326,7 @@ describe("DecisionPanel — service worker notification paths", () => {
     const handler = getRegisteredMessageHandler();
     act(() => {
       handler({
-        data: { type: "NOTIFICATION_ACTION", action: "bunt", payload: {} },
+        data: notificationMessage("bunt", { kind: "bunt" }).data,
       } as MessageEvent);
     });
     expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: "bunt_attempt" }));
@@ -321,7 +350,7 @@ describe("DecisionPanel — service worker notification paths", () => {
     for (const { action, expected } of cases) {
       dispatch.mockClear();
       act(() => {
-        handler({ data: { type: "NOTIFICATION_ACTION", action, payload: {} } } as MessageEvent);
+        handler({ data: notificationMessage(action, { kind: "count30" }).data } as MessageEvent);
       });
       expect(dispatch).toHaveBeenCalledWith(expected);
     }
@@ -336,8 +365,45 @@ describe("DecisionPanel — service worker notification paths", () => {
     const handler = getRegisteredMessageHandler();
     act(() => {
       handler({
-        data: { type: "NOTIFICATION_ACTION", action: "focus", payload: {} },
+        data: notificationMessage("focus", { kind: "bunt" }).data,
       } as MessageEvent);
+    });
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it("ignores stale notification actions from a different pitch or decision", () => {
+    const dispatch = vi.fn();
+    renderWithContext(
+      <DecisionPanel strategy="balanced" />,
+      makeContextValue({
+        gameInstanceId: "game-current",
+        pendingDecision: { kind: "bunt" },
+        pitchKey: 7,
+        dispatch,
+      }),
+    );
+    const handler = getRegisteredMessageHandler();
+    act(() => {
+      handler(
+        notificationMessage(
+          "bunt",
+          { kind: "bunt" },
+          { gameInstanceId: "game-current", pitchKey: 6 },
+        ),
+      );
+      handler(
+        notificationMessage(
+          "bunt",
+          { kind: "steal", base: 0, successPct: 80 },
+          {
+            gameInstanceId: "game-current",
+            pitchKey: 7,
+          },
+        ),
+      );
+      handler(
+        notificationMessage("bunt", { kind: "bunt" }, { gameInstanceId: "game-old", pitchKey: 7 }),
+      );
     });
     expect(dispatch).not.toHaveBeenCalled();
   });
@@ -382,7 +448,14 @@ describe("DecisionPanel — service worker notification paths", () => {
     for (const { action, expected } of cases) {
       dispatch.mockClear();
       act(() => {
-        handler({ data: { type: "NOTIFICATION_ACTION", action, payload: {} } } as MessageEvent);
+        handler({
+          data: notificationMessage(action, {
+            kind: "pinch_hitter",
+            candidates: [],
+            teamIdx: 0,
+            lineupIdx: 0,
+          }).data,
+        } as MessageEvent);
       });
       expect(dispatch).toHaveBeenCalledWith(expected);
     }
@@ -397,7 +470,7 @@ describe("DecisionPanel — service worker notification paths", () => {
     const handler = getRegisteredMessageHandler();
     act(() => {
       handler({
-        data: { type: "NOTIFICATION_ACTION", action: "shift_off", payload: {} },
+        data: notificationMessage("shift_off", { kind: "defensive_shift" }).data,
       } as MessageEvent);
     });
     expect(dispatch).toHaveBeenCalledWith({ type: "set_defensive_shift", payload: false });

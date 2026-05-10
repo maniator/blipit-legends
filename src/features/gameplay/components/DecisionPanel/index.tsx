@@ -6,7 +6,11 @@ import { appLog } from "@shared/utils/logger";
 
 import { DECISION_TIMEOUT_SEC } from "./constants";
 import DecisionButtons from "./DecisionButtons";
-import { closeManagerNotification, showManagerNotification } from "./notificationHelpers";
+import {
+  closeManagerNotification,
+  type ManagerNotificationData,
+  showManagerNotification,
+} from "./notificationHelpers";
 import { CountdownFill, CountdownLabel, CountdownRow, CountdownTrack, Panel } from "./styles";
 
 type Props = {
@@ -14,7 +18,7 @@ type Props = {
 };
 
 const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
-  const { dispatch, pendingDecision } = useGameContext();
+  const { dispatch, gameInstanceId, pendingDecision, pitchKey } = useGameContext();
   const [secondsLeft, setSecondsLeft] = React.useState(DECISION_TIMEOUT_SEC);
 
   // Listen for actions dispatched from the service worker (notification button taps).
@@ -27,7 +31,21 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
       if (event.origin && typeof window !== "undefined" && event.origin !== window.location.origin)
         return;
       if (event.data?.type !== "NOTIFICATION_ACTION") return;
-      const { action, payload } = event.data;
+      if (!pendingDecision) return;
+      const {
+        action,
+        gameInstanceId: sourceGameInstanceId,
+        payload,
+        pitchKey: sourcePitchKey,
+      } = event.data as {
+        action?: string;
+        gameInstanceId?: string;
+        payload?: ManagerNotificationData["decision"];
+        pitchKey?: number;
+      };
+      if (sourcePitchKey !== pitchKey) return;
+      if (sourceGameInstanceId !== gameInstanceId) return;
+      if (!payload || payload.kind !== pendingDecision.kind) return;
       switch (action) {
         case "steal":
           dispatch({ type: "steal_attempt", payload });
@@ -80,7 +98,7 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
     };
     navigator.serviceWorker.addEventListener("message", handler);
     return () => navigator.serviceWorker.removeEventListener("message", handler);
-  }, [dispatch]);
+  }, [dispatch, gameInstanceId, pendingDecision, pitchKey]);
 
   // Countdown timer + chime + notification on new decision
   React.useEffect(() => {
@@ -95,9 +113,9 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
     // Sound alert (respects mute)
     playDecisionChime();
 
-    // Browser notification — always send immediately so the user is alerted
-    // whether they are on the tab or have switched away.
-    showManagerNotification(pendingDecision);
+    if (document.hidden) {
+      showManagerNotification(pendingDecision, { gameInstanceId, pitchKey });
+    }
 
     // Re-send if the user switches away while the decision is still pending
     // (e.g. they saw the in-page panel but then tabbed away).
@@ -107,7 +125,7 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
           "visibilitychange — tab hidden, re-sending notification for:",
           pendingDecision.kind,
         );
-        showManagerNotification(pendingDecision);
+        showManagerNotification(pendingDecision, { gameInstanceId, pitchKey });
       }
     };
     document.addEventListener("visibilitychange", handleVisibility);
@@ -125,7 +143,7 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
       clearInterval(id);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [pendingDecision, dispatch]);
+  }, [pendingDecision, dispatch, gameInstanceId, pitchKey]);
 
   if (!pendingDecision) return null;
 
@@ -141,7 +159,14 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
         onDispatch={dispatch}
       />
       <CountdownRow>
-        <CountdownTrack>
+        <CountdownTrack
+          role="progressbar"
+          aria-label="Decision countdown until auto-skip"
+          aria-valuemin={0}
+          aria-valuemax={DECISION_TIMEOUT_SEC}
+          aria-valuenow={secondsLeft}
+          aria-valuetext={`${secondsLeft} seconds remaining`}
+        >
           <CountdownFill $pct={pct} />
         </CountdownTrack>
         <CountdownLabel>auto-skip {secondsLeft}s</CountdownLabel>

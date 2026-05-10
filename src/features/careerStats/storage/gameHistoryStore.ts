@@ -370,9 +370,25 @@ function buildStore(getDbFn: GetDb) {
       );
     }
 
-    // Validate that all required team IDs exist locally.
-    const requiredTeamIds = bundle.payload.requiredTeamIds ?? [];
-    const missingTeamIds = requiredTeamIds.filter((id) => !existingTeamIds.has(id));
+    const games = bundle.payload.games ?? [];
+    const stats = bundle.payload.playerGameStats ?? [];
+    const pitcherStats = bundle.payload.pitcherGameStats ?? [];
+
+    // Validate team IDs from the actual rows, not just the advisory requiredTeamIds list.
+    const requiredTeamIds = new Set(bundle.payload.requiredTeamIds ?? []);
+    for (const game of games) {
+      requiredTeamIds.add(game.homeTeamId);
+      requiredTeamIds.add(game.awayTeamId);
+    }
+    for (const stat of stats) {
+      requiredTeamIds.add(stat.teamId);
+      requiredTeamIds.add(stat.opponentTeamId);
+    }
+    for (const stat of pitcherStats) {
+      requiredTeamIds.add(stat.teamId);
+      requiredTeamIds.add(stat.opponentTeamId);
+    }
+    const missingTeamIds = Array.from(requiredTeamIds).filter((id) => !existingTeamIds.has(id));
     if (missingTeamIds.length > 0) {
       throw new Error(
         `Cannot import game history: the following teams are missing from your local install. ` +
@@ -382,10 +398,6 @@ function buildStore(getDbFn: GetDb) {
     }
 
     const db = await getDbFn();
-
-    const games = bundle.payload.games ?? [];
-    const stats = bundle.payload.playerGameStats ?? [];
-    const pitcherStats = bundle.payload.pitcherGameStats ?? [];
 
     // Games.
     const gameIds = games.map((g) => g.id);

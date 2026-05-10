@@ -1,4 +1,4 @@
-import { DecisionType } from "@feat/gameplay/context/index";
+import type { DecisionType } from "@feat/gameplay/context/index";
 import { appLog } from "@shared/utils/logger";
 
 import { NOTIF_TAG } from "./constants";
@@ -6,6 +6,12 @@ import { NOTIF_TAG } from "./constants";
 export interface ServiceWorkerNotificationOptions extends NotificationOptions {
   actions?: { action: string; title: string }[];
   data?: unknown;
+}
+
+export interface ManagerNotificationData {
+  decision: DecisionType;
+  gameInstanceId?: string;
+  pitchKey: number;
 }
 
 export const getNotificationBody = (d: DecisionType): string => {
@@ -91,11 +97,12 @@ export const getNotificationActions = (d: DecisionType): { action: string; title
 };
 
 /** Show a service-worker notification with action buttons.
- *  Always sent (regardless of tab visibility) so the user receives an alert
- *  both when they are watching the game and after they switch away.
  *  requireInteraction: true keeps the notification visible until acted upon.
  *  Falls back to a plain Notification if the SW path fails. */
-export const showManagerNotification = (d: DecisionType): void => {
+export const showManagerNotification = (
+  d: DecisionType,
+  metadata: { gameInstanceId?: string; pitchKey: number },
+): void => {
   const permission = typeof Notification !== "undefined" ? Notification.permission : "unavailable";
   appLog.log(`showManagerNotification — kind="${d.kind}" permission="${permission}"`);
 
@@ -116,7 +123,7 @@ export const showManagerNotification = (d: DecisionType): void => {
           body,
           tag: NOTIF_TAG,
           actions: getNotificationActions(d),
-          data: d,
+          data: { decision: d, ...metadata } satisfies ManagerNotificationData,
           requireInteraction: true,
         } as ServiceWorkerNotificationOptions);
       })
