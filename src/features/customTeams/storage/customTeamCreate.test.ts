@@ -231,6 +231,61 @@ describe("createCustomTeam — name uniqueness", () => {
     const id2 = await store.createCustomTeam(makeInput({ name: "Falcons" }));
     expect(id1).not.toBe(id2);
   });
+
+  it("silently replaces an existing unlocked autogen team when the new team is also autogen (re-create season scenario)", async () => {
+    const autogenMarker = {
+      version: 1 as const,
+      theme: "classic" as const,
+      parity: "balanced" as const,
+      baseSeed: "seed:autogen:s1",
+    };
+    // Simulate first season: create autogen "Rockets"
+    const firstId = await store.createCustomTeam(
+      makeInput({ name: "Rockets", autogen: autogenMarker }),
+    );
+    expect(firstId).toBeTruthy();
+
+    // Simulate second season: create autogen "Rockets" again (different master seed → different ID)
+    const autogenMarker2 = { ...autogenMarker, baseSeed: "seed:autogen:s2" };
+    const secondId = await store.createCustomTeam(
+      makeInput({ name: "Rockets", autogen: autogenMarker2 }),
+    );
+    expect(secondId).not.toBe(firstId);
+
+    // Old team should be gone, new one should exist
+    const old = await db.teams.findOne(firstId).exec();
+    expect(old).toBeNull();
+    const current = await store.getCustomTeam(secondId);
+    expect(current?.name).toBe("Rockets");
+  });
+
+  it("throws when a manual team already holds the name and the new team is autogen", async () => {
+    // Manual team (no autogen marker) reserves the name
+    await store.createCustomTeam(makeInput({ name: "Rockets" }));
+    const autogenMarker = {
+      version: 1 as const,
+      theme: "classic" as const,
+      parity: "balanced" as const,
+      baseSeed: "seed:autogen:s1",
+    };
+    await expect(
+      store.createCustomTeam(makeInput({ name: "Rockets", autogen: autogenMarker })),
+    ).rejects.toThrow("already exists");
+  });
+
+  it("throws when an autogen team already holds the name and the new team is manual", async () => {
+    const autogenMarker = {
+      version: 1 as const,
+      theme: "classic" as const,
+      parity: "balanced" as const,
+      baseSeed: "seed:autogen:s1",
+    };
+    await store.createCustomTeam(makeInput({ name: "Rockets", autogen: autogenMarker }));
+    // Manual team (no autogen marker) tries to claim the same name
+    await expect(store.createCustomTeam(makeInput({ name: "Rockets" }))).rejects.toThrow(
+      "already exists",
+    );
+  });
 });
 
 describe("createCustomTeam — no teamSeed stored", () => {

@@ -102,7 +102,9 @@ test.describe("Smoke", () => {
       // instructions modal dialog (which is in the DOM but hidden) — that
       // modal now contains League Mode help text referencing "final score/step"
       // which Playwright's case-insensitive getByText would otherwise match.
-      await expect(page.getByTestId("scoreboard").getByText("FINAL", { exact: true })).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("scoreboard").getByText("FINAL", { exact: true })).toBeVisible({
+        timeout: 15_000,
+      });
 
       // After FINAL, the scoreboard should still be visible and no errors thrown.
       await expect(page.getByTestId("scoreboard")).toBeVisible();
@@ -145,7 +147,8 @@ test.describe("Smoke", () => {
       let lastLogCount = 0;
       let lastLogChangeTime = Date.now();
       await expect(async () => {
-        if (await page.getByTestId("scoreboard").getByText("FINAL", { exact: true }).isVisible()) return;
+        if (await page.getByTestId("scoreboard").getByText("FINAL", { exact: true }).isVisible())
+          return;
 
         const currentCount = await page.locator("[data-log-index]").count();
         if (currentCount > lastLogCount) {
