@@ -374,7 +374,9 @@ function buildStore(getDbFn: GetDb) {
     const stats = bundle.payload.playerGameStats ?? [];
     const pitcherStats = bundle.payload.pitcherGameStats ?? [];
 
-    // Validate team IDs from the actual rows, not just the advisory requiredTeamIds list.
+    // Validate custom team IDs from the actual rows, not just the advisory requiredTeamIds list.
+    // Only ct_* IDs are persisted in the local custom-teams store; built-in team IDs (those
+    // without the ct_ prefix) are always available and must not be checked against the store.
     const requiredTeamIds = new Set(bundle.payload.requiredTeamIds ?? []);
     for (const game of games) {
       requiredTeamIds.add(game.homeTeamId);
@@ -388,7 +390,9 @@ function buildStore(getDbFn: GetDb) {
       requiredTeamIds.add(stat.teamId);
       requiredTeamIds.add(stat.opponentTeamId);
     }
-    const missingTeamIds = Array.from(requiredTeamIds).filter((id) => !existingTeamIds.has(id));
+    const missingTeamIds = Array.from(requiredTeamIds)
+      .filter((id) => id.startsWith("ct_"))
+      .filter((id) => !existingTeamIds.has(id));
     if (missingTeamIds.length > 0) {
       throw new Error(
         `Cannot import game history: the following teams are missing from your local install. ` +
