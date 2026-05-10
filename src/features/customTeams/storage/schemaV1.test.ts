@@ -137,4 +137,68 @@ describe("teams schema migration: v0 → v1", () => {
 
     await db.close();
   });
+  it("migrates legacy autogen paritySeed marker to parity/baseSeed", async () => {
+    const storage = getRxStorageMemory();
+    const dbName = `${DB_NAME_BASE}_autogen_${Math.random().toString(36).slice(2, 10)}`;
+
+    const oldV1Schema: RxJsonSchema<Record<string, unknown>> = {
+      version: 1,
+      primaryKey: "id",
+      type: "object",
+      properties: {
+        id: { type: "string", maxLength: 128 },
+        schemaVersion: { type: "number" },
+        createdAt: { type: "string", maxLength: 32 },
+        updatedAt: { type: "string", maxLength: 32 },
+        name: { type: "string", maxLength: 256 },
+        nameLowercase: { type: "string", maxLength: 256 },
+        metadata: { type: "object", additionalProperties: true },
+        autogen: {
+          type: ["object", "null"],
+          properties: {
+            version: { type: "number" },
+            theme: { type: "string" },
+            paritySeed: { type: "string" },
+          },
+        },
+      },
+      required: [
+        "id",
+        "schemaVersion",
+        "createdAt",
+        "updatedAt",
+        "name",
+        "nameLowercase",
+        "metadata",
+      ],
+      indexes: ["updatedAt", "nameLowercase"],
+    };
+
+    const dbV1 = await createRxDatabase({ name: dbName, storage, multiInstance: false });
+    await dbV1.addCollections({ teams: { schema: oldV1Schema } });
+    await dbV1.teams.insert({
+      id: "ct_old_autogen",
+      schemaVersion: 1,
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+      name: "Old Auto",
+      nameLowercase: "old auto",
+      metadata: {},
+      autogen: { version: 1, theme: "classic", paritySeed: "old-seed" },
+    });
+    await dbV1.close();
+
+    const dbV2 = await createRxDatabase({ name: dbName, storage, multiInstance: false });
+    await dbV2.addCollections({ teams: teamsV1CollectionConfig });
+    const doc = (await dbV2.teams
+      .findOne("ct_old_autogen")
+      .exec())!.toJSON() as unknown as TeamRecord;
+    expect(doc.autogen).toEqual({
+      version: 1,
+      theme: "classic",
+      parity: "mixed",
+      baseSeed: "old-seed",
+    });
+    await dbV2.close();
+  });
 });

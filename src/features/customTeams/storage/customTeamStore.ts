@@ -227,6 +227,7 @@ function buildStore(getDbFn: GetDb) {
       if (updates.city !== undefined) patch.city = updates.city;
       if (updates.slug !== undefined) patch.slug = updates.slug;
       if (updates.statsProfile !== undefined) patch.statsProfile = updates.statsProfile;
+      if (updates.autogen !== undefined) patch.autogen = updates.autogen;
 
       if (updates.roster !== undefined) {
         const current = await populateRoster(db, doc.toJSON() as unknown as TeamRecord);
