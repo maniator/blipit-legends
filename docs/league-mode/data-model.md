@@ -167,7 +167,7 @@ Awards are stored as an array field on the parent `seasons` doc rather than as a
 > 1. A `validateSeasonAward(entry)` helper called at the `seasons` write site **for every entry in `awards[]`** (rejects writes that violate the XOR or where the populated field doesn't match the `awardKey`'s expected kind — player vs team award).
 > 2. A unit test that loops every `awardKey` and asserts the correct field is populated and the other is `null`.
 >
-> Owner: `@rxdb-save-integrity`.
+> Owner: Amelia (bmad-agent-dev) via RX menu.
 
 ### `seasonArchives` (v4, only if measured doc count exceeds budget)
 
