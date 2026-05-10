@@ -66,7 +66,21 @@ export const teamsV1CollectionConfig = {
     // v0 → v1: adds optional fields activeLeagueIds and autogen — identity migration is safe.
     1: (oldDoc: Record<string, unknown>) => oldDoc,
     // v1 → v2: autogen marker shape changes from paritySeed to parity/baseSeed.
-    2: (oldDoc: Record<string, unknown>) => oldDoc,
+    2: (oldDoc: Record<string, unknown>) => {
+      const autogen = oldDoc["autogen"] as Record<string, unknown> | null | undefined;
+      if (autogen && "paritySeed" in autogen) {
+        return {
+          ...oldDoc,
+          autogen: {
+            version: autogen["version"],
+            theme: autogen["theme"],
+            parity: "mixed",
+            baseSeed: String(autogen["paritySeed"] ?? ""),
+          },
+        };
+      }
+      return oldDoc;
+    },
   },
 };
 
