@@ -153,6 +153,18 @@ export const theme = {
 
     // Subdued text (between textMuted and textDimmer)
     textSubdued: "#8895A2",
+
+    // Chip / pill status backing colors
+    chipSuccessBg: "rgba(74, 222, 128, 0.15)",
+    chipSuccessBorder: "rgba(74, 222, 128, 0.3)",
+    chipWarnBg: "rgba(242, 193, 78, 0.15)",
+    chipWarnBorder: "rgba(242, 193, 78, 0.3)",
+    chipDangerBg: "rgba(255, 107, 107, 0.15)",
+    chipDangerBorder: "rgba(255, 107, 107, 0.3)",
+    chipAccentBg: "rgba(255, 154, 31, 0.15)",
+    chipAccentBorder: "rgba(255, 154, 31, 0.3)",
+    chipNeutralBg: "rgba(160, 180, 208, 0.15)",
+    chipNeutralBorder: "rgba(160, 180, 208, 0.3)",
   },
   fonts: {
     sans: '"Inter Variable", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
