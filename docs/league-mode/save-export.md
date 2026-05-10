@@ -6,7 +6,7 @@
 
 **League state is included in the SaveStore export bundle** starting in v1. The bundle format version bumps from `1` to `2`; v2 importers handle both. v1 importers reject v2 bundles with a friendly error.
 
-Rationale: a user who exports during an active season expects the season to come along. Silent data loss on import would violate the existing repo invariant ("save data correctness and replay determinism are critical invariants" — `@rxdb-save-integrity` agent contract).
+Rationale: a user who exports during an active season expects the season to come along. Silent data loss on import would violate the existing repo invariant ("save data correctness and replay determinism are critical invariants" — Amelia (bmad-agent-dev) RX-menu agent contract).
 
 ## Bundle format v2 — collection set
 

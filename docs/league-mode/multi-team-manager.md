@@ -4,7 +4,7 @@
 
 ## Status
 
-**Stub for v4.** This doc names the contracts and routing rules that v4 implementation must respect. Detailed visual mockups land via `@ux-design-lead` before the v4 implementation PR opens (see [`agent-prompts/v4.md`](agent-prompts/v4.md) `@senior-lead` gate #2).
+**Stub for v4.** This doc names the contracts and routing rules that v4 implementation must respect. Detailed visual mockups land via Sally (bmad-agent-ux-designer) before the v4 implementation PR opens (see [`agent-prompts/v4.md`](agent-prompts/v4.md) Winston (bmad-agent-architect) CR gate #2).
 
 ## What it is
 

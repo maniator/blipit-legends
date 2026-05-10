@@ -1,12 +1,12 @@
 # League Mode — Style Guide Additions (proposed)
 
-> Companion to [`README.md`](README.md). **This doc captures the visual tokens and component variants that League Mode v1–v4 needs but `docs/style-guide.md` does not yet ship.** It exists so the league plan is implementable without painting `@ui-visual-snapshot` into a corner. The canonical `docs/style-guide.md` PR is a follow-up owned by `@ux-design-lead` and must merge **before** the v1 implementation PR.
+> Companion to [`README.md`](README.md). **This doc captures the visual tokens and component variants that League Mode v1–v4 needs but `docs/style-guide.md` does not yet ship.** It exists so the league plan is implementable without painting the e2e-test-runner operational specialist into a corner. The canonical `docs/style-guide.md` PR is a follow-up owned by Sally (bmad-agent-ux-designer) and must merge **before** the v1 implementation PR.
 
 > Resolves UX round-2 P0-3 (five net-new visuals lacked tokens) and P2-15 (`autogen` "Auto" badge token).
 
 ## Why this lives in `docs/league-mode/` and not in `docs/style-guide.md`
 
-`docs/style-guide.md` is owned by `@ux-design-lead`. The repo policy is: "before adding any new color, font size, spacing token, or component variant, route to `@ux-design-lead`" (`.github/copilot-instructions.md`). This file is the league-mode PR's **proposal** to `@ux-design-lead`. Once UX signs off, the canonical style guide gains these entries and this file's role narrows to "history of the proposal."
+`docs/style-guide.md` is owned by Sally (bmad-agent-ux-designer). The repo policy is: "before adding any new color, font size, spacing token, or component variant, route to Sally (bmad-agent-ux-designer)" (`.github/copilot-instructions.md`). This file is the league-mode PR's **proposal** to Sally (bmad-agent-ux-designer). Once UX signs off, the canonical style guide gains these entries and this file's role narrows to "history of the proposal."
 
 Until then, every UI in League Mode that uses one of these tokens is **blocked on UX sign-off** — captured as a v1 prerequisite in [`agent-prompts/v1.md`](agent-prompts/v1.md).
 
@@ -48,7 +48,7 @@ An inline informational banner — distinct from the existing `UpdateBanner` (wh
 
 - Three variants: `info`, `warn`, `neutral`. Each pulls from existing semantic color tokens; no new hex.
 - Optional `action` slot for a single button/link; disabled-state styling for read-only banners.
-- ARIA: `role="status"` for `info`/`neutral`; `role="alert"` for `warn` — to be confirmed by `@ux-design-lead`.
+- ARIA: `role="status"` for `info`/`neutral`; `role="alert"` for `warn` — to be confirmed by Sally (bmad-agent-ux-designer).
 
 ### 3. `<EmptyState>` (icon + title + body + CTA)
 
@@ -99,7 +99,7 @@ Per the round-2 a11y review, the existing fatigue text colors must be measured a
 | `#ffd06b`  | `#0d1b2e`  | TBD                   | TBD                | TBD      |
 | `#a0b4d0`  | `#0d1b2e`  | TBD                   | TBD                | TBD      |
 
-If any combination fails, `@ux-design-lead` darkens / shifts hue and reports the new tokens here before v1 ships.
+If any combination fails, Sally (bmad-agent-ux-designer) darkens / shifts hue and reports the new tokens here before v1 ships.
 
 ## Mobile bracket — reuse existing accordion treatment
 
@@ -107,6 +107,6 @@ Per round-2 P2-18: `playoffs-and-trades.md`'s mobile bracket should explicitly i
 
 ## Next steps
 
-1. `@ux-design-lead` reviews this file and proposes the matching `docs/style-guide.md` diff (new section "League Mode additions" or interspersed entries — UX's call).
-2. `@ui-visual-snapshot` is **NOT** to introduce any of these visuals before that style-guide PR merges.
+1. Sally (bmad-agent-ux-designer) reviews this file and proposes the matching `docs/style-guide.md` diff (new section "League Mode additions" or interspersed entries — UX's call).
+2. The e2e-test-runner operational specialist is **NOT** to introduce any of these visuals before that style-guide PR merges.
 3. After style-guide PR merges, this file's role becomes "historical proposal" and may be deleted in a cleanup pass.

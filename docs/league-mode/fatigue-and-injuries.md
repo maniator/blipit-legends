@@ -25,7 +25,7 @@ After every completed `seasonGames`:
 
 `pitchingRole` is read from the team's `customTeams` snapshot (`'SP'` vs `'RP'`; `'SP/RP'` is bucketed as `'SP'` for recovery-curve purposes since SP outings dominate fatigue accrual).
 
-Recovery curves (defaults; tunable in a single constants module). **Per the `@baseball-manager` realism review (v0 docs review, MUST-FIX), starters and relievers use distinct curves to match modern MLB rotation/bullpen behavior:**
+Recovery curves (defaults; tunable in a single constants module). **Per the Buck (bmad-agent-baseball-manager) realism review (v0 docs review, MUST-FIX), starters and relievers use distinct curves to match modern MLB rotation/bullpen behavior:**
 
 **Starting pitchers (SP, ~80–110 pitches per outing):**
 
@@ -51,9 +51,9 @@ Eligibility threshold: SP cannot start the next game with `pitcherAvailability <
 
 Eligibility threshold: RP cannot enter a game with `pitcherAvailability < 0.35`. Allows the realistic 3-of-4-days closer pattern.
 
-**Back-to-back-to-back floor (v1, per `@baseball-manager` realism review + `@user-manager-strategist` proxy interview):** an RP that appeared in **both** of the previous two consecutive game-days has `pitcherAvailability` clamped to `0.0` for the current game-day, regardless of where the curve would otherwise put them. This is a deterministic, no-rolling-window rule that prevents the AI (or a manager-mode user) from running a single closer 5-of-6 days — behavior no real-world manager exhibits and which would otherwise blunt the strategic value of bullpen depth. The clamp is read from `pitcherFatigueConstants.ts` and pinned to `rulesetVersion`. Implementation: tracked via two existing fields (`pitcherDaysRest === 0` for two consecutive prior game-days), no new schema.
+**Back-to-back-to-back floor (v1, per Buck (bmad-agent-baseball-manager) realism review + Manager Strategist (P3) proxy interview via Sally (bmad-agent-ux-designer)):** an RP that appeared in **both** of the previous two consecutive game-days has `pitcherAvailability` clamped to `0.0` for the current game-day, regardless of where the curve would otherwise put them. This is a deterministic, no-rolling-window rule that prevents the AI (or a manager-mode user) from running a single closer 5-of-6 days — behavior no real-world manager exhibits and which would otherwise blunt the strategic value of bullpen depth. The clamp is read from `pitcherFatigueConstants.ts` and pinned to `rulesetVersion`. Implementation: tracked via two existing fields (`pitcherDaysRest === 0` for two consecutive prior game-days), no new schema.
 
-**Linked v1 roster-minimum decision:** v1 RP minimum is **3** in [`decisions.md`](decisions.md) #13 (lineup 9 + bench 3 + 5 SP + 3 RP = 20 active) so the bullpen is credible alongside the SP-derived recovery curve. v2+ minimums add a 4th RP (5 SP + 4 RP = 9 pitchers, 23 active) per `@baseball-manager` sign-off — once full fatigue + injury systems are live, 8 pitchers cannot survive an extra-inning or short-start game. See decisions.md #13 for the canonical table.
+**Linked v1 roster-minimum decision:** v1 RP minimum is **3** in [`decisions.md`](decisions.md) #13 (lineup 9 + bench 3 + 5 SP + 3 RP = 20 active) so the bullpen is credible alongside the SP-derived recovery curve. v2+ minimums add a 4th RP (5 SP + 4 RP = 9 pitchers, 23 active) per Buck (bmad-agent-baseball-manager) sign-off — once full fatigue + injury systems are live, 8 pitchers cannot survive an extra-inning or short-start game. See decisions.md #13 for the canonical table.
 
 These values are **trusted defaults** per decision #11 with the realism deltas above. Both curves and thresholds are stored in a single `pitcherFatigueConstants.ts` module and pinned to `seasons.rulesetVersion` (see "Ruleset versioning" below) so a post-launch tuning pass does not silently break in-flight saved seasons' replay determinism.
 
@@ -142,7 +142,7 @@ Rate constants live in `injuryConstants.ts` and are pinned to `seasons.rulesetVe
 
 **Per-game procedure (deterministic):**
 
-1. Run **after** the box-score simulation completes (so injury rolls do not perturb at-bat outcomes — `@simulation-correctness` review requirement).
+1. Run **after** the box-score simulation completes (so injury rolls do not perturb at-bat outcomes — Amelia (bmad-agent-dev) via SC menu review requirement).
 2. Iterate players in fixed order: home lineup batting positions 1–9, away lineup batting positions 1–9, home starting pitcher, away starting pitcher, then any home then away RP that appeared in the game (in entrance order). This iteration order is the binding contract for replay.
 3. For each player, draw a uniform[0,1) from the seeded PRNG (per-game `derivedSeed`, same PRNG that ran the box score).
 4. If `< rulesetVersion.injuryRatePctPerGame` (regular-season) or `× 0.5` (playoff), the player is injured.
@@ -179,7 +179,7 @@ At the **start of each game-day** (before any games of that day simulate), any p
 
 This keeps lineups recognizable (the best player plays most days) while honoring fatigue (stars do get scheduled rest) without creating a guessable cadence.
 
-**Catcher wear multiplier (deferred to v2.1 follow-up):** real catchers play ~110/162 (68%) vs other positions ~140/162 (86%). When v2 ships, accept universal `wear += 1/game` as a known limitation; flag for a v2.1 retune via `@baseball-manager` after a Standard season log is captured.
+**Catcher wear multiplier (deferred to v2.1 follow-up):** real catchers play ~110/162 (68%) vs other positions ~140/162 (86%). When v2 ships, accept universal `wear += 1/game` as a known limitation; flag for a v2.1 retune via Buck (bmad-agent-baseball-manager) after a Standard season log is captured.
 
 ### League-play roster minimums (decision #13)
 
@@ -190,7 +190,7 @@ This keeps lineups recognizable (the best player plays most days) while honoring
 - Bench ≥ 5.
 - Pitchers ≥ 9 (5 SP + 4 RP).
 
-Approved by `@baseball-manager`: once v2's full fatigue + injury systems are live, 8 pitchers cannot survive an extra-inning or short-start game; the 4th RP keeps the bullpen viable across the season.
+Approved by Buck (bmad-agent-baseball-manager): once v2's full fatigue + injury systems are live, 8 pitchers cannot survive an extra-inning or short-start game; the 4th RP keeps the bullpen viable across the season.
 
 The setup wizard validates and offers to "auto-fill missing slots from autogen" for hand-picked teams below this minimum, **without** mutating the user's persistent `customTeams` doc — only the season snapshot is augmented.
 
