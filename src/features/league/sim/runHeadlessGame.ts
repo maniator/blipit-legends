@@ -92,7 +92,7 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
   // Document here so Phase 4 can add an optimistic-locking guard if needed.
   // -------------------------------------------------------------------------
   const db = await getDb();
-  const gameDoc = await db.seasonGames.findOne({ selector: { id: seasonGameId } }).exec();
+  const gameDoc = await db.seasonGames.findOne(seasonGameId).exec();
 
   if (!gameDoc) {
     return { status: "not_found" };
@@ -110,7 +110,7 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
   // stale _rev on `gameDoc` would cause CONFLICT on subsequent patches (step 3
   // rollback and step 9 completion write). Live re-fetch ensures we always
   // write against the current revision.
-  const liveGameDoc = await db.seasonGames.findOne({ selector: { id: seasonGameId } }).exec();
+  const liveGameDoc = await db.seasonGames.findOne(seasonGameId).exec();
   if (!liveGameDoc) {
     // Extremely unlikely, but guard defensively.
     return { status: "not_found" };
@@ -125,8 +125,8 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
   // STEP 3 — Load rosterSnapshots from both seasonTeams.
   // -------------------------------------------------------------------------
   const [homeTeamDoc, awayTeamDoc] = await Promise.all([
-    db.seasonTeams.findOne({ selector: { id: liveGameDoc.homeSeasonTeamId } }).exec(),
-    db.seasonTeams.findOne({ selector: { id: liveGameDoc.awaySeasonTeamId } }).exec(),
+    db.seasonTeams.findOne(liveGameDoc.homeSeasonTeamId).exec(),
+    db.seasonTeams.findOne(liveGameDoc.awaySeasonTeamId).exec(),
   ]);
 
   if (!homeTeamDoc || !awayTeamDoc) {
@@ -171,7 +171,7 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
     (ps) => ps.seasonTeamId === liveGameDoc.awaySeasonTeamId,
   );
 
-  const seasonDoc = await db.seasons.findOne({ selector: { id: liveGameDoc.seasonId } }).exec();
+  const seasonDoc = await db.seasons.findOne(liveGameDoc.seasonId).exec();
 
   const homeRotation = selectPitchers({
     seasonTeamId: liveGameDoc.homeSeasonTeamId,

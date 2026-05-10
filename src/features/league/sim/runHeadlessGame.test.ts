@@ -153,21 +153,21 @@ describe("deriveScheduledGameSeed — DB integration", () => {
 
 describe("SeasonGame claim flow", () => {
   it("transitions from scheduled to in_progress when claimed", async () => {
-    const game = await db.seasonGames.findOne({ selector: { id: GAME_ID } }).exec();
+    const game = await db.seasonGames.findOne(GAME_ID).exec();
     expect(game?.status).toBe("scheduled");
 
     await game?.patch({ status: "in_progress", claimedBy: "claim-token-abc" });
 
-    const updated = await db.seasonGames.findOne({ selector: { id: GAME_ID } }).exec();
+    const updated = await db.seasonGames.findOne(GAME_ID).exec();
     expect(updated?.status).toBe("in_progress");
     expect(updated?.claimedBy).toBe("claim-token-abc");
   });
 
   it("transitions from in_progress to completed with boxscore", async () => {
-    const game = await db.seasonGames.findOne({ selector: { id: GAME_ID } }).exec();
+    const game = await db.seasonGames.findOne(GAME_ID).exec();
     await game?.patch({ status: "in_progress", claimedBy: "tok" });
     // Re-fetch after first patch — RxDB uses optimistic locking; stale refs throw CONFLICT.
-    const gameV2 = await db.seasonGames.findOne({ selector: { id: GAME_ID } }).exec();
+    const gameV2 = await db.seasonGames.findOne(GAME_ID).exec();
     await gameV2?.patch({
       status: "completed",
       boxscore: { homeScore: 4, awayScore: 2, stub: true },
@@ -175,7 +175,7 @@ describe("SeasonGame claim flow", () => {
       claimedBy: null,
     });
 
-    const done = await db.seasonGames.findOne({ selector: { id: GAME_ID } }).exec();
+    const done = await db.seasonGames.findOne(GAME_ID).exec();
     expect(done?.status).toBe("completed");
     expect(done?.claimedBy).toBeNull();
     expect((done?.boxscore as Record<string, unknown>)?.homeScore).toBe(4);
