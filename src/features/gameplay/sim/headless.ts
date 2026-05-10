@@ -40,11 +40,15 @@ export interface HeadlessGameResult {
  * with the full reducer loop (see docs/league-mode/schedule-and-sim.md §Modes).
  */
 export function runHeadlessGameSim(): HeadlessGameResult {
-  // Each score is a bimodal sample: most games score 0–9 runs.
-  // Two random() calls per team, matching the PRNG consumption a real game would use
-  // at a high level so the call count is predictable for testing.
-  const homeScore = Math.floor(random() * 10);
+  // Each score is a uniform sample over [0, 9] — one random() call per team.
+  // Phase 4 replaces this with the full reducer (Poisson-shaped real distribution).
+  let homeScore = Math.floor(random() * 10);
   const awayScore = Math.floor(random() * 10);
+
+  // Stub tie-break: real games go to extra innings. To avoid an artificial ~10%
+  // tie rate in Phase 2 logs, give the home team a one-run walk-off when tied.
+  // The `ties` path in standings is preserved for Phase 4 genuine suspended games.
+  if (homeScore === awayScore) homeScore += 1;
 
   const completedAt = Date.now();
   return {

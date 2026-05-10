@@ -1,4 +1,7 @@
-import type { SanctionedWriteContext } from "@feat/league/storage/sanctionedWrite";
+import {
+  SANCTIONED_WRITE_CTX,
+  type SanctionedWriteContext,
+} from "@feat/league/storage/sanctionedWrite";
 import { appLog } from "@shared/utils/logger";
 
 import { type BallgameDb, getDb } from "@storage/db";
@@ -87,13 +90,29 @@ async function assertTeamNotLocked(
   teamId: string,
   ctx?: SanctionedWriteContext,
 ): Promise<void> {
-  // If a sanctioned context is provided, bypass the lock check.
-  if (ctx !== undefined) return;
+  // If the caller holds the sanctioned-write capability, bypass the lock.
+  // Explicitly check for the Symbol identity — any other non-undefined value
+  // does NOT grant bypass (prevents accidental truthy-bypass bugs).
+  if (ctx === SANCTIONED_WRITE_CTX) return;
   const lockedIds = await getLockedTeamIds(db);
   if (lockedIds.has(teamId)) {
     appLog.warn(`[customTeamStore] Write blocked: team ${teamId} is in an active season.`);
     throw new CustomTeamLockedError(teamId);
   }
+}
+
+/**
+ * Resets the module-level lock cache for test isolation.
+ *
+ * The cache is shared across all `buildStore()` instances. Tests that use
+ * multiple in-memory DBs (via `_createTestDb`) must call this between DB
+ * instances to prevent stale lock data from one DB contaminating another.
+ *
+ * @internal — test use only. Follow the `_resetDbSingletonForTests` precedent.
+ */
+export function _resetLockCacheForTests(): void {
+  lockCache = null;
+  lockCacheInvalidation = null;
 }
 
 function buildStore(getDbFn: GetDb) {

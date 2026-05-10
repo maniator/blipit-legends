@@ -44,7 +44,7 @@ const V1_CONSTANTS: PitcherFatigueConstants = {
   // RP: shorter recovery window — ready again by day 2–3.
   rpRecovery: { 0: 0.4, 1: 0.8, 2: 0.95 },
   spEligibilityThreshold: 0.7,
-  rpEligibilityThreshold: 0.35,
+  rpEligibilityThreshold: 0.41,
   maxFatigueEffect: 0.12,
 };
 
