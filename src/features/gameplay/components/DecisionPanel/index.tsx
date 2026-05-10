@@ -21,17 +21,28 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
   const { dispatch, gameInstanceId, pendingDecision, pitchKey } = useGameContext();
   const [secondsLeft, setSecondsLeft] = React.useState(DECISION_TIMEOUT_SEC);
 
+  // Keep refs current so the SW message handler (registered once) always reads
+  // the latest values without being torn down and re-added every pitch.
+  const pendingDecisionRef = React.useRef(pendingDecision);
+  pendingDecisionRef.current = pendingDecision;
+  const pitchKeyRef = React.useRef(pitchKey);
+  pitchKeyRef.current = pitchKey;
+  const gameInstanceIdRef = React.useRef(gameInstanceId);
+  gameInstanceIdRef.current = gameInstanceId;
+
   // Listen for actions dispatched from the service worker (notification button taps).
   // Validate the message origin so only same-origin SW messages are processed.
   // SW-to-page postMessages have event.origin === "" (empty string), so we only
   // reject messages whose origin is explicitly a different, non-empty origin.
+  // Registered once with [dispatch] (stable) — reads pitchKey/pendingDecision from refs.
   React.useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     const handler = (event: MessageEvent) => {
       if (event.origin && typeof window !== "undefined" && event.origin !== window.location.origin)
         return;
       if (event.data?.type !== "NOTIFICATION_ACTION") return;
-      if (!pendingDecision) return;
+      const currentPendingDecision = pendingDecisionRef.current;
+      if (!currentPendingDecision) return;
       const {
         action,
         gameInstanceId: sourceGameInstanceId,
@@ -44,10 +55,10 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
         pitchKey?: number;
       };
       if (
-        sourcePitchKey !== pitchKey ||
-        sourceGameInstanceId !== gameInstanceId ||
+        sourcePitchKey !== pitchKeyRef.current ||
+        sourceGameInstanceId !== gameInstanceIdRef.current ||
         !payload ||
-        payload.kind !== pendingDecision.kind
+        payload.kind !== currentPendingDecision.kind
       )
         return;
       switch (action) {
@@ -102,7 +113,7 @@ const DecisionPanel: React.FunctionComponent<Props> = ({ strategy }) => {
     };
     navigator.serviceWorker.addEventListener("message", handler);
     return () => navigator.serviceWorker.removeEventListener("message", handler);
-  }, [dispatch, gameInstanceId, pendingDecision, pitchKey]);
+  }, [dispatch]);
 
   // Countdown timer + chime + notification on new decision
   React.useEffect(() => {

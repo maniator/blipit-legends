@@ -304,6 +304,82 @@ describe("GameHistoryStore export/import", () => {
   it("rejects invalid JSON", async () => {
     await expect(store.importGameHistory("not json {}", new Set())).rejects.toThrow("Invalid JSON");
   });
+
+  it("rejects bundles where a game row has a non-string homeTeamId", async () => {
+    // Simulate a malformed-but-signed bundle with a numeric homeTeamId.
+    const payload = {
+      games: [
+        {
+          id: "g_bad",
+          playedAt: 0,
+          seed: "x",
+          rngState: null,
+          homeTeamId: 42, // non-string — should throw, not TypeError
+          awayTeamId: "Mets",
+          homeScore: 1,
+          awayScore: 0,
+          innings: 9,
+          schemaVersion: 1,
+        },
+      ],
+      playerGameStats: [],
+      pitcherGameStats: [],
+      requiredTeamIds: [],
+    };
+    const sig = fnv1a(GAME_HISTORY_EXPORT_KEY + JSON.stringify(payload));
+    const bundle = JSON.stringify({
+      type: "gameHistory",
+      formatVersion: 1,
+      exportedAt: "x",
+      payload,
+      sig,
+    });
+    await expect(store.importGameHistory(bundle, new Set())).rejects.toThrow("game.homeTeamId");
+  });
+
+  it("rejects bundles where a stat row has a non-string teamId", async () => {
+    const payload = {
+      games: [],
+      playerGameStats: [
+        {
+          id: "s_bad",
+          gameId: "g1",
+          teamId: null, // non-string
+          opponentTeamId: "Mets",
+          playerId: "p1",
+          nameAtGameTime: "T",
+          role: "batter",
+          batting: {
+            atBats: 1,
+            hits: 0,
+            walks: 0,
+            strikeouts: 0,
+            rbi: 0,
+            singles: 0,
+            doubles: 0,
+            triples: 0,
+            homers: 0,
+            sacFlies: 0,
+          },
+          createdAt: 0,
+          schemaVersion: 1,
+        },
+      ],
+      pitcherGameStats: [],
+      requiredTeamIds: [],
+    };
+    const sig = fnv1a(GAME_HISTORY_EXPORT_KEY + JSON.stringify(payload));
+    const bundle = JSON.stringify({
+      type: "gameHistory",
+      formatVersion: 1,
+      exportedAt: "x",
+      payload,
+      sig,
+    });
+    await expect(store.importGameHistory(bundle, new Set())).rejects.toThrow(
+      "playerGameStat.teamId",
+    );
+  });
 });
 
 describe("GameHistoryStore — gameInstanceId deduplication across save slots", () => {
