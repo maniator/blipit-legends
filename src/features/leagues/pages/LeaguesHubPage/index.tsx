@@ -211,7 +211,9 @@ const LeaguesHubPageInner: React.FunctionComponent = () => {
             data-testid="hub-continue-card"
           >
             <ContinueTitle>{progressText}</ContinueTitle>
-            <ContinueSub id={progressId}>Day {activeSeason.currentGameDay} of 30</ContinueSub>
+            <ContinueSub id={progressId}>
+              {activeSeason.preset} · {activeSeason.seasonLength} season
+            </ContinueSub>
           </ContinueCard>
 
           <SectionCard>
