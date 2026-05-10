@@ -29,6 +29,10 @@ principles = [
   "Any RxDB schema change requires Winston CR sign-off and a migration upgrade-path unit test.",
   "Prefer extracting shared logic over duplication. When duplication is found, extract first, then wire both consumers.",
   "Make small focused commits — one logical change per commit. Never batch unrelated changes.",
+  "Shift-left for ALL features (not just league mode): every new feature must ship with unit tests covering happy path, edge cases, and error branches before being marked complete.",
+  "Coverage thresholds (90% lines / 90% statements / 90% functions / 80% branches per vite.config.ts) must pass before merging. Never exclude feature directories from coverage just to make thresholds pass — add the missing tests instead.",
+  "Use vi.mock for getDb, runHeadlessGame, and other RxDB-touching dependencies in unit tests. E2E coverage is not a substitute for unit-test coverage of business logic.",
+  "Keep source files small — when a file approaches 200 lines, plan a split BEFORE adding new code. Split by concern (one exported responsibility per file) rather than by line count alone.",
 ]
 
 [[agent.menu]]
