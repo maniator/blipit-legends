@@ -78,7 +78,9 @@ const HomeScreen: React.FunctionComponent<Props> = ({
     </MenuGroup>
     {activeSeasonId != null && onContinueSeason != null ? (
       <LeagueTeaserBox data-testid="league-play-teaser">
-        <LeagueTeaserTitle>🏆 Continue Season</LeagueTeaserTitle>
+        <LeagueTeaserTitle>
+          <span aria-hidden="true">🏆</span> Continue Season
+        </LeagueTeaserTitle>
         <LeagueTeaserSub>{activeSeasonLabel}</LeagueTeaserSub>
         <SecondaryBtn
           onClick={onContinueSeason}

@@ -38,7 +38,9 @@ function isIdObjectArray(arr: unknown[]): arr is Array<{ id: string } & Record<s
  */
 export function canonicalJSON(value: unknown): string {
   if (value === null || value === undefined) {
-    return JSON.stringify(value);
+    // JSON.stringify(null) → "null"; JSON.stringify(undefined) → undefined (not a string).
+    // Treat undefined as null so the return type is always a valid JSON string.
+    return "null";
   }
 
   if (Array.isArray(value)) {
