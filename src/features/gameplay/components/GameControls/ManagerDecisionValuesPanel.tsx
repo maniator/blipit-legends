@@ -399,7 +399,10 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                   {/* autoFocus so keyboard users land on the safe option when
                        the confirm row mounts (WCAG 2.4.3 focus order).
                        onClick restores focus to the reset button so the
-                       dismiss cycle completes cleanly for keyboard users. */}
+                       dismiss cycle completes cleanly for keyboard users.
+                       NOTE: autoFocus silently fails inside <React.Suspense>. If
+                       this panel is ever wrapped in Suspense, replace autoFocus
+                       with a useEffect-based focus call to preserve the a11y contract. */}
                   <button
                     type="button"
                     autoFocus
