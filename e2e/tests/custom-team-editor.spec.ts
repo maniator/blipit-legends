@@ -285,7 +285,10 @@ test.describe("Custom Team Editor — team abbreviation field", () => {
   }) => {
     await page.getByTestId("home-manage-teams-button").click();
     await page.getByTestId("manage-teams-create-button").click();
-    // Attempt save without any data
+    // Wait for the editor to mount before clicking Save to ensure React has
+    // hydrated the form state and the save button is interactive.
+    await expect(page.getByTestId("custom-team-save-button")).toBeVisible({ timeout: 15_000 });
+    // Attempt save without any data — triggers "Team name is required." validation
     await page.getByTestId("custom-team-save-button").click();
     // Error hint near the save button area
     const hint = page.getByTestId("custom-team-save-error-hint");

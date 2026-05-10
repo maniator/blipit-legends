@@ -8,7 +8,7 @@ import {
 import type { State, Strategy } from "@feat/gameplay/context/index";
 import { useGameContext } from "@feat/gameplay/context/index";
 import {
-  DEFAULT_MANAGER_DECISION_VALUES,
+  getDefaultDecisionValues,
   type ManagerDecisionValues,
 } from "@feat/gameplay/context/managerDecisionValues";
 import { useImportSave } from "@feat/saves/hooks/useImportSave";
@@ -105,7 +105,7 @@ export const useSavesModal = ({
       managerMode,
       homeTeam: teams[1],
       awayTeam: teams[0],
-      decisionValues: decisionValues ?? DEFAULT_MANAGER_DECISION_VALUES,
+      decisionValues: decisionValues ?? getDefaultDecisionValues(),
     };
 
     if (currentSaveId) {

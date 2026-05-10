@@ -181,6 +181,19 @@ describe("ManagerModeControls", () => {
     expect(screen.getByTestId("manager-decision-tuning-toggle")).toBeTruthy();
   });
 
+  it("toggle label includes '· defaults' when all values equal defaults", () => {
+    render(<ManagerModeControls {...defaultProps} managerMode={true} />);
+    const toggle = screen.getByTestId("manager-decision-tuning-toggle");
+    expect(toggle.textContent).toContain("· defaults");
+  });
+
+  it("toggle label does NOT include '· defaults' when a value differs from defaults", () => {
+    const modified = { ...DEFAULT_MANAGER_DECISION_VALUES, aiStealThreshold: 80 };
+    render(<ManagerModeControls {...defaultProps} managerMode={true} decisionValues={modified} />);
+    const toggle = screen.getByTestId("manager-decision-tuning-toggle");
+    expect(toggle.textContent).not.toContain("· defaults");
+  });
+
   it("does not show Decision Tuning panel until toggle is clicked", () => {
     render(<ManagerModeControls {...defaultProps} managerMode={true} />);
     expect(screen.queryByTestId("manager-decision-tuning-panel")).toBeNull();
@@ -192,13 +205,18 @@ describe("ManagerModeControls", () => {
     expect(screen.getByTestId("manager-decision-tuning-panel")).toBeTruthy();
   });
 
-  it("calls onDecisionValuesReset when reset button is clicked", async () => {
+  it("calls onDecisionValuesReset when reset button is clicked (requires confirmation)", async () => {
     const onReset = vi.fn();
     render(
       <ManagerModeControls {...defaultProps} managerMode={true} onDecisionValuesReset={onReset} />,
     );
     await userEvent.click(screen.getByTestId("manager-decision-tuning-toggle"));
+    // First click shows the confirmation row; reset is NOT called yet.
     await userEvent.click(screen.getByTestId("manager-decision-tuning-reset"));
+    expect(onReset).not.toHaveBeenCalled();
+    expect(screen.getByTestId("manager-decision-tuning-reset-confirm-row")).toBeTruthy();
+    // Second click (on the "Yes, reset" confirm button) fires onReset.
+    await userEvent.click(screen.getByTestId("manager-decision-tuning-reset-confirm"));
     expect(onReset).toHaveBeenCalledOnce();
   });
 

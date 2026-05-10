@@ -325,7 +325,7 @@ export const DecisionTuningPanel = styled.div`
     max-height: 75dvh;
     overflow-y: auto;
     border-radius: 12px 12px 0 0;
-    padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.md};
+    padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.md} 0;
   }
 `;
 
@@ -472,5 +472,64 @@ export const DecisionResetButton = styled.button`
   &:focus-visible {
     outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
     outline-offset: 2px;
+  }
+`;
+
+/**
+ * Footer at the bottom of the Decision Tuning panel.
+ * On mobile, adds `env(safe-area-inset-bottom)` padding so the reset button
+ * sits above the home-indicator bar on notched / swipe-gesture iPhones and
+ * Android devices.
+ */
+export const DecisionPanelFooter = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+  padding-top: ${({ theme }) => theme.spacing.xs};
+
+  ${mq.mobile} {
+    padding-bottom: calc(${({ theme }) => theme.spacing.md} + env(safe-area-inset-bottom, 0px));
+  }
+`;
+
+/**
+ * Inline confirmation row shown when the user clicks "Reset to defaults".
+ * Renders the question + Yes/No buttons horizontally.
+ */
+export const DecisionResetConfirmRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  flex-wrap: wrap;
+
+  span {
+    font-size: ${({ theme }) => theme.fontSizes.sm};
+    color: ${({ theme }) => theme.colors.textMuted};
+    flex: 1 1 100%;
+  }
+
+  button {
+    background: transparent;
+    border: 1px solid ${({ theme }) => theme.colors.borderMid};
+    border-radius: ${({ theme }) => theme.radii.md};
+    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+    font-size: ${({ theme }) => theme.fontSizes.sm};
+    font-family: inherit;
+    cursor: pointer;
+    color: ${({ theme }) => theme.colors.textMuted};
+
+    &:first-of-type {
+      color: ${({ theme }) => theme.colors.statusWarn};
+      border-color: ${({ theme }) => theme.colors.statusWarn};
+    }
+
+    &:hover {
+      background: ${({ theme }) => theme.colors.bgSurface};
+    }
+
+    &:focus-visible {
+      outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+      outline-offset: 2px;
+    }
   }
 `;

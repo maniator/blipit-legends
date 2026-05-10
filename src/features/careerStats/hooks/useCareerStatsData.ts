@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { GameHistoryStore } from "@feat/careerStats/storage/gameHistoryStore";
 import { useCustomTeams } from "@shared/hooks/useCustomTeams";
+import { appLog } from "@shared/utils/logger";
 import { useNavigate, useParams } from "react-router";
 
 import { getDb } from "@storage/db";
@@ -53,29 +54,33 @@ export function useCareerStatsData() {
   }, [customTeams, teamsWithHistory]);
 
   React.useEffect(() => {
+    // Use a reactive subscription so this updates automatically when new games
+    // are inserted (e.g. after an import), eliminating the WebKit import-then-query
+    // race where the one-shot query fired before IndexedDB writes had propagated.
     let cancelled = false;
+    let subscription: { unsubscribe: () => void } | null = null;
 
-    async function loadTeamIds() {
-      try {
-        const db = await getDb();
-        const completedGames = await db.completedGames.find().exec();
+    getDb()
+      .then((db) => {
         if (cancelled) return;
+        subscription = db.completedGames.find().$.subscribe((completedGames) => {
+          if (cancelled) return;
+          const ids = new Set<string>();
+          for (const game of completedGames) {
+            const row = game.toJSON();
+            ids.add(row.homeTeamId);
+            ids.add(row.awayTeamId);
+          }
+          setTeamsWithHistory(Array.from(ids));
+        });
+      })
+      .catch((err) => {
+        appLog.error("[useCareerStatsData] Failed to subscribe to completedGames:", err);
+      });
 
-        const ids = new Set<string>();
-        for (const game of completedGames) {
-          const row = game.toJSON();
-          ids.add(row.homeTeamId);
-          ids.add(row.awayTeamId);
-        }
-        setTeamsWithHistory(Array.from(ids));
-      } catch {
-        // Silently degrade — history just won't include non-custom teams.
-      }
-    }
-
-    void loadTeamIds();
     return () => {
       cancelled = true;
+      subscription?.unsubscribe();
     };
   }, []);
 
@@ -96,6 +101,7 @@ export function useCareerStatsData() {
       setEraLeader(null);
       setSavesLeader(null);
       setStrikeoutsLeader(null);
+      setDataLoading(false);
       return;
     }
 
@@ -124,11 +130,18 @@ export function useCareerStatsData() {
         setEraLeader(pitchingLeaders.eraLeader);
         setSavesLeader(pitchingLeaders.savesLeader);
         setStrikeoutsLeader(pitchingLeaders.strikeoutsLeader);
-      } catch {
+      } catch (err) {
         if (!cancelled) {
+          appLog.error("[useCareerStatsData] Failed to load stats for team:", selectedTeamId, err);
           setBattingRows([]);
           setPitchingRows([]);
           setTeamSummary(null);
+          setHrLeader(null);
+          setAvgLeader(null);
+          setRbiLeader(null);
+          setEraLeader(null);
+          setSavesLeader(null);
+          setStrikeoutsLeader(null);
         }
       } finally {
         if (!cancelled) {
