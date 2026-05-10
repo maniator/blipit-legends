@@ -51,7 +51,8 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
     try {
       await simulateNextDay(seasonId);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Simulation failed.";
+      const msg =
+        err instanceof Error ? err.message : "Unable to simulate games. Please try again.";
       appLog.error("[SeasonHomePage] simulateNextDay error:", err);
       setSimError(msg);
     } finally {
