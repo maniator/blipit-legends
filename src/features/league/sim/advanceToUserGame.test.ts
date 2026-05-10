@@ -11,7 +11,12 @@ import { seasonTeamsCollectionConfig } from "@feat/league/storage/seasonTeamsSch
 import { deriveScheduledGameSeed } from "@feat/league/utils/deriveScheduledGameSeed";
 import { createRxDatabase } from "rxdb";
 import { getRxStorageMemory } from "rxdb/plugins/storage-memory";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { advanceToUserGame } from "./advanceToUserGame";
+
+vi.mock("@storage/db", () => ({ getDb: vi.fn() }));
+vi.mock("./runHeadlessGame", () => ({ runHeadlessGame: vi.fn() }));
 
 // We test the batch ordering logic (what gets simulated vs. returned) without
 // wiring through getDb(). The sorting and filtering logic in advanceToUserGame
@@ -262,5 +267,104 @@ describe("advanceToUserGame — batch ordering logic", () => {
 
     expect(headlessBefore.every((g) => g.id !== "sg_user_d1")).toBe(true);
     expect(headlessBefore.length).toBe(2);
+  });
+});
+
+describe("advanceToUserGame — full function", () => {
+  it("returns immediately when user game is the next scheduled", async () => {
+    const { getDb } = await import("@storage/db");
+    const { runHeadlessGame } = await import("./runHeadlessGame");
+
+    const testDb = await makeTestDb();
+    vi.mocked(getDb).mockResolvedValue(testDb as any);
+    vi.mocked(runHeadlessGame).mockResolvedValue({ status: "completed" });
+
+    // Insert season.
+    await testDb.seasons.insert({
+      id: SEASON_ID,
+      name: "Test Season",
+      status: "active",
+      createdAt: Date.now(),
+      preset: "mini",
+      seasonLength: "sprint",
+      masterSeed: "testseed",
+      leagues: [],
+      tradeDeadlineGameDay: null,
+      playoffFormat: null,
+      featureFlags: {},
+      currentGameDay: 0,
+      championTeamId: null,
+      rulesetVersion: 1,
+      awards: [],
+    });
+
+    // Insert a user game as the first scheduled game.
+    await insertGame("sg_user_first", 0, USER_ST_ID, OTHER_ST_A);
+
+    const result = await advanceToUserGame({ seasonId: SEASON_ID, userSeasonTeamId: USER_ST_ID });
+
+    expect(result.nextGameId).toBe("sg_user_first");
+    expect(result.gamesSimulated).toBe(0);
+    expect(vi.mocked(runHeadlessGame)).not.toHaveBeenCalled();
+
+    await testDb.close();
+  });
+
+  it("advances through prior games headlessly", async () => {
+    const { getDb } = await import("@storage/db");
+    const { runHeadlessGame } = await import("./runHeadlessGame");
+
+    const testDb = await makeTestDb();
+    vi.mocked(getDb).mockResolvedValue(testDb as any);
+    vi.mocked(runHeadlessGame).mockResolvedValue({ status: "completed" });
+
+    // Insert season.
+    await testDb.seasons.insert({
+      id: SEASON_ID,
+      name: "Test Season",
+      status: "active",
+      createdAt: Date.now(),
+      preset: "mini",
+      seasonLength: "sprint",
+      masterSeed: "testseed",
+      leagues: [],
+      tradeDeadlineGameDay: null,
+      playoffFormat: null,
+      featureFlags: {},
+      currentGameDay: 0,
+      championTeamId: null,
+      rulesetVersion: 1,
+      awards: [],
+    });
+
+    // Insert games: 2 non-user games on day 0, then a user game on day 1.
+    await insertGame("sg_other_d0a", 0, OTHER_ST_A, OTHER_ST_B);
+    await insertGame("sg_other_d0b", 0, OTHER_ST_B, OTHER_ST_A);
+    await insertGame("sg_user_d1", 1, USER_ST_ID, OTHER_ST_A);
+
+    const result = await advanceToUserGame({ seasonId: SEASON_ID, userSeasonTeamId: USER_ST_ID });
+
+    expect(result.nextGameId).toBe("sg_user_d1");
+    expect(result.gamesSimulated).toBe(2);
+    expect(vi.mocked(runHeadlessGame)).toHaveBeenCalledTimes(2);
+
+    await testDb.close();
+  });
+
+  it("handles missing season", async () => {
+    const { getDb } = await import("@storage/db");
+
+    const testDb = await makeTestDb();
+    vi.mocked(getDb).mockResolvedValue(testDb as any);
+
+    const result = await advanceToUserGame({
+      seasonId: "s_nonexistent",
+      userSeasonTeamId: USER_ST_ID,
+    });
+
+    expect(result.nextGameId).toBeNull();
+    expect(result.gamesSimulated).toBe(0);
+
+    await testDb.close();
   });
 });

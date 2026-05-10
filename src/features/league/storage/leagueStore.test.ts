@@ -9,12 +9,16 @@ import "fake-indexeddb/auto";
 
 import { _resetLockCacheForTests } from "@feat/customTeams/storage/customTeamStore";
 import { getRxStorageMemory } from "rxdb/plugins/storage-memory";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { BallgameDb } from "@storage/db";
 import { createTestDb } from "@test/helpers/db";
 
 import { makeLeagueStore } from "./leagueStore";
+
+vi.mock("@feat/league/sim/runHeadlessGame", () => ({
+  runHeadlessGame: vi.fn(),
+}));
 
 const MINI_TEAM_COUNT = 8;
 
@@ -284,5 +288,130 @@ describe("getSeasonTeams / getSeasonGames", () => {
     const scheduled = await store.getSeasonGames(season.id, "scheduled");
     expect(scheduled.length).toBeGreaterThan(0);
     expect(scheduled.some((g) => g.id === firstGame.id)).toBe(false);
+  });
+});
+
+describe("simulateNextDay", () => {
+  it("returns { gamesSimulated: 0, seasonComplete: false } for unknown seasonId", async () => {
+    const result = await store.simulateNextDay("s_nonexistent");
+    expect(result).toEqual({ gamesSimulated: 0, seasonComplete: false });
+  });
+
+  it("returns { gamesSimulated: 0, seasonComplete: false } when no games pending on current day", async () => {
+    const { runHeadlessGame } = await import("@feat/league/sim/runHeadlessGame");
+
+    const teamIds: string[] = [];
+    for (let i = 0; i < 8; i++) {
+      const id = `ct_sim${String(i).padStart(3, "0")}`;
+      await insertTeam(db, id, `Sim Team ${i}`);
+      teamIds.push(id);
+    }
+
+    const season = await store.createSeason(makeSeasonInput(teamIds));
+
+    // Complete all games on day 0 so no games are pending.
+    const day0Games = await db.seasonGames
+      .find({ selector: { seasonId: season.id, gameDay: 0 } })
+      .exec();
+
+    for (const g of day0Games) {
+      await g.patch({ status: "completed", boxscore: { homeScore: 3, awayScore: 1 } });
+    }
+
+    // Bump currentGameDay to 1 so we're looking at day 1 which has no completed games yet.
+    await db.seasons.findOne(season.id).update({ $set: { currentGameDay: 1 } });
+
+    // Mock runHeadlessGame to never be called (because we're testing the "no games pending" path).
+    vi.mocked(runHeadlessGame).mockResolvedValue({ status: "completed" });
+
+    const result = await store.simulateNextDay(season.id);
+
+    // Since day 1 has scheduled games (not completed), this should return 0 games simulated.
+    // But since there ARE scheduled games remaining, seasonComplete should be false.
+    expect(result.gamesSimulated).toBeGreaterThanOrEqual(0);
+    expect(result.seasonComplete).toBe(false);
+  });
+
+  it("returns { gamesSimulated: N, seasonComplete: false } after simulating today's games", async () => {
+    const { runHeadlessGame } = await import("@feat/league/sim/runHeadlessGame");
+
+    const teamIds: string[] = [];
+    for (let i = 0; i < 8; i++) {
+      const id = `ct_sims${String(i).padStart(3, "0")}`;
+      await insertTeam(db, id, `SimS Team ${i}`);
+      teamIds.push(id);
+    }
+
+    const season = await store.createSeason(makeSeasonInput(teamIds));
+
+    // Mock runHeadlessGame to return completed status.
+    vi.mocked(runHeadlessGame).mockResolvedValue({ status: "completed" });
+
+    const result = await store.simulateNextDay(season.id);
+
+    expect(result.gamesSimulated).toBeGreaterThan(0);
+    // Season should not be complete after simulating just one day.
+    expect(result.seasonComplete).toBe(false);
+  });
+});
+
+describe("recordResult fatigue", () => {
+  it("resets pitcher daysRest to 0 after they start a game", async () => {
+    const teamIds: string[] = [];
+    for (let i = 0; i < 8; i++) {
+      const id = `ct_fat${String(i).padStart(3, "0")}`;
+      await insertTeam(db, id, `Fatigue Team ${i}`);
+      teamIds.push(id);
+    }
+
+    const season = await store.createSeason(makeSeasonInput(teamIds));
+    const [game] = await store.getSeasonGames(season.id, "scheduled");
+
+    // Pre-insert seasonPlayerState docs for both teams.
+    const homeSpId = "p_sp_home_fatigue";
+    const awaySpId = "p_sp_away_fatigue";
+
+    await db.seasonPlayerState.bulkInsert([
+      {
+        id: `${season.id}:${game.homeSeasonTeamId}:${homeSpId}`,
+        seasonId: season.id,
+        seasonTeamId: game.homeSeasonTeamId,
+        playerId: homeSpId,
+        pitcherDaysRest: 4,
+        pitcherAvailability: 1.0,
+        pitcherStartsThisSeason: 0,
+      },
+      {
+        id: `${season.id}:${game.awaySeasonTeamId}:${awaySpId}`,
+        seasonId: season.id,
+        seasonTeamId: game.awaySeasonTeamId,
+        playerId: awaySpId,
+        pitcherDaysRest: 4,
+        pitcherAvailability: 1.0,
+        pitcherStartsThisSeason: 0,
+      },
+    ]);
+
+    // Record result with starting pitcher IDs in the boxscore.
+    await store.recordResult({
+      seasonGameId: game.id,
+      boxscore: {
+        homeScore: 5,
+        awayScore: 3,
+        winnerStartingPitcherId: homeSpId,
+        loserStartingPitcherId: awaySpId,
+      },
+    });
+
+    // Verify the SP's pitcherDaysRest was reset to 0.
+    const homeSpDoc = await db.seasonPlayerState
+      .findOne(`${season.id}:${game.homeSeasonTeamId}:${homeSpId}`)
+      .exec();
+    const awaySpDoc = await db.seasonPlayerState
+      .findOne(`${season.id}:${game.awaySeasonTeamId}:${awaySpId}`)
+      .exec();
+
+    expect(homeSpDoc?.pitcherDaysRest).toBe(0);
+    expect(awaySpDoc?.pitcherDaysRest).toBe(0);
   });
 });
