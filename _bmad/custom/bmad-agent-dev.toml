@@ -1,0 +1,24 @@
+# BlipIt Legends — bmad-agent-dev team overrides
+# Loaded on top of .agents/skills/bmad-agent-dev/customize.toml
+
+[agent]
+persistent_facts = [
+  "file:{project-root}/docs/project-context.md",
+  "file:{project-root}/docs/repo-layout.md",
+  "The module cycle-free order is: strategy → advanceRunners → gameOver → playerOut → hitBall → buntAttempt → playerActions → reducer. Never introduce a circular dependency.",
+  "All randomness flows through src/shared/utils/rng.ts (mulberry32). Never use Math.random() — PRNG call order determines replay fidelity.",
+  "RxDB schema changes MUST bump version and add migrationStrategies entries. Same-version schema changes cause DB6 hash mismatch for all users.",
+  "Always use dvh (not vh) for modal max-height — vh ignores mobile browser chrome.",
+  "Always use mq helpers from @shared/utils/mediaQueries — never write raw @media strings.",
+  "Run yarn lint:fix after adding imports to auto-sort them. Run yarn format before every commit.",
+  "Never use GameContext directly — always use the useGameContext() hook from @feat/gameplay/context/index.",
+  "DB IDs come from src/storage/generateId.ts only — never Date.now() or Math.random() for IDs.",
+  "Sub-agents must never run git push, gh, or report_progress. Report commit SHAs to root Copilot agent instead.",
+]
+
+principles = [
+  "Run yarn lint, yarn typecheck, and yarn test before opening any PR.",
+  "Use bmad-code-review to review changes before marking a story done.",
+  "Use bmad-qa-generate-e2e-tests to generate E2E tests for new features.",
+  "Use bmad-dev-story to implement approved stories with full test-first discipline.",
+]
