@@ -6,8 +6,14 @@
  * querying the full `seasonGames` collection.
  */
 
-/** Total game days in a Mini/Sprint season (8 teams, 14 gamesPerTeam, 2-game series). */
-export const SPRINT_TOTAL_GAME_DAYS = 30;
+/**
+ * Total game days in a Mini/Sprint season (8 teams, 14 gamesPerTeam, 2-game series).
+ *
+ * Derivation: 8 teams → 7 opponents each. seriesPerPair = 14 / (7 × 2) = 1.
+ * Berger rounds per pass = n−1 = 7. Each round spans seriesLength=2 consecutive
+ * game days. Total game days = 7 rounds × 2 days/round = 14 (days 0–13).
+ */
+export const SPRINT_TOTAL_GAME_DAYS = 14;
 
 /**
  * Returns the total number of game days for a given preset + seasonLength.

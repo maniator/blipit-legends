@@ -200,12 +200,17 @@ export function generateSchedule(input: GenerateScheduleInput): GenerateSchedule
           // Game day: each season round occupies seriesLength consecutive days.
           const gameDay = seasonRoundIdx * seriesLength + g;
           const gameId = generateSeasonGameId();
+          // Use stable customTeamIds (homeCtId/awayCtId) as seed inputs, not
+          // the random seasonTeamIds. seasonTeamIds are nanoid-generated and
+          // differ across two createSeason calls with the same masterSeed,
+          // which would break the "same seed → identical outcomes" contract.
+          // customTeamIds are persistent across calls and produce stable seeds.
           const derivedSeed = deriveScheduledGameSeed({
             seasonId,
             seasonRoundIdx,
             gameInSeriesIdx: g,
-            homeSeasonTeamId: seasonTeamIdByCustomTeamId[homeCtId],
-            awaySeasonTeamId: seasonTeamIdByCustomTeamId[awayCtId],
+            homeSeasonTeamId: homeCtId,
+            awaySeasonTeamId: awayCtId,
           });
           games.push({
             id: gameId,
