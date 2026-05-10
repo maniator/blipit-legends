@@ -3,8 +3,12 @@ import * as React from "react";
 import { createSeason, quickStart } from "@feat/league/storage/leagueStore";
 import { useActiveSeason } from "@feat/leagues/hooks/useActiveSeason";
 import ModalShell from "@shared/components/ModalShell";
+import { appLog } from "@shared/utils/log";
+import { getDb, type BallgameDb } from "@storage/db";
 import StatusBanner from "@shared/components/StatusBanner";
 import { useNavigate } from "react-router";
+import { RxDatabaseProvider } from "rxdb/plugins/react";
+import { useCustomTeams } from "@shared/hooks/useCustomTeams";
 
 import { validateAllSteps } from "../../wizard/validateWizardState";
 import type { WizardState } from "../../wizard/wizardReducer";
@@ -353,9 +357,10 @@ const STEP_LABELS: Record<number, string> = {
   6: "Review",
 };
 
-export default function LeagueSetupWizard(): React.ReactElement {
+function LeagueSetupWizardInner(): React.ReactElement {
   const navigate = useNavigate();
   const { activeSeason, loading } = useActiveSeason();
+  const { teams: customTeams } = useCustomTeams();
 
   const [state, dispatch] = React.useReducer(wizardReducer, undefined, () => {
     return loadWizardState() ?? makeInitialState();
@@ -495,7 +500,18 @@ export default function LeagueSetupWizard(): React.ReactElement {
             <SecondaryButton type="button" onClick={() => setShowAbandonDialog(false)}>
               Cancel
             </SecondaryButton>
-            <DangerButton type="button" onClick={() => setShowAbandonDialog(false)}>
+            <DangerButton
+              type="button"
+              onClick={async () => {
+                if (!activeSeason) return;
+                const db = await getDb();
+                const seasonDoc = await db.seasons.findOne(activeSeason.id).exec();
+                if (seasonDoc) {
+                  await seasonDoc.patch({ status: "abandoned", completedAt: Date.now() });
+                }
+                setShowAbandonDialog(false);
+              }}
+            >
               Abandon
             </DangerButton>
           </AbandonDialogActions>
@@ -509,7 +525,7 @@ export default function LeagueSetupWizard(): React.ReactElement {
       case 1:
         return <Step1 />;
       case 2:
-        return <Step2 state={state} dispatch={dispatch} customTeams={[]} />;
+        return <Step2 state={state} dispatch={dispatch} customTeams={customTeams} />;
       case 3:
         return <Step3 state={state} dispatch={dispatch} />;
       case 5:
@@ -534,5 +550,31 @@ export default function LeagueSetupWizard(): React.ReactElement {
         {stepContent}
       </ModalShell>
     </div>
+  );
+}
+
+export default function LeagueSetupWizard(): React.ReactElement {
+  const [db, setDb] = React.useState<BallgameDb | null>(null);
+
+  React.useEffect(() => {
+    getDb()
+      .then(setDb)
+      .catch((err: unknown) => appLog.error("[LeagueSetupWizard] DB init failed:", err));
+  }, []);
+
+  if (!db) {
+    return (
+      <div data-testid="league-setup-wizard" style={{ padding: "24px" }}>
+        Loading…
+      </div>
+    );
+  }
+
+  return (
+    <RxDatabaseProvider
+      database={db as unknown as Parameters<typeof RxDatabaseProvider>[0]["database"]}
+    >
+      <LeagueSetupWizardInner />
+    </RxDatabaseProvider>
   );
 }
