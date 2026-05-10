@@ -60,7 +60,7 @@ test.describe("Visual", () => {
    *
    * Desktop-only to keep CI time reasonable; the accordion layout is the
    * same across all viewports.  We programmatically open every closed
-   * <details> element and then wait until all 11 sections are structurally
+   * <details> element and then wait until all 13 sections are structurally
    * open before snapshotting.
    */
   test(
@@ -79,9 +79,11 @@ test.describe("Visual", () => {
       while ((await closedSummaries.count()) > 0) {
         await closedSummaries.first().click();
       }
-      // Wait until all 11 sections are structurally open before snapshotting.
+      // Wait until all 13 sections are structurally open before snapshotting.
+      // HelpContent now has 13 sections (11 gameplay + 2 new League Mode sections).
+      // Both the /help page and the in-game How to Play modal share the same HelpContent.
       await expect(page.locator('[data-testid="instructions-modal"] details[open]')).toHaveCount(
-        11,
+        13,
       );
       await expect(page.getByTestId("instructions-modal")).toHaveScreenshot(
         "instructions-modal-all-sections.png",
@@ -151,7 +153,8 @@ test.describe("Visual — Help page", () => {
       while ((await closedSummaries.count()) > 0) {
         await closedSummaries.first().click();
       }
-      await expect(page.locator('[data-testid="help-page"] details[open]')).toHaveCount(11);
+      // Help page now has 13 sections (11 gameplay sections + 2 new League Mode sections).
+      await expect(page.locator('[data-testid="help-page"] details[open]')).toHaveCount(13);
 
       // Snapshot at the initial scroll position (top of page).
       await expect(page.getByTestId("help-page")).toHaveScreenshot(

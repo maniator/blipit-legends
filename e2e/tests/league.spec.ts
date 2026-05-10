@@ -77,7 +77,8 @@ test.describe("League Mode", () => {
       await page.getByTestId("hub-start-autogen").click();
 
       await expect(page).toHaveURL(/\/leagues\/new/, { timeout: 15_000 });
-      await expect(page.getByTestId("league-setup-wizard")).toBeVisible({ timeout: 15_000 });
+      // Wizard wraps content in a <dialog> — check for step navigation instead of outer div.
+      await expect(page.getByRole("button", { name: /next →/i })).toBeVisible({ timeout: 15_000 });
     },
   );
 
@@ -91,7 +92,10 @@ test.describe("League Mode", () => {
     async ({ page }) => {
       await page.goto("/leagues/new");
 
-      await expect(page.getByTestId("league-setup-wizard")).toBeVisible({ timeout: 15_000 });
+      // The wizard wraps its content in a <dialog> (ModalShell). Check for visible
+      // step content ("Format & Length" is step 1) rather than the outer wrapper div,
+      // which Playwright considers hidden while the dialog element is not yet opened.
+      await expect(page.getByRole("button", { name: /next →/i })).toBeVisible({ timeout: 15_000 });
     },
   );
 
@@ -108,7 +112,8 @@ test.describe("League Mode", () => {
       await expect(page.getByTestId("leagues-hub")).toBeVisible({ timeout: 15_000 });
 
       await page.getByTestId("hub-start-autogen").click();
-      await expect(page.getByTestId("league-setup-wizard")).toBeVisible({ timeout: 15_000 });
+      // Wait for the wizard step navigation to appear (the dialog opens asynchronously).
+      await expect(page.getByRole("button", { name: /next →/i })).toBeVisible({ timeout: 15_000 });
 
       // The ModalShell renders a close button with aria-label="Close dialog".
       const closeBtn = page.getByRole("button", { name: /close dialog/i });
@@ -149,7 +154,7 @@ test.describe("League Mode", () => {
       await expect(page.getByTestId("leagues-hub")).toBeVisible({ timeout: 15_000 });
 
       // The hub always renders a "← Back" button.
-      const backBtn = page.getByRole("button", { name: /go back/i });
+      const backBtn = page.getByRole("button", { name: /back to home/i });
       await expect(backBtn).toBeVisible({ timeout: 10_000 });
       await backBtn.click();
 
