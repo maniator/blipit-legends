@@ -91,8 +91,9 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
     const map: Record<string, string> = {};
     for (const t of seasonTeams) {
       const snap = t.rosterSnapshot as Record<string, unknown>;
-      const name = typeof snap.name === "string" ? snap.name : t.customTeamId;
-      map[t.id] = name;
+      const city = typeof snap.city === "string" && snap.city ? snap.city : "";
+      const snapName = typeof snap.name === "string" ? snap.name : t.customTeamId;
+      map[t.id] = city ? `${city} ${snapName}` : snapName;
     }
     return map;
   }, [seasonTeams]);

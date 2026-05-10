@@ -333,23 +333,44 @@ export function generateLeagueTeams(options: GenerateLeagueTeamsOptions): Genera
     ((index?: number) => `p_auto_${fnv1a(`${baseSeed}:player:${index ?? 0}`)}`);
   let playerIndex = 0;
   const nextPlayerId = () => playerId(playerIndex++);
-  const usedTeamNames = new Set<string>();
+
+  // Track used cities and nicknames globally across all teams in this batch.
+  // Separate sets prevent any city or nickname word from appearing twice,
+  // which eliminates both repeated prefixes (e.g. "Noodle Zoomers" + "Noodle
+  // Nibblers") and the doubled display name bug ("Cupcake Cupcake Launchers").
+  const usedCities = new Set<string>();
+  const usedNicknames = new Set<string>();
 
   return Array.from({ length: count }, (_, teamIndex) => {
     const actualTheme = resolveTheme(rng, theme);
     const { cities, nicknames } = wordLists(actualTheme);
+
+    // Pick a unique city — retry until an unused one is found.
     let city = pick(rng, cities);
-    let nickname = pick(rng, nicknames);
-    let name = `${city} ${nickname}`;
-    let attempts = 0;
-    while (usedTeamNames.has(name) && attempts < cities.length * nicknames.length) {
+    let cityAttempts = 0;
+    while (usedCities.has(city) && cityAttempts < cities.length) {
       city = pick(rng, cities);
-      nickname = pick(rng, nicknames);
-      name = `${city} ${nickname}`;
-      attempts++;
+      cityAttempts++;
     }
-    if (usedTeamNames.has(name)) name = `${name} ${teamIndex + 1}`;
-    usedTeamNames.add(name);
+    // Fallback: all cities exhausted (count > pool size) — append index.
+    if (usedCities.has(city)) city = `${city} ${teamIndex + 1}`;
+    usedCities.add(city);
+
+    // Pick a unique nickname — retry until an unused one is found.
+    let nickname = pick(rng, nicknames);
+    let nickAttempts = 0;
+    while (usedNicknames.has(nickname) && nickAttempts < nicknames.length) {
+      nickname = pick(rng, nicknames);
+      nickAttempts++;
+    }
+    // Fallback: all nicknames exhausted — append index.
+    if (usedNicknames.has(nickname)) nickname = `${nickname} ${teamIndex + 1}`;
+    usedNicknames.add(nickname);
+
+    // `name` stores only the nickname so that the display adapter can
+    // reconstruct the full name as "${city} ${name}" — matching how
+    // user-created custom teams store their data (city and name separately).
+    const name = nickname;
 
     const strength = teamStrength(rng, parity);
     const usedPlayerNames = new Set<string>();
@@ -400,7 +421,7 @@ export function generateLeagueTeams(options: GenerateLeagueTeamsOptions): Genera
     ];
 
     const roster = buildRoster({ lineup, bench, pitchers });
-    const abbreviation = nickname.slice(0, 3).toUpperCase();
+    const abbreviation = name.slice(0, 3).toUpperCase();
     return {
       id: teamId(teamIndex),
       name,

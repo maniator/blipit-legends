@@ -60,6 +60,34 @@ describe("generateLeagueTeams", () => {
     },
   );
 
+  it.each<AutogenTheme>(["classic", "whimsical"])(
+    "no city word repeats across 8 teams for fixed-pool theme %s",
+    (theme) => {
+      const teams = generate(theme);
+      const cities = teams.map((t) => t.city);
+      expect(new Set(cities).size).toBe(cities.length);
+    },
+  );
+
+  it.each<AutogenTheme>(["classic", "whimsical"])(
+    "no nickname word repeats across 8 teams for fixed-pool theme %s",
+    (theme) => {
+      const teams = generate(theme);
+      const nicknames = teams.map((t) => t.nickname);
+      expect(new Set(nicknames).size).toBe(nicknames.length);
+    },
+  );
+
+  it("name field stores only the nickname (not city-prefixed)", () => {
+    const teams = generate("whimsical");
+    for (const team of teams) {
+      // name must equal nickname exactly — no "City Nickname" doubling
+      expect(team.name).toBe(team.nickname);
+      // full display name is reconstructed as city + name by the adapter
+      expect(`${team.city} ${team.name}`).not.toContain(`${team.city} ${team.city}`);
+    }
+  });
+
   it.each<AutogenParity>(["balanced", "mixed", "random"])(
     "supports %s parity and stamps the autogen marker",
     (parity) => {
