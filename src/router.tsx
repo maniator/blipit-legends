@@ -5,6 +5,7 @@ import AppLoadingFallback from "@feat/gameplay/components/AppLoadingFallback";
 import AppShell from "@feat/gameplay/components/AppShell";
 import HomeScreen from "@feat/gameplay/components/HomeScreen";
 import RootLayout from "@feat/gameplay/components/RootLayout";
+import { getTotalGameDays } from "@feat/leagues/utils/seasonPresets";
 import {
   createBrowserRouter,
   Navigate,
@@ -42,7 +43,7 @@ function HomeRoute() {
   const ctx = useOutletContext<AppShellOutletContext>();
   const navigate = useNavigate();
 
-  const [activeSeasonId, setActiveSeasonId] = React.useState<string | null | undefined>(undefined);
+  const [activeSeasonId, setActiveSeasonId] = React.useState<string | null>(null);
   const [activeSeasonLabel, setActiveSeasonLabel] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -52,7 +53,9 @@ function HomeRoute() {
         if (docs.length > 0) {
           const s = docs[0].toJSON() as unknown as SeasonRecord;
           setActiveSeasonId(s.id);
-          setActiveSeasonLabel(`${s.name} · day ${s.currentGameDay} / 30`);
+          setActiveSeasonLabel(
+            `${s.name} · day ${s.currentGameDay} / ${getTotalGameDays(s.preset, s.seasonLength)}`,
+          );
         } else {
           setActiveSeasonId(null);
         }
@@ -72,7 +75,7 @@ function HomeRoute() {
       activeSeasonId={activeSeasonId}
       activeSeasonLabel={activeSeasonLabel}
       onContinueSeason={
-        activeSeasonId != null ? () => navigate(`/leagues/${activeSeasonId}`) : undefined
+        activeSeasonId !== null ? () => navigate(`/leagues/${activeSeasonId}`) : undefined
       }
     />
   );
