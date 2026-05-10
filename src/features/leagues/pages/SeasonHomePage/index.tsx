@@ -1,11 +1,13 @@
 import * as React from "react";
 
+import { simulateNextDay } from "@feat/league/storage/leagueStore";
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
 import { deriveStandings } from "@feat/league/utils/deriveStandings";
 import { SeasonContextProvider, useSeasonContext } from "@feat/leagues/context/SeasonContext";
 import { getTotalGameDays } from "@feat/leagues/utils/seasonPresets";
 import EmptyState from "@shared/components/EmptyState";
 import { BackBtn, PageContainer, PageHeader } from "@shared/components/PageLayout/styles";
+import { appLog } from "@shared/utils/logger";
 import { useNavigate, useParams } from "react-router";
 import { useLiveRxQuery } from "rxdb/plugins/react";
 
@@ -19,6 +21,9 @@ import {
   SeasonMeta,
   SeasonProgress,
   SeasonTitle,
+  SimulateButton,
+  SimulateError,
+  SimulateSection,
   StandingsRow,
   StandingsTable,
   StandingsTd,
@@ -35,6 +40,24 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
   const navigate = useNavigate();
   const { seasonId } = useParams<{ seasonId: string }>();
   const { season, seasonTeams, loading } = useSeasonContext();
+
+  const [simulating, setSimulating] = React.useState(false);
+  const [simError, setSimError] = React.useState<string | null>(null);
+
+  const handleSimulateDay = React.useCallback(async () => {
+    if (!seasonId) return;
+    setSimError(null);
+    setSimulating(true);
+    try {
+      await simulateNextDay(seasonId);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Simulation failed.";
+      appLog.error("[SeasonHomePage] simulateNextDay error:", err);
+      setSimError(msg);
+    } finally {
+      setSimulating(false);
+    }
+  }, [seasonId]);
 
   const gamesQuery = React.useMemo(
     () => ({
@@ -172,6 +195,20 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
           title="No games played yet"
           body="Standings will appear as games are completed."
         />
+      )}
+
+      {season.status === "active" && (
+        <SimulateSection>
+          <SimulateButton
+            type="button"
+            onClick={handleSimulateDay}
+            disabled={simulating}
+            data-testid="simulate-day-button"
+          >
+            {simulating ? "Simulating…" : "▶ Simulate Next Day"}
+          </SimulateButton>
+          {simError !== null && <SimulateError>{simError}</SimulateError>}
+        </SimulateSection>
       )}
 
       <NavCardGrid>
