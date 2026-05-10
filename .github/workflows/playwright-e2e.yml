@@ -84,6 +84,12 @@ jobs:
               --project=tablet
               --project=iphone-15-pro-max
               --project=iphone-15
+          # League shard: runs only @league-tagged tests on desktop chromium
+          - browser: league
+            shardIndex: 1
+            shardTotal: 1
+            projects: --project=desktop
+            grep: --grep "@league"
 
     steps:
       - name: Checkout
@@ -111,7 +117,7 @@ jobs:
         run: yarn build
 
       - name: Run Playwright E2E tests
-        run: npx playwright test ${{ matrix.projects }} --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+        run: npx playwright test ${{ matrix.projects }} ${{ matrix.grep || '' }} --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
         env:
           CI: true
 
