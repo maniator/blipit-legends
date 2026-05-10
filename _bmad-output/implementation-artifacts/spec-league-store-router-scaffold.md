@@ -5,9 +5,9 @@ created: "2026-05-10"
 status: "ready-for-dev"
 baseline_commit: "6d6b608"
 context:
-  - "{project-root}/docs/league-mode/data-model.md"
-  - "{project-root}/docs/league-mode/routing.md"
-  - "{project-root}/docs/league-mode/schedule-and-sim.md"
+  - "_bmad-output/planning-artifacts/league-mode-distillate/02-data-model-routing-schedule.md"
+  - "_bmad-output/planning-artifacts/league-mode-distillate/02-data-model-routing-schedule.md"
+  - "_bmad-output/planning-artifacts/league-mode-distillate/02-data-model-routing-schedule.md"
 ---
 
 <frozen-after-approval reason="human-owned intent — do not modify unless human renegotiates">

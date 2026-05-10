@@ -84,7 +84,7 @@ export interface SeasonGameRecord {
  * Primary key is composite: `${seasonId}:${playerId}`.
  */
 export interface SeasonPlayerStateRecord {
-  /** Composite key: `${seasonId}:${playerId}` */
+  /** Composite key: `${seasonId}:${seasonTeamId}:${playerId}` */
   id: string;
   /** FK → SeasonRecord.id */
   seasonId: string;

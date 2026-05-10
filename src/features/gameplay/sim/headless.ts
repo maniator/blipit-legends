@@ -37,7 +37,7 @@ export interface HeadlessGameResult {
  * and this call.
  *
  * v1 stub: generates scores using random(). Phase 4 will replace this body
- * with the full reducer loop (see docs/league-mode/schedule-and-sim.md §Modes).
+ * with the full reducer loop (see _bmad-output/planning-artifacts/league-mode-distillate/02-data-model-routing-schedule.md §Modes).
  */
 export function runHeadlessGameSim(): HeadlessGameResult {
   // Each score is a uniform sample over [0, 9] — one random() call per team.

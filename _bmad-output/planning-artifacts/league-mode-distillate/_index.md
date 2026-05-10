@@ -1,35 +1,18 @@
 ---
 type: bmad-distillate
-sources:
-  - "../../../docs/league-mode/README.md"
-  - "../../../docs/league-mode/roadmap.md"
-  - "../../../docs/league-mode/decisions.md"
-  - "../../../docs/league-mode/data-model.md"
-  - "../../../docs/league-mode/routing.md"
-  - "../../../docs/league-mode/schedule-and-sim.md"
-  - "../../../docs/league-mode/setup-wizard.md"
-  - "../../../docs/league-mode/team-autogeneration.md"
-  - "../../../docs/league-mode/fatigue-and-injuries.md"
-  - "../../../docs/league-mode/leagues-hub.md"
-  - "../../../docs/league-mode/playoffs-and-trades.md"
-  - "../../../docs/league-mode/awards-and-archive.md"
-  - "../../../docs/league-mode/multi-team-manager.md"
-  - "../../../docs/league-mode/save-export.md"
-  - "../../../docs/league-mode/ui-reuse.md"
-  - "../../../docs/league-mode/style-guide-additions.md"
-  - "../../../docs/league-mode/risks.md"
-  - "../../../docs/league-mode/agent-prompts/README.md"
-  - "../../../docs/league-mode/agent-prompts/v1.md"
-  - "../../../docs/league-mode/agent-prompts/v2.md"
-  - "../../../docs/league-mode/agent-prompts/v3.md"
-  - "../../../docs/league-mode/agent-prompts/v4.md"
+sources_note: >
+  Source planning docs (docs/league-mode/*.md — 22 files) were removed after
+  League Mode v1 shipped. This distillate is now the canonical and sole reference
+  for all League Mode v1–v4 design decisions, contracts, and agent prompts.
 downstream_consumer: "League Mode v1–v4 implementation — John (bmad-agent-pm), Winston (bmad-agent-architect), Amelia (bmad-agent-dev)"
 created: "2026-05-10"
+sources_archived: "2026-05-10"
 token_estimate: 14000
 parts: 6
 ---
 
 - Distillate of all 22 League Mode planning docs (v0–v4); ~92K source tokens compressed to ~14K; lossless for implementation use
+- **This is the sole canonical reference** — source docs (docs/league-mode/) were removed after v1 shipped
 - Consumer: bmad agents (John/PM planning, Winston/Architect CR gates, Amelia/Dev implementation, Buck/Baseball-Manager realism review, Sally/UX design sign-off)
 - 6 parts; each self-contained; load only the section(s) relevant to your task
 

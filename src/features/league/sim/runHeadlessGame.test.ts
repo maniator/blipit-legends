@@ -109,7 +109,7 @@ beforeEach(async () => {
 
   await db.seasonPlayerState.bulkInsert([
     {
-      id: `${SEASON_ID}:p_sp_home`,
+      id: `${SEASON_ID}:${HOME_ST_ID}:p_sp_home`,
       seasonId: SEASON_ID,
       seasonTeamId: HOME_ST_ID,
       playerId: "p_sp_home",
@@ -118,7 +118,7 @@ beforeEach(async () => {
       pitcherStartsThisSeason: 0,
     },
     {
-      id: `${SEASON_ID}:p_rp_home`,
+      id: `${SEASON_ID}:${HOME_ST_ID}:p_rp_home`,
       seasonId: SEASON_ID,
       seasonTeamId: HOME_ST_ID,
       playerId: "p_rp_home",
@@ -127,7 +127,7 @@ beforeEach(async () => {
       pitcherStartsThisSeason: 0,
     },
     {
-      id: `${SEASON_ID}:p_sp_away`,
+      id: `${SEASON_ID}:${AWAY_ST_ID}:p_sp_away`,
       seasonId: SEASON_ID,
       seasonTeamId: AWAY_ST_ID,
       playerId: "p_sp_away",

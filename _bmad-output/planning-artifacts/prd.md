@@ -43,7 +43,7 @@ The product's core differentiator is the intersection of **realism** and **effor
 
 **Current version:** Fully playable with Exhibition games, Manager Mode, custom teams, local saves, career stats, and PWA installability.
 
-**Next horizon:** League Mode — multi-team scheduled seasons with standings and playoffs (see `docs/league-mode/`).
+**Next horizon:** League Mode — multi-team scheduled seasons with standings and playoffs (see `_bmad-output/planning-artifacts/league-mode-distillate/`).
 
 ---
 

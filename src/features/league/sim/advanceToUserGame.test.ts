@@ -128,7 +128,7 @@ beforeEach(async () => {
   // Player states for all teams (SP only for simplicity)
   await db.seasonPlayerState.bulkInsert([
     {
-      id: `${SEASON_ID}:p_sp1_user`,
+      id: `${SEASON_ID}:${USER_ST_ID}:p_sp1_user`,
       seasonId: SEASON_ID,
       seasonTeamId: USER_ST_ID,
       playerId: "p_sp1",
@@ -137,7 +137,7 @@ beforeEach(async () => {
       pitcherStartsThisSeason: 0,
     },
     {
-      id: `${SEASON_ID}:p_rp1_user`,
+      id: `${SEASON_ID}:${USER_ST_ID}:p_rp1_user`,
       seasonId: SEASON_ID,
       seasonTeamId: USER_ST_ID,
       playerId: "p_rp1",
@@ -146,7 +146,7 @@ beforeEach(async () => {
       pitcherStartsThisSeason: 0,
     },
     {
-      id: `${SEASON_ID}:p_sp1_a`,
+      id: `${SEASON_ID}:${OTHER_ST_A}:p_sp1_a`,
       seasonId: SEASON_ID,
       seasonTeamId: OTHER_ST_A,
       playerId: "p_sp1",
@@ -155,7 +155,7 @@ beforeEach(async () => {
       pitcherStartsThisSeason: 0,
     },
     {
-      id: `${SEASON_ID}:p_rp1_a`,
+      id: `${SEASON_ID}:${OTHER_ST_A}:p_rp1_a`,
       seasonId: SEASON_ID,
       seasonTeamId: OTHER_ST_A,
       playerId: "p_rp1",
@@ -164,7 +164,7 @@ beforeEach(async () => {
       pitcherStartsThisSeason: 0,
     },
     {
-      id: `${SEASON_ID}:p_sp1_b`,
+      id: `${SEASON_ID}:${OTHER_ST_B}:p_sp1_b`,
       seasonId: SEASON_ID,
       seasonTeamId: OTHER_ST_B,
       playerId: "p_sp1",
@@ -173,7 +173,7 @@ beforeEach(async () => {
       pitcherStartsThisSeason: 0,
     },
     {
-      id: `${SEASON_ID}:p_rp1_b`,
+      id: `${SEASON_ID}:${OTHER_ST_B}:p_rp1_b`,
       seasonId: SEASON_ID,
       seasonTeamId: OTHER_ST_B,
       playerId: "p_rp1",
