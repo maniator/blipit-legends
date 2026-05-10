@@ -123,6 +123,41 @@ export const StandingsTeamName = styled.span`
   color: ${({ theme }) => theme.colors.textPrimary};
 `;
 
+export const SimulateSection = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+`;
+
+export const SimulateButton = styled.button`
+  background: ${({ theme }) => theme.colors.accentPrimary};
+  color: ${({ theme }) => theme.colors.btnPrimaryText};
+  border: none;
+  border-radius: ${({ theme }) => theme.radii.pill};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.xl};
+  font-size: ${({ theme }) => theme.fontSizes.body};
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:not(:disabled):hover {
+    opacity: 0.85;
+  }
+
+  &:not(:disabled):active {
+    opacity: 0.7;
+  }
+`;
+
+export const SimulateError = styled.p`
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.textDanger};
+  margin: ${({ theme }) => theme.spacing.xs} 0 0;
+`;
+
 export const NavCardGrid = styled.div`
   display: flex;
   flex-direction: column;

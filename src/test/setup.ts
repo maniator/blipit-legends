@@ -1,6 +1,16 @@
 import "fake-indexeddb/auto";
 import "@testing-library/jest-dom/vitest";
 
+import { addRxPlugin } from "rxdb";
+import { RxDBMigrationSchemaPlugin } from "rxdb/plugins/migration-schema";
+
+// Register the migration-schema plugin in the test environment.
+// src/storage/db.ts also registers it at module load, but schema migration
+// tests (e.g. schemaV1.test.ts) create databases directly via createRxDatabase
+// without going through getDb(), so the plugin must be present here too.
+// addRxPlugin is idempotent in RxDB v17 — calling it twice is safe.
+addRxPlugin(RxDBMigrationSchemaPlugin);
+
 import * as React from "react";
 
 import { theme } from "@shared/theme";

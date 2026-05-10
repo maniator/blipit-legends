@@ -13,6 +13,7 @@ import type { AutogenParity, AutogenTheme } from "@feat/league/autogen/generateL
 import { generateLeagueTeams } from "@feat/league/autogen/generateLeagueTeams";
 import { generateSchedule } from "@feat/league/schedule/generateSchedule";
 import { advanceToUserGame } from "@feat/league/sim/advanceToUserGame";
+import { runHeadlessGame } from "@feat/league/sim/runHeadlessGame";
 import { computePitcherFatigueUpdates } from "@feat/league/sim/updatePitcherFatigue";
 import type {
   SeasonGameRecord,
@@ -21,6 +22,7 @@ import type {
   SeasonTeamRecord,
 } from "@feat/league/storage/types";
 import { deriveStandings } from "@feat/league/utils/deriveStandings";
+import { nanoid } from "nanoid";
 
 import type { BallgameDb } from "@storage/db";
 import { getDb } from "@storage/db";
@@ -85,6 +87,13 @@ export interface AdvanceSeasonResult {
 export interface RecordResultInput {
   seasonGameId: string;
   boxscore: { homeScore: number; awayScore: number };
+}
+
+export interface SimulateNextDayResult {
+  /** Number of games that completed during this call. */
+  gamesSimulated: number;
+  /** True when no scheduled or in-progress games remain. */
+  seasonComplete: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -470,6 +479,95 @@ function buildStore(getDbFn: GetDb) {
       return docs[0].toJSON() as unknown as SeasonRecord;
     },
 
+    /**
+     * Simulates all scheduled games for the current game day.
+     *
+     * Games are run headlessly in id-ASC order (same deterministic order as
+     * advanceToUserGame). When all games for the day complete, `runHeadlessGame`
+     * (step 10) automatically advances `seasons.currentGameDay`. If the final
+     * day completes, champion declaration runs here and status is set to
+     * "complete".
+     *
+     * Safe to call when the season is already complete — returns immediately
+     * with `{ gamesSimulated: 0, seasonComplete: true }`.
+     */
+    async simulateNextDay(seasonId: string): Promise<SimulateNextDayResult> {
+      const db = await getDbFn();
+
+      const seasonDoc = await db.seasons.findOne(seasonId).exec();
+      if (!seasonDoc) return { gamesSimulated: 0, seasonComplete: false };
+
+      const season = seasonDoc.toJSON() as unknown as SeasonRecord;
+
+      // Fast-path: season already finished.
+      if (season.status !== "active") {
+        return { gamesSimulated: 0, seasonComplete: season.status === "complete" };
+      }
+
+      const currentDay = season.currentGameDay;
+
+      // All scheduled/in_progress games for today.
+      const pendingOnDay = await db.seasonGames
+        .find({
+          selector: {
+            seasonId,
+            gameDay: currentDay,
+            status: { $in: ["scheduled", "in_progress"] },
+          },
+        })
+        .exec();
+
+      if (pendingOnDay.length === 0) {
+        // Today is already done — check overall completion.
+        const anyPending = await db.seasonGames
+          .find({ selector: { seasonId, status: { $in: ["scheduled", "in_progress"] } } })
+          .exec();
+        return { gamesSimulated: 0, seasonComplete: anyPending.length === 0 };
+      }
+
+      const claimToken = nanoid(12);
+      let gamesSimulated = 0;
+
+      // Sort by id ASC — deterministic, matches advanceToUserGame ordering.
+      const sorted = [...pendingOnDay].sort((a, b) => a.id.localeCompare(b.id));
+
+      for (const game of sorted) {
+        const outcome = await runHeadlessGame({ seasonGameId: game.id, claimToken });
+        if (outcome.status === "completed" || outcome.status === "already_complete") {
+          gamesSimulated++;
+        }
+      }
+
+      // Re-check whether all games are now done.
+      const anyStillPending = await db.seasonGames
+        .find({ selector: { seasonId, status: { $in: ["scheduled", "in_progress"] } } })
+        .exec();
+      const seasonComplete = anyStillPending.length === 0;
+
+      if (seasonComplete) {
+        const freshSeasonDoc = await db.seasons.findOne(seasonId).exec();
+        if (freshSeasonDoc) {
+          const completedGames = await db.seasonGames
+            .find({ selector: { seasonId, status: "completed" } })
+            .exec();
+          const allTeamDocs = await db.seasonTeams.find({ selector: { seasonId } }).exec();
+          const allSeasonTeamIds = allTeamDocs.map((d) => d.id);
+          const standings = deriveStandings(
+            completedGames.map((d) => d.toJSON() as unknown as SeasonGameRecord),
+            allSeasonTeamIds,
+          );
+          const championTeamId = standings[0]?.seasonTeamId ?? null;
+          await freshSeasonDoc.patch({
+            status: "complete",
+            completedAt: Date.now(),
+            championTeamId,
+          });
+        }
+      }
+
+      return { gamesSimulated, seasonComplete };
+    },
+
     /** Returns all season team records for a given season. */
     async getSeasonTeams(seasonId: string): Promise<SeasonTeamRecord[]> {
       const db = await getDbFn();
@@ -515,6 +613,7 @@ export const {
   quickStart,
   advanceSeason,
   recordResult,
+  simulateNextDay,
   getActiveSeason,
   getSeasonTeams,
   getSeasonGames,
