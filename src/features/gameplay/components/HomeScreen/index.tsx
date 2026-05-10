@@ -16,7 +16,7 @@ type Props = {
   onContact?: () => void;
   /** Active season ID — when set, shows a Continue banner instead of the teaser. */
   activeSeasonId?: string | null;
-  /** Full label e.g. "Spring 2026 · day 3 / 30" */
+  /** Full label e.g. "Spring 2026 · day 3 / 14" */
   activeSeasonLabel?: string | null;
   /** Called when user clicks Continue on the league banner. */
   onContinueSeason?: () => void;

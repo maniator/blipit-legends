@@ -22,7 +22,7 @@
 - seasons: id, name, status(active|complete|abandoned), createdAt(indexed), preset(mini|standard|full), seasonLength(sprint|standard|marathon), masterSeed(base-36), leagues[]{id;name;teamIds;dhEnabled;divisions?}, tradeDeadlineGameDay(null v1-v2), playoffFormat(null v1-v2), featureFlags, currentGameDay, championTeamId, rulesetVersion, awards[](v4); indexes: status, createdAt
 - seasonTeams: id, seasonId(indexed), leagueId(indexed), customTeamId(indexed), rosterSnapshot(frozen at start), wins, losses, ties, runDifferential, expectedWins(v4); wins/losses/runDiff DERIVED by recomputing from seasonGames — never incremented directly
 - seasonGames: id, seasonId(indexed), gameDay(indexed), homeSeasonTeamId, awaySeasonTeamId, seriesId, status(scheduled|in_progress|completed, indexed), boxscore(null until complete), derivedSeed, completedAt; double-completion is no-op
-- seasonPlayerState: id="${seasonId}:${playerId}", seasonId(indexed), seasonTeamId(indexed), playerId, pitcherDaysRest, pitcherAvailability(0..1; ≥0.85=Fresh, 0.50-0.84=Tired, <0.50=Spent), pitcherStartsThisSeason
+- seasonPlayerState: id="${seasonId}:${seasonTeamId}:${playerId}", seasonId(indexed), seasonTeamId(indexed), playerId, pitcherDaysRest, pitcherAvailability(0..1; ≥0.85=Fresh, 0.50-0.84=Tired, <0.50=Spent), pitcherStartsThisSeason
 
 ## Collections — v2 (1 new + schema bump)
 
@@ -42,12 +42,12 @@
 ## Schedule Generation
 
 - Pure module; inputs frozen at creation; sub-PRNG: mulberry32(parseInt(fnv1a(`${masterSeed}:schedule`),16)>>>0)
-- Odd team counts: byes; distribution deterministic; Mini preset (8 teams, 30 games, 3-game series) caveat: ~4.28 games/opponent — non-uniform opponent frequency, surface in wizard
+- Odd team counts: byes; distribution deterministic; Mini preset (8 teams, 14 game days, 2-game series) caveat: ~4.28 games/opponent — non-uniform opponent frequency, surface in wizard
 - Sub-PRNG registry: :schedule (v1); :autogen:${autogenSubSeed} (v1); per-game derivedSeed cached; :trades:day:${gameDay} (v3); :tiebreak:${sortedTiedIds} (v3)
 
 ## Per-Game Seed Derivation (non-negotiable)
 
-- deriveScheduledGameSeed(seasonId, seasonGameId): fnv1a(`${seasonId}:${seasonGameId}`) → parseInt(hex,16)>>>0 → .toString(36)
+- deriveScheduledGameSeed({ seasonId, seasonRoundIdx, gameInSeriesIdx, homeCustomTeamId, awayCustomTeamId }): fnv1a(`${seasonId}:r${seasonRoundIdx}:g${gameInSeriesIdx}:${homeCustomTeamId}:${awayCustomTeamId}`) → parseInt(hex,16)>>>0 → .toString(36)
 - reinitSeed: parseInt(cachedDerivedSeed, 36)>>>0 → mulberry32 state
 - NEVER pass raw colon-joined string to reinitSeed (colon not base-36-safe)
 - Cached on seasonGames.derivedSeed at schedule generation; sim reads cache
