@@ -14,7 +14,7 @@ import { handleSimAction } from "./handlers/sim";
 import { warnIfImpossible } from "./invariants";
 import type { LogAction } from "./logReducer";
 import type { ManagerDecisionValues } from "./managerDecisionValues";
-import { DEFAULT_MANAGER_DECISION_VALUES } from "./managerDecisionValues";
+import { getDefaultDecisionValues } from "./managerDecisionValues";
 import { computeBatterFatigueFactor } from "./pitchSimulation";
 import type { Strategy } from "./playerTypes";
 import { PINCH_HITTER_CONTACT_WEIGHT, PINCH_HITTER_POWER_WEIGHT } from "./playerTypes";
@@ -66,7 +66,7 @@ const computeStealSuccessPct = (base: 0 | 1, strategy: Strategy, state: State): 
  * satisfied simultaneously. The type is retained for type completeness.
  *
  * @param decisionValues - Optional runtime tuning values. Defaults to
- *   DEFAULT_MANAGER_DECISION_VALUES so existing callers are unaffected.
+ *   `getDefaultDecisionValues()` so the active A/B variant is respected.
  *
  * @internal-ai-caller
  *   The default `stealMinOfferPct` (and the `stealMinOfferPct` field in
@@ -81,7 +81,7 @@ export const detectDecision = (
   state: State,
   strategy: Strategy,
   managerMode: boolean,
-  decisionValues: ManagerDecisionValues = DEFAULT_MANAGER_DECISION_VALUES,
+  decisionValues: ManagerDecisionValues = getDefaultDecisionValues(),
 ): DecisionType | null => {
   if (!managerMode) return null;
   if (state.gameOver) return null;

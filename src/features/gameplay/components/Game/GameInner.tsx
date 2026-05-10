@@ -56,6 +56,21 @@ const wouldClampStealThreshold = (
   );
 };
 
+/**
+ * Shows the steal-threshold clamp notice once per session when a save's
+ * `decisionValues` contains a steal threshold that will be clamped. The
+ * module-level flag prevents repeat toasts when the user loads multiple saves.
+ */
+const maybeShowStealClampToast = (
+  dv: Partial<ManagerDecisionValues> | null | undefined,
+  showToast: (show: boolean) => void,
+) => {
+  if (wouldClampStealThreshold(dv) && !_stealClampToastShown) {
+    _stealClampToastShown = true;
+    showToast(true);
+  }
+};
+
 /** Finds the best save to auto-resume: prefer seed+snapshot match, fallback to any snapshot. */
 const findMatchedSave = (saves: SaveRecord[]): SaveRecord | null => {
   const currentSeed = getSeed()?.toString(36);
@@ -200,10 +215,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     setStrategy(setup.strategy);
     if (setup.managedTeam !== null) setManagedTeam(setup.managedTeam);
     setManagerMode(setup.managerMode);
-    if (wouldClampStealThreshold(setup.decisionValues) && !_stealClampToastShown) {
-      _stealClampToastShown = true;
-      setShowStealClampToast(true);
-    }
+    maybeShowStealClampToast(setup.decisionValues, setShowStealClampToast);
     setDecisionValues(
       setup.decisionValues != null
         ? sanitizeManagerDecisionValues(setup.decisionValues)
@@ -373,10 +385,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     setManagerMode(setup.managerMode);
     setManagedTeam(setup.managedTeam ?? 0);
     setStrategy(setup.strategy);
-    if (wouldClampStealThreshold(setup.decisionValues) && !_stealClampToastShown) {
-      _stealClampToastShown = true;
-      setShowStealClampToast(true);
-    }
+    maybeShowStealClampToast(setup.decisionValues, setShowStealClampToast);
     setDecisionValues(
       setup.decisionValues != null
         ? sanitizeManagerDecisionValues(setup.decisionValues)
@@ -436,10 +445,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       setManagerMode(setup.managerMode);
       setManagedTeam(setup.managedTeam ?? 0);
       setStrategy(setup.strategy);
-      if (wouldClampStealThreshold(setup.decisionValues) && !_stealClampToastShown) {
-        _stealClampToastShown = true;
-        setShowStealClampToast(true);
-      }
+      maybeShowStealClampToast(setup.decisionValues, setShowStealClampToast);
       setDecisionValues(
         setup.decisionValues != null
           ? sanitizeManagerDecisionValues(setup.decisionValues)

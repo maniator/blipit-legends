@@ -40,6 +40,7 @@ interface Props {
 const TouchTooltip: React.FunctionComponent<Props> = ({ label, children = "ⓘ", triggerTestId }) => {
   const [open, setOpen] = React.useState(false);
   const wrapperRef = React.useRef<HTMLSpanElement>(null);
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
   const bubbleId = React.useId();
 
   const close = React.useCallback(() => setOpen(false), []);
@@ -74,6 +75,7 @@ const TouchTooltip: React.FunctionComponent<Props> = ({ label, children = "ⓘ",
   return (
     <Wrapper ref={wrapperRef}>
       <Trigger
+        ref={triggerRef}
         type="button"
         aria-label="More info"
         aria-describedby={open ? bubbleId : undefined}
@@ -113,6 +115,9 @@ const TouchTooltip: React.FunctionComponent<Props> = ({ label, children = "ⓘ",
           onClick={(e) => {
             e.stopPropagation();
             close();
+            // Restore focus to the trigger so keyboard and touch+keyboard users
+            // don't lose their place when the bubble closes.
+            triggerRef.current?.focus();
           }}
           data-testid="touch-tooltip-close"
         >
