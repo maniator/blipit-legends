@@ -53,6 +53,9 @@
 | Routes | `src/router.tsx` |
 | Styling theme | `src/shared/theme.ts`, `src/shared/utils/mediaQueries.ts` |
 | E2E helpers | `e2e/utils/helpers.ts` |
+| Baseball rules delta | `docs/agent/baseball-rules-delta.md` |
+| PM knowledge map | `docs/agent/pm-agent-knowledge-map.md` |
+| PRD | `_bmad-output/planning-artifacts/prd.md` |
 
 ## Path Aliases (tsconfig)
 
@@ -77,18 +80,37 @@ yarn build         # Production build to dist/
 
 ## Agent Routing
 
-| Task | Agent |
-| --- | --- |
-| Feature planning, baseball rules, risk review | `pm-agent` |
-| Gameplay realism review | `baseball-manager` |
-| Behavior-preserving refactor | `safe-refactor` |
-| UX/design/wireframes | `ux-design-lead` |
-| UI implementation | `ui-visual-snapshot` |
-| Simulation bug (wrong counts/logic) | `simulation-correctness` |
-| RxDB/save/export changes | `rxdb-save-integrity` |
-| CI/GitHub Actions | `ci-workflow` |
-| E2E test authoring/running | `e2e-test-runner` |
-| High-value change review/sign-off | `senior-lead` |
+### bmad Agents (planning, design, review, implementation)
+
+| Task | bmad Agent | Menu |
+| --- | --- | --- |
+| Feature planning, risk review, implementation sequencing | `bmad-agent-pm` (John) | M1 |
+| Baseball rules (MLB vs simulator) | `bmad-agent-pm` (John) | M2 |
+| PR description review | `bmad-agent-pm` (John) | PR |
+| Engineering sign-off request to architect | `bmad-agent-pm` (John) | SL |
+| Gameplay realism review (logs look unrealistic) | `bmad-agent-baseball-manager` (Coach) | RL |
+| Post-change realism validation | `bmad-agent-baseball-manager` (Coach) | VR |
+| Architecture decision, module boundary | `bmad-agent-architect` (Winston) | AD |
+| High-value change engineering sign-off | `bmad-agent-architect` (Winston) | CR |
+| Story implementation, feature coding | `bmad-agent-dev` (Amelia) | — |
+| Code review | `bmad-agent-dev` (Amelia) | bmad-code-review skill |
+| Simulation correctness bug (broken/impossible state) | `bmad-agent-dev` (Amelia) | SC |
+| RxDB schema change, migration | `bmad-agent-dev` (Amelia) | RX |
+| Safe refactor (behavior-preserving) | `bmad-agent-dev` (Amelia) | SR |
+| UI/styled-components implementation | `bmad-agent-dev` (Amelia) | UI |
+| E2E test authoring | `bmad-agent-dev` (Amelia) | E2E |
+| UX design, wireframes, accessibility | `bmad-agent-ux-designer` (Sally) | HR/SD |
+| User persona interview (6 personas) | `bmad-agent-ux-designer` (Sally) | P1–P6 |
+| Multi-agent deliberation | `bmad-party-mode` skill | — |
+| PRD creation | `bmad-agent-pm` (John) | bmad-create-prd skill |
+
+### Operational Specialists (kept — non-obvious setup steps)
+
+| Task | Agent | Why kept |
+| --- | --- | --- |
+| Visual snapshot baseline regen, E2E test execution | `e2e-test-runner` | Docker container correctness — baselines generated outside `mcr.microsoft.com/playwright:v1.58.2-noble` are silently wrong |
+| GitHub Actions / CI workflow YAML | `ci-workflow` | `copilot-setup-steps.yml` must NOT use `container:` — catastrophic, non-obvious bootstrap failure |
+| Live QA against blipit.net | `playwright-prod` | Localhost reverse proxy must be started first — no other documented path to production QA |
 
 ## Sub-Agent Push Rule
 

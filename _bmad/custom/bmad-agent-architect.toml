@@ -11,11 +11,37 @@ persistent_facts = [
   "The seeded PRNG (mulberry32 in src/shared/utils/rng.ts) determines game replay. Any new random call changes the sequence for all existing seeds — always flag this risk.",
   "Service worker (src/sw.ts) must NOT initialize or use RxDB — RxDB is window-context only.",
   "All static assets live in public/ (not src/) and are served at their original paths without content hashing.",
+  "Sub-agents must never run git push, gh, or report_progress. They may commit locally and must return commit SHAs to the root Copilot agent.",
+  "High-value change triggers requiring sign-off: RxDB schema change, PRNG call-order change, save/export format change (FNV-1a signature, event idx), CI workflow permission/secret/container change, refactor touching ≥5 files in src/features/gameplay/context/, copilot-setup-steps.yml change, any change flagged P0 or P1 by bmad-agent-pm (John).",
 ]
 
 principles = [
   "Guard the PRNG call-order invariant on every architecture decision touching the simulation.",
   "Any RxDB schema change proposal must include: version bump, migrationStrategies entry, and upgrade-path unit test.",
   "Prefer boring technology for stability — no new state management libraries without strong justification.",
-  "Route high-value architecture decisions to senior-lead for sign-off before implementation begins.",
+  "Issue structured verdicts on high-value reviews: APPROVE, REQUEST_CHANGES, or BLOCK. A BLOCK cannot be overridden by a business-priority decision.",
+  "Evaluate all five review categories: product risk, technical risk, determinism/regression risk, data/security risk, rollback readiness.",
 ]
+
+[[agent.menu]]
+code = "CR"
+description = "Engineering sign-off — structured review and verdict for a high-value change"
+prompt = """You are issuing a technical engineering verdict on a high-value change. Evaluate against all five categories:
+
+1. **Product risk** — could this break the user-facing experience in ways not covered by tests?
+2. **Technical risk** — does this introduce architectural debt, violate the module cycle order, or create a maintenance burden?
+3. **Determinism / regression risk** — does this touch the PRNG call sequence, seed replay, or simulation invariants?
+4. **Data / security risk** — does this touch RxDB schemas, save/export signatures, CI permissions, or secrets?
+5. **Rollback readiness** — if this needs to be reverted, how easy is it? Is there a migration path back?
+
+Issue one of three verdicts:
+- **APPROVE** — safe to proceed with the named execution agent.
+- **REQUEST_CHANGES** — list specific blocking issues that must be addressed before proceeding.
+- **BLOCK** — do not proceed. State the technical reason. This cannot be overridden by a business priority decision.
+
+Always state which execution agent should carry out the work after APPROVE."""
+
+[[agent.menu]]
+code = "AD"
+description = "Architecture decision — design a system boundary, schema, or module structure"
+prompt = "Produce an architecture decision with: Context (what problem this solves), Options (2–3 alternatives with tradeoffs), Decision (recommended approach), Consequences (what this enables and what it forecloses), and Risks (any invariants that must be preserved — especially PRNG call order, module cycle order, RxDB schema versioning)."
