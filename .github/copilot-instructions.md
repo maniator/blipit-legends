@@ -59,7 +59,7 @@ Before starting any task, check whether it belongs to a specialist agent. The ta
 
 | Layer | Agents | Purpose |
 | --- | --- | --- |
-| **bmad agents** (`.agents/skills/`) | John 📋 `bmad-agent-pm`, Coach ⚾ `bmad-agent-baseball-manager`, Winston 🏗️ `bmad-agent-architect`, Amelia 💻 `bmad-agent-dev`, Sally 🎨 `bmad-agent-ux-designer`, Mary 📊 `bmad-agent-analyst`, Paige 📚 `bmad-agent-tech-writer` | Planning, PRD, baseball rules, design, code review, story implementation, architecture, engineering sign-off, user personas, realism review. All load `docs/project-context.md` as persistent facts. |
+| **bmad agents** (`.agents/skills/`) | John 📋 `bmad-agent-pm`, Buck ⚾ `bmad-agent-baseball-manager`, Winston 🏗️ `bmad-agent-architect`, Amelia 💻 `bmad-agent-dev`, Sally 🎨 `bmad-agent-ux-designer`, Mary 📊 `bmad-agent-analyst`, Paige 📚 `bmad-agent-tech-writer` | Planning, PRD, baseball rules, design, code review, story implementation, architecture, engineering sign-off, user personas, realism review. All load `docs/project-context.md` as persistent facts. |
 | **Operational specialists** (`.github/agents/`) | `e2e-test-runner`, `ci-workflow`, `playwright-prod` | Kept because they carry non-obvious operational setup steps whose failure is silent or catastrophic. All other former specialists have been folded into bmad agents. |
 
 ### Routing Table
@@ -74,7 +74,7 @@ Before starting any task, check whether it belongs to a specialist agent. The ta
 | Net-new screen, modal, dialog, copy, design-system addition, accessibility audit, wireframe, "how should this feel / look" | `bmad-agent-ux-designer` (Sally) → HR or SD menu |
 | UI / layout / styled-components / responsive implementation | `bmad-agent-dev` (Amelia) → UI menu |
 | Deterministic simulation bug, impossible game state, stat inconsistency — **something is broken** | `bmad-agent-dev` (Amelia) → SC menu |
-| Gameplay realism review — **something feels wrong** (outcomes look unrealistic in logs, hit/walk/HR rates are off) | `bmad-agent-baseball-manager` (Coach) → RL menu |
+| Gameplay realism review — **something feels wrong** (outcomes look unrealistic in logs, hit/walk/HR rates are off) | `bmad-agent-baseball-manager` (Buck) → RL menu |
 | Code review on any change | `bmad-agent-dev` (Amelia) → invoke `bmad-code-review` skill |
 | High-value change engineering sign-off (P0/P1, PRNG, RxDB schema, broad refactor) | `bmad-agent-architect` (Winston) → CR menu |
 | RxDB schema change, save/load, export/import, `SaveStore` API | `bmad-agent-dev` (Amelia) → RX menu → Winston CR sign-off |
