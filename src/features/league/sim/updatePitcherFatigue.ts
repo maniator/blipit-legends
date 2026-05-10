@@ -78,6 +78,10 @@ export interface PitcherFatigueUpdateInput {
   winnerStartingPitcherId: string;
   /** playerId of the starting pitcher for the losing team. */
   loserStartingPitcherId: string;
+  /** playerId of the relief pitcher for the winning team. Empty string if none. */
+  winnerRelieverId?: string;
+  /** playerId of the relief pitcher for the losing team. Empty string if none. */
+  loserRelieverId?: string;
   /** All SeasonPlayerStateRecord docs for both teams combined. */
   allPlayerStates: SeasonPlayerStateRecord[];
   /**
@@ -105,6 +109,8 @@ export function computePitcherFatigueUpdates(
     rulesetVersion,
     winnerStartingPitcherId,
     loserStartingPitcherId,
+    winnerRelieverId,
+    loserRelieverId,
     allPlayerStates,
     rosterSnapshotBySeasonTeamId,
   } = input;
@@ -113,7 +119,12 @@ export function computePitcherFatigueUpdates(
   // Exclude empty-string sentinel values — null pitcher IDs (no eligible
   // pitcher found) should not trigger fatigue updates for a ghost player.
   const pitched = new Set(
-    [winnerStartingPitcherId, loserStartingPitcherId].filter((id) => id !== ""),
+    [
+      winnerStartingPitcherId,
+      loserStartingPitcherId,
+      winnerRelieverId ?? "",
+      loserRelieverId ?? "",
+    ].filter((id) => id !== ""),
   );
 
   return allPlayerStates.map((ps) => {
