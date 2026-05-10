@@ -43,6 +43,7 @@ export default defineConfig(({ mode }) => ({
       "@storage": path.resolve(__dirname, "src/storage"),
       "@test": path.resolve(__dirname, "src/test"),
       "@feat": path.resolve(__dirname, "src/features"),
+      "@feat/leagues": path.resolve(__dirname, "src/features/leagues"),
       "@shared": path.resolve(__dirname, "src/shared"),
     },
   },

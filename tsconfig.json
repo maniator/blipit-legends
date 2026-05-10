@@ -12,6 +12,7 @@
       "@storage/*": ["./src/storage/*"],
       "@test/*": ["./src/test/*"],
       "@feat/*": ["./src/features/*"],
+      "@feat/leagues/*": ["./src/features/leagues/*"],
       "@shared/*": ["./src/shared/*"]
     }
   },
