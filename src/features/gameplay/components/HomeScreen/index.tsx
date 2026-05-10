@@ -14,6 +14,12 @@ type Props = {
   onCareerStats?: () => void;
   /** When provided, shows a "Contact / Report Bug" button at the bottom of the menu. */
   onContact?: () => void;
+  /** Active season ID — when set, shows a Continue banner instead of the teaser. */
+  activeSeasonId?: string | null;
+  /** Full label e.g. "Spring 2026 · day 3 / 30" */
+  activeSeasonLabel?: string | null;
+  /** Called when user clicks Continue on the league banner. */
+  onContinueSeason?: () => void;
 };
 
 const HomeScreen: React.FunctionComponent<Props> = ({
@@ -24,6 +30,9 @@ const HomeScreen: React.FunctionComponent<Props> = ({
   onHelp,
   onCareerStats,
   onContact,
+  activeSeasonId,
+  activeSeasonLabel,
+  onContinueSeason,
 }) => (
   <HomeContainer data-testid="home-screen">
     <HomeLogo>
@@ -64,14 +73,28 @@ const HomeScreen: React.FunctionComponent<Props> = ({
         </>
       )}
     </MenuGroup>
-    <LeagueTeaserBox data-testid="league-play-teaser">
-      <LeagueTeaserTitle>
-        <span aria-hidden="true">🏆</span> League play coming soon
-      </LeagueTeaserTitle>
-      <LeagueTeaserSub>
-        Season schedules, standings, and playoffs are on the roadmap.
-      </LeagueTeaserSub>
-    </LeagueTeaserBox>
+    {activeSeasonId != null && onContinueSeason != null ? (
+      <LeagueTeaserBox data-testid="league-play-teaser">
+        <LeagueTeaserTitle>🏆 Continue Season</LeagueTeaserTitle>
+        <LeagueTeaserSub>{activeSeasonLabel}</LeagueTeaserSub>
+        <SecondaryBtn
+          onClick={onContinueSeason}
+          data-testid="home-continue-season-button"
+          style={{ marginTop: "8px" }}
+        >
+          Continue
+        </SecondaryBtn>
+      </LeagueTeaserBox>
+    ) : (
+      <LeagueTeaserBox data-testid="league-play-teaser">
+        <LeagueTeaserTitle>
+          <span aria-hidden="true">🏆</span> League play coming soon
+        </LeagueTeaserTitle>
+        <LeagueTeaserSub>
+          Season schedules, standings, and playoffs are on the roadmap.
+        </LeagueTeaserSub>
+      </LeagueTeaserBox>
+    )}
     <Attribution>
       Created by <AttributionLink href="https://naftali.dev">naftali.dev</AttributionLink>
     </Attribution>

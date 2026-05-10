@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  type WizardState,
   clearWizardState,
   loadWizardState,
   makeInitialState,
   saveWizardState,
   wizardReducer,
+  type WizardState,
 } from "./wizardReducer";
 
 // Mock generateSeed to return a deterministic value in tests.
@@ -44,7 +44,10 @@ describe("wizardReducer", () => {
   });
 
   it("PREV_STEP reverses through [6, 5, 3, 2, 1]", () => {
-    let state: ReturnType<typeof makeInitialState> = { ...makeInitialState(), step: 6 as WizardState["step"] };
+    let state: ReturnType<typeof makeInitialState> = {
+      ...makeInitialState(),
+      step: 6 as WizardState["step"],
+    };
 
     state = wizardReducer(state, { type: "PREV_STEP" });
     expect(state.step).toBe(5);
