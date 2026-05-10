@@ -10,8 +10,8 @@
 
 ### v1 — Foundation + Pitcher Fatigue
 
-- Goal: complete Mini-preset season loop (create → watch 30 games → standings → champion)
-- Setup wizard: Mini preset only (8 teams); 30-game sprint season; per-league DH toggle; master seed (random default)
+- Goal: complete Mini-preset season loop (create → watch 14 game days → standings → champion)
+- Setup wizard: Mini preset only (8 teams); 14-game-day sprint season (7 rounds × 2-game series); per-league DH toggle; master seed (random default)
 - Team autogeneration: all four naming themes v1 — Classic (city+animal), Sci-fi (planet+role), Whimsical (food+verb), Random mix; Mixed mode default; autogen teams promoted into customTeams at setup
 - New RxDB collections (v1): seasons, seasonTeams, seasonGames, seasonPlayerState (pitcher availability only)
 - Schedule: deterministic round-robin, series-based, byes for odd team counts
