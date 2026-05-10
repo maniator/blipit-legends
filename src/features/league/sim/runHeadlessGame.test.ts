@@ -11,7 +11,11 @@ import { seasonTeamsCollectionConfig } from "@feat/league/storage/seasonTeamsSch
 import { deriveScheduledGameSeed } from "@feat/league/utils/deriveScheduledGameSeed";
 import { createRxDatabase } from "rxdb";
 import { getRxStorageMemory } from "rxdb/plugins/storage-memory";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { runHeadlessGame } from "./runHeadlessGame";
+
+vi.mock("@storage/db", () => ({ getDb: vi.fn() }));
 
 // We test the core claim → sim → write flow by injecting a minimal test DB.
 // runHeadlessGame() uses getDb() which opens IndexedDB; to avoid that we
@@ -232,5 +236,167 @@ describe("seasonPlayerState fatigue after game", () => {
       .exec();
     expect(updated?.pitcherDaysRest).toBe(0);
     expect(updated?.pitcherAvailability).toBeCloseTo(0.1);
+  });
+});
+
+describe("runHeadlessGame — full flow", () => {
+  it("returns { status: 'not_found' } when game does not exist", async () => {
+    const { getDb } = await import("@storage/db");
+
+    const testDb = await makeTestDb();
+    vi.mocked(getDb).mockResolvedValue(testDb as any);
+
+    const result = await runHeadlessGame({
+      seasonGameId: "sg_nonexistent",
+      claimToken: "tok_test",
+    });
+
+    expect(result.status).toBe("not_found");
+    await testDb.close();
+  });
+
+  it("returns { status: 'already_complete' } when game is already completed", async () => {
+    const { getDb } = await import("@storage/db");
+
+    const testDb = await makeTestDb();
+    vi.mocked(getDb).mockResolvedValue(testDb as any);
+
+    // Insert a completed game.
+    await testDb.seasonGames.insert({
+      id: "sg_complete",
+      seasonId: SEASON_ID,
+      gameDay: 0,
+      homeSeasonTeamId: HOME_ST_ID,
+      awaySeasonTeamId: AWAY_ST_ID,
+      seriesId: "ser_1",
+      status: "completed",
+      boxscore: { homeScore: 5, awayScore: 3 },
+      derivedSeed: "abc123",
+      completedAt: Date.now(),
+      claimedBy: null,
+    });
+
+    const result = await runHeadlessGame({
+      seasonGameId: "sg_complete",
+      claimToken: "tok_test",
+    });
+
+    expect(result.status).toBe("already_complete");
+    await testDb.close();
+  });
+
+  it("returns { status: 'already_claimed' } when game is in_progress", async () => {
+    const { getDb } = await import("@storage/db");
+
+    const testDb = await makeTestDb();
+    vi.mocked(getDb).mockResolvedValue(testDb as any);
+
+    // Insert an in_progress game.
+    await testDb.seasonGames.insert({
+      id: "sg_claimed",
+      seasonId: SEASON_ID,
+      gameDay: 0,
+      homeSeasonTeamId: HOME_ST_ID,
+      awaySeasonTeamId: AWAY_ST_ID,
+      seriesId: "ser_1",
+      status: "in_progress",
+      boxscore: null,
+      derivedSeed: "abc123",
+      completedAt: null,
+      claimedBy: "other_token",
+    });
+
+    const result = await runHeadlessGame({
+      seasonGameId: "sg_claimed",
+      claimToken: "tok_test",
+    });
+
+    expect(result.status).toBe("already_claimed");
+    await testDb.close();
+  });
+
+  it("completes a scheduled game (happy path)", async () => {
+    const { getDb } = await import("@storage/db");
+
+    const testDb = await makeTestDb();
+    vi.mocked(getDb).mockResolvedValue(testDb as any);
+
+    // Insert season, teams, and a scheduled game.
+    await testDb.seasons.insert({
+      id: SEASON_ID,
+      name: "Test Season",
+      status: "active",
+      createdAt: Date.now(),
+      preset: "mini",
+      seasonLength: "sprint",
+      masterSeed: "testseed",
+      leagues: [],
+      tradeDeadlineGameDay: null,
+      playoffFormat: null,
+      featureFlags: {},
+      currentGameDay: 0,
+      championTeamId: null,
+      rulesetVersion: 1,
+      awards: [],
+    });
+
+    await testDb.seasonTeams.bulkInsert([
+      {
+        id: HOME_ST_ID,
+        seasonId: SEASON_ID,
+        leagueId: "l_1",
+        customTeamId: "ct_home",
+        rosterSnapshot: ROSTER_SNAP,
+        wins: 0,
+        losses: 0,
+        ties: 0,
+        runDifferential: 0,
+      },
+      {
+        id: AWAY_ST_ID,
+        seasonId: SEASON_ID,
+        leagueId: "l_1",
+        customTeamId: "ct_away",
+        rosterSnapshot: ROSTER_SNAP,
+        wins: 0,
+        losses: 0,
+        ties: 0,
+        runDifferential: 0,
+      },
+    ]);
+
+    const gameId = "sg_happy";
+    await testDb.seasonGames.insert({
+      id: gameId,
+      seasonId: SEASON_ID,
+      gameDay: 0,
+      homeSeasonTeamId: HOME_ST_ID,
+      awaySeasonTeamId: AWAY_ST_ID,
+      seriesId: "ser_1",
+      status: "scheduled",
+      boxscore: null,
+      derivedSeed: deriveScheduledGameSeed({
+        seasonId: SEASON_ID,
+        seasonRoundIdx: 0,
+        gameInSeriesIdx: 0,
+        homeCustomTeamId: HOME_ST_ID,
+        awayCustomTeamId: AWAY_ST_ID,
+      }),
+      completedAt: null,
+      claimedBy: null,
+    });
+
+    const result = await runHeadlessGame({
+      seasonGameId: gameId,
+      claimToken: "tok_happy",
+    });
+
+    expect(result.status).toBe("completed");
+
+    // Verify the game is now completed.
+    const updatedGame = await testDb.seasonGames.findOne(gameId).exec();
+    expect(updatedGame?.status).toBe("completed");
+
+    await testDb.close();
   });
 });
