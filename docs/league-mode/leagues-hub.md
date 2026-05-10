@@ -1,6 +1,6 @@
 # League Mode — Leagues Hub
 
-> Companion to [`README.md`](README.md). Owns the `/leagues` hub UX across all phases. Resolves UX P0-4 and P1-11 from the round-2 `@ux-design-lead` review (return-user "Continue" CTA, empty/active/complete states, microcopy inventory, `/saves` vs `/leagues` mental-model split).
+> Companion to [`README.md`](README.md). Owns the `/leagues` hub UX across all phases. Resolves UX P0-4 and P1-11 from the round-2 Sally (bmad-agent-ux-designer) review (return-user "Continue" CTA, empty/active/complete states, microcopy inventory, `/saves` vs `/leagues` mental-model split).
 
 ## Why a dedicated doc
 
@@ -24,7 +24,7 @@ After v1 ships, returning users with an active season should see a **"Continue"*
 
 - **No active season** → home screen unchanged (Play Ball is the primary CTA).
 - **Has active season** → home screen renders a `<StatusBanner variant="info">` row at the top: _"Continue: <season name> · day 12 / 30"_ with a button linking to `/leagues/:activeSeasonId`. "Play Ball" remains as a secondary action.
-- The `League teaser box` already documented in `docs/style-guide.md §8.6` may be repurposed as the container for this row, after `@ux-design-lead` signs off in `style-guide-additions.md`.
+- The `League teaser box` already documented in `docs/style-guide.md §8.6` may be repurposed as the container for this row, after Sally (bmad-agent-ux-designer) signs off in `style-guide-additions.md`.
 
 ## `/saves` vs `/leagues` — mental model
 
@@ -37,7 +37,7 @@ These are **two distinct user flows** and the docs / nav must surface that:
 
 The home screen's "Continue" affordance always points to whichever is more recent (an active league always wins; otherwise the most recently played exhibition save). This avoids forcing the user to choose between two parallel "lists of stuff I saved" UIs to find their game.
 
-`@user-save-curator` proxy interview is owed before v1 ships to validate this split (see `routing.md`'s back-affordance section for the matching navigation contract).
+A Save Curator (P4) proxy interview via Sally (bmad-agent-ux-designer) is owed before v1 ships to validate this split (see `routing.md`'s back-affordance section for the matching navigation contract).
 
 ## Microcopy inventory (v1–v4)
 
