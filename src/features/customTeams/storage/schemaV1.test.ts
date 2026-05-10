@@ -123,12 +123,17 @@ describe("teams schema migration: v0 → v1", () => {
       nameLowercase: "new team",
       metadata: {},
       activeLeagueIds: ["league_abc", "league_def"],
-      autogen: { version: 1, theme: "powerhouse", paritySeed: "seed123" },
+      autogen: { version: 1, theme: "powerhouse", parity: "mixed", baseSeed: "seed123" },
     });
 
     const doc = (await db.teams.findOne("ct_new001").exec())!.toJSON() as unknown as TeamRecord;
     expect(doc.activeLeagueIds).toEqual(["league_abc", "league_def"]);
-    expect(doc.autogen).toEqual({ version: 1, theme: "powerhouse", paritySeed: "seed123" });
+    expect(doc.autogen).toEqual({
+      version: 1,
+      theme: "powerhouse",
+      parity: "mixed",
+      baseSeed: "seed123",
+    });
 
     await db.close();
   });
