@@ -79,15 +79,15 @@ BlipIt Legends is a **browser-based entertainment product** with the following s
 
 ### Primary Success Metrics
 
-| Metric | Target | Measurement |
-| --- | --- | --- |
-| Zero-config game completion rate | Games started via default "Play Ball" complete successfully | E2E smoke test + no crash reports |
-| Manager Mode decision realism | 0 "impossible state" decisions shipped | simulation-correctness agent audit + determinism E2E |
-| Save round-trip fidelity | Loaded game resumes identically to auto-saved state | save-load E2E test |
-| K% / BB% / HR% proximity to MLB | Within ±20% of MLB seasonal averages per 9 innings | baseball-manager realism review |
-| PWA installability | Lighthouse installability score = 100 | Lighthouse CI |
-| E2E test coverage | All critical user flows covered | playwright-e2e CI workflow |
-| Mobile usability | All critical UI elements visible & non-overlapping on iPhone 15 and Pixel 7 portrait | responsive-smoke E2E + visual regression |
+| Metric                           | Target                                                                               | Measurement                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| Zero-config game completion rate | Games started via default "Play Ball" complete successfully                          | E2E smoke test + no crash reports                    |
+| Manager Mode decision realism    | 0 "impossible state" decisions shipped                                               | simulation-correctness agent audit + determinism E2E |
+| Save round-trip fidelity         | Loaded game resumes identically to auto-saved state                                  | save-load E2E test                                   |
+| K% / BB% / HR% proximity to MLB  | Within ±20% of MLB seasonal averages per 9 innings                                   | baseball-manager realism review                      |
+| PWA installability               | Lighthouse installability score = 100                                                | Lighthouse CI                                        |
+| E2E test coverage                | All critical user flows covered                                                      | playwright-e2e CI workflow                           |
+| Mobile usability                 | All critical UI elements visible & non-overlapping on iPhone 15 and Pixel 7 portrait | responsive-smoke E2E + visual regression             |
 
 ### Anti-Goals (Out of Scope)
 
