@@ -45,8 +45,8 @@ const HelpContent: React.FunctionComponent = () => (
         </Li>
         <Li>
           The wizard currently offers the <strong>Mini preset</strong>: 8 teams, Sprint season (14
-          games per team, 14 game days). Select Standard or Full season lengths to come in a
-          future update.
+          games per team, 14 game days). Select Standard or Full season lengths to come in a future
+          update.
         </Li>
         <Li>
           Choose your team mode: <strong>All autogen</strong> (one click), <strong>Mixed</strong>{" "}

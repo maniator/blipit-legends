@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { SPRINT_TOTAL_GAME_DAYS, getTotalGameDays } from "./seasonPresets";
+import { getTotalGameDays, SPRINT_TOTAL_GAME_DAYS } from "./seasonPresets";
 
 describe("seasonPresets", () => {
   it("SPRINT_TOTAL_GAME_DAYS is 14", () => {

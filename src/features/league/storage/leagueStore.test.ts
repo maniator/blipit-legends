@@ -319,10 +319,15 @@ describe("simulateNextDay", () => {
     }
 
     // Bump currentGameDay to 1 so we're looking at day 1 which has no completed games yet.
-    await db.seasons.findOne(season.id).update({ $set: { currentGameDay: 1 } });
+    const seasonDoc = await db.seasons.findOne(season.id).exec();
+    await seasonDoc?.patch({ currentGameDay: 1 });
 
     // Mock runHeadlessGame to never be called (because we're testing the "no games pending" path).
-    vi.mocked(runHeadlessGame).mockResolvedValue({ status: "completed" });
+    vi.mocked(runHeadlessGame).mockResolvedValue({
+      status: "completed",
+      homeScore: 5,
+      awayScore: 3,
+    });
 
     const result = await store.simulateNextDay(season.id);
 
@@ -345,7 +350,11 @@ describe("simulateNextDay", () => {
     const season = await store.createSeason(makeSeasonInput(teamIds));
 
     // Mock runHeadlessGame to return completed status.
-    vi.mocked(runHeadlessGame).mockResolvedValue({ status: "completed" });
+    vi.mocked(runHeadlessGame).mockResolvedValue({
+      status: "completed",
+      homeScore: 5,
+      awayScore: 3,
+    });
 
     const result = await store.simulateNextDay(season.id);
 
@@ -400,7 +409,7 @@ describe("recordResult fatigue", () => {
         awayScore: 3,
         winnerStartingPitcherId: homeSpId,
         loserStartingPitcherId: awaySpId,
-      },
+      } as any,
     });
 
     // Verify the SP's pitcherDaysRest was reset to 0.
