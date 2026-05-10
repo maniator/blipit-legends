@@ -2,7 +2,7 @@
  * Derives a deterministic per-game seed from deterministic schedule coordinates.
  *
  * Contract (binding — do not change without bumping _bmad-output/planning-artifacts/league-mode-distillate/02-data-model-routing-schedule.md):
- *   1. input  = `${seasonId}:r${seasonRoundIdx}:g${gameInSeriesIdx}:${homeSeasonTeamId}:${awaySeasonTeamId}`
+ *   1. input  = `${seasonId}:r${seasonRoundIdx}:g${gameInSeriesIdx}:${homeCustomTeamId}:${awayCustomTeamId}`
  *   2. hash   = fnv1a(input)          // 8-char hex string
  *   3. uint32 = parseInt(hash, 16) >>> 0
  *   4. return uint32.toString(36)     // base-36 lowercase
@@ -21,14 +21,16 @@ interface DeriveScheduledGameSeedInput {
   seasonId: string;
   seasonRoundIdx: number;
   gameInSeriesIdx: number;
-  homeSeasonTeamId: string;
-  awaySeasonTeamId: string;
+  /** Stable customTeamId (not the per-season seasonTeamId). */
+  homeCustomTeamId: string;
+  /** Stable customTeamId (not the per-season seasonTeamId). */
+  awayCustomTeamId: string;
 }
 
 export function deriveScheduledGameSeed(input: DeriveScheduledGameSeedInput): string {
   const seedInput =
     `${input.seasonId}:r${input.seasonRoundIdx}:g${input.gameInSeriesIdx}:` +
-    `${input.homeSeasonTeamId}:${input.awaySeasonTeamId}`;
+    `${input.homeCustomTeamId}:${input.awayCustomTeamId}`;
   const hash = fnv1a(seedInput);
   const uint32 = parseInt(hash, 16) >>> 0;
   return uint32.toString(36);

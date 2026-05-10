@@ -106,8 +106,8 @@ beforeEach(async () => {
       seasonId: SEASON_ID,
       seasonRoundIdx: 0,
       gameInSeriesIdx: 0,
-      homeSeasonTeamId: HOME_ST_ID,
-      awaySeasonTeamId: AWAY_ST_ID,
+      homeCustomTeamId: HOME_ST_ID,
+      awayCustomTeamId: AWAY_ST_ID,
     }),
     completedAt: null,
     claimedBy: null,
@@ -154,8 +154,8 @@ describe("deriveScheduledGameSeed — DB integration", () => {
       seasonId: SEASON_ID,
       seasonRoundIdx: 0,
       gameInSeriesIdx: 0,
-      homeSeasonTeamId: HOME_ST_ID,
-      awaySeasonTeamId: AWAY_ST_ID,
+      homeCustomTeamId: HOME_ST_ID,
+      awayCustomTeamId: AWAY_ST_ID,
     };
     const s1 = deriveScheduledGameSeed(input);
     const s2 = deriveScheduledGameSeed(input);
@@ -202,15 +202,15 @@ describe("SeasonGame claim flow", () => {
       seasonId: SEASON_ID,
       seasonRoundIdx: 0,
       gameInSeriesIdx: 0,
-      homeSeasonTeamId: HOME_ST_ID,
-      awaySeasonTeamId: AWAY_ST_ID,
+      homeCustomTeamId: HOME_ST_ID,
+      awayCustomTeamId: AWAY_ST_ID,
     });
     const seed2 = deriveScheduledGameSeed({
       seasonId: SEASON_ID,
       seasonRoundIdx: 0,
       gameInSeriesIdx: 0,
-      homeSeasonTeamId: HOME_ST_ID,
-      awaySeasonTeamId: AWAY_ST_ID,
+      homeCustomTeamId: HOME_ST_ID,
+      awayCustomTeamId: AWAY_ST_ID,
     });
     expect(seed1).toBe(seed2);
   });

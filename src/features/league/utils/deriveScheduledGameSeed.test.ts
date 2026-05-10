@@ -16,8 +16,8 @@ describe("deriveScheduledGameSeed", () => {
       seasonId: "s_testseason01",
       seasonRoundIdx: 0,
       gameInSeriesIdx: 0,
-      homeSeasonTeamId: "st_home01",
-      awaySeasonTeamId: "st_away01",
+      homeCustomTeamId: "st_home01",
+      awayCustomTeamId: "st_away01",
     });
     expect(typeof seed).toBe("string");
     expect(seed.length).toBeGreaterThan(0);
@@ -35,8 +35,8 @@ describe("deriveScheduledGameSeed", () => {
       seasonId: "s_abc",
       seasonRoundIdx: 0,
       gameInSeriesIdx: 0,
-      homeSeasonTeamId: "st_home",
-      awaySeasonTeamId: "st_away",
+      homeCustomTeamId: "st_home",
+      awayCustomTeamId: "st_away",
     };
     const a = deriveScheduledGameSeed(input);
     const b = deriveScheduledGameSeed(input);
@@ -47,8 +47,8 @@ describe("deriveScheduledGameSeed", () => {
     const base = {
       seasonId: "s_season1",
       gameInSeriesIdx: 0,
-      homeSeasonTeamId: "st_home",
-      awaySeasonTeamId: "st_away",
+      homeCustomTeamId: "st_home",
+      awayCustomTeamId: "st_away",
     };
     const a = deriveScheduledGameSeed({ ...base, seasonRoundIdx: 0 });
     const b = deriveScheduledGameSeed({ ...base, seasonRoundIdx: 1 });
@@ -59,8 +59,8 @@ describe("deriveScheduledGameSeed", () => {
     const base = {
       seasonRoundIdx: 0,
       gameInSeriesIdx: 0,
-      homeSeasonTeamId: "st_home",
-      awaySeasonTeamId: "st_away",
+      homeCustomTeamId: "st_home",
+      awayCustomTeamId: "st_away",
     };
     const a = deriveScheduledGameSeed({ ...base, seasonId: "s_season1" });
     const b = deriveScheduledGameSeed({ ...base, seasonId: "s_season2" });
@@ -72,8 +72,8 @@ describe("deriveScheduledGameSeed", () => {
       seasonId: "s_abc:def",
       seasonRoundIdx: 0,
       gameInSeriesIdx: 0,
-      homeSeasonTeamId: "st_home:ghi",
-      awaySeasonTeamId: "st_away:jkl",
+      homeCustomTeamId: "st_home:ghi",
+      awayCustomTeamId: "st_away:jkl",
     });
     // Base-36 uses digits 0-9 and letters a-z only.
     expect(seed).toMatch(/^[0-9a-z]+$/);
@@ -85,8 +85,8 @@ describe("deriveScheduledGameSeed", () => {
       seasonId: "s_ffffffff_large_season_id_test",
       seasonRoundIdx: 999,
       gameInSeriesIdx: 999,
-      homeSeasonTeamId: "st_ffffffff_large_home_id",
-      awaySeasonTeamId: "st_ffffffff_large_away_id",
+      homeCustomTeamId: "st_ffffffff_large_home_id",
+      awayCustomTeamId: "st_ffffffff_large_away_id",
     });
     const parsed = parseInt(seed, 36);
     expect(Number.isFinite(parsed)).toBe(true);
