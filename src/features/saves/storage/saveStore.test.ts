@@ -62,6 +62,9 @@ async function insertMinimalTeam(targetDb: BallgameDb, id: string): Promise<void
 }
 
 const resignSaveEnvelope = (envelope: RxdbExportedSave): string => {
+  if (envelope.version !== 1) {
+    throw new Error("Expected a v1 save envelope in test fixture");
+  }
   envelope.sig = fnv1a(
     RXDB_EXPORT_KEY + JSON.stringify({ header: envelope.header, events: envelope.events }),
   );
@@ -536,6 +539,8 @@ describe("SaveStore.importRxdbSave — event replacement and validation", () => 
       { type: "old-b", at: 1, payload: {} },
     ]);
     const envelope = JSON.parse(await store.exportRxdbSave(saveId)) as RxdbExportedSave;
+    expect(envelope.version).toBe(1);
+    if (envelope.version !== 1) throw new Error("Expected v1 export for event replacement test");
     envelope.events = [
       {
         ...envelope.events[0],
@@ -559,6 +564,8 @@ describe("SaveStore.importRxdbSave — event replacement and validation", () => 
     const saveId = await store.createSave(makeCustomFormatSetup());
     await store.appendEvents(saveId, [{ type: "pitch", at: 0, payload: {} }]);
     const envelope = JSON.parse(await store.exportRxdbSave(saveId)) as RxdbExportedSave;
+    expect(envelope.version).toBe(1);
+    if (envelope.version !== 1) throw new Error("Expected v1 export for saveId validation test");
     envelope.events = [
       {
         ...envelope.events[0],
@@ -578,6 +585,8 @@ describe("SaveStore.importRxdbSave — event replacement and validation", () => 
     const saveId = await store.createSave(makeCustomFormatSetup());
     await store.appendEvents(saveId, [{ type: "pitch", at: 0, payload: {} }]);
     const envelope = JSON.parse(await store.exportRxdbSave(saveId)) as RxdbExportedSave;
+    expect(envelope.version).toBe(1);
+    if (envelope.version !== 1) throw new Error("Expected v1 export for index validation test");
     envelope.events = [
       {
         ...envelope.events[0],
