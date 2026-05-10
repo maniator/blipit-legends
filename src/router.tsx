@@ -5,9 +5,16 @@ import AppLoadingFallback from "@feat/gameplay/components/AppLoadingFallback";
 import AppShell from "@feat/gameplay/components/AppShell";
 import HomeScreen from "@feat/gameplay/components/HomeScreen";
 import RootLayout from "@feat/gameplay/components/RootLayout";
-import { createBrowserRouter, Navigate, redirect, useOutletContext } from "react-router";
+import {
+  createBrowserRouter,
+  Navigate,
+  redirect,
+  useNavigate,
+  useOutletContext,
+} from "react-router";
 
-import type { AppShellOutletContext } from "@storage/types";
+import { getDb } from "@storage/db";
+import type { AppShellOutletContext, SeasonRecord } from "@storage/types";
 
 const CareerStatsPage = React.lazy(() => import("@feat/careerStats/pages/CareerStatsPage"));
 const ContactPage = React.lazy(() => import("@feat/contact/pages/ContactPage"));
@@ -33,6 +40,26 @@ function LazyRoute({ children }: { children: React.ReactNode }) {
 /** Route element for `/` — reads navigation callbacks from AppShell outlet context. */
 function HomeRoute() {
   const ctx = useOutletContext<AppShellOutletContext>();
+  const navigate = useNavigate();
+
+  const [activeSeasonId, setActiveSeasonId] = React.useState<string | null | undefined>(undefined);
+  const [activeSeasonLabel, setActiveSeasonLabel] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    getDb()
+      .then(async (db) => {
+        const docs = await db.seasons.find({ selector: { status: "active" } }).exec();
+        if (docs.length > 0) {
+          const s = docs[0].toJSON() as unknown as SeasonRecord;
+          setActiveSeasonId(s.id);
+          setActiveSeasonLabel(`${s.name} · day ${s.currentGameDay} / 30`);
+        } else {
+          setActiveSeasonId(null);
+        }
+      })
+      .catch(() => setActiveSeasonId(null));
+  }, []);
+
   return (
     <HomeScreen
       onNewGame={ctx.onNewGame}
@@ -42,6 +69,11 @@ function HomeRoute() {
       onHelp={ctx.onHelp}
       onContact={ctx.onContact}
       onCareerStats={ctx.hasCareerStats ? ctx.onCareerStats : undefined}
+      activeSeasonId={activeSeasonId}
+      activeSeasonLabel={activeSeasonLabel}
+      onContinueSeason={
+        activeSeasonId != null ? () => navigate(`/leagues/${activeSeasonId}`) : undefined
+      }
     />
   );
 }

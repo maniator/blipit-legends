@@ -5,28 +5,28 @@ export type PillVariant = "fresh" | "tired" | "spent" | "il" | "auto";
 const variantStyles = {
   fresh: css`
     color: ${({ theme }) => theme.colors.statusSuccess};
-    background: rgba(74, 222, 128, 0.15);
-    border: 1px solid rgba(74, 222, 128, 0.3);
+    background: ${({ theme }) => theme.colors.chipSuccessBg};
+    border: 1px solid ${({ theme }) => theme.colors.chipSuccessBorder};
   `,
   tired: css`
     color: ${({ theme }) => theme.colors.textFatigueMed};
-    background: rgba(242, 193, 78, 0.15);
-    border: 1px solid rgba(242, 193, 78, 0.3);
+    background: ${({ theme }) => theme.colors.chipWarnBg};
+    border: 1px solid ${({ theme }) => theme.colors.chipWarnBorder};
   `,
   spent: css`
     color: ${({ theme }) => theme.colors.textFatigueHigh};
-    background: rgba(255, 107, 107, 0.15);
-    border: 1px solid rgba(255, 107, 107, 0.3);
+    background: ${({ theme }) => theme.colors.chipDangerBg};
+    border: 1px solid ${({ theme }) => theme.colors.chipDangerBorder};
   `,
   il: css`
     color: ${({ theme }) => theme.colors.accentPrimary};
-    background: rgba(255, 154, 31, 0.15);
-    border: 1px solid rgba(255, 154, 31, 0.3);
+    background: ${({ theme }) => theme.colors.chipAccentBg};
+    border: 1px solid ${({ theme }) => theme.colors.chipAccentBorder};
   `,
   auto: css`
     color: ${({ theme }) => theme.colors.textFaint};
-    background: rgba(160, 180, 208, 0.15);
-    border: 1px solid rgba(160, 180, 208, 0.3);
+    background: ${({ theme }) => theme.colors.chipNeutralBg};
+    border: 1px solid ${({ theme }) => theme.colors.chipNeutralBorder};
   `,
 };
 
