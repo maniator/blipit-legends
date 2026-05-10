@@ -41,9 +41,9 @@ BlipIt Legends is a **self-playing baseball simulator** that runs entirely in th
 
 The product's core differentiator is the intersection of **realism** and **effortlessness**: game outcomes follow MLB-calibrated probability distributions with full handedness matchups and pitch-type resolution, yet a casual user never needs to touch a setting. Seeded randomness makes every game fully deterministic and replayable from its seed. A custom team builder lets enthusiasts create, save, and share named rosters with per-player stat attributes.
 
-**Current version:** Fully playable with Exhibition games, Manager Mode, custom teams, local saves, career stats, and PWA installability.
+**Current version:** Fully playable with Exhibition games, Manager Mode, custom teams, local saves, career stats, PWA installability, and League Mode v1 (Mini Sprint seasons with 8 teams, fatigue, standings, headless sim).
 
-**Next horizon:** League Mode — multi-team scheduled seasons with standings and playoffs (see `_bmad-output/planning-artifacts/league-mode-distillate/`).
+**Next horizon:** League Mode v2 — full rosters, wear, injuries, and trades (see `_bmad-output/planning-artifacts/league-mode-distillate/`).
 
 ---
 
