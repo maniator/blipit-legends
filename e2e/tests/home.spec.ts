@@ -193,18 +193,28 @@ test.describe("Home page League teaser", () => {
     await resetAppState(page);
   });
 
-  test("Home page shows 'League play coming soon' teaser", async ({ page }) => {
+  test("Home page shows league teaser box", async ({ page }) => {
     await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId("league-play-teaser")).toBeVisible();
-    await expect(page.getByTestId("league-play-teaser")).toContainText(/league play coming soon/i);
+    await expect(page.getByTestId("league-play-teaser")).toContainText(/league mode/i);
   });
 
-  test("League teaser is not a clickable link", async ({ page }) => {
+  test("League teaser contains a Browse Leagues button that navigates to /leagues", async ({
+    page,
+  }) => {
+    await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
+    const browseBtn = page.getByTestId("home-browse-leagues-button");
+    await expect(browseBtn).toBeVisible();
+    await browseBtn.click();
+    await expect(page).toHaveURL(/\/leagues/);
+  });
+
+  test("League teaser outer element is not an anchor tag", async ({ page }) => {
     await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
     const teaser = page.getByTestId("league-play-teaser");
     await expect(teaser).toBeVisible();
-    // The teaser box is not a button or anchor — it's a non-interactive element
+    // The teaser box is a styled div container, not an anchor
     const tagName = await teaser.evaluate((el) => el.tagName.toLowerCase());
-    expect(["div", "section", "aside", "p", "span"]).toContain(tagName);
+    expect(["div", "section", "aside"]).toContain(tagName);
   });
 });

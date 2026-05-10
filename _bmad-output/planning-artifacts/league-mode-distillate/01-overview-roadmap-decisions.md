@@ -1,6 +1,7 @@
 > This section covers Overview, roadmap (v0–v4), version deliverables, non-negotiable contracts, and locked decisions. Part 1 of 6.
 
 ## Status & Scope Boundary
+
 - Status: planning only; zero League Mode code shipped; docs are single source of truth
 - Five phases: v0 (docs rewrite, no code), v1–v4 (shippable increments)
 - Out of scope v0–v4: salaries/payroll, free agency/waivers, player aging, MLB roster import, networked multi-user, custom award definitions, doubleheaders/rainouts, skip/forfeit semantics, public share routes, trade-history-by-player, cross-season Hall of Fame, selective save-bundle import
@@ -8,6 +9,7 @@
 ## Version Deliverables
 
 ### v1 — Foundation + Pitcher Fatigue
+
 - Goal: complete Mini-preset season loop (create → watch 30 games → standings → champion)
 - Setup wizard: Mini preset only (8 teams); 30-game sprint season; per-league DH toggle; master seed (random default)
 - Team autogeneration: all four naming themes v1 — Classic (city+animal), Sci-fi (planet+role), Whimsical (food+verb), Random mix; Mixed mode default; autogen teams promoted into customTeams at setup
@@ -19,17 +21,20 @@
 - Roster minimum v1: 9 lineup + 3 bench + 5 SP + 3 RP = 20 active
 
 ### v2 — Realism: Full Rosters, Wear, Injuries
+
 - Standard preset (16 teams, 2 leagues × 2 divisions, 60 games)
 - Position-player wear added to seasonPlayerState (~5% effect); injury system: 1.5% per active-lineup player-game; IL collection; bench-fill replacement
 - seasonTransactions collection (forward-compatible with v3 trade kinds)
 - Roster minimum v2+: 9 lineup + 5 bench + 5 SP + 4 RP = 23 active
 
 ### v3 — Postseason & Trades
+
 - Trade engine: manual + AI; deadline default 70%, configurable; moderate AI default (~2–3 trades/team/season)
 - Playoff bracket: 4 teams/league; WC bo3 / LCS bo5 / BCS bo7; presets Short (1/3/5) and Long (5/7/7); reseed after each round
 - Tiebreaker chain: head-to-head → intra-division → run diff vs tied group → full-season run diff → seeded coin flip
 
 ### v4 — Polish, Awards, Full Preset
+
 - Full preset (24 teams, Marathon 120-game season)
 - Five awards per league: MVP, Cy Young, Reliever of the Year, Rookie of the Year, Manager of the Year; formula breakdown surfaced
 - Optional minor-league call-ups; optional offseason carryover toggle; "Sim full season" mode with progress bar
@@ -37,6 +42,7 @@
 - Feature-flagged: featureFlags.shareableSeasonSeeds, featureFlags.allowReplay (both default off)
 
 ## Non-Negotiable Contracts
+
 - One team library: all teams in existing customTeams collection; no separate "league teams" collection
 - Roster-edit lock: customTeams doc locked while referenced by active season; enforced at storage layer (write guard), not just UI
 - UI reuse first: no new visual language; every screen reuses existing components before building new
@@ -47,6 +53,7 @@
 - RxDB collection cap: 12 steady-state (v4); pinned rxdb@17.0.0-beta.7 (cap=16); seasonAwards folded into seasons.awards[]; seasonArchives lazy-opened
 
 ## Locked Decisions (key)
+
 - #1/#2: Sizes (Mini/Standard/Full) and lengths (Sprint/Standard/Marathon) by preset only; no custom counts
 - #5: DH per-league at setup; interleague uses home team's rule
 - #7b: Roster-edit lock at storage layer; #8: One active season; wizard refuses if active exists

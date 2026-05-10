@@ -77,6 +77,7 @@ function HomeRoute() {
       onContinueSeason={
         activeSeasonId !== null ? () => navigate(`/leagues/${activeSeasonId}`) : undefined
       }
+      onStartLeague={() => navigate("/leagues")}
     />
   );
 }
