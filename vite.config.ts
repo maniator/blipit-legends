@@ -66,6 +66,12 @@ export default defineConfig(({ mode }) => ({
     }),
   ] as ViteUserConfig["plugins"],
   test: {
+    // vmForks creates an isolated V8 VM context per test file, torn down after
+    // each file completes. This allows the GC to reclaim RxDB / fake-indexeddb
+    // memory between files and prevents heap accumulation across the 145-file
+    // suite (the default "forks" pool retains module caches between files in the
+    // same worker process, causing 4-6 GB heap growth on CI).
+    pool: "vmForks",
     environment: "jsdom",
     globals: true,
     setupFiles: ["./test/react-global.ts", "./test/setup.ts"],

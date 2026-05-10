@@ -41,6 +41,13 @@ jobs:
 
       - name: Test
         run: yarn test:coverage
+        env:
+          # Safety-net heap limit for the vmForks pool workers.  With vmForks,
+          # each test file runs in an isolated V8 VM context that is torn down
+          # after the file completes, so peak memory is bounded by the largest
+          # single file (~300 MB).  4 GB leaves generous headroom while staying
+          # within the 7 GB available on ubuntu-latest runners.
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Upload coverage report
         if: always()
