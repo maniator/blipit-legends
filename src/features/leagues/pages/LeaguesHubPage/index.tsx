@@ -10,6 +10,8 @@ import type { BallgameDb } from "@storage/db";
 import { getDb } from "@storage/db";
 import type { SeasonRecord, TeamRecord } from "@storage/types";
 
+import { getTotalGameDays } from "../../utils/seasonPresets";
+
 import {
   ActionLink,
   BodyText,

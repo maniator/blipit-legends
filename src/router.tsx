@@ -6,6 +6,7 @@ import HomeScreen from "@feat/gameplay/components/HomeScreen";
 import RootLayout from "@feat/gameplay/components/RootLayout";
 import { resetStaleInProgressGames } from "@feat/league/sim/resetStaleGames";
 import { getTotalGameDays } from "@feat/leagues/utils/seasonPresets";
+import { appLog } from "@shared/utils/logger";
 import {
   createBrowserRouter,
   Navigate,
@@ -201,7 +202,12 @@ export const router = createBrowserRouter([
             loader: async () => {
               // Reset any stale in_progress games before the hub renders its
               // "Continue" CTA — ensures the advance button never sees a stuck row.
-              await resetStaleInProgressGames();
+              // Swallow errors so a DB-init failure doesn't crash the /leagues route.
+              try {
+                await resetStaleInProgressGames();
+              } catch (err) {
+                appLog.warn("[leagues loader] resetStaleInProgressGames failed:", err);
+              }
               return null;
             },
             element: (
