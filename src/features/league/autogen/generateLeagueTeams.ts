@@ -367,9 +367,10 @@ export function generateLeagueTeams(options: GenerateLeagueTeamsOptions): Genera
     if (usedNicknames.has(nickname)) nickname = `${nickname} ${teamIndex + 1}`;
     usedNicknames.add(nickname);
 
-    // `name` stores only the nickname so that the display adapter can
-    // reconstruct the full name as "${city} ${name}" — matching how
-    // user-created custom teams store their data (city and name separately).
+    // `name` stores only the nickname so that SeasonHomePage, SeasonTeamPage,
+    // and other presentation-layer components can reconstruct the full display
+    // name as "${city} ${name}" — matching how user-created custom teams store
+    // their data (city and name separately).
     const name = nickname;
 
     const strength = teamStrength(rng, parity);
