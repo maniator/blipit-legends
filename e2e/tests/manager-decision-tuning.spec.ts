@@ -117,7 +117,12 @@ test.describe("Manager Mode — Decision Tuning panel", () => {
     await expect(stealToggle).not.toBeChecked();
 
     // ── Reset and verify defaults restored ─────────────────────────────────
+    // The reset flow is two-step: first click opens a confirmation row, then
+    // the user must confirm with "Yes, reset" to prevent accidental resets.
     await resetButton.click();
+    const confirmButton = page.getByTestId("manager-decision-tuning-reset-confirm");
+    await expect(confirmButton).toBeVisible();
+    await confirmButton.click();
 
     // Default `stealMinOfferPct` is 72 (see DEFAULT_MANAGER_DECISION_VALUES).
     // usehooks-ts useLocalStorage writes to localStorage and fires a storage

@@ -9,6 +9,16 @@ import type { GameSetup } from "@storage/types";
 import { createTestDb } from "@test/helpers/db";
 import { makeState } from "@test/testHelpers";
 
+/**
+ * Module-private signing key used by `exportRxdbSave` / `importRxdbSave`.
+ * Kept in sync with the production constant in `saveStore.ts`; centralized
+ * here so signature-construction tests do not drift if the key ever changes.
+ * If the production key changes, update this constant and re-run the tests —
+ * any test that manually builds a bundle will fail with "signature mismatch"
+ * until the constant below matches the new production value.
+ */
+const RXDB_EXPORT_KEY = "ballgame:rxdb:v1";
+
 const makeSetup = (overrides: Partial<GameSetup> = {}): GameSetup => ({
   homeTeamId: "Yankees",
   awayTeamId: "Mets",
@@ -411,7 +421,6 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
 
   it("importRxdbSave preserves ct_* team IDs unchanged (v1 canonical format)", async () => {
     // In v1, ct_* is the canonical format — IDs are preserved as-is without any prefix normalization.
-    const RXDB_EXPORT_KEY_LOCAL = "ballgame:rxdb:v1";
     const header: Record<string, unknown> = {
       id: "test-norm-save-id",
       name: "ct_norm_away vs ct_norm_home",
@@ -431,7 +440,7 @@ describe("SaveStore.exportRxdbSave / importRxdbSave", () => {
       },
     };
     const events: unknown[] = [];
-    const sig = fnv1a(RXDB_EXPORT_KEY_LOCAL + JSON.stringify({ header, events }));
+    const sig = fnv1a(RXDB_EXPORT_KEY + JSON.stringify({ header, events }));
     const bundle = JSON.stringify({ version: 1, header, events, sig });
 
     const db2 = await createTestDb(getRxStorageMemory());
@@ -831,8 +840,6 @@ describe("SaveStore — updatedAt advances on updateProgress", () => {
 });
 
 describe("importRxdbSave — missing custom team rejection", () => {
-  const RXDB_EXPORT_KEY = "ballgame:rxdb:v1";
-
   const makeCustomSave = (homeTeamId: string, awayTeamId = "ct_default_away"): { json: string } => {
     const header = {
       id: `save_${Date.now()}_test`,
@@ -911,5 +918,153 @@ describe("importRxdbSave — missing custom team rejection", () => {
     await expect(store.importRxdbSave(json)).rejects.toThrow(
       "Cannot import save: 1 custom team used by this save is not installed on this device.",
     );
+  });
+});
+
+// #233-F3 — decisionValues round-trip through export/import bundle
+describe("SaveStore export/import — decisionValues round-trip (#233-F3)", () => {
+  it("preserves decisionValues in setup through export→import round-trip", async () => {
+    const decisionValues = {
+      stealMinOfferPct: 78,
+      aiStealThreshold: 70,
+      stealEnabled: false,
+      buntEnabled: true,
+      ibbEnabled: false,
+      pinchHitterEnabled: true,
+      defensiveShiftEnabled: true,
+      aiPitchingChangeAggressiveness: 60,
+    };
+    const saveId = await store.createSave(
+      makeCustomFormatSetup({
+        seed: "dv-roundtrip",
+        setup: {
+          strategy: "contact",
+          managedTeam: 0,
+          managerMode: true,
+          homeTeam: "ct_rt_home",
+          awayTeam: "ct_rt_away",
+          decisionValues,
+        },
+      }),
+    );
+
+    const json = await store.exportRxdbSave(saveId);
+    const db2 = await createTestDb(getRxStorageMemory());
+    await insertMinimalTeam(db2, "ct_rt_home");
+    await insertMinimalTeam(db2, "ct_rt_away");
+    const store2 = makeSaveStore(() => Promise.resolve(db2));
+    const restored = await store2.importRxdbSave(json);
+
+    // Verify the in-memory return value carries decisionValues from the bundle.
+    expect(restored.setup.decisionValues).toEqual(decisionValues);
+
+    // Also verify DB persistence: the upsert must have stored decisionValues so
+    // that a subsequent listSaves() (the real load path) returns the correct value.
+    const saves = await store2.listSaves();
+    expect(saves).toHaveLength(1);
+    expect(saves[0].setup.decisionValues).toEqual(decisionValues);
+    await db2.close();
+  });
+
+  it("handles import of a bundle where decisionValues is absent (pre-decisionValues save)", async () => {
+    // Simulate a legacy export bundle that has no decisionValues in setup.
+    const header: Record<string, unknown> = {
+      id: "legacy-dv-save",
+      name: "Legacy Save",
+      seed: "abc",
+      homeTeamId: "ct_rt_home",
+      awayTeamId: "ct_rt_away",
+      createdAt: 0,
+      updatedAt: 0,
+      progressIdx: -1,
+      schemaVersion: 1,
+      setup: {
+        strategy: "balanced",
+        managedTeam: null,
+        managerMode: false,
+        homeTeam: "ct_rt_home",
+        awayTeam: "ct_rt_away",
+        // intentionally no decisionValues
+      },
+    };
+    const events: unknown[] = [];
+    const sig = fnv1a(RXDB_EXPORT_KEY + JSON.stringify({ header, events }));
+    const bundle = JSON.stringify({ version: 1, header, events, sig });
+
+    const db2 = await createTestDb(getRxStorageMemory());
+    await insertMinimalTeam(db2, "ct_rt_home");
+    await insertMinimalTeam(db2, "ct_rt_away");
+    const store2 = makeSaveStore(() => Promise.resolve(db2));
+    const restored = await store2.importRxdbSave(bundle);
+
+    // decisionValues should be absent (undefined) — the caller applies the default
+    expect(restored.setup.decisionValues).toBeUndefined();
+    await db2.close();
+  });
+});
+
+// #233-F5 — Migration-path test: legacy save without stealEnabled
+describe("decisionValues migration path (#233-F5) — legacy save without stealEnabled", () => {
+  it("sanitizeManagerDecisionValues silently defaults stealEnabled to true when field is absent", async () => {
+    // Simulate a save whose decisionValues was persisted before the stealEnabled
+    // field was introduced (pre-stealEnabled fixture).
+    const legacyDecisionValues = {
+      stealMinOfferPct: 72,
+      aiStealThreshold: 67,
+      // stealEnabled intentionally absent (legacy)
+      buntEnabled: true,
+      ibbEnabled: true,
+      pinchHitterEnabled: true,
+      defensiveShiftEnabled: false,
+      aiPitchingChangeAggressiveness: 50,
+    } as unknown as Record<string, unknown>;
+
+    const saveId = await store.createSave(
+      makeCustomFormatSetup({
+        seed: "legacy-steal-enabled",
+        setup: {
+          strategy: "balanced",
+          managedTeam: null,
+          managerMode: false,
+          homeTeam: "ct_rt_home",
+          awayTeam: "ct_rt_away",
+          // Cast to bypass TS — this replicates a real legacy doc missing stealEnabled.
+          decisionValues:
+            legacyDecisionValues as unknown as import("@feat/gameplay/context/managerDecisionValues").ManagerDecisionValues,
+        },
+      }),
+    );
+
+    const saves = await store.listSaves();
+    const save = saves.find((s) => s.id === saveId);
+    expect(save).toBeDefined();
+
+    // Apply sanitization as the game load path does.
+    const { sanitizeManagerDecisionValues } =
+      await import("@feat/gameplay/context/managerDecisionValues");
+
+    const sanitized = sanitizeManagerDecisionValues(save!.setup.decisionValues ?? {});
+
+    // stealEnabled must default to true even though the field was absent.
+    expect(sanitized.stealEnabled).toBe(true);
+    // All other fields must be preserved as-is (they were within valid ranges).
+    expect(sanitized.stealMinOfferPct).toBe(72);
+    expect(sanitized.aiStealThreshold).toBe(67);
+    expect(sanitized.buntEnabled).toBe(true);
+    expect(sanitized.ibbEnabled).toBe(true);
+    expect(sanitized.pinchHitterEnabled).toBe(true);
+    expect(sanitized.defensiveShiftEnabled).toBe(false);
+    expect(sanitized.aiPitchingChangeAggressiveness).toBe(50);
+  });
+
+  it("sanitizeManagerDecisionValues does not throw on a completely empty legacy object", async () => {
+    const { sanitizeManagerDecisionValues, DEFAULT_MANAGER_DECISION_VALUES } =
+      await import("@feat/gameplay/context/managerDecisionValues");
+    // An entirely missing decisionValues (undefined field on old saves).
+    expect(() => sanitizeManagerDecisionValues({})).not.toThrow();
+    const result = sanitizeManagerDecisionValues({});
+    // Must default stealEnabled to true (matches production default).
+    expect(result.stealEnabled).toBe(DEFAULT_MANAGER_DECISION_VALUES.stealEnabled);
+    expect(result.stealEnabled).toBe(true);
   });
 });

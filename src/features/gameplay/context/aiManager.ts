@@ -9,7 +9,7 @@ import type { AiDecision } from "./aiTypes";
 import type { DecisionType } from "./decisionTypes";
 import type { State } from "./gameStateTypes";
 import type { ManagerDecisionValues } from "./managerDecisionValues";
-import { DEFAULT_MANAGER_DECISION_VALUES } from "./managerDecisionValues";
+import { getDefaultDecisionValues } from "./managerDecisionValues";
 import { PINCH_HITTER_CONTACT_WEIGHT, PINCH_HITTER_POWER_WEIGHT } from "./playerTypes";
 
 export {
@@ -36,15 +36,15 @@ export type {
  * (AiNoneDecision, meaning let the normal pitch proceed).
  *
  * @param decisionValues - Optional runtime manager/AI tuning values. Defaults
- *   to DEFAULT_MANAGER_DECISION_VALUES so existing callers without the arg are
- *   unaffected. Previously a hard-coded constant `AI_STEAL_THRESHOLD = 0.62`
+ *   to `getDefaultDecisionValues()` so the active A/B variant is respected.
+ *   Previously a hard-coded constant `AI_STEAL_THRESHOLD = 0.62`
  *   was used here; this was a bug (integer % vs fraction) — the AI always stole
  *   since `73 >= 0.62`. Fixed: now uses `aiStealThreshold` (integer %, default 65).
  */
 export function makeAiTacticalDecision(
   state: State,
   decision: DecisionType,
-  decisionValues: ManagerDecisionValues = DEFAULT_MANAGER_DECISION_VALUES,
+  decisionValues: ManagerDecisionValues = getDefaultDecisionValues(),
 ): AiDecision {
   const { score, inning, outs, atBat } = state;
   const scoreDiff = score[0] - score[1]; // positive = away leading

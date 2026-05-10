@@ -16,17 +16,20 @@ describe("TouchTooltip", () => {
     // While closed, the bubble is not referenced from the trigger so screen
     // readers do not announce it as part of the button name/description.
     expect(trigger.getAttribute("aria-describedby")).toBeNull();
+    // Bubble is in DOM but has the HTML `hidden` attribute while closed.
     const bubble = screen.getByRole("tooltip", { hidden: true });
-    expect(bubble.textContent).toBe("hello world");
+    expect(bubble).toHaveAttribute("hidden");
     expect(bubble.getAttribute("aria-hidden")).toBe("true");
 
-    // Opening the tooltip wires the trigger to the bubble via aria-describedby.
+    // Opening the tooltip wires the trigger to the bubble via aria-describedby
+    // and removes the `hidden` attribute.
     await userEvent.click(trigger);
     expect(trigger.getAttribute("aria-describedby")).toBe(bubble.getAttribute("id"));
     expect(bubble.getAttribute("aria-hidden")).toBe("false");
+    expect(bubble).not.toHaveAttribute("hidden");
   });
 
-  it("starts closed (aria-expanded=false) and opens on click (mobile-tap support)", async () => {
+  it("starts closed (aria-expanded=false, hidden attribute present) and opens on click (mobile-tap support)", async () => {
     render(<TouchTooltip label="explain" triggerTestId="tt" />);
     const trigger = screen.getByTestId("tt");
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
@@ -36,7 +39,8 @@ describe("TouchTooltip", () => {
 
     // The bubble (role=tooltip) is in the DOM and contains the label text.
     const bubble = screen.getByRole("tooltip");
-    expect(bubble.textContent).toBe("explain");
+    expect(bubble.textContent).toContain("explain");
+    expect(bubble).not.toHaveAttribute("hidden");
   });
 
   it("toggles closed on a second tap on the trigger", async () => {
@@ -82,5 +86,44 @@ describe("TouchTooltip", () => {
       </TouchTooltip>,
     );
     expect(screen.getByTestId("tt").textContent).toContain("❓");
+  });
+
+  it("renders the × close button inside the bubble (for touch devices)", async () => {
+    render(<TouchTooltip label="explain" triggerTestId="tt" />);
+    const trigger = screen.getByTestId("tt");
+    await userEvent.click(trigger);
+    // The close button is rendered inside the bubble; CSS hides it on non-touch
+    // devices but it is always in the DOM when open.
+    const closeBtn = screen.getByTestId("touch-tooltip-close");
+    expect(closeBtn).toBeInTheDocument();
+    expect(closeBtn.getAttribute("aria-label")).toBe("Dismiss tooltip");
+  });
+
+  it("closes when the × close button inside the bubble is clicked", async () => {
+    render(<TouchTooltip label="explain" triggerTestId="tt" />);
+    const trigger = screen.getByTestId("tt");
+    await userEvent.click(trigger);
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+
+    const closeBtn = screen.getByTestId("touch-tooltip-close");
+    await userEvent.click(closeBtn);
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("bubble has hidden attribute when closed and lacks it when open", async () => {
+    render(<TouchTooltip label="explain" triggerTestId="tt" />);
+    const trigger = screen.getByTestId("tt");
+    const bubble = screen.getByTestId("touch-tooltip-bubble");
+
+    // Closed — hidden attribute present
+    expect(bubble).toHaveAttribute("hidden");
+
+    // Open — hidden attribute removed
+    await userEvent.click(trigger);
+    expect(bubble).not.toHaveAttribute("hidden");
+
+    // Close again — hidden attribute restored
+    await userEvent.click(trigger);
+    expect(bubble).toHaveAttribute("hidden");
   });
 });

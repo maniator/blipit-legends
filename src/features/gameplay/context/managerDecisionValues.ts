@@ -27,6 +27,17 @@
  *   numbers favor it without chasing high-variance attempts.
  * - defensiveShiftEnabled defaults to false to reflect the 2023 MLB shift ban
  *   (Rule 5.02(c)). Users can enable it for a pre-2023 / old-school experience.
+ *
+ * A/B experiment:
+ * - Set `localStorage.__blip_ab_decision_variant = "b"` to opt into Variant B.
+ * - Variant B tests more aggressive AI steal/pitching defaults with bunts off.
+ * - The flag is read once at module load via `_abVariant`.
+ * - Normal runtime code should call `getDefaultDecisionValues()` rather than
+ *   importing `DEFAULT_MANAGER_DECISION_VALUES` directly so the active variant
+ *   is respected. The exported const is kept for backward-compat, tests, and
+ *   stable baseline comparisons; runtime fallbacks (including
+ *   `sanitizeManagerDecisionValues`) use `getDefaultDecisionValues()` so they
+ *   follow the active variant.
  */
 
 export interface ManagerDecisionValues {
@@ -95,6 +106,12 @@ export interface ManagerDecisionValues {
   aiPitchingChangeAggressiveness: number;
 }
 
+/**
+ * Variant A — current production defaults.
+ * Kept as a named export for backward compatibility (sanitize fallbacks, tests,
+ * and comparisons that need the stable baseline). New runtime callers should
+ * prefer `getDefaultDecisionValues()` so the A/B variant is respected.
+ */
 export const DEFAULT_MANAGER_DECISION_VALUES: ManagerDecisionValues = {
   stealMinOfferPct: 72,
   aiStealThreshold: 67,
@@ -105,6 +122,53 @@ export const DEFAULT_MANAGER_DECISION_VALUES: ManagerDecisionValues = {
   defensiveShiftEnabled: false,
   aiPitchingChangeAggressiveness: 50,
 };
+
+/**
+ * Variant B — experimental defaults for A/B testing.
+ * More aggressive AI steal threshold, bullpen-leaning pitching aggressiveness,
+ * and bunts disabled to compare game feel against Variant A.
+ *
+ * Opt in by setting `localStorage.__blip_ab_decision_variant = "b"`.
+ * QA can toggle this in the browser console:
+ *   `localStorage.setItem('__blip_ab_decision_variant', 'b'); location.reload();`
+ */
+const VARIANT_B_DECISION_VALUES: ManagerDecisionValues = {
+  ...DEFAULT_MANAGER_DECISION_VALUES,
+  aiStealThreshold: 70,
+  aiPitchingChangeAggressiveness: 60,
+  buntEnabled: false,
+};
+
+/**
+ * A/B experiment variant flag — read once at module load so that all callers
+ * within a session see a consistent value without re-reading localStorage on
+ * every call. `"b"` opts into Variant B; any other value (or absence) uses
+ * Variant A (production defaults).
+ *
+ * localStorage access is wrapped in a try/catch to handle environments where
+ * storage access is blocked (e.g. private-browsing with strict settings,
+ * server-side rendering).
+ */
+const _abVariant = (() => {
+  try {
+    return localStorage.getItem("__blip_ab_decision_variant");
+  } catch {
+    return null;
+  }
+})();
+
+/**
+ * Returns the default decision values for the current A/B variant.
+ *
+ * Runtime code that needs "fresh defaults" (e.g. initial state, reset-to-defaults)
+ * should call this function rather than importing `DEFAULT_MANAGER_DECISION_VALUES`
+ * directly, so the experiment variant is respected.
+ *
+ * Variant B is active when `localStorage.__blip_ab_decision_variant === "b"`.
+ */
+export function getDefaultDecisionValues(): ManagerDecisionValues {
+  return _abVariant === "b" ? VARIANT_B_DECISION_VALUES : DEFAULT_MANAGER_DECISION_VALUES;
+}
 
 export const STEAL_PCT_MIN = 65;
 export const STEAL_PCT_MAX = 85;
@@ -123,14 +187,19 @@ const clampInt = (value: number, min: number, max: number): number =>
  * ±Infinity — both pass the typeof check but produce NaN/broken values after
  * clamp/round math, causing threshold comparisons (e.g. `pct > NaN`) to always
  * return false.
+ *
+ * Fallback values come from `getDefaultDecisionValues()` so that the A/B
+ * experiment variant is respected when a field is missing from stored data.
  */
 export const sanitizeManagerDecisionValues = (
   raw: Partial<ManagerDecisionValues>,
 ): ManagerDecisionValues => {
+  const defaults = getDefaultDecisionValues();
+
   const stealMinOfferPct = clampInt(
     Number.isFinite(raw.stealMinOfferPct)
       ? (raw.stealMinOfferPct as number)
-      : DEFAULT_MANAGER_DECISION_VALUES.stealMinOfferPct,
+      : defaults.stealMinOfferPct,
     STEAL_PCT_MIN,
     STEAL_PCT_MAX,
   );
@@ -138,7 +207,7 @@ export const sanitizeManagerDecisionValues = (
   const aiStealThreshold = clampInt(
     Number.isFinite(raw.aiStealThreshold)
       ? (raw.aiStealThreshold as number)
-      : DEFAULT_MANAGER_DECISION_VALUES.aiStealThreshold,
+      : defaults.aiStealThreshold,
     STEAL_PCT_MIN,
     // AI threshold must be ≤ the manager offer threshold.
     stealMinOfferPct,
@@ -147,7 +216,7 @@ export const sanitizeManagerDecisionValues = (
   const aggressiveness = clampInt(
     Number.isFinite(raw.aiPitchingChangeAggressiveness)
       ? (raw.aiPitchingChangeAggressiveness as number)
-      : DEFAULT_MANAGER_DECISION_VALUES.aiPitchingChangeAggressiveness,
+      : defaults.aiPitchingChangeAggressiveness,
     AGGRESSIVENESS_MIN,
     AGGRESSIVENESS_MAX,
   );
@@ -155,26 +224,17 @@ export const sanitizeManagerDecisionValues = (
   return {
     stealMinOfferPct,
     aiStealThreshold,
-    stealEnabled:
-      typeof raw.stealEnabled === "boolean"
-        ? raw.stealEnabled
-        : DEFAULT_MANAGER_DECISION_VALUES.stealEnabled,
-    buntEnabled:
-      typeof raw.buntEnabled === "boolean"
-        ? raw.buntEnabled
-        : DEFAULT_MANAGER_DECISION_VALUES.buntEnabled,
-    ibbEnabled:
-      typeof raw.ibbEnabled === "boolean"
-        ? raw.ibbEnabled
-        : DEFAULT_MANAGER_DECISION_VALUES.ibbEnabled,
+    stealEnabled: typeof raw.stealEnabled === "boolean" ? raw.stealEnabled : defaults.stealEnabled,
+    buntEnabled: typeof raw.buntEnabled === "boolean" ? raw.buntEnabled : defaults.buntEnabled,
+    ibbEnabled: typeof raw.ibbEnabled === "boolean" ? raw.ibbEnabled : defaults.ibbEnabled,
     pinchHitterEnabled:
       typeof raw.pinchHitterEnabled === "boolean"
         ? raw.pinchHitterEnabled
-        : DEFAULT_MANAGER_DECISION_VALUES.pinchHitterEnabled,
+        : defaults.pinchHitterEnabled,
     defensiveShiftEnabled:
       typeof raw.defensiveShiftEnabled === "boolean"
         ? raw.defensiveShiftEnabled
-        : DEFAULT_MANAGER_DECISION_VALUES.defensiveShiftEnabled,
+        : defaults.defensiveShiftEnabled,
     aiPitchingChangeAggressiveness: aggressiveness,
   };
 };
