@@ -1035,6 +1035,7 @@ describe("SaveStore export/import — decisionValues round-trip (#233-F3)", () =
     );
 
     const json = await store.exportRxdbSave(saveId);
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
     await insertMinimalTeam(db2, "ct_rt_away");
@@ -1077,6 +1078,7 @@ describe("SaveStore export/import — decisionValues round-trip (#233-F3)", () =
     const sig = fnv1a(RXDB_EXPORT_KEY + JSON.stringify({ header, events }));
     const bundle = JSON.stringify({ version: 1, header, events, sig });
 
+    await db.close(); // close primary DB before opening db2 (stays within OSS 16-collection limit)
     const db2 = await createTestDb(getRxStorageMemory());
     await insertMinimalTeam(db2, "ct_rt_home");
     await insertMinimalTeam(db2, "ct_rt_away");
