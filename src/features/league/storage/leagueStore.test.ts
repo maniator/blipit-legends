@@ -16,6 +16,8 @@ import { createTestDb } from "@test/helpers/db";
 
 import { makeLeagueStore } from "./leagueStore";
 
+const MINI_TEAM_COUNT = 8;
+
 // ---------------------------------------------------------------------------
 // Test setup
 // ---------------------------------------------------------------------------
@@ -267,6 +269,3 @@ describe("getSeasonTeams / getSeasonGames", () => {
     expect(scheduled.some((g) => g.id === firstGame.id)).toBe(false);
   });
 });
-
-// Expose MINI_TEAM_COUNT as a constant accessible in tests.
-const MINI_TEAM_COUNT = 8;
