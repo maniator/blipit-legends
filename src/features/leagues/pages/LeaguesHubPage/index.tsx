@@ -31,8 +31,11 @@ import {
   SectionCard,
 } from "./styles";
 
-const ALL_SEASONS_QUERY = { selector: {}, sort: [{ createdAt: "desc" as const }] };
-const ALL_TEAMS_QUERY = { selector: {} };
+const ALL_SEASONS_QUERY = {
+  selector: { createdAt: { $gte: 0 } },
+  sort: [{ createdAt: "desc" as const }],
+};
+const ALL_TEAMS_QUERY = { selector: { id: { $gt: "" } } };
 
 const LeaguesHubPageInner: React.FunctionComponent = () => {
   const navigate = useNavigate();
