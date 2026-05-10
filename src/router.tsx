@@ -14,8 +14,13 @@ const ContactPage = React.lazy(() => import("@feat/contact/pages/ContactPage"));
 const ExhibitionSetupPage = React.lazy(() => import("@feat/exhibition/pages/ExhibitionSetupPage"));
 const GamePage = React.lazy(() => import("@feat/gameplay/pages/GamePage"));
 const HelpPage = React.lazy(() => import("@feat/help/pages/HelpPage"));
+const LeagueSetupWizard = React.lazy(() => import("@feat/leagues/pages/LeagueSetupWizard"));
+const LeaguesHubPage = React.lazy(() => import("@feat/leagues/pages/LeaguesHubPage"));
 const PlayerCareerPage = React.lazy(() => import("@feat/careerStats/pages/PlayerCareerPage"));
 const SavesPage = React.lazy(() => import("@feat/saves/pages/SavesPage"));
+const SeasonHomePage = React.lazy(() => import("@feat/leagues/pages/SeasonHomePage"));
+const SeasonSchedulePage = React.lazy(() => import("@feat/leagues/pages/SeasonSchedulePage"));
+const SeasonTeamPage = React.lazy(() => import("@feat/leagues/pages/SeasonTeamPage"));
 
 function LazyRoute({ children }: { children: React.ReactNode }) {
   return (
@@ -161,6 +166,46 @@ export const router = createBrowserRouter([
               <LazyRoute>
                 <PlayerCareerPage />
               </LazyRoute>
+            ),
+          },
+          {
+            path: "leagues",
+            element: (
+              <React.Suspense fallback={null}>
+                <LeaguesHubPage />
+              </React.Suspense>
+            ),
+          },
+          {
+            path: "leagues/new",
+            element: (
+              <React.Suspense fallback={null}>
+                <LeagueSetupWizard />
+              </React.Suspense>
+            ),
+          },
+          {
+            path: "leagues/:seasonId",
+            element: (
+              <React.Suspense fallback={null}>
+                <SeasonHomePage />
+              </React.Suspense>
+            ),
+          },
+          {
+            path: "leagues/:seasonId/schedule",
+            element: (
+              <React.Suspense fallback={null}>
+                <SeasonSchedulePage />
+              </React.Suspense>
+            ),
+          },
+          {
+            path: "leagues/:seasonId/teams/:seasonTeamId",
+            element: (
+              <React.Suspense fallback={null}>
+                <SeasonTeamPage />
+              </React.Suspense>
             ),
           },
         ],
