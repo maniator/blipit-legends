@@ -67,7 +67,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
   const resetBtnRef = React.useRef<HTMLButtonElement>(null);
   const focusTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Cancel any pending focus-restore timer on unmount.
+  // Cancel any pending focus-restore timer (if any) on unmount.
   React.useEffect(() => {
     return () => {
       if (focusTimerRef.current !== null) clearTimeout(focusTimerRef.current);
@@ -400,9 +400,10 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
                        the confirm row mounts (WCAG 2.4.3 focus order).
                        onClick restores focus to the reset button so the
                        dismiss cycle completes cleanly for keyboard users.
-                       NOTE: autoFocus silently fails inside <React.Suspense>. If
-                       this panel is ever wrapped in Suspense, replace autoFocus
-                       with a useEffect-based focus call to preserve the a11y contract. */}
+                       NOTE: autoFocus fails silently if this component is ever
+                       made lazy-loaded and the button mounts during a Suspense
+                       fallback phase. If that happens, replace autoFocus with a
+                       useEffect-based focus call to preserve the a11y contract. */}
                   <button
                     type="button"
                     autoFocus
