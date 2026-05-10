@@ -77,7 +77,14 @@ export const SeasonContextProvider: React.FunctionComponent<{ children: React.Re
       .catch((err: unknown) => appLog.error("[SeasonContext] DB init failed:", err));
   }, []);
 
-  if (!db) return null;
+  if (!db)
+    return (
+      <div role="status" aria-live="polite" aria-label="Loading season data">
+        <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden" }}>
+          Loading…
+        </span>
+      </div>
+    );
 
   return (
     <RxDatabaseProvider
