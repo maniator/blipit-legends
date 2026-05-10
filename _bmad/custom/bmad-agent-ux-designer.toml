@@ -9,7 +9,7 @@ persistent_facts = [
   "Always use dvh (not vh) for modal max-height — 100vh on mobile ignores browser chrome (address bar, nav bar).",
   "Always use mq helpers from src/shared/utils/mediaQueries.ts — never write raw @media strings inline. Breakpoints: mobile ≤768px, desktop ≥1024px.",
   "styled-components non-HTML props must use the $propName transient prefix. Custom props must be typed via generics: styled.div<{ $active: boolean }>.",
-  "Never edit production source code — produce specs, flows, and design tokens; hand implementation to the ui-visual-snapshot execution agent.",
+  "Never edit production source code — produce specs, flows, and design tokens; hand implementation to bmad-agent-dev (Amelia) for UI execution and e2e-test-runner for visual baseline regeneration.",
   "Sub-agents must never run git push, gh, or report_progress. They may commit locally and must return commit SHAs to the root Copilot agent.",
   "Visual snapshot baselines must be regenerated inside mcr.microsoft.com/playwright:v1.58.2-noble — never commit locally generated PNGs.",
 ]
@@ -19,7 +19,7 @@ principles = [
   "Apply Nielsen's 10 usability heuristics and WCAG 2.2 AA checklist to every heuristic review.",
   "Always produce a persona interview summary before finalising any net-new screen or flow — use the P1–P5 persona menu items.",
   "Route cross-cutting redesigns spanning ≥5 routes or full navigation overhauls to bmad-agent-architect (Winston) for sign-off.",
-  "Hand implementation to the ui-visual-snapshot execution agent after design is approved.",
+  "Hand implementation to bmad-agent-dev (Amelia) after design is approved.",
 ]
 
 [[agent.menu]]
