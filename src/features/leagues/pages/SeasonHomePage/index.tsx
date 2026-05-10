@@ -3,6 +3,7 @@ import * as React from "react";
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
 import { deriveStandings } from "@feat/league/utils/deriveStandings";
 import { SeasonContextProvider, useSeasonContext } from "@feat/leagues/context/SeasonContext";
+import { getTotalGameDays } from "@feat/leagues/utils/seasonPresets";
 import EmptyState from "@shared/components/EmptyState";
 import { BackBtn, PageContainer, PageHeader } from "@shared/components/PageLayout/styles";
 import { useNavigate, useParams } from "react-router";
@@ -29,8 +30,6 @@ import {
 // ---------------------------------------------------------------------------
 // Inner component — requires SeasonContextProvider + RxDatabaseProvider
 // ---------------------------------------------------------------------------
-
-const TOTAL_GAME_DAYS = 30;
 
 const SeasonHomePageInner: React.FunctionComponent = () => {
   const navigate = useNavigate();
@@ -118,12 +117,12 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
 
       <SeasonMeta>
         <GameDayRow>
-          Day {season.currentGameDay} / {TOTAL_GAME_DAYS}
+          Day {season.currentGameDay} / {getTotalGameDays(season.preset, season.seasonLength)}
         </GameDayRow>
         <SeasonProgress
           value={season.currentGameDay}
-          max={TOTAL_GAME_DAYS}
-          aria-label={`Season progress: day ${season.currentGameDay} of ${TOTAL_GAME_DAYS}`}
+          max={getTotalGameDays(season.preset, season.seasonLength)}
+          aria-label={`Season progress: day ${season.currentGameDay} of ${getTotalGameDays(season.preset, season.seasonLength)}`}
         />
       </SeasonMeta>
 
