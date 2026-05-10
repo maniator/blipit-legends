@@ -7,7 +7,7 @@ This repository is `maniator/blipit-legends`. All agent-routing guidance, custom
 | **Agent routing (start here)** | [`.github/agents/README.md`](.github/agents/README.md) |
 | bmad persistent facts for all agents | [`docs/project-context.md`](docs/project-context.md) |
 | Code conventions, global rules & critical notes | [`.github/copilot-instructions.md`](.github/copilot-instructions.md) |
-| Gameplay realism (Coach ⚾) | `.agents/skills/bmad-agent-baseball-manager/` |
+| Gameplay realism (Buck ⚾) | `.agents/skills/bmad-agent-baseball-manager/` |
 | Planning / baseball rules (John 📋) | `.agents/skills/bmad-agent-pm/` + `_bmad/custom/bmad-agent-pm.toml` |
 | Engineering sign-off / architecture (Winston 🏗️) | `.agents/skills/bmad-agent-architect/` + `_bmad/custom/bmad-agent-architect.toml` |
 | Story implementation / code review (Amelia 💻) | `.agents/skills/bmad-agent-dev/` + `_bmad/custom/bmad-agent-dev.toml` |

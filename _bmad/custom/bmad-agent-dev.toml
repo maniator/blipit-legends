@@ -52,7 +52,7 @@ Write a seed-anchored regression test BEFORE fixing. Confirm the same seed now p
 **Step 5 — Flag if high-risk**
 If the fix touches advanceRunners, gameOver, hitBall, or PRNG call order — flag for bmad-agent-architect (Winston) CR sign-off before merging.
 
-Correctness vs realism rule: if the engine is technically correct but outcomes feel unrealistic → that is bmad-agent-baseball-manager (Coach), not this workflow."""
+Correctness vs realism rule: if the engine is technically correct but outcomes feel unrealistic → that is bmad-agent-baseball-manager (Buck), not this workflow."""
 
 [[agent.menu]]
 code = "RX"

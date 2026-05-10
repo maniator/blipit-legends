@@ -88,8 +88,8 @@ yarn build         # Production build to dist/
 | Baseball rules (MLB vs simulator) | `bmad-agent-pm` (John) | M2 |
 | PR description review | `bmad-agent-pm` (John) | PR |
 | Engineering sign-off request to architect | `bmad-agent-pm` (John) | SL |
-| Gameplay realism review (logs look unrealistic) | `bmad-agent-baseball-manager` (Coach) | RL |
-| Post-change realism validation | `bmad-agent-baseball-manager` (Coach) | VR |
+| Gameplay realism review (logs look unrealistic) | `bmad-agent-baseball-manager` (Buck) | RL |
+| Post-change realism validation | `bmad-agent-baseball-manager` (Buck) | VR |
 | Architecture decision, module boundary | `bmad-agent-architect` (Winston) | AD |
 | High-value change engineering sign-off | `bmad-agent-architect` (Winston) | CR |
 | Story implementation, feature coding | `bmad-agent-dev` (Amelia) | — |

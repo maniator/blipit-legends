@@ -13,7 +13,7 @@ This directory contains the **3 remaining operational specialist agents** for `m
 │                                                                 │
 │  John 📋  bmad-agent-pm        Planning, PRD, baseball rules,  │
 │                                 risk review (Mode 1 / Mode 2)   │
-│  Coach ⚾  bmad-agent-baseball  Gameplay realism review,        │
+│  Buck ⚾   bmad-agent-baseball  Gameplay realism review,        │
 │            -manager             log analysis, MLB delta          │
 │  Winston 🏗️ bmad-agent-         Architecture, engineering       │
 │             architect           sign-off (APPROVE/BLOCK/        │
@@ -54,8 +54,8 @@ Sub-agents **must never** run `git push`, `gh`, or `report_progress`. Sub-agents
 | Baseball rules question (MLB vs simulator) | `bmad-agent-pm` (John) → M2 menu |
 | Risk review / "what could break?" | `bmad-agent-pm` (John) → M1 or RF menu |
 | PR description review | `bmad-agent-pm` (John) → PR menu |
-| Gameplay realism review (logs look unrealistic) | `bmad-agent-baseball-manager` (Coach) → RL menu |
-| Post-change realism validation | `bmad-agent-baseball-manager` (Coach) → VR menu |
+| Gameplay realism review (logs look unrealistic) | `bmad-agent-baseball-manager` (Buck) → RL menu |
+| Post-change realism validation | `bmad-agent-baseball-manager` (Buck) → VR menu |
 | Architecture decision, module boundary | `bmad-agent-architect` (Winston) → AD menu |
 | Engineering sign-off on high-value change | `bmad-agent-architect` (Winston) → CR menu |
 | Story implementation, feature coding | `bmad-agent-dev` (Amelia) → story impl |
