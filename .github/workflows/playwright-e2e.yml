@@ -42,6 +42,7 @@ jobs:
               --project=desktop
               --project=pixel-7
               --project=pixel-5
+            grepInvert: --grep-invert "@league"
           # Chromium shard 2: determinism + desktop + Pixel devices
           - browser: chromium
             shardIndex: 2
@@ -51,6 +52,7 @@ jobs:
               --project=desktop
               --project=pixel-7
               --project=pixel-5
+            grepInvert: --grep-invert "@league"
           # Chromium shard 3: determinism + desktop + Pixel devices
           - browser: chromium
             shardIndex: 3
@@ -60,6 +62,7 @@ jobs:
               --project=desktop
               --project=pixel-7
               --project=pixel-5
+            grepInvert: --grep-invert "@league"
           # WebKit shard 1: tablet + iPhone devices
           - browser: webkit
             shardIndex: 1
@@ -68,6 +71,7 @@ jobs:
               --project=tablet
               --project=iphone-15-pro-max
               --project=iphone-15
+            grepInvert: --grep-invert "@league"
           # WebKit shard 2: tablet + iPhone devices
           - browser: webkit
             shardIndex: 2
@@ -76,6 +80,7 @@ jobs:
               --project=tablet
               --project=iphone-15-pro-max
               --project=iphone-15
+            grepInvert: --grep-invert "@league"
           # WebKit shard 3: tablet + iPhone devices
           - browser: webkit
             shardIndex: 3
@@ -84,6 +89,7 @@ jobs:
               --project=tablet
               --project=iphone-15-pro-max
               --project=iphone-15
+            grepInvert: --grep-invert "@league"
           # League shard: runs only @league-tagged tests on desktop chromium
           - browser: league
             shardIndex: 1
@@ -117,7 +123,7 @@ jobs:
         run: yarn build
 
       - name: Run Playwright E2E tests
-        run: npx playwright test ${{ matrix.projects }} ${{ matrix.grep || '' }} --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+        run: npx playwright test ${{ matrix.projects }} ${{ matrix.grep || '' }} ${{ matrix.grepInvert || '' }} --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
         env:
           CI: true
 
