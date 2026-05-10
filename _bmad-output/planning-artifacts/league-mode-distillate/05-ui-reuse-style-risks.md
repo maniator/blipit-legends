@@ -1,10 +1,12 @@
 > This section covers UI reuse catalog, net-new components, style-guide-additions token requirements, and consolidated risk register. Part 5 of 6.
 
 ## UI Reuse Principles
+
 - Reuse order: (1) existing component as-is; (2) generalize with small prop; (3) compose wrapper; (4) new build — only if 1–3 demonstrably wrong; document why in PR
 - Every league UI PR must list reused vs net-new components
 
 ## Existing Components for League Reuse
+
 - LineScore → completed-game detail panels in schedule, playoff series, transactions feed
 - PlayerStatsPanel + PlayerDetails → season team page rows, trade UI player picker, awards winner card
 - SubstitutionPanel → v2 RosterManagementPage lineup updates
@@ -19,6 +21,7 @@
 - mq helpers → always; never raw @media strings; dvh modal sizing (never vh)
 
 ## Net-New Components (keep list small)
+
 - StatusPill (v1): fresh/tired/spent/il/auto/team variants; src/shared/components/StatusPill/; variant prop API
 - StatusBanner (v1): info/warn/neutral variants; ARIA role=status (info/neutral), role=alert (warn) — confirm with Sally
 - EmptyState (v1): icon 24×24px + title + body + CTA; used by LeaguesHubPage, TransactionsFeedPage, AwardsPage, PlayoffBracketPage
@@ -30,12 +33,14 @@
 - PlayoffBracketTree (v3): desktop; horizontal tree + connector lines; pre-clear BracketConnector token with Sally
 
 ## Style-Guide Token Requirements (proposal — blocked on Sally sign-off before any visual snapshots)
+
 - StatusPill: each variant needs (background, foreground, border) triplet meeting WCAG 2.2 AA against bgSurface (#0d1b2e)
 - OPEN QUESTION: #ffd06b on #0d1b2e borderline AA at body sizes — verification owed before v1 visual snapshots baselined
 - StatusBanner: pull from existing semantic color tokens; no new hex
 - BracketConnector (v3): stroke=muted borderForm; weight 2px desktop; orthogonal joints; no bezier; desktop only
 
 ## Risk Register (summary)
+
 - R1 (Medium/v4): RxDB collection-count budget — steady-state 12, peak 13; measure before v4 starts
 - R2 (Critical/v1): Same-version schema edits brick users (DB6 hash) — every change bumps version + migrationStrategies; PR template checkbox
 - R3 (High/v1): Per-game seed drift — single deriveScheduledGameSeed() helper; cached on seasonGames.derivedSeed
