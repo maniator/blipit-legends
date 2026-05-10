@@ -34,6 +34,17 @@ export async function dispatchClickUntil(
 }
 
 /**
+ * Fills a textarea or input locator with `value` then dispatches a synthetic
+ * `"input"` event. Required on WebKit headless runners where Playwright's
+ * `.fill()` skips the native input event, causing React's controlled-component
+ * `onChange` to never fire (import button stays disabled).
+ */
+export async function fillAndDispatchInput(locator: Locator, value: string): Promise<void> {
+  await locator.fill(value);
+  await locator.dispatchEvent("input");
+}
+
+/**
  * Registers an `addInitScript` that mutes announcement volume exactly once per
  * `Page` instance. Safe to call from any helper.
  */

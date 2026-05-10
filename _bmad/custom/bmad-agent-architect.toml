@@ -13,6 +13,7 @@ persistent_facts = [
   "All static assets live in public/ (not src/) and are served at their original paths without content hashing.",
   "Sub-agents must never run git push, gh, or report_progress. They may commit locally and must return commit SHAs to the root Copilot agent.",
   "High-value change triggers requiring sign-off: RxDB schema change, PRNG call-order change, save/export format change (FNV-1a signature, event idx), CI workflow permission/secret/container change, refactor touching ≥5 files in src/features/gameplay/context/, copilot-setup-steps.yml change, any change flagged P0 or P1 by bmad-agent-pm (John).",
+  "PR descriptions (the prDescription passed to report_progress) MUST follow .github/pull_request_template.md: include ## Summary, ## Changes, ## Testing, ## Risks H2 sections with prose content — not just checklists. Checklist-only bodies fail the pr-description-check CI workflow.",
 ]
 
 principles = [

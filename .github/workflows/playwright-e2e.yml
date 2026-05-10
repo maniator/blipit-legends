@@ -115,6 +115,13 @@ jobs:
         env:
           CI: true
 
+      # Post a one-line summary to the GitHub Actions job summary for quick visibility.
+      - name: Post job summary
+        if: always()
+        run: |
+          echo "## E2E Results" >> $GITHUB_STEP_SUMMARY
+          echo "Shard: ${{ matrix.browser }}-${{ matrix.shardIndex }}/${{ matrix.shardTotal }} | Retries enabled: 2" >> $GITHUB_STEP_SUMMARY
+
       # Always upload the blob report so the merge-reports job can combine
       # results from all shards into a single HTML report.
       - name: Upload blob report

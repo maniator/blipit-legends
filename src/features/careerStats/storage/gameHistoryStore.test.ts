@@ -862,6 +862,32 @@ describe("getTeamCareerSummary", () => {
     const result = await store.getTeamCareerSummary("Yankees");
     expect(result.streak).toBe("T2");
   });
+
+  it("does not double-count a self-matchup game (homeTeamId === awayTeamId)", async () => {
+    // Simulates an imported/legacy game where a team played itself.
+    // The home query and the away query both return this document; dedup must keep it once.
+    await store.commitCompletedGame(
+      "sum_self1",
+      {
+        ...gameMeta,
+        homeTeamId: "Yankees",
+        awayTeamId: "Yankees",
+        homeScore: 5,
+        awayScore: 3,
+        playedAt: 1000,
+      },
+      [],
+    );
+
+    const result = await store.getTeamCareerSummary("Yankees");
+    // Must be counted as exactly 1 game, not 2.
+    expect(result.gamesPlayed).toBe(1);
+    expect(result.wins).toBe(1);
+    expect(result.losses).toBe(0);
+    // isHome === true (homeTeamId === teamId), so runsScored = homeScore, runsAllowed = awayScore.
+    expect(result.runsScored).toBe(5);
+    expect(result.runsAllowed).toBe(3);
+  });
 });
 
 // ---------------------------------------------------------------------------

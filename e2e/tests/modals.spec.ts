@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import {
+  fillAndDispatchInput,
   importSaveFromFixture,
   importTeamsFixture,
   openSavesModal,
@@ -67,8 +68,9 @@ test.describe("Modals", () => {
       // Read the sample fixture and paste it into the import textarea.
       const fixturePath = path.resolve(__dirname, "../fixtures/sample-save.json");
       const fixtureJson = fs.readFileSync(fixturePath, "utf-8");
-      await page.getByTestId("import-save-textarea").fill(fixtureJson);
-      await expect(page.getByTestId("import-save-button")).toBeEnabled();
+      const importTextareaEl = page.getByTestId("import-save-textarea");
+      await fillAndDispatchInput(importTextareaEl, fixtureJson);
+      await expect(page.getByTestId("import-save-button")).toBeEnabled({ timeout: 5_000 });
 
       await page.getByTestId("import-save-button").click();
 
@@ -123,7 +125,11 @@ test.describe("Modals", () => {
       await openSavesModal(page);
 
       // Enter clearly invalid JSON.
-      await page.getByTestId("import-save-textarea").fill("not-valid-json");
+      // fillAndDispatchInput ensures React's synthetic onChange fires on
+      // WebKit, where Playwright's .fill() may not trigger it automatically.
+      const importTextarea = page.getByTestId("import-save-textarea");
+      await fillAndDispatchInput(importTextarea, "not-valid-json");
+      await expect(page.getByTestId("import-save-button")).toBeEnabled({ timeout: 5_000 });
       await page.getByTestId("import-save-button").click();
 
       // An error message should appear inside the modal.

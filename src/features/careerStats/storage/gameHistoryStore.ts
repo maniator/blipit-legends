@@ -458,17 +458,29 @@ function buildStore(getDbFn: GetDb) {
    * Returns aggregate career team stats from completed games (W/L/T, RS/RA, streak, last10).
    * Games are computed by matching teamId against homeTeamId or awayTeamId.
    * Tied games (rs === ra) are tracked separately and excluded from win-percentage calculation.
+   *
+   * Uses two separate indexed queries instead of $or to ensure reliable index hits on
+   * RxDB v17 beta.7 / Dexie (IndexedDB) — $or is not guaranteed to use indexes in this version.
    */
   async function getTeamCareerSummary(teamId: string): Promise<TeamCareerSummary> {
     const db = await getDbFn();
-    const rows = await db.completedGames
-      .find({
-        selector: { $or: [{ homeTeamId: teamId }, { awayTeamId: teamId }] },
-        sort: [{ playedAt: "asc" }],
-      })
-      .exec();
+    const [homeRows, awayRows] = await Promise.all([
+      db.completedGames.find({ selector: { homeTeamId: teamId } }).exec(),
+      db.completedGames.find({ selector: { awayTeamId: teamId } }).exec(),
+    ]);
 
-    const docs = rows.map((r) => r.toJSON() as CompletedGameRecord);
+    // Merge, dedupe by id (imported/legacy records with homeTeamId === awayTeamId
+    // match both queries and would otherwise be double-counted), then sort
+    // chronologically (playedAt asc) in memory.
+    const mergedDocs = [
+      ...homeRows.map((r) => r.toJSON() as CompletedGameRecord),
+      ...awayRows.map((r) => r.toJSON() as CompletedGameRecord),
+    ];
+    const docs = Array.from(new Map(mergedDocs.map((doc) => [doc.id, doc] as const)).values()).sort(
+      // Ordinal id tiebreaker for equal playedAt (e.g. batch imports) — avoids
+      // locale-sensitivity across JS engines and OS environments.
+      (a, b) => a.playedAt - b.playedAt || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+    );
 
     let wins = 0;
     let losses = 0;
@@ -480,6 +492,9 @@ function buildStore(getDbFn: GetDb) {
     const gameResults: ("W" | "L" | "T")[] = [];
 
     for (const doc of docs) {
+      // When homeTeamId === awayTeamId (self-matchup import), isHome is always true,
+      // so runsScored = homeScore and runsAllowed = awayScore. This is deterministic
+      // and intentional; the dedup above ensures such a game is counted exactly once.
       const isHome = doc.homeTeamId === teamId;
       const rs = isHome ? doc.homeScore : doc.awayScore;
       const ra = isHome ? doc.awayScore : doc.homeScore;
