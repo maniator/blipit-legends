@@ -20,6 +20,8 @@ type Props = {
   activeSeasonLabel?: string | null;
   /** Called when user clicks Continue on the league banner. */
   onContinueSeason?: () => void;
+  /** Called when user clicks "Browse Leagues" in the idle league teaser. */
+  onStartLeague?: () => void;
 };
 
 const HomeScreen: React.FunctionComponent<Props> = ({
@@ -33,6 +35,7 @@ const HomeScreen: React.FunctionComponent<Props> = ({
   activeSeasonId,
   activeSeasonLabel,
   onContinueSeason,
+  onStartLeague,
 }) => (
   <HomeContainer data-testid="home-screen">
     <HomeLogo>
@@ -88,11 +91,26 @@ const HomeScreen: React.FunctionComponent<Props> = ({
     ) : (
       <LeagueTeaserBox data-testid="league-play-teaser">
         <LeagueTeaserTitle>
-          <span aria-hidden="true">🏆</span> League play coming soon
+          <span aria-hidden="true">🏆</span> League Mode
         </LeagueTeaserTitle>
-        <LeagueTeaserSub>
-          Season schedules, standings, and playoffs are on the roadmap.
-        </LeagueTeaserSub>
+        {onStartLeague != null ? (
+          <>
+            <LeagueTeaserSub>
+              Create a season, track standings, and crown a champion.
+            </LeagueTeaserSub>
+            <SecondaryBtn
+              onClick={onStartLeague}
+              data-testid="home-browse-leagues-button"
+              style={{ marginTop: "8px" }}
+            >
+              Browse Leagues
+            </SecondaryBtn>
+          </>
+        ) : (
+          <LeagueTeaserSub>
+            Season schedules, standings, and playoffs are on the roadmap.
+          </LeagueTeaserSub>
+        )}
       </LeagueTeaserBox>
     )}
     <Attribution>

@@ -35,14 +35,14 @@ parts: 6
 
 ## Section Manifest
 
-| File | Contents |
-| ---- | -------- |
-| [01-overview-roadmap-decisions.md](01-overview-roadmap-decisions.md) | Overview, roadmap (v0–v4), version deliverables, non-negotiable contracts, locked decisions |
-| [02-data-model-routing-schedule.md](02-data-model-routing-schedule.md) | Data model (all collections), roster-edit lock, routing per version, schedule generation, per-game seed derivation, concurrency model |
-| [03-setup-wizard-autogen-fatigue-hub.md](03-setup-wizard-autogen-fatigue-hub.md) | Setup wizard UX, team autogeneration, pitcher fatigue/injuries (v1), leagues hub page states |
-| [04-advanced-features-trades-playoffs-awards.md](04-advanced-features-trades-playoffs-awards.md) | Trades (v3), playoffs/bracket (v3), awards/archive (v4), multi-team manager mode (v4), save-export bundle format |
-| [05-ui-reuse-style-risks.md](05-ui-reuse-style-risks.md) | UI reuse catalog, net-new components, style-guide-additions token requirements, consolidated risk register |
-| [06-agent-prompts-execution.md](06-agent-prompts-execution.md) | Phase-by-phase execution prompts (v1–v4), acceptance criteria, agent gates |
+| File                                                                                             | Contents                                                                                                                              |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| [01-overview-roadmap-decisions.md](01-overview-roadmap-decisions.md)                             | Overview, roadmap (v0–v4), version deliverables, non-negotiable contracts, locked decisions                                           |
+| [02-data-model-routing-schedule.md](02-data-model-routing-schedule.md)                           | Data model (all collections), roster-edit lock, routing per version, schedule generation, per-game seed derivation, concurrency model |
+| [03-setup-wizard-autogen-fatigue-hub.md](03-setup-wizard-autogen-fatigue-hub.md)                 | Setup wizard UX, team autogeneration, pitcher fatigue/injuries (v1), leagues hub page states                                          |
+| [04-advanced-features-trades-playoffs-awards.md](04-advanced-features-trades-playoffs-awards.md) | Trades (v3), playoffs/bracket (v3), awards/archive (v4), multi-team manager mode (v4), save-export bundle format                      |
+| [05-ui-reuse-style-risks.md](05-ui-reuse-style-risks.md)                                         | UI reuse catalog, net-new components, style-guide-additions token requirements, consolidated risk register                            |
+| [06-agent-prompts-execution.md](06-agent-prompts-execution.md)                                   | Phase-by-phase execution prompts (v1–v4), acceptance criteria, agent gates                                                            |
 
 ## Cross-Cutting Items (apply to every section)
 
@@ -52,4 +52,4 @@ parts: 6
 - Schema change → always bump version + add migrationStrategies; same-version edits forbidden (DB6 hash mismatch bricks all users)
 - All colors/typography/button variants → docs/style-guide.md; new tokens proposed to Sally before any visual snapshots baselined
 - Service worker is RxDB-free; no league background work in SW
-- All imports follow path aliases: @feat/league/*, @feat/leagues/*, @shared/*, @storage/*
+- All imports follow path aliases: @feat/league/_, @feat/leagues/_, @shared/_, @storage/_
