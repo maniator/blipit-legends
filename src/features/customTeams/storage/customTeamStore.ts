@@ -154,9 +154,8 @@ function buildStore(getDbFn: GetDb) {
       // Enforce unique team names using the indexed `nameLowercase` field — O(log n)
       // instead of loading the full collection and scanning in JS.
       const nameLower = name.toLowerCase();
-      const duplicateDoc = await db.teams
-        .findOne({ selector: { nameLowercase: nameLower } })
-        .exec();
+      const duplicateDocs = await db.teams.find({ selector: { nameLowercase: nameLower } }).exec();
+      const duplicateDoc = duplicateDocs[0] ?? null;
       if (duplicateDoc) {
         const dup = duplicateDoc.toJSON() as unknown as TeamRecord;
         throw new Error(`A team named "${dup.name}" already exists. Team names must be unique.`);
@@ -207,9 +206,10 @@ function buildStore(getDbFn: GetDb) {
         // Enforce unique team names using the indexed `nameLowercase` field — O(log n)
         // instead of loading the full collection and scanning in JS.
         const nameLower = newName.toLowerCase();
-        const duplicateDoc = await db.teams
-          .findOne({ selector: { nameLowercase: nameLower } })
+        const duplicateDocs = await db.teams
+          .find({ selector: { nameLowercase: nameLower } })
           .exec();
+        const duplicateDoc = duplicateDocs[0] ?? null;
         if (duplicateDoc && (duplicateDoc.toJSON() as unknown as TeamRecord).id !== id) {
           const dup = duplicateDoc.toJSON() as unknown as TeamRecord;
           throw new Error(`A team named "${dup.name}" already exists. Team names must be unique.`);
