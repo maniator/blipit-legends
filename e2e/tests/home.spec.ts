@@ -20,7 +20,7 @@ test.describe("Home Screen", () => {
     await expect(page.getByTestId("home-manage-teams-button")).toBeVisible();
   });
 
-  test("New Game button navigates to exhibition setup page", async ({ page }) => {
+  test("New Exhibition Game button navigates to exhibition setup page", async ({ page }) => {
     await waitForNewGameDialog(page);
     await expect(page.getByTestId("exhibition-setup-page")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId("play-ball-button")).toBeVisible();
@@ -28,7 +28,7 @@ test.describe("Home Screen", () => {
     await expect(page.getByTestId("home-screen")).not.toBeVisible();
   });
 
-  test("New Game path leads to a working game", async ({ page }) => {
+  test("New Exhibition Game path leads to a working game", async ({ page }) => {
     await startGameViaPlayBall(page, { seed: "home-test1" });
     await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 10_000 });
   });
@@ -79,12 +79,12 @@ test.describe("Home Screen", () => {
     await expect(page.getByTestId("home-screen")).not.toBeVisible();
   });
 
-  test("New Game setup shows a Back to Home button", async ({ page }) => {
+  test("Exhibition setup shows a Back to Home button", async ({ page }) => {
     await waitForNewGameDialog(page);
     await expect(page.getByTestId("new-game-back-home-button")).toBeVisible({ timeout: 10_000 });
   });
 
-  test("New Game setup Back to Home button returns to Home screen", async ({ page }) => {
+  test("Exhibition setup Back to Home button returns to Home screen", async ({ page }) => {
     await waitForNewGameDialog(page);
     await page.getByTestId("new-game-back-home-button").click();
     await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 10_000 });
@@ -146,7 +146,7 @@ test.describe("Home Screen", () => {
 
   // ── Home → New Game when a game is already active ──────────────────────────
 
-  test("New Game navigates to exhibition setup even when an active game already exists", async ({
+  test("New Exhibition Game navigates to exhibition setup even when an active game already exists", async ({
     page,
   }) => {
     // Start a real game so the active-game session is created.
@@ -199,7 +199,7 @@ test.describe("Home page League teaser", () => {
     await expect(page.getByTestId("league-play-teaser")).toContainText(/league mode/i);
   });
 
-  test("League teaser contains a Browse Leagues button that navigates to /leagues", async ({
+  test("League teaser contains a Start a Season button that navigates to /leagues", async ({
     page,
   }) => {
     await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });

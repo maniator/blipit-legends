@@ -27,11 +27,11 @@ test.describe("League Mode", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // 2. Home → /leagues navigation via "Browse Leagues" button
+  // 2. Home → /leagues navigation via "Start a Season" button
   // ---------------------------------------------------------------------------
 
   test(
-    "clicking Browse Leagues on the home screen navigates to /leagues",
+    "clicking Start a Season on the home screen navigates to /leagues",
     { tag: "@league" },
     async ({ page }) => {
       const browseBtn = page.getByTestId("home-browse-leagues-button");

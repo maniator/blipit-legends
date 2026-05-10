@@ -18,7 +18,9 @@ test.describe("Smoke", () => {
     await expect(page.getByTestId("home-manage-teams-button")).toBeVisible();
   });
 
-  test("New Game button on Home screen shows the Exhibition Setup page", async ({ page }) => {
+  test("New Exhibition Game button on Home screen shows the Exhibition Setup page", async ({
+    page,
+  }) => {
     await resetAppState(page);
     await waitForNewGameDialog(page);
     await expect(page.getByTestId("exhibition-setup-page")).toBeVisible({ timeout: 15_000 });
