@@ -150,4 +150,94 @@ describe("computePitcherFatigueUpdates", () => {
     const patches = computePitcherFatigueUpdates({ ...BASE_INPUT, allPlayerStates: states });
     expect(patches.length).toBe(2);
   });
+
+  it("SP who pitched has pitcherStartsThisSeason incremented by 1", () => {
+    const states = [
+      makePlayerState({
+        playerId: "p_sp_home",
+        seasonTeamId: "st_home",
+        pitcherStartsThisSeason: 3,
+      }),
+    ];
+    const patches = computePitcherFatigueUpdates({ ...BASE_INPUT, allPlayerStates: states });
+    const patch = patches.find((p) => p.id === "sps_p_sp_home");
+    expect(patch?.pitcherStartsThisSeason).toBe(4);
+  });
+
+  it("RP who pitched does NOT have pitcherStartsThisSeason incremented", () => {
+    const states = [
+      makePlayerState({
+        id: "sps_p_rp_home",
+        playerId: "p_rp_home",
+        seasonTeamId: "st_home",
+        pitcherStartsThisSeason: 0,
+      }),
+    ];
+    // Make the RP the winner's starter for this test.
+    const patches = computePitcherFatigueUpdates({
+      ...BASE_INPUT,
+      winnerStartingPitcherId: "p_rp_home",
+      allPlayerStates: states,
+    });
+    const patch = patches.find((p) => p.id === "sps_p_rp_home");
+    expect(patch?.pitcherStartsThisSeason).toBe(0);
+  });
+
+  it("SP who did NOT pitch does NOT have pitcherStartsThisSeason incremented", () => {
+    const states = [
+      makePlayerState({
+        playerId: "p_sp_home",
+        seasonTeamId: "st_home",
+        pitcherStartsThisSeason: 2,
+        pitcherDaysRest: 3,
+      }),
+    ];
+    // SP is NOT in the pitched set for this test.
+    const patches = computePitcherFatigueUpdates({
+      ...BASE_INPUT,
+      winnerStartingPitcherId: "p_someone_else",
+      loserStartingPitcherId: "p_sp_away",
+      allPlayerStates: states,
+    });
+    const patch = patches.find((p) => p.id === "sps_p_sp_home");
+    expect(patch?.pitcherStartsThisSeason).toBe(2);
+  });
+
+  it("RP who pitched on back-to-back days gets availability clamped to 0.0", () => {
+    // pitcherDaysRest=0 means the RP appeared yesterday; appearing today = back-to-back.
+    const states = [
+      makePlayerState({
+        id: "sps_p_rp_home",
+        playerId: "p_rp_home",
+        seasonTeamId: "st_home",
+        pitcherDaysRest: 0,
+        pitcherAvailability: 0.4,
+      }),
+    ];
+    const patches = computePitcherFatigueUpdates({
+      ...BASE_INPUT,
+      winnerStartingPitcherId: "p_rp_home", // RP appears today too
+      allPlayerStates: states,
+    });
+    const patch = patches.find((p) => p.id === "sps_p_rp_home");
+    expect(patch?.pitcherDaysRest).toBe(0);
+    expect(patch?.pitcherAvailability).toBe(0.0);
+  });
+
+  it("SP who pitched on back-to-back days (short rest) also gets floor at 0.0", () => {
+    const states = [
+      makePlayerState({
+        playerId: "p_sp_home",
+        seasonTeamId: "st_home",
+        pitcherDaysRest: 0,
+        pitcherAvailability: 0.1,
+        pitcherStartsThisSeason: 1,
+      }),
+    ];
+    const patches = computePitcherFatigueUpdates({ ...BASE_INPUT, allPlayerStates: states });
+    const patch = patches.find((p) => p.id === "sps_p_sp_home");
+    expect(patch?.pitcherAvailability).toBe(0.0);
+    // Starts still incremented for SPs even on back-to-back (they did start).
+    expect(patch?.pitcherStartsThisSeason).toBe(2);
+  });
 });

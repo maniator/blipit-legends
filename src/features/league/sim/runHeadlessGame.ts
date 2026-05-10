@@ -106,22 +106,32 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
 
   await gameDoc.patch({ status: "in_progress", claimedBy: claimToken });
 
+  // Re-fetch after claim: RxDB snapshot docs use optimistic locking — the
+  // stale _rev on `gameDoc` would cause CONFLICT on subsequent patches (step 3
+  // rollback and step 9 completion write). Live re-fetch ensures we always
+  // write against the current revision.
+  const liveGameDoc = await db.seasonGames.findOne({ selector: { id: seasonGameId } }).exec();
+  if (!liveGameDoc) {
+    // Extremely unlikely, but guard defensively.
+    return { status: "not_found" };
+  }
+
   // -------------------------------------------------------------------------
   // STEP 2 — Read derivedSeed (cached at schedule-generation time).
   // -------------------------------------------------------------------------
-  const derivedSeed = gameDoc.derivedSeed;
+  const derivedSeed = liveGameDoc.derivedSeed;
 
   // -------------------------------------------------------------------------
   // STEP 3 — Load rosterSnapshots from both seasonTeams.
   // -------------------------------------------------------------------------
   const [homeTeamDoc, awayTeamDoc] = await Promise.all([
-    db.seasonTeams.findOne({ selector: { id: gameDoc.homeSeasonTeamId } }).exec(),
-    db.seasonTeams.findOne({ selector: { id: gameDoc.awaySeasonTeamId } }).exec(),
+    db.seasonTeams.findOne({ selector: { id: liveGameDoc.homeSeasonTeamId } }).exec(),
+    db.seasonTeams.findOne({ selector: { id: liveGameDoc.awaySeasonTeamId } }).exec(),
   ]);
 
   if (!homeTeamDoc || !awayTeamDoc) {
     appLog.warn(`[runHeadlessGame] Missing seasonTeam doc for game ${seasonGameId}`);
-    await gameDoc.patch({ status: "scheduled", claimedBy: null });
+    await liveGameDoc.patch({ status: "scheduled", claimedBy: null });
     return { status: "not_found" };
   }
 
@@ -131,7 +141,7 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
   const playerStates = await db.seasonPlayerState
     .find({
       selector: {
-        seasonTeamId: { $in: [gameDoc.homeSeasonTeamId, gameDoc.awaySeasonTeamId] },
+        seasonTeamId: { $in: [liveGameDoc.homeSeasonTeamId, liveGameDoc.awaySeasonTeamId] },
       },
     })
     .exec();
@@ -155,22 +165,22 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
   // STEP 7 — AI rotation policy for both teams.
   // -------------------------------------------------------------------------
   const homePlayerStates = playerStates.filter(
-    (ps) => ps.seasonTeamId === gameDoc.homeSeasonTeamId,
+    (ps) => ps.seasonTeamId === liveGameDoc.homeSeasonTeamId,
   );
   const awayPlayerStates = playerStates.filter(
-    (ps) => ps.seasonTeamId === gameDoc.awaySeasonTeamId,
+    (ps) => ps.seasonTeamId === liveGameDoc.awaySeasonTeamId,
   );
 
-  const seasonDoc = await db.seasons.findOne({ selector: { id: gameDoc.seasonId } }).exec();
+  const seasonDoc = await db.seasons.findOne({ selector: { id: liveGameDoc.seasonId } }).exec();
 
   const homeRotation = selectPitchers({
-    seasonTeamId: gameDoc.homeSeasonTeamId,
+    seasonTeamId: liveGameDoc.homeSeasonTeamId,
     rosterSnapshot: homeTeamDoc.rosterSnapshot,
     playerStates: homePlayerStates,
     rulesetVersion: seasonDoc?.rulesetVersion ?? 1,
   });
   const awayRotation = selectPitchers({
-    seasonTeamId: gameDoc.awaySeasonTeamId,
+    seasonTeamId: liveGameDoc.awaySeasonTeamId,
     rosterSnapshot: awayTeamDoc.rosterSnapshot,
     playerStates: awayPlayerStates,
     rulesetVersion: seasonDoc?.rulesetVersion ?? 1,
@@ -180,30 +190,28 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
   // STEP 8 — Compute pitcher fatigue patches.
   // -------------------------------------------------------------------------
   const winnerSeasonTeamId =
-    homeScore > awayScore ? gameDoc.homeSeasonTeamId : gameDoc.awaySeasonTeamId;
+    homeScore > awayScore ? liveGameDoc.homeSeasonTeamId : liveGameDoc.awaySeasonTeamId;
   const loserSeasonTeamId =
-    homeScore > awayScore ? gameDoc.awaySeasonTeamId : gameDoc.homeSeasonTeamId;
+    homeScore > awayScore ? liveGameDoc.awaySeasonTeamId : liveGameDoc.homeSeasonTeamId;
+  // Null pitcher IDs (no eligible pitcher found) are excluded from the pitched set;
+  // only valid non-empty IDs are added to avoid ghost-pitcher fatigue updates.
   const winnerStartingPitcherId =
-    homeScore > awayScore
-      ? (homeRotation.startingPitcherId ?? "")
-      : (awayRotation.startingPitcherId ?? "");
+    homeScore > awayScore ? homeRotation.startingPitcherId : awayRotation.startingPitcherId;
   const loserStartingPitcherId =
-    homeScore > awayScore
-      ? (awayRotation.startingPitcherId ?? "")
-      : (homeRotation.startingPitcherId ?? "");
+    homeScore > awayScore ? awayRotation.startingPitcherId : homeRotation.startingPitcherId;
 
   const rosterSnapshotBySeasonTeamId: Record<string, Record<string, unknown>> = {
-    [gameDoc.homeSeasonTeamId]: homeTeamDoc.rosterSnapshot,
-    [gameDoc.awaySeasonTeamId]: awayTeamDoc.rosterSnapshot,
+    [liveGameDoc.homeSeasonTeamId]: homeTeamDoc.rosterSnapshot,
+    [liveGameDoc.awaySeasonTeamId]: awayTeamDoc.rosterSnapshot,
   };
 
   const fatiguePatches = computePitcherFatigueUpdates({
-    seasonId: gameDoc.seasonId,
+    seasonId: liveGameDoc.seasonId,
     rulesetVersion: seasonDoc?.rulesetVersion ?? 1,
     winnerSeasonTeamId,
     loserSeasonTeamId,
-    winnerStartingPitcherId,
-    loserStartingPitcherId,
+    winnerStartingPitcherId: winnerStartingPitcherId ?? "",
+    loserStartingPitcherId: loserStartingPitcherId ?? "",
     allPlayerStates: playerStates.map((d) => d.toJSON()),
     rosterSnapshotBySeasonTeamId,
   });
@@ -217,7 +225,7 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
   const runDiff = homeScore - awayScore;
 
   // Commit game as completed.
-  await gameDoc.patch({
+  await liveGameDoc.patch({
     status: "completed",
     boxscore,
     completedAt,
@@ -248,7 +256,7 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
     await awayTeamDoc.patch({ ties: awayTeamDoc.ties + 1 });
   }
 
-  // Apply pitcher fatigue patches.
+  // Apply pitcher fatigue patches (includes pitcherStartsThisSeason increment for SPs).
   if (fatiguePatches.length > 0) {
     const allStatesById = new Map(playerStates.map((d) => [d.id, d]));
     await Promise.all(
@@ -257,6 +265,7 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
         return doc?.patch({
           pitcherDaysRest: patch.pitcherDaysRest,
           pitcherAvailability: patch.pitcherAvailability,
+          pitcherStartsThisSeason: patch.pitcherStartsThisSeason,
         });
       }),
     );
@@ -270,8 +279,8 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
     const pendingOnDay = await db.seasonGames
       .find({
         selector: {
-          seasonId: gameDoc.seasonId,
-          gameDay: gameDoc.gameDay,
+          seasonId: liveGameDoc.seasonId,
+          gameDay: liveGameDoc.gameDay,
           status: { $in: ["scheduled", "in_progress"] },
         },
       })
@@ -279,8 +288,8 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
 
     if (pendingOnDay.length === 0) {
       // All games for this day complete — advance if still on this day.
-      if (seasonDoc.currentGameDay === gameDoc.gameDay) {
-        await seasonDoc.patch({ currentGameDay: gameDoc.gameDay + 1 });
+      if (seasonDoc.currentGameDay === liveGameDoc.gameDay) {
+        await seasonDoc.patch({ currentGameDay: liveGameDoc.gameDay + 1 });
       }
     }
   }

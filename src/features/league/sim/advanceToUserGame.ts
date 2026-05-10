@@ -102,6 +102,7 @@ export async function advanceToUserGame(
     }
 
     // Simulate one game at a time — must be sequential (global PRNG).
+    let madeProgress = false;
     for (const game of headlessBefore) {
       const outcome = await runHeadlessGame({
         seasonGameId: game.id,
@@ -110,14 +111,25 @@ export async function advanceToUserGame(
 
       if (outcome.status === "completed") {
         gamesSimulated++;
+        madeProgress = true;
       } else if (outcome.status === "already_complete") {
-        // Already done — skip silently.
+        madeProgress = true; // treat existing-complete as forward progress
       } else {
         appLog.warn(
           `[advanceToUserGame] Unexpected outcome for game ${game.id}: ${outcome.status}`,
         );
       }
     }
-    // Loop — re-query to check if any remaining headless games exist.
+
+    // If no progress was made (all headless games returned already_claimed /
+    // not_found), the season is stuck — break to avoid an infinite busy loop.
+    // The caller should run resetStaleInProgressGames() and retry.
+    if (!madeProgress) {
+      appLog.error(
+        `[advanceToUserGame] No progress — ${headlessBefore.length} game(s) stuck ` +
+          "(in_progress or not_found). Call resetStaleInProgressGames() and retry.",
+      );
+      return { nextGameId: nextUserGame.id, gamesSimulated };
+    }
   }
 }

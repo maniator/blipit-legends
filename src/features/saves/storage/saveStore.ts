@@ -376,10 +376,10 @@ function buildStore(getDbFn: GetDb) {
       const header: V2BundleHeader = {
         exportedAt: Date.now(),
         appVersion: import.meta.env?.VITE_APP_VERSION ?? "unknown",
-        rulesetVersion: (() => {
+        rulesetVersion: await (async () => {
           try {
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            return require("@feat/league/ruleset").CURRENT_RULESET_VERSION as number;
+            const { CURRENT_RULESET_VERSION } = await import("@feat/league/ruleset");
+            return CURRENT_RULESET_VERSION as number;
           } catch {
             return 1;
           }
@@ -486,14 +486,15 @@ function buildStore(getDbFn: GetDb) {
             );
           }
 
-          // For completed/abandoned seasons with id collision, rename them.
-          if (localActiveSeasonIds.has(seasonId) || !isActive) {
-            const existing = await db.seasons.findOne(seasonId).exec();
-            if (existing && !isActive) {
-              // Rewrite the id to avoid collision.
+          // Completed/abandoned collision: rename the incoming season so it
+          // can coexist with the local one. Active incoming seasons cannot
+          // collide with active local seasons (thrown above) or with completed
+          // local seasons (no active ID appears in a completed season's key).
+          if (!isActive) {
+            const existsLocally = !!(await db.seasons.findOne(seasonId).exec());
+            if (existsLocally) {
               const shortToken = Math.random().toString(36).slice(2, 8);
-              const newId = `${seasonId}-imported-${shortToken}`;
-              idRemap.set(seasonId, newId);
+              idRemap.set(seasonId, `${seasonId}-imported-${shortToken}`);
             }
           }
         }
@@ -507,9 +508,7 @@ function buildStore(getDbFn: GetDb) {
           >[0]);
         }
 
-        // ── 3. seasonTeams, seasonGames, seasonPlayerState ───────────────────
-        // Rewrite seasonId references if ids were remapped above.
-
+        // Rewrite seasonId field (and composite primary key for seasonPlayerState).
         const rewriteSeasonId = (
           docs: Array<Record<string, unknown>>,
         ): Array<Record<string, unknown>> =>
@@ -521,6 +520,29 @@ function buildStore(getDbFn: GetDb) {
             return doc;
           });
 
+        // seasonPlayerState uses composite primary key: "${seasonId}:${playerId}".
+        // When the seasonId is remapped, the `id` field must also be rewritten so
+        // the composite key invariant is preserved — otherwise queries by playerId
+        // under the new seasonId find nothing, and bulkUpsert silently overwrites
+        // the original season's player-state docs.
+        const rewritePlayerStateSeasonId = (
+          docs: Array<Record<string, unknown>>,
+        ): Array<Record<string, unknown>> =>
+          docs.map((doc) => {
+            const sid = doc["seasonId"] as string | undefined;
+            if (sid && idRemap.has(sid)) {
+              const newSeasonId = idRemap.get(sid)!;
+              const oldId = doc["id"] as string | undefined;
+              // Rewrite composite id: replace the old seasonId prefix.
+              const newId = oldId?.startsWith(sid + ":")
+                ? newSeasonId + oldId.slice(sid.length)
+                : oldId;
+              return { ...doc, id: newId, seasonId: newSeasonId };
+            }
+            return doc;
+          });
+
+        // ── 3. seasonTeams, seasonGames, seasonPlayerState ───────────────────
         const incomingTeams = Array.isArray(collections.seasonTeams)
           ? rewriteSeasonId(collections.seasonTeams as unknown as Array<Record<string, unknown>>)
           : [];
@@ -528,7 +550,7 @@ function buildStore(getDbFn: GetDb) {
           ? rewriteSeasonId(collections.seasonGames as unknown as Array<Record<string, unknown>>)
           : [];
         const incomingPlayerStates = Array.isArray(collections.seasonPlayerState)
-          ? rewriteSeasonId(
+          ? rewritePlayerStateSeasonId(
               collections.seasonPlayerState as unknown as Array<Record<string, unknown>>,
             )
           : [];
@@ -629,7 +651,10 @@ function buildStore(getDbFn: GetDb) {
       }
 
       if (startedAt > 0) {
-        const threshold = startedAt - 5000;
+        // Remove orphaned teams: created at or after the import started and not
+        // referenced by any season's leagues[].teamIds.
+        // Using `startedAt` (not `startedAt - 5000`) to avoid incorrectly
+        // deleting teams the user created just before triggering the import.
         const allTeams = await db.teams.find().exec();
         const orphans = allTeams.filter((t) => {
           const doc = t.toJSON() as unknown as { createdAt?: string | number; id: string };
@@ -639,7 +664,7 @@ function buildStore(getDbFn: GetDb) {
               : doc.createdAt
                 ? new Date(doc.createdAt).getTime()
                 : 0;
-          return created > threshold && !referencedTeamIds.has(doc.id);
+          return created >= startedAt && !referencedTeamIds.has(doc.id);
         });
         await Promise.all(orphans.map((t) => t.remove()));
       }

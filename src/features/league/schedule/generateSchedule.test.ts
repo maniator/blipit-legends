@@ -170,6 +170,31 @@ describe("generateSchedule — no double-booking", () => {
       teams.add(game.awaySeasonTeamId);
     }
   });
+
+  it("no team appears in two games on the same gameDay (3 teams — odd count with null bye)", () => {
+    // 3 teams: gamesPerTeam=4, seriesLength=2 → passes divisibility: 4 % (2 * 2) = 0
+    const result = generateSchedule({
+      ...BASE_INPUT,
+      teamIds: ["ct_a", "ct_b", "ct_c"],
+      gamesPerTeam: 4,
+      seriesLength: 2,
+      seasonTeamIdByCustomTeamId: { ct_a: "st_a", ct_b: "st_b", ct_c: "st_c" },
+    });
+
+    // No day should have the same team playing twice (bye slot = only 1 game per day).
+    const byDay = new Map<number, Set<string>>();
+    for (const game of result.games) {
+      if (!byDay.has(game.gameDay)) byDay.set(game.gameDay, new Set());
+      const teams = byDay.get(game.gameDay)!;
+      expect(teams.has(game.homeSeasonTeamId)).toBe(false);
+      expect(teams.has(game.awaySeasonTeamId)).toBe(false);
+      teams.add(game.homeSeasonTeamId);
+      teams.add(game.awaySeasonTeamId);
+    }
+
+    // Total game count: 3 teams × 4 gamesPerTeam / 2 = 6 games
+    expect(result.games.length).toBe(6);
+  });
 });
 
 describe("generateSchedule — error cases", () => {
