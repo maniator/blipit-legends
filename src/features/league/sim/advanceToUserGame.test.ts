@@ -13,7 +13,10 @@ import { createRxDatabase } from "rxdb";
 import { getRxStorageMemory } from "rxdb/plugins/storage-memory";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { getDb } from "@storage/db";
+
 import { advanceToUserGame } from "./advanceToUserGame";
+import { runHeadlessGame } from "./runHeadlessGame";
 
 vi.mock("@storage/db", () => ({ getDb: vi.fn() }));
 vi.mock("./runHeadlessGame", () => ({ runHeadlessGame: vi.fn() }));
@@ -272,12 +275,13 @@ describe("advanceToUserGame — batch ordering logic", () => {
 
 describe("advanceToUserGame — full function", () => {
   it("returns immediately when user game is the next scheduled", async () => {
-    const { getDb } = await import("@storage/db");
-    const { runHeadlessGame } = await import("./runHeadlessGame");
-
     const testDb = await makeTestDb();
     vi.mocked(getDb).mockResolvedValue(testDb as any);
-    vi.mocked(runHeadlessGame).mockResolvedValue({ status: "completed" });
+    vi.mocked(runHeadlessGame).mockResolvedValue({
+      status: "completed",
+      homeScore: 5,
+      awayScore: 3,
+    });
 
     // Insert season.
     await testDb.seasons.insert({
@@ -299,7 +303,25 @@ describe("advanceToUserGame — full function", () => {
     });
 
     // Insert a user game as the first scheduled game.
-    await insertGame("sg_user_first", 0, USER_ST_ID, OTHER_ST_A);
+    await testDb.seasonGames.insert({
+      id: "sg_user_first",
+      seasonId: SEASON_ID,
+      gameDay: 0,
+      homeSeasonTeamId: USER_ST_ID,
+      awaySeasonTeamId: OTHER_ST_A,
+      seriesId: "ser_sg_user_first",
+      status: "scheduled",
+      boxscore: null,
+      derivedSeed: deriveScheduledGameSeed({
+        seasonId: SEASON_ID,
+        seasonRoundIdx: 0,
+        gameInSeriesIdx: 0,
+        homeCustomTeamId: USER_ST_ID,
+        awayCustomTeamId: OTHER_ST_A,
+      }),
+      completedAt: null,
+      claimedBy: null,
+    });
 
     const result = await advanceToUserGame({ seasonId: SEASON_ID, userSeasonTeamId: USER_ST_ID });
 
@@ -311,12 +333,13 @@ describe("advanceToUserGame — full function", () => {
   });
 
   it("advances through prior games headlessly", async () => {
-    const { getDb } = await import("@storage/db");
-    const { runHeadlessGame } = await import("./runHeadlessGame");
-
     const testDb = await makeTestDb();
     vi.mocked(getDb).mockResolvedValue(testDb as any);
-    vi.mocked(runHeadlessGame).mockResolvedValue({ status: "completed" });
+    vi.mocked(runHeadlessGame).mockResolvedValue({
+      status: "completed",
+      homeScore: 5,
+      awayScore: 3,
+    });
 
     // Insert season.
     await testDb.seasons.insert({
@@ -337,10 +360,103 @@ describe("advanceToUserGame — full function", () => {
       awards: [],
     });
 
+    // Insert teams.
+    await testDb.seasonTeams.bulkInsert([
+      {
+        id: USER_ST_ID,
+        seasonId: SEASON_ID,
+        leagueId: "l_1",
+        customTeamId: "ct_user",
+        rosterSnapshot: ROSTER,
+        wins: 0,
+        losses: 0,
+        ties: 0,
+        runDifferential: 0,
+      },
+      {
+        id: OTHER_ST_A,
+        seasonId: SEASON_ID,
+        leagueId: "l_1",
+        customTeamId: "ct_otherA",
+        rosterSnapshot: ROSTER,
+        wins: 0,
+        losses: 0,
+        ties: 0,
+        runDifferential: 0,
+      },
+      {
+        id: OTHER_ST_B,
+        seasonId: SEASON_ID,
+        leagueId: "l_1",
+        customTeamId: "ct_otherB",
+        rosterSnapshot: ROSTER,
+        wins: 0,
+        losses: 0,
+        ties: 0,
+        runDifferential: 0,
+      },
+    ]);
+
     // Insert games: 2 non-user games on day 0, then a user game on day 1.
-    await insertGame("sg_other_d0a", 0, OTHER_ST_A, OTHER_ST_B);
-    await insertGame("sg_other_d0b", 0, OTHER_ST_B, OTHER_ST_A);
-    await insertGame("sg_user_d1", 1, USER_ST_ID, OTHER_ST_A);
+    await testDb.seasonGames.bulkInsert([
+      {
+        id: "sg_other_d0a",
+        seasonId: SEASON_ID,
+        gameDay: 0,
+        homeSeasonTeamId: OTHER_ST_A,
+        awaySeasonTeamId: OTHER_ST_B,
+        seriesId: "ser_sg_other_d0a",
+        status: "scheduled",
+        boxscore: null,
+        derivedSeed: deriveScheduledGameSeed({
+          seasonId: SEASON_ID,
+          seasonRoundIdx: 0,
+          gameInSeriesIdx: 0,
+          homeCustomTeamId: OTHER_ST_A,
+          awayCustomTeamId: OTHER_ST_B,
+        }),
+        completedAt: null,
+        claimedBy: null,
+      },
+      {
+        id: "sg_other_d0b",
+        seasonId: SEASON_ID,
+        gameDay: 0,
+        homeSeasonTeamId: OTHER_ST_B,
+        awaySeasonTeamId: OTHER_ST_A,
+        seriesId: "ser_sg_other_d0b",
+        status: "scheduled",
+        boxscore: null,
+        derivedSeed: deriveScheduledGameSeed({
+          seasonId: SEASON_ID,
+          seasonRoundIdx: 0,
+          gameInSeriesIdx: 1,
+          homeCustomTeamId: OTHER_ST_B,
+          awayCustomTeamId: OTHER_ST_A,
+        }),
+        completedAt: null,
+        claimedBy: null,
+      },
+      {
+        id: "sg_user_d1",
+        seasonId: SEASON_ID,
+        gameDay: 1,
+        homeSeasonTeamId: USER_ST_ID,
+        awaySeasonTeamId: OTHER_ST_A,
+        seriesId: "ser_sg_user_d1",
+        status: "scheduled",
+        boxscore: null,
+        derivedSeed: deriveScheduledGameSeed({
+          seasonId: SEASON_ID,
+          seasonRoundIdx: 1,
+          gameInSeriesIdx: 0,
+          homeCustomTeamId: USER_ST_ID,
+          awayCustomTeamId: OTHER_ST_A,
+        }),
+        completedAt: null,
+        claimedBy: null,
+      },
+    ]);
 
     const result = await advanceToUserGame({ seasonId: SEASON_ID, userSeasonTeamId: USER_ST_ID });
 
@@ -352,8 +468,6 @@ describe("advanceToUserGame — full function", () => {
   });
 
   it("handles missing season", async () => {
-    const { getDb } = await import("@storage/db");
-
     const testDb = await makeTestDb();
     vi.mocked(getDb).mockResolvedValue(testDb as any);
 

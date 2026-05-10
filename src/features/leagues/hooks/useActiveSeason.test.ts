@@ -12,7 +12,7 @@ import { useLiveRxQuery } from "rxdb/plugins/react";
 
 describe("useActiveSeason", () => {
   it("returns loading state when results are not yet loaded", () => {
-    vi.mocked(useLiveRxQuery).mockReturnValue({ results: [], loading: true });
+    vi.mocked(useLiveRxQuery).mockReturnValue({ results: [], loading: true, error: null });
 
     const { result } = renderHook(() => useActiveSeason());
 
@@ -42,6 +42,7 @@ describe("useActiveSeason", () => {
     vi.mocked(useLiveRxQuery).mockReturnValue({
       results: [{ toJSON: () => mockSeason }] as any,
       loading: false,
+      error: null,
     });
 
     const { result } = renderHook(() => useActiveSeason());
@@ -51,7 +52,7 @@ describe("useActiveSeason", () => {
   });
 
   it("returns null when no active season exists", () => {
-    vi.mocked(useLiveRxQuery).mockReturnValue({ results: [], loading: false });
+    vi.mocked(useLiveRxQuery).mockReturnValue({ results: [], loading: false, error: null });
 
     const { result } = renderHook(() => useActiveSeason());
 
