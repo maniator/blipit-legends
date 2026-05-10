@@ -72,7 +72,11 @@ export default defineConfig(({ mode }) => ({
     // suite (the default "forks" pool retains module caches between files in the
     // same worker process, causing 4-6 GB heap growth on CI).
     pool: "vmForks",
-    environment: "jsdom",
+    // happy-dom is a lightweight DOM implementation that is significantly
+    // faster and uses less memory than jsdom. It also makes window.location
+    // fully configurable, which prevents the "Cannot redefine property:
+    // location" errors that occur in jsdom when using the vmForks pool.
+    environment: "happy-dom",
     globals: true,
     setupFiles: ["./test/react-global.ts", "./test/setup.ts"],
     coverage: {

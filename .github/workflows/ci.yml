@@ -42,11 +42,11 @@ jobs:
       - name: Test
         run: yarn test:coverage
         env:
-          # Safety-net heap limit for the vmForks pool workers.  With vmForks,
-          # each test file runs in an isolated V8 VM context that is torn down
-          # after the file completes, so peak memory is bounded by the largest
-          # single file (~300 MB).  4 GB leaves generous headroom while staying
-          # within the 7 GB available on ubuntu-latest runners.
+          # vmForks pool isolates each test file in its own V8 VM context, so
+          # memory is freed between files.  On the 2-core ubuntu-latest runner
+          # Vitest creates one fork worker; 4 GB gives that worker headroom for
+          # the largest test files while fitting within the 7 GB runner budget
+          # (1 worker × 4 GB + main ~512 MB ≈ 4.6 GB total).
           NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Upload coverage report

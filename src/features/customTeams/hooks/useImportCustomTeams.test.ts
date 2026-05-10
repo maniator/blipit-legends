@@ -141,8 +141,10 @@ describe("useImportCustomTeams", () => {
 
   describe("handlePasteFromClipboard", () => {
     it("reads clipboard and updates pasteJson", async () => {
-      Object.assign(navigator, {
-        clipboard: { readText: vi.fn().mockResolvedValue('{"type":"customTeams"}') },
+      Object.defineProperty(navigator, "clipboard", {
+        value: { readText: vi.fn().mockResolvedValue('{"type":"customTeams"}') },
+        configurable: true,
+        writable: true,
       });
       const { result } = renderHookUnderTest();
       await act(async () => result.current.handlePasteFromClipboard());
@@ -150,8 +152,10 @@ describe("useImportCustomTeams", () => {
     });
 
     it("sets error when clipboard read fails", async () => {
-      Object.assign(navigator, {
-        clipboard: { readText: vi.fn().mockRejectedValue(new Error("Permission denied")) },
+      Object.defineProperty(navigator, "clipboard", {
+        value: { readText: vi.fn().mockRejectedValue(new Error("Permission denied")) },
+        configurable: true,
+        writable: true,
       });
       const { result } = renderHookUnderTest();
       await act(async () => result.current.handlePasteFromClipboard());
