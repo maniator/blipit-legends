@@ -15,14 +15,14 @@ inputs:
   - 6 persona interviews (P1 Casual Watcher → P6 Power User)
   - mary impact-math analysis
   - cross-talk round (sally↔buck, john↔mary, amelia↔paige, winston final verdict)
-  - docs/blipit-qa-v1-followup-package.zip (post-v1-leagues QA follow-up context)
+  - docs/league-v1-followup/ (post-v1-leagues QA follow-up context)
 ---
 
 # Accessibility & UX Sprint — BlipIt Legends
 
 This is the consolidated planning artifact for the **Critical Accessibility & Trust Sprint**, generated through a full bmad multi-agent roundtable. A future implementing agent (Amelia) should be able to pick this up and execute Sprint 1 with no further clarification needed.
 
-> Re-baseline note (2026-05-11): v1 leagues is now live on this branch. This artifact has been refreshed to convert F9/F10 from implementation work to regression-guard work, and to account for the QA follow-up package in `docs/blipit-qa-v1-followup-package.zip`.
+> Re-baseline note (2026-05-11): v1 leagues is now live on this branch. This artifact has been refreshed to convert F9/F10 from implementation work to regression-guard work, and to account for the QA follow-up package now integrated at `docs/league-v1-followup/`.
 
 ## Navigation
 
@@ -37,6 +37,8 @@ This is the consolidated planning artifact for the **Critical Accessibility & Tr
 | [`06-sprint-kickoff-prompts.md`](./06-sprint-kickoff-prompts.md) | Copy-paste agent session prompts for Sprint 1 and Sprint 2               | Amelia                  |
 
 ## TL;DR
+
+**Priority-first note:** before expanding scope, treat `docs/league-v1-followup/` P0/P1 QA fixes as the highest priority stream.
 
 **Sprint 1 scope (one focused sprint, re-baselined after v1 leagues merge):**
 

@@ -13,6 +13,10 @@ Implement Sprint 1 of the Accessibility & UX sprint plan. The full plan is at:
 
   _bmad-output/planning-artifacts/accessibility-ux-sprint/
 
+Before implementation, confirm QA-first sequencing:
+  1) docs/league-v1-followup/ P0/P1 fixes (priority-first)
+  2) this accessibility sprint
+
 Read the files in this order before starting:
   1. README.md                     — routing rules and architectural non-negotiable
   2. 00-overview-and-decisions.md  — scope (LOCKED), key decisions, guardrails
@@ -20,7 +24,7 @@ Read the files in this order before starting:
   4. 04-implementation-notes.md    — file-level search commands and CI spec
 
 Also review QA context package:
-  docs/blipit-qa-v1-followup-package.zip
+  docs/league-v1-followup/
   (especially 01-qa-report.md and 03-bmad-implementation-plan-prompt.md)
 
 ## Agent routing (REQUIRED — do not skip)

@@ -4,7 +4,7 @@
 
 BlipIt Legends underwent a heuristic UX/accessibility review that surfaced **10 findings** spanning P0 (critical) to P2 (minor). A full bmad multi-agent roundtable (7 agents + 6 persona interviews + a cross-talk round) produced unanimous signal that **low-contrast text (Finding #6) is the single biggest user-impact failure** — every one of the 6 user personas, from Casual Watcher to Power User, independently flagged it as their #1 or co-#1 pain.
 
-This sprint executes the highest-leverage subset of those findings, slices Finding #6 into tiers to manage visual-snapshot churn, and installs a CI guardrail to prevent regression of the foundational style-guide/theme drift problem. It is now re-baselined against the v1 leagues branch state and the QA follow-up package in `docs/blipit-qa-v1-followup-package.zip`.
+This sprint executes the highest-leverage subset of those findings, slices Finding #6 into tiers to manage visual-snapshot churn, and installs a CI guardrail to prevent regression of the foundational style-guide/theme drift problem. It is now re-baselined against the v1 leagues branch state and the integrated QA follow-up package in `docs/league-v1-followup/`.
 
 ## Sprint 1 Scope (LOCKED)
 
