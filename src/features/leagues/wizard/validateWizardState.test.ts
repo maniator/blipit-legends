@@ -27,6 +27,10 @@ describe("validateWizardState", () => {
     const errors = validateWizardState(state);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0]).toMatch(new RegExp(ERR_PREFIX_HANDPICK));
+    // Also verify the error includes the expected count so regressions in the
+    // count parameter are caught.
+    expect(errors[0]).toMatch(/8/);
+    expect(errors[0]).toMatch(/2 selected/);
   });
 
   it("step 2 handpick: valid when exactly 8 selected", () => {
