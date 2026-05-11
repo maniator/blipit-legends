@@ -137,7 +137,11 @@ await button.evaluate((el) =>
     (window as unknown as Record<string, () => void>).onHelpClicked(),
   ),
 );
-await page.mouse.click(box!.x - 8, box!.y + box!.height / 2); // probe left of visual edge
+// probe 8px to the RIGHT of the visual right edge (inside the ::before expanded zone)
+// NOTE: avoid box.x - 8 — that can produce negative X if the button is near the viewport
+// left edge, making the test flaky. The ::before expands in all directions so probing
+// right is equally valid and viewport-safe.
+await page.mouse.click(box!.x + box!.width + 8, box!.y + box!.height / 2);
 expect(clicked).toBe(true);
 ```
 

@@ -83,7 +83,7 @@ const HelpButton = styled.button`
 - Token name validation handles dotted paths (`theme.colors.primary.main`)
 - Escape hatch: skip fenced blocks tagged `bad`/`diff`/`old`; support `<!-- style-guide-ignore -->` inline marker
 - Wired as `yarn check:style-guide`, chained into existing `lint` script (NOT husky pre-commit — won't catch cross-file drift)
-- **Self-test required:** fixture in `scripts/__tests__/` with known-bad doc that fails and known-good that passes
+- **Self-test required:** fixture in `src/__tests__/` with known-bad doc that fails and known-good that passes (must live under `src/` so Vitest discovers it — `root: "src"` in vite.config.ts)
 
 ### D5 — Ownership boundaries (Winston)
 

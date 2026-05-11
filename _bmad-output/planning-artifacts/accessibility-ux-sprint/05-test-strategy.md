@@ -113,8 +113,11 @@ for (const { route, testid } of BUTTONS_TO_VERIFY) {
         ),
       `onClicked_${testid}`,
     );
-    // probe 8px to the left of the visual left edge (inside the ::before expanded zone)
-    await page.mouse.click(box!.x - 8, box!.y + box!.height / 2);
+    // probe 8px to the RIGHT of the visual right edge (inside the ::before expanded zone)
+    // NOTE: avoid probing left (box.x - 8) — that can produce a negative X if the element
+    // is near the viewport left edge, making the test flaky. The ::before expands in all
+    // directions so probing right is equally valid and viewport-safe.
+    await page.mouse.click(box!.x + box!.width + 8, box!.y + box!.height / 2);
     expect(clicked).toBe(true);
   });
 }
