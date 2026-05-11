@@ -317,10 +317,10 @@ If you encounter connection problems, see § "Troubleshooting: MCP browser not w
 If a `playwright-isolated-browser_*` call fails or the browser won't start, first confirm the `playwright-isolated` process is running with the correct flags:
 
 ```bash
-ps -ef | grep "playwright-mcp --no-sandbox --isolated" | grep -v grep
+ps -ef | grep "@playwright/mcp" | grep -- "--isolated" | grep -v grep
 ```
 
-If the process is missing, the `playwright-isolated` MCP server was not spawned. Verify the GitHub repo settings under **Settings → Copilot → MCP servers** contain a `"playwright-isolated"` key (not `"playwright"`) with args `["@playwright/mcp@latest", "--no-sandbox", "--isolated"]`. The key name must **not** be `"playwright"` — that name collides with the default pre-started systemd service and the repo config will be silently ignored.
+If the process is missing, the `playwright-isolated` MCP server was not spawned. Verify the GitHub repo settings under **Settings → Copilot → MCP servers** contain a `"playwright-isolated"` key (not `"playwright"`) with `command: "npx"` and `args: ["@playwright/mcp@latest", "--no-sandbox", "--isolated"]` — `@playwright/mcp@latest` is the npx package name; `--no-sandbox` and `--isolated` are the Playwright MCP server flags. The key name must **not** be `"playwright"` — that name collides with the default pre-started systemd service and the repo config will be silently ignored.
 
 ### Agent method: MCP browser with batch-loop evaluate (preferred for tuning rounds)
 

@@ -33,6 +33,7 @@ venv/
 
 # Playwright MCP session artifacts
 .playwright-mcp/
+localhost-verify.png
 
 #docker tmp files
 .docker*/

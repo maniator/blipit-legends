@@ -416,7 +416,7 @@ Use the `SENIOR LEAD REVIEW REQUEST` template from `.github/agents/prompt-exampl
 This agent does not use the Playwright MCP for test execution (it uses `docker run`). If you are asked to do live-browser QA via MCP, use the `playwright-isolated-browser_*` tools. If the browser fails to start, check that the `playwright-isolated` MCP server process is running:
 
 ```bash
-ps -ef | grep "playwright-mcp --no-sandbox --isolated" | grep -v grep
+ps -ef | grep "@playwright/mcp" | grep -- "--isolated" | grep -v grep
 ```
 
 If the process is missing, verify GitHub repo settings → Copilot → MCP servers contains the `"playwright-isolated"` key (not `"playwright"`). See `docs/e2e-testing.md` § "Troubleshooting: MCP browser not working" for full details.
