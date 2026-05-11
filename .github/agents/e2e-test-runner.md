@@ -145,7 +145,12 @@ docker run --rm \
 sudo chown -hR "$(id -u):$(id -g)" dist/ node_modules/ .yarn/ 2>/dev/null || true
 ```
 
-> **Tip:** On a fresh runner, the first `docker run` may pull `mcr.microsoft.com/playwright:v1.58.2-noble` automatically. If you want to warm it up first, run `docker pull mcr.microsoft.com/playwright:v1.58.2-noble`.
+> **Required preflight:** Before the first Playwright container run in a session, verify the image is present and pull it if missing:
+>
+> ```bash
+> docker image inspect mcr.microsoft.com/playwright:v1.58.2-noble >/dev/null 2>&1 \
+>   || docker pull mcr.microsoft.com/playwright:v1.58.2-noble
+> ```
 
 ## Playwright projects reference
 

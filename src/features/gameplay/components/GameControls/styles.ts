@@ -124,6 +124,17 @@ export const HelpButton = styled.button`
   line-height: 1;
   padding: 0;
   flex-shrink: 0;
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -5px;
+
+    ${mq.mobile} {
+      inset: -3px;
+    }
+  }
 
   &:hover {
     background: ${({ theme }) => theme.colors.helpButtonBgHover};
@@ -359,6 +370,13 @@ export const DecisionPanelClose = styled.button`
   justify-content: center;
   border-radius: ${({ theme }) => theme.radii.sm};
   flex-shrink: 0;
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+  }
 
   &:hover {
     background: ${({ theme }) => theme.colors.bgSurface};

@@ -172,4 +172,40 @@ describe("HomeScreen", () => {
     expect(screen.getByTestId("league-play-teaser")).toBeInTheDocument();
     expect(screen.getByText(/league mode/i)).toBeInTheDocument();
   });
+
+  it("shows idle league CTA with Start a Season button", () => {
+    const onStartLeague = vi.fn();
+    render(
+      <HomeScreen
+        onNewGame={noop}
+        onLoadSaves={noop}
+        onManageTeams={noop}
+        onStartLeague={onStartLeague}
+      />,
+    );
+
+    expect(screen.getByTestId("home-browse-leagues-button")).toBeInTheDocument();
+    expect(screen.getByText("Start a Season")).toBeInTheDocument();
+    expect(screen.queryByTestId("home-continue-season-button")).not.toBeInTheDocument();
+  });
+
+  it("shows active-season CTA with Continue button + season label", () => {
+    const onContinueSeason = vi.fn();
+    render(
+      <HomeScreen
+        onNewGame={noop}
+        onLoadSaves={noop}
+        onManageTeams={noop}
+        activeSeasonId="season_1"
+        activeSeasonLabel="Spring 2026 · day 3 / 14"
+        onContinueSeason={onContinueSeason}
+      />,
+    );
+
+    expect(screen.getByText(/continue season/i)).toBeInTheDocument();
+    expect(screen.getByText("Spring 2026 · day 3 / 14")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("home-continue-season-button"));
+    expect(onContinueSeason).toHaveBeenCalled();
+    expect(screen.queryByTestId("home-browse-leagues-button")).not.toBeInTheDocument();
+  });
 });

@@ -64,7 +64,7 @@ export const SaveDate = styled.div`
 
 export const SaveActions = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: ${({ theme }) => theme.spacing.md};
   flex-shrink: 0;
 
   ${mq.mobile} {
@@ -91,6 +91,13 @@ export const ActionBtn = styled.button<{ $variant?: ActionBtnVariant }>`
   font-family: inherit;
   cursor: pointer;
   min-height: ${({ theme }) => theme.sizes.inputMd};
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+  }
 
   &:focus-visible {
     outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};

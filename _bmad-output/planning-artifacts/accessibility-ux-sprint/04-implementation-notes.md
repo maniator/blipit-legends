@@ -101,6 +101,12 @@ rg "Load|Export|Delete" src/features/saves/components/
 
 **Pattern to apply:**
 
+> **⚠️ SKETCH VALUES — verify neighbor gap before using**
+>
+> The `inset` value below (`-10px`) is illustrative only. **Before using any inset value, check that the adjacent flex `gap` satisfies `gap ≥ 2 × |inset|`.** If it does not, either reduce the inset or increase the gap. Using an inset value larger than half the gap will create overlapping hit areas that mis-route taps to the wrong button. See `docs/style-guide.md` § "Touch-target hit-area expansion" for the full rule and pre-PR checklist item.
+>
+> Sprint 1 lesson (retro C1/C2): the initial `HelpButton` used `-10px` from this sketch, which caused two CI-breaking reviewer findings and required two fix rounds.
+
 ```ts
 const HelpButton = styled.button`
   width: 25px;
@@ -110,7 +116,7 @@ const HelpButton = styled.button`
   &::before {
     content: "";
     position: absolute;
-    inset: -10px;
+    inset: -10px; /* ⚠️ SKETCH — verify gap ≥ 2 × |inset| before using; see note above */
     /* DO NOT add background/border here */
   }
 `;
@@ -133,7 +139,9 @@ const inset = await button.evaluate((el) => {
   const s = window.getComputedStyle(el, "::before");
   return { top: parseFloat(s.top), left: parseFloat(s.left) };
 });
-expect(inset.top).toBeLessThanOrEqual(-10); // 25px base + 10px each side ≥ 44px
+// ⚠️ SKETCH value: replace -10 with the actual verified inset for the button you're testing.
+// Always use the minimum (mobile) breakpoint value — see docs/e2e-testing.md § responsive CSS assertions.
+expect(inset.top).toBeLessThanOrEqual(-10); // 25px base + 10px each side ≥ 44px — VERIFY vs. neighbor gap first
 expect(inset.left).toBeLessThanOrEqual(-10);
 
 // Part 2: edge-probe — click outside visual bounds, confirm handler fires

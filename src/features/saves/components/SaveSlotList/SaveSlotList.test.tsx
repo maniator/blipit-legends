@@ -13,6 +13,7 @@ vi.stubGlobal("confirm", confirmMock);
 afterAll(() => vi.unstubAllGlobals());
 
 import { makeSaveDoc } from "@test/helpers/saves";
+import { expectPseudoInset } from "@test/testHelpers";
 
 import { DELETE_SAVE_CONFIRM_MSG } from "./index";
 import SaveSlotList from "./index";
@@ -60,5 +61,12 @@ describe("SaveSlotList", () => {
     render(<SaveSlotList {...defaultProps} onDelete={onDelete} />);
     fireEvent.click(screen.getByTestId("delete-save-button"));
     expect(onDelete).not.toHaveBeenCalled();
+  });
+
+  it("uses pseudo-element hit expansion on save action buttons", () => {
+    render(<SaveSlotList {...defaultProps} />);
+    expectPseudoInset(screen.getByTestId("load-save-button"), 6);
+    expectPseudoInset(screen.getByTestId("export-save-button"), 6);
+    expectPseudoInset(screen.getByTestId("delete-save-button"), 6);
   });
 });

@@ -39,6 +39,7 @@ This keeps CI skip counts clean and ensures project scoping is resolved at colle
 - **Seeded games** — seeds are set via the seed input field in the New Game form, which calls `reinitSeed(seedStr)` on submit. The seed is not written to the URL. E2E tests use `configureNewGame(page, { seed: "..." })` to fill the input field.
 - **`data-log-index` on log entries** — each play-by-play `<Log>` element has `data-log-index={log.length - 1 - arrayIndex}` (0 = oldest event). `captureGameSignature` reads indices 0–4 to get a stable deterministic signature regardless of how many new entries autoplay has prepended.
 - **Fresh context per determinism run** — `browser.newContext()` gives each game run its own IndexedDB, preventing the auto-save from the first run from restoring mid-game state in the second run and breaking seed reproducibility.
+- **Responsive CSS assertions: always use the mobile (minimum) value** — when a styled-component overrides a CSS value inside a `${mq.mobile}` block (e.g. `::before` inset), Playwright's 7 device projects include mobile emulations (Pixel-5, Pixel-7, iPhone) where that override applies. Always assert against the smallest breakpoint value. For example, if `::before { inset: -5px }` on desktop and `-3px` on mobile, assert `top <= -3` (not `-5`) so all projects pass.
 
 ### Helper functions (`e2e/utils/helpers.ts`)
 
