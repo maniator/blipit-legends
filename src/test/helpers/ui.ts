@@ -1,5 +1,8 @@
 import { expect } from "vitest";
 
+/** Escapes regex metacharacters in `s` so it can be safely used inside `new RegExp(…)`. */
+const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 /**
  * Asserts that an element's `::before` pseudo-element has a negative inset of at
  * least `insetMagnitude` pixels (i.e. the hit-area expansion is active).
@@ -27,14 +30,11 @@ export const expectPseudoInset = (element: HTMLElement, insetMagnitude: number):
   const headText = document.head.textContent ?? "";
 
   const matched = classes.some((cls) => {
-    // Escape the class name so that any regex metacharacters (e.g., from
-    // styled-components generated hashes) are treated as literals.
-    const escapedCls = cls.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    // Match a rule containing this class name that also contains the expected inset
-    // within the same ::before block.  [^{]* / [^}]* safely skip other properties
-    // without crossing block boundaries.
+    // Matches: .<className> (optional extras) ::before { ... inset: -Npx ... }
+    // [^{]* skips extras before the opening brace; [^}]* skips other CSS properties
+    // inside the rule without crossing the closing brace boundary.
     const pattern = new RegExp(
-      `\\.${escapedCls}[^{]*::before[^{]*\\{[^}]*inset:\\s*${insetPx}`,
+      `\\.${escapeRegExp(cls)}[^{]*::before[^{]*\\{[^}]*inset:\\s*${insetPx}`,
       "s",
     );
     return pattern.test(headText);
