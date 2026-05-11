@@ -146,3 +146,4 @@ Only consider v2 ready when:
   - `docs/league-v1-followup/04-validation-status.md`
   - `docs/league-v1-followup/05-shift-left-regression-plan.md`
 - If PR-comment posting tools are unavailable in the active agent runtime, copy/paste the markdown block above directly into the PR conversation.
+- Retention/update policy: keep this file as a durable PR-orchestration artifact; do not remove it in routine updates. Update it only when prompt ownership, execution ordering, or QA gate criteria materially change.

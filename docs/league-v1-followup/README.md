@@ -17,3 +17,5 @@ Files:
 - `screenshots/mixed-mode-review-dropdown-unreadable-user-screenshot.png` — user-provided screenshot showing the unreadable/inaccessible mixed-mode “Which team will you manage?” field.
 
 Note: Earlier QA screenshots from the live desktop run were not available as standalone files in this environment, so the textual findings are documented in `01-qa-report.md` and include the available user-provided screenshot.
+
+Retention/update policy: treat `06-pr-comment-prompts-and-execution-plan.md` as a long-lived artifact. It should remain in this folder and only be updated when prompt content, agent ownership, sequencing rules, or QA gates materially change.
