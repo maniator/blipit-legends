@@ -34,7 +34,7 @@ All 10 findings from Sally's heuristic review, enriched with WCAG citations (Mar
 - `scripts/check-style-guide-drift.ts` — runtime tsx import of theme + regex extraction from doc
 - Normalize hex (lowercase, 6-digit, strip alpha=ff); validate dotted paths
 - Skip fenced `bad`/`diff` blocks; support `<!-- style-guide-ignore -->` inline marker
-- Self-test fixture in `scripts/__tests__/`
+- Self-test fixture in `src/__tests__/` (Vitest `root: "src"` — tests under `scripts/` are not discovered by `yarn test`)
 - Wire as `yarn check:style-guide`, chain into existing `lint` script
 - Effort: S (~2-3h)
 
@@ -102,7 +102,7 @@ All 10 findings from Sally's heuristic review, enriched with WCAG citations (Mar
 
 ### Acceptance criteria
 
-- [ ] All flagged buttons have ≥ 44×44 effective tap area when measured via Playwright `boundingBox()`
+- [ ] All flagged buttons pass the two-part E2E hit-area validation: (a) computed `::before` inset is `≤ -10px` on all sides, and (b) `page.mouse.click()` at 8px outside the visual bounds fires the click handler (see `05-test-strategy.md` for the full pattern — **do not use `boundingBox()` for this; it reflects only the element's layout box, not `::before` overflow**)
 - [ ] No visual regression on `e2e/tests/responsive-smoke.spec.ts` snapshots
 - [ ] Visual snapshots for `HelpButton`, save cards, modal close buttons unchanged (visible footprint identical)
 - [ ] New unit test in component test file asserting `::before` pseudo-element exists and has correct inset

@@ -94,9 +94,10 @@ for (const { route, testid } of BUTTONS_TO_VERIFY) {
       const s = window.getComputedStyle(node, "::before");
       return { top: parseFloat(s.top), left: parseFloat(s.left) };
     });
-    const delta = (MIN_TARGET - 44) / 2; // base element is assumed ~25–32px
-    expect(inset.top).toBeLessThan(0); // negative = expanding upward
-    expect(inset.left).toBeLessThan(0); // negative = expanding left
+    // Inset must be ≤ -10px to guarantee ≥ 44px effective target on a ~24–32px visual element
+    // (a value of -1 would be technically negative but nowhere near sufficient)
+    expect(inset.top).toBeLessThanOrEqual(-10); // expanding upward by at least 10px
+    expect(inset.left).toBeLessThanOrEqual(-10); // expanding left by at least 10px
 
     // Part 2: edge-probe — click outside visual bounds, confirm handler fires
     const box = await el.boundingBox();
@@ -128,8 +129,8 @@ test("modal close button has ≥ 44×44 effective tap area", async ({ page }) =>
     const s = window.getComputedStyle(node, "::before");
     return { top: parseFloat(s.top), left: parseFloat(s.left) };
   });
-  expect(inset.top).toBeLessThan(0);
-  expect(inset.left).toBeLessThan(0);
+  expect(inset.top).toBeLessThanOrEqual(-10);
+  expect(inset.left).toBeLessThanOrEqual(-10);
 });
 ```
 

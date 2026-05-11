@@ -69,7 +69,7 @@ rg -i '#(00ced1|2ecc71|0fc97f|44cc88)' src/  # known-old aquamarine/greens
 **Reference patterns from existing scripts:**
 
 - Look in `scripts/` for any existing tsx-style runners as template
-- If no `scripts/__tests__/` directory exists, follow the colocated test pattern documented in CLAUDE.md
+- The test lives under `src/__tests__/` (not alongside the script) because Vitest `root: "src"` will not discover tests outside `src/`
 
 ### Story 2.1 (F3 Touch Targets)
 
@@ -263,7 +263,7 @@ PR body MUST include:
 
 From the project conventions:
 
-- **Vitest tests** are co-located with source files
+- **Vitest tests** are typically co-located with source files, but CI-guardrail/script tests (like the style-guide drift test) must live under `src/__tests__/` so that Vitest discovers them via `root: "src"` and repo-wide coverage thresholds apply
 - **`fake-indexeddb/auto`** is globally polyfilled via `src/test/setup.ts` (loaded by Vitest `setupFiles`) — do **not** add a per-file import in standard `yarn test` runs; it is already active
 - **For RxDB tests**: use `makeSaveStore(_createTestDb(getRxStorageMemory()))` — the polyfill is already active. Only import `fake-indexeddb/auto` explicitly in standalone scripts or processes that run **outside** Vitest and therefore bypass `src/test/setup.ts`.
 - **E2E tests** in `e2e/tests/` use `@playwright/test` against a `vite preview` build (production, not dev server)
