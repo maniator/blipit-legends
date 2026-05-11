@@ -125,7 +125,7 @@ yarn build         # Production build to dist/
 
 If any `playwright-browser_*` tool throws `"Browser is already in use for /root/.cache/ms-playwright/mcp-chrome"`:
 
-1. **Quick fix (stale lock from crash):** `sudo rm -rf /root/.cache/ms-playwright/mcp-chrome` then retry. `copilot-setup-steps.yml` does this automatically on session start.
+1. **Quick fix (stale lock from crash):** `sudo rm -rf /root/.cache/ms-playwright/mcp-chrome*` then retry. `copilot-setup-steps.yml` does this automatically on session start.
 2. **Permanent fix:** Add `--no-sandbox` (or `--isolated`) to the `mcp-server-playwright` args in GitHub repo Copilot MCP settings (Settings → Copilot → MCP servers → playwright-mcp). Root cause: the MCP server runs system Chrome as root with sandbox enabled; `--no-sandbox` disables it; `--isolated` uses an in-memory profile that avoids the issue entirely.
 3. Full diagnosis guide: `docs/e2e-testing.md` § "Troubleshooting: Browser already in use".
 
