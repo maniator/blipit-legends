@@ -31,6 +31,9 @@ __pycache__/
 venv/
 
 
+# Playwright MCP session artifacts
+.playwright-mcp/
+
 #docker tmp files
 .docker*/
 

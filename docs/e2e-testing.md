@@ -375,7 +375,7 @@ This is the **fastest way for an agent to collect 200+ browser game metrics**. I
 
 ```js
 // ── 1. Navigate to the new game form ──────────────────────────────────────
-// (use playwright-isolated-browser_navigate to go to http://localhost:5173/exhibition/new)
+// (use playwright-isolated-browser_navigate to go to http://127.0.0.1:5173/exhibition/new)
 // (use playwright-isolated-browser_wait_for to wait for "Play Ball" to appear)
 
 // ── 2. Set teams + seed via JS injection ──────────────────────────────────
