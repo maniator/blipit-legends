@@ -422,7 +422,7 @@ Error: Browser is already in use for /root/.cache/ms-playwright/mcp-chrome
 Run this first, then retry the MCP tool call:
 
 ```bash
-sudo rm -rf /root/.cache/ms-playwright/mcp-chrome
+sudo rm -rf /root/.cache/ms-playwright/mcp-chrome*
 ```
 
 For the root cause and permanent fix, see `docs/e2e-testing.md` § "Troubleshooting: Browser already in use".
