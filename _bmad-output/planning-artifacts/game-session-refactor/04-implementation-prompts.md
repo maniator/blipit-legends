@@ -291,6 +291,12 @@ After the PR merges, invoke bmad-agent-tech-writer (Paige) to produce all requir
 Pass Paige the following exact content spec:
 
 --- PAIGE CONTENT SPEC BEGIN ---
+Update `docs/e2e-testing.md`:
+  - Add the two new routes (`/game/exhibition`, `/game/league/:seasonGameId`) to the route
+    navigation helpers table and any route-guard test descriptions
+  - List any new `data-testid` selectors introduced on `ExhibitionGamePage` or `LeagueGamePage`
+    (loading spinner, error state, redirect targets) in the `data-testid` reference section
+
 Update `docs/architecture.md`:
   - In the Route table, add two rows:
     /game/exhibition | ExhibitionGamePage | Exhibition games (from ExhibitionSetupPage via AppShell); provides GameSessionProvider; new in game-session-refactor epic
