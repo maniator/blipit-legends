@@ -115,10 +115,10 @@ yarn build         # Production build to dist/
 ## Playwright MCP Local App Access Rule
 
 - For Playwright MCP local-browser sessions, **do not** start `yarn dev` or `npx vite preview` manually from bash.
-- Start localhost access via Playwright CLI so `webServer` owns preview startup (for example `npx playwright test --config=playwright-metrics.config.ts --project=desktop`).
+- Start localhost access via a Playwright CLI command whose config defines `webServer` for `http://localhost:5173` (for example `npx playwright test --config=playwright.config.ts --project=desktop` or `npx playwright test --config=playwright-metrics.config.ts --project=desktop`).
 - Then navigate the MCP browser to `http://localhost:5173`.
 - If the Playwright process exits, restart the same command before continuing MCP browser actions.
-- Full rationale and troubleshooting live in `docs/e2e-testing.md` under “Starting the preview server for MCP browser automation.”
+- Full rationale and troubleshooting live in `docs/e2e-testing.md` under the existing “Starting the preview server for MCP browser automation” section.
 
 ## Sub-Agent Push Rule
 
