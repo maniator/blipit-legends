@@ -20,8 +20,10 @@ function renderWithTheme(ui: React.ReactNode) {
 
 function getAppRoutes() {
   const [rootRoute] = router.routes as TestRoute[];
-  const [appShellRoute] = rootRoute.children ?? [];
-  return appShellRoute.children ?? [];
+  const appShellRoute = rootRoute.children?.find((route) =>
+    route.children?.some((child) => child.path === "saves"),
+  );
+  return appShellRoute?.children ?? [];
 }
 
 /**
@@ -57,9 +59,11 @@ describe("router", () => {
   it("provides a visible fallback for lazy page routes", () => {
     const savesRoute = getAppRoutes().find((route) => route.path === "saves");
 
-    expect(savesRoute?.element).toBeDefined();
+    if (!savesRoute?.element) {
+      throw new Error("Expected the saves route to have an element");
+    }
 
-    renderWithTheme(savesRoute?.element);
+    renderWithTheme(savesRoute.element);
 
     expect(screen.getByTestId("app-loading-fallback")).toHaveTextContent("Loading page…");
   });
