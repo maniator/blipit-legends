@@ -252,25 +252,35 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
             </tr>
           </thead>
           <tbody>
-            {standings.map((row, i) => (
-              <StandingsRow
-                key={row.seasonTeamId}
-                $rank={i}
-                onClick={() => navigate(`/leagues/${seasonId}/teams/${row.seasonTeamId}`)}
-                title="View team"
-              >
-                <StandingsTd>
-                  <StandingsTeamName>{teamNameById[row.seasonTeamId] ?? "—"}</StandingsTeamName>
-                </StandingsTd>
-                <StandingsTd>{row.wins}</StandingsTd>
-                <StandingsTd>{row.losses}</StandingsTd>
-                <StandingsTd>{row.winPct.toFixed(3).replace(/^0/, "")}</StandingsTd>
-                <StandingsTd>
-                  {row.runDifferential >= 0 ? "+" : ""}
-                  {row.runDifferential}
-                </StandingsTd>
-              </StandingsRow>
-            ))}
+            {standings.map((row, i) => {
+              const teamPath = `/leagues/${seasonId}/teams/${row.seasonTeamId}`;
+              return (
+                <StandingsRow
+                  key={row.seasonTeamId}
+                  $rank={i}
+                  onClick={() => navigate(teamPath)}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      navigate(teamPath);
+                    }
+                  }}
+                  tabIndex={0}
+                  title="View team"
+                >
+                  <StandingsTd>
+                    <StandingsTeamName>{teamNameById[row.seasonTeamId] ?? "—"}</StandingsTeamName>
+                  </StandingsTd>
+                  <StandingsTd>{row.wins}</StandingsTd>
+                  <StandingsTd>{row.losses}</StandingsTd>
+                  <StandingsTd>{row.winPct.toFixed(3).replace(/^0/, "")}</StandingsTd>
+                  <StandingsTd>
+                    {row.runDifferential >= 0 ? "+" : ""}
+                    {row.runDifferential}
+                  </StandingsTd>
+                </StandingsRow>
+              );
+            })}
           </tbody>
         </StandingsTable>
       ) : (

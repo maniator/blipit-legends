@@ -379,7 +379,7 @@ function Step6({
       </FieldGroup>
 
       {errors.length > 0 && (
-        <div style={{ marginTop: "16px" }}>
+        <div style={{ marginTop: "16px" }} aria-live="polite">
           {errors.map((err) => (
             <p key={err} style={{ color: "#ff8080", fontSize: "12px", margin: "4px 0" }}>
               ⚠ {err}

@@ -223,17 +223,19 @@ const SeasonTeamPageInner: React.FunctionComponent = () => {
               const role = typeof pitcher.pitchingRole === "string" ? pitcher.pitchingRole : "RP";
               const ps = playerStateById.get(playerId);
               const availability = ps?.pitcherAvailability ?? 1.0;
+              const daysRest = ps?.pitcherDaysRest ?? 0;
               const pillVariant =
                 availability >= fatigueConstants.spEligibilityThreshold
                   ? "fresh"
                   : availability >= 0.25
                     ? "tired"
                     : "spent";
+              const pillTooltip = `${daysRest} day${daysRest === 1 ? "" : "s"} rest · availability ${Math.round(availability * 100)}%`;
               return (
                 <PitcherRow key={playerId || pitcherName}>
                   <PitcherName>{pitcherName}</PitcherName>
                   <PitcherRole>{role}</PitcherRole>
-                  <StatusPill variant={pillVariant} />
+                  <StatusPill variant={pillVariant} title={pillTooltip} />
                 </PitcherRow>
               );
             })}

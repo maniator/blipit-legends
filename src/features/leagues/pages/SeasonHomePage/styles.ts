@@ -113,6 +113,11 @@ export const StandingsRow = styled.tr<{ $rank: number }>`
     background: ${({ theme }) => theme.colors.bgFormAlpha15};
   }
 
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: -2px;
+  }
+
   &:last-child td {
     border-bottom: none;
   }
@@ -152,7 +157,7 @@ export const SimulateButton = styled.button`
   }
 `;
 
-export const SimulateError = styled.p`
+export const SimulateError = styled.p.attrs({ role: "alert" })`
   font-size: ${({ theme }) => theme.fontSizes.sm};
   color: ${({ theme }) => theme.colors.textDanger};
   margin: ${({ theme }) => theme.spacing.xs} 0 0;

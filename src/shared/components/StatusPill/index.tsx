@@ -14,10 +14,16 @@ interface StatusPillProps {
   variant: PillVariant;
   label?: string;
   className?: string;
+  title?: string;
 }
 
-const StatusPill: React.FunctionComponent<StatusPillProps> = ({ variant, label, className }) => (
-  <PillSpan $variant={variant} className={className}>
+const StatusPill: React.FunctionComponent<StatusPillProps> = ({
+  variant,
+  label,
+  className,
+  title,
+}) => (
+  <PillSpan $variant={variant} className={className} title={title}>
     {label ?? defaultLabels[variant]}
   </PillSpan>
 );
