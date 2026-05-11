@@ -89,7 +89,7 @@ export const theme = {
     bsoBall: "#44cc88",
     bsoStrike: "#F2C14E",
     bsoOut: "#ff7070",
-    /** WCAG AAA (≥7:1) count label text on bgGame (#0a1628). */
+    /** WCAG AAA (≥7:1) count label text on theme.colors.bgGame. */
     bsoCountText: "#e8d5a3",
     /** Inner box-shadow on active BSO dots for grayscale/CVD distinguishability. */
     bsoDotInset: "rgba(0, 0, 0, 0.35)",

@@ -145,7 +145,9 @@ export const Dot = styled.span<{ $on: boolean; $type: "ball" | "strike" | "out" 
   box-shadow: ${({ $on, theme }) => ($on ? `inset 0 0 0 1px ${theme.colors.bsoDotInset}` : "none")};
 `;
 
-/** Count label shown beneath dots (mobile) or to the right (desktop). aria-hidden on the element itself. */
+/** Count label shown beneath dots (mobile) or to the right (desktop). aria-hidden on the element itself.
+ * Requires BsoRow to have `flex-wrap: wrap` so `flex-basis: 100%` forces a new row on mobile.
+ */
 export const BsoCountLabel = styled.span`
   font-size: ${({ theme }) => theme.fontSizes.f20};
   font-weight: 700;
