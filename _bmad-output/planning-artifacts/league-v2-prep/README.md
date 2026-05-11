@@ -2,7 +2,7 @@
 
 These artifacts close out the three items deferred from League v1 (D-01, D-02, D-03) and must
 merge before v2 feature work begins. The authoritative backlog entry is
-[`docs/pre-v2-backlog.md`](../../docs/pre-v2-backlog.md).
+[`docs/pre-v2-backlog.md`](../../../docs/pre-v2-backlog.md).
 
 ---
 

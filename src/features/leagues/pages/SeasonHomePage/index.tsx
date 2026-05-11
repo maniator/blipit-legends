@@ -131,7 +131,7 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
   );
 
   const handleAutoSimNextGame = React.useCallback(async () => {
-    if (!nextGameId || !seasonId) return;
+    if (!nextGameId || !seasonId || launchingGame) return;
     setLaunchingGame(true);
     setSimError(null);
     try {
@@ -161,7 +161,7 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
     } finally {
       setLaunchingGame(false);
     }
-  }, [nextGameId, seasonId, userSeasonTeamId]);
+  }, [launchingGame, nextGameId, seasonId, userSeasonTeamId]);
 
   const gamesQuery = React.useMemo(
     () => ({
