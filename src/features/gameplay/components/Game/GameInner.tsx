@@ -220,7 +220,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       },
     });
     setStrategy(setup.strategy);
-    setManagerModeAllowed(setup.managedTeam !== null);
+    setManagerModeAllowed(setup.seasonGameId == null || setup.managedTeam !== null);
     if (setup.managedTeam !== null) setManagedTeam(setup.managedTeam);
     setManagerMode(setup.managerMode && setup.managedTeam !== null);
     maybeShowStealClampToast(setup.decisionValues, setShowStealClampToast);
@@ -253,10 +253,13 @@ const GameInner: React.FunctionComponent<Props> = ({
     awayTeamLabel: string,
     managedTeam: 0 | 1 | null,
     playerOverrides: PlayerOverrides,
+    seasonGameId?: string,
   ) => {
     // A fresh game is never "already final".
     setWasAlreadyFinalOnLoad(false);
-    setManagerModeAllowed(managedTeam !== null);
+    // Exhibition games (no seasonGameId) always allow manager mode.
+    // League spectator games (seasonGameId set, managedTeam null) block it.
+    setManagerModeAllowed(seasonGameId == null || managedTeam !== null);
     setManagerMode(managedTeam !== null);
     if (managedTeam !== null) {
       setManagedTeam(managedTeam);
@@ -374,6 +377,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       pendingGameSetup.awayTeamLabel,
       pendingGameSetup.managedTeam,
       pendingGameSetup.playerOverrides,
+      pendingGameSetup.seasonGameId,
     );
     onConsumeGameSetup?.();
   }, [pendingGameSetup, onConsumeGameSetup]);
@@ -407,7 +411,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     });
 
     const setup = pendingLoadSave.setup;
-    setManagerModeAllowed(setup.managedTeam !== null);
+    setManagerModeAllowed(setup.seasonGameId == null || setup.managedTeam !== null);
     setManagerMode(setup.managerMode && setup.managedTeam !== null);
     setManagedTeam(setup.managedTeam ?? 0);
     setStrategy(setup.strategy);
@@ -468,7 +472,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       });
 
       const { setup } = slot;
-      setManagerModeAllowed(setup.managedTeam !== null);
+      setManagerModeAllowed(setup.seasonGameId == null || setup.managedTeam !== null);
       setManagerMode(setup.managerMode && setup.managedTeam !== null);
       setManagedTeam(setup.managedTeam ?? 0);
       setStrategy(setup.strategy);

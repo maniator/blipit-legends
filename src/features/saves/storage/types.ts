@@ -18,6 +18,8 @@ export interface GameSaveSetup {
   awayTeam: string;
   /** Manager/AI decision tuning values at the time of save. Optional for backward compat. */
   decisionValues?: ManagerDecisionValues;
+  /** Set for league season games; absent for exhibition games. */
+  seasonGameId?: string;
 }
 
 /** Scored snapshot stored on the save header for quick display. */
