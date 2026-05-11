@@ -260,5 +260,5 @@ in the realistic 7–9 R/game band. BB% and K% are both within acceptable range.
   - Use the current measured values, not the PR #142 delta, for Round 1 planning.
 - Use harness for iteration speed; use browser results as the final authority.
 - Never use harness-only results to declare success.
-- **MCP batch-loop approach:** Using a single `playwright-browser_evaluate` call that loops over multiple games (start→waitForFinal→collect→start next) is far more efficient than the documented per-game approach. 108 games were collected in ~20 MCP tool calls (~50–60s total wall-clock). See the "single-tab batch loop" section in `e2e-testing.md` for the full snippet.
+- **MCP batch-loop approach:** Using a single `playwright-isolated-browser_evaluate` call that loops over multiple games (start→waitForFinal→collect→start next) is far more efficient than the documented per-game approach. 108 games were collected in ~20 MCP tool calls (~50–60s total wall-clock). See the "single-tab batch loop" section in `e2e-testing.md` for the full snippet.
 - **Background tabs do NOT advance:** Browser throttles background-tab JS timers to ~1000ms minimum. In Instant mode, a game that otherwise completes in <100ms takes several minutes in a background tab. The real efficiency gain comes from the within-tab batch-loop approach, not from pipelining across tabs.

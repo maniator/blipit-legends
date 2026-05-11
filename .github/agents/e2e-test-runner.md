@@ -411,18 +411,12 @@ Use the `SENIOR LEAD REVIEW REQUEST` template from `.github/agents/prompt-exampl
 - [ ] `yarn typecheck:e2e` passes (catches Playwright API type errors in `e2e/**/*.ts`)
 - [ ] `yarn lint` — zero ESLint errors (applies to test files too)
 
-## Troubleshooting: Playwright MCP "Browser already in use"
+## Troubleshooting: Playwright MCP browser not working
 
-This agent does not use the Playwright MCP for test execution (it uses `docker run`). If you are asked to do live-browser QA via MCP and encounter:
-
-```
-Error: Browser is already in use for /root/.cache/ms-playwright/mcp-chrome
-```
-
-Run this first, then retry the MCP tool call:
+This agent does not use the Playwright MCP for test execution (it uses `docker run`). If you are asked to do live-browser QA via MCP, use the `playwright-isolated-browser_*` tools. If the browser fails to start, check that the `playwright-isolated` MCP server process is running:
 
 ```bash
-sudo rm -rf /root/.cache/ms-playwright/mcp-chrome*
+ps -ef | grep "@playwright/mcp" | grep -- "--isolated" | grep -v grep
 ```
 
-For the root cause and permanent fix, see `docs/e2e-testing.md` § "Troubleshooting: Browser already in use".
+If the process is missing, verify GitHub repo settings → Copilot → MCP servers contains the `"playwright-isolated"` key (not `"playwright"`). See `docs/e2e-testing.md` § "Troubleshooting: MCP browser not working" for full details.

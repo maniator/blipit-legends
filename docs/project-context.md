@@ -114,20 +114,14 @@ yarn build         # Production build to dist/
 
 ## Playwright MCP Local App Access Rule
 
-- For Playwright MCP local-browser sessions, start `npx vite preview` with `--host 0.0.0.0` so Chrome can reach it over IPv4.
+- For Playwright MCP local-browser sessions, use the `playwright-isolated-browser_*` tools (the `playwright-isolated` MCP server, spawned with `--no-sandbox --isolated`).
+- Start `npx vite preview` with `--host 0.0.0.0` so Chrome can reach it over IPv4.
 - **Recommended bootstrap:** `nohup npx vite preview --port 5173 --host 0.0.0.0 >> vite-preview.log 2>&1 & disown`, wait 4 seconds, then verify with `curl -s -o /dev/null -w "HTTP %{http_code}" http://127.0.0.1:5173/`.
 - The Playwright CLI `webServer` approach (e.g. `npx playwright test --config=playwright.config.ts --project=desktop`) also works and is still valid for standard E2E runs — it is no longer the _only_ option.
 - Navigate the MCP browser to `http://127.0.0.1:5173` (not `localhost:5173`).
-- **Prerequisite:** `--no-sandbox` must be present in the `mcp-server-playwright` MCP server args (Settings → Copilot → MCP servers → playwright-mcp). Without it Chrome fails to start regardless of how the server was launched.
-- Full rationale and troubleshooting live in `docs/e2e-testing.md`.
+- Full rationale and troubleshooting live in `docs/e2e-testing.md` § "Starting the preview server for MCP browser automation".
 
-## Playwright MCP "Browser already in use" Fix
-
-If any `playwright-browser_*` tool throws `"Browser is already in use for /root/.cache/ms-playwright/mcp-chrome"`:
-
-1. **Quick fix (stale lock from crash):** `sudo rm -rf /root/.cache/ms-playwright/mcp-chrome*` then retry. `copilot-setup-steps.yml` does this automatically on session start.
-2. **Permanent fix:** Add `--no-sandbox` (or `--isolated`) to the `mcp-server-playwright` args in GitHub repo Copilot MCP settings (Settings → Copilot → MCP servers → playwright-mcp). Root cause: the MCP server runs system Chrome as root with sandbox enabled; `--no-sandbox` disables it; `--isolated` uses an in-memory profile that avoids the issue entirely.
-3. Full diagnosis guide: `docs/e2e-testing.md` § "Troubleshooting: Browser already in use".
+> **Key config note:** The MCP server key **must** be `"playwright-isolated"` (not `"playwright"`) in GitHub repo settings → Copilot → MCP servers. The `"playwright"` name collides with the pre-started systemd service and the repo config is silently ignored, causing tools to fail.
 
 ## Sub-Agent Push Rule
 
