@@ -135,7 +135,15 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
     setLaunchingGame(true);
     setSimError(null);
     try {
-      await runHeadlessGame({ seasonGameId: nextGameId, claimToken: nanoid(12) });
+      const simResult = await runHeadlessGame({ seasonGameId: nextGameId, claimToken: nanoid(12) });
+      if (simResult.status !== "completed" && simResult.status !== "already_complete") {
+        const reason =
+          simResult.status === "already_claimed"
+            ? "Game is already being simulated by another process."
+            : "Game could not be found.";
+        setSimError(reason);
+        return;
+      }
       if (userSeasonTeamId) {
         const result = await advanceSeason({ seasonId, userSeasonTeamId });
         setNextGameReady(result.nextGameId !== null);
