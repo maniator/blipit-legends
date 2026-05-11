@@ -53,6 +53,15 @@ Copilot-specific policy that remains in this file:
 
 ## Agent Auto-Routing
 
+### ⚠️ Mandatory policy — always invoke bmad agents automatically
+
+**Do NOT wait to be asked.** Before writing a single line of code or making any design decision, consult the routing table below and invoke the matching bmad skill or agent via the `skill` tool or `task` tool. This is a standing rule for every session, not a one-time reminder.
+
+- When the routing table points at a **bmad skill** (e.g. `bmad-code-review`, `bmad-party-mode`), call `skill("bmad-<name>")` immediately.
+- When the routing table points at a **task agent** (e.g. `bmad-agent-dev`, `e2e-test-runner`, `ci-workflow`), delegate via `task(agent_type, ...)`.
+- For mixed tasks, follow the full sequence: `bmad-agent-pm` plans → Winston CR sign-off if high-value → Amelia implements → `e2e-test-runner` validates.
+- **Never skip this step because the task "seems small"** — even bug fixes in production code warrant `bmad-agent-dev` (Amelia), and every change to E2E tests routes to `e2e-test-runner`.
+
 Before starting any task, check whether it belongs to a specialist agent. The table below is the authoritative routing guide.
 
 ### Agent Architecture
@@ -148,4 +157,5 @@ Before starting any task, check whether it belongs to a specialist agent. The ta
 - **NewGameDialog mobile compaction** — `NewGameDialog/styles.ts` uses `${mq.mobile}` blocks on every styled component (Dialog, Title, FieldGroup, FieldLabel, Input, Select, SectionLabel, RadioLabel, ResumeButton, Divider, PlayBallButton, SeedHint) to reduce padding/margins so the modal fits without scrolling on phone viewports. `PlayerCustomizationPanel.styles.ts` does the same for `PanelSection`. The Dialog's `max-height` uses `min(96dvh, 820px)` on mobile (vs `90dvh` on desktop) to reclaim browser-chrome space. Never revert these to desktop-only values.
 - **Viewport-safe modal sizing** — always use `dvh` (dynamic viewport height) units, not bare `vh`, for modal `max-height`. `100vh` on mobile browsers can exceed the visible area because it ignores browser chrome (address bar, navigation bar). `dvh` tracks the actual visible viewport. The `responsive-smoke.spec.ts` E2E test verifies the Play Ball button bottom edge is within `viewport.height` on all projects.
 - **`ResumeLabel` span in NewGameDialog** — the "Resume: " prefix inside `ResumeButton` is wrapped in `<ResumeLabel>` (exported from `NewGameDialog/styles.ts`). `ResumeLabel` uses `display: none` inside `${mq.mobile}` so on phone viewports the button shows "▶ {saveName}" (shorter) while desktop still shows "▶ Resume: {saveName}". Do not remove this span or inline the text directly into `ResumeButton`.
+- **`managerModeAllowed` in `GameInner`** — gates the manager-mode toggle in `GameControls`. Formula: `setManagerModeAllowed(seasonGameId == null || managedTeam !== null)`. Exhibition games (no `seasonGameId`) are **always** allowed; league spectator games (`seasonGameId` set, `managedTeam === null`) are blocked. **Never change this to `managedTeam !== null` alone** — that hides the toggle for all exhibition games (regression fixed in PR #260). All four restore paths in `GameInner` (fresh start, auto-restore rxAutoSave, pendingLoadSave, modal-load) must apply this formula consistently. See `docs/architecture.md` § "Manager Mode & Decision System" for the full table.
 - **`responsive-smoke.spec.ts` New Game dialog tests** — three tests guard the no-scroll contract on all viewport projects: (1) Play Ball button bottom edge ≤ viewport height; (2) critical fields (`matchup-mode-select`, `home-team-select`, `away-team-select`, `seed-input`, `play-ball-button`) all have bottom edges within viewport height; (3) `document.documentElement.scrollWidth <= window.innerWidth` (no horizontal overflow). Always keep these passing when touching NewGameDialog layout.
