@@ -69,4 +69,10 @@ export const GameRowActions = styled.div`
   gap: ${({ theme }) => theme.spacing.xs};
 `;
 
+export const LaunchErrorMsg = styled.p`
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.textDanger};
+  margin: ${({ theme }) => theme.spacing.xs} 0 0;
+`;
+
 export { GameActionBtn } from "@feat/leagues/components/styles";

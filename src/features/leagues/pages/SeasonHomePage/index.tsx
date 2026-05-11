@@ -305,6 +305,8 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
                     void handlePlayNextGame(true);
                   }}
                   disabled={launchingGame}
+                  aria-busy={launchingGame}
+                  aria-label={launchingGame ? "Loading game…" : "Play next game in Manager Mode"}
                   data-testid="play-next-game-button"
                 >
                   {launchingGame ? "Loading…" : "▶ Play in Manager Mode"}
@@ -316,6 +318,8 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
                     void handlePlayNextGame(false);
                   }}
                   disabled={launchingGame}
+                  aria-busy={launchingGame}
+                  aria-label={launchingGame ? "Loading game…" : "Watch next game"}
                   data-testid="watch-next-game-button"
                 >
                   👁 Watch
