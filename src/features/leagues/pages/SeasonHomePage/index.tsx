@@ -88,7 +88,7 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
   }, [seasonId, userSeasonTeamId]);
 
   const handlePlayNextGame = React.useCallback(
-    async (managedTeam: 0 | 1 | null) => {
+    async (asManager: boolean) => {
       if (!nextGameId || !seasonId) return;
       setLaunchingGame(true);
       try {
@@ -103,6 +103,11 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
         if (!homeTeamDoc || !awayTeamDoc) throw new Error("Season team record not found");
         const homeSeasonTeam = homeTeamDoc.toJSON() as unknown as SeasonTeamRecord;
         const awaySeasonTeam = awayTeamDoc.toJSON() as unknown as SeasonTeamRecord;
+        // Derive managed side from actual game record (user may be home or away).
+        let managedTeam: 0 | 1 | null = null;
+        if (asManager && userSeasonTeamId) {
+          managedTeam = game.homeSeasonTeamId === userSeasonTeamId ? 1 : 0;
+        }
         const setup = await buildSeasonGameSetup(
           db,
           game,
@@ -120,7 +125,7 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
         setLaunchingGame(false);
       }
     },
-    [nextGameId, seasonId, navigate],
+    [nextGameId, seasonId, userSeasonTeamId, navigate],
   );
 
   const gamesQuery = React.useMemo(
@@ -297,7 +302,7 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
                   type="button"
                   $variant="primary"
                   onClick={() => {
-                    void handlePlayNextGame(userSeasonTeamId !== null ? 1 : null);
+                    void handlePlayNextGame(true);
                   }}
                   disabled={launchingGame}
                   data-testid="play-next-game-button"
@@ -308,7 +313,7 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
                   type="button"
                   $variant="secondary"
                   onClick={() => {
-                    void handlePlayNextGame(null);
+                    void handlePlayNextGame(false);
                   }}
                   disabled={launchingGame}
                   data-testid="watch-next-game-button"
