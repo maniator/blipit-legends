@@ -18,6 +18,10 @@ import { random } from "@shared/utils/rng";
 export interface HeadlessGameResult {
   homeScore: number;
   awayScore: number;
+  /** Number of innings played. Always 9 in the v1 stub — the stub tie-break gives home team
+   * a walk-off run so no extra innings occur. Phase 4 will return the actual inning count
+   * from the full reducer loop (including extra-inning games). */
+  innings: number;
   /** Epoch ms when the sim completed. */
   completedAt: number;
   /**
@@ -54,6 +58,7 @@ export function runHeadlessGameSim(): HeadlessGameResult {
   return {
     homeScore,
     awayScore,
+    innings: 9,
     completedAt,
     boxscore: { homeScore, awayScore, stub: true },
   };

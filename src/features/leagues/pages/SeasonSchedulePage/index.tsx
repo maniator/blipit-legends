@@ -201,7 +201,7 @@ const SeasonSchedulePageInner: React.FunctionComponent = () => {
                       <GameRowResult>
                         {awayScore}–{homeScore}
                       </GameRowResult>
-                    ) : (
+                    ) : game.gameDay === season.currentGameDay ? (
                       <>
                         <GameRowStatus $status={game.status}>
                           {game.status === "in_progress" ? "Live" : "—"}
@@ -243,6 +243,8 @@ const SeasonSchedulePageInner: React.FunctionComponent = () => {
                           </GameActionBtn>
                         </GameRowActions>
                       </>
+                    ) : (
+                      <GameRowStatus $status={game.status}>—</GameRowStatus>
                     )}
                   </GameRow>
                 );

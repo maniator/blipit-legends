@@ -93,6 +93,13 @@ export type ExhibitionGameSetup = {
    * already call reinitSeed via ExhibitionSetupPage before navigation).
    */
   seed?: string;
+  /**
+   * When true, GameInner will skip creating a mid-game RxDB save slot for this
+   * session. Used for league season games, which are tracked separately via
+   * seasonGames records and should not appear in the general Load Saved Game list.
+   * Career-stats commits still occur via gameInstanceId regardless of this flag.
+   */
+  disableSave?: boolean;
 };
 
 /** Context shape provided by AppShell through the React Router Outlet. */

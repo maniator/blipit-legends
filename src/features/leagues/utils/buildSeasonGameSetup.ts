@@ -54,6 +54,9 @@ export async function buildSeasonGameSetup(
     managedTeam,
     // Pass seed through so GameInner can reinitSeed at the correct point.
     seed: game.derivedSeed,
+    // League season games are tracked via seasonGames records — skip the
+    // general-purpose save slot so they don't appear in Load Saved Game.
+    disableSave: true,
     playerOverrides: {
       away: customTeamToPlayerOverrides(awayTeam),
       home: customTeamToPlayerOverrides(homeTeam),
