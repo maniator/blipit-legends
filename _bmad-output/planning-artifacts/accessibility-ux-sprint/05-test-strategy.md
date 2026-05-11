@@ -21,25 +21,25 @@ The CI guardrail (Story 1.3) IS the test. Manual sign-off from Sally.
 
 ### Story 1.3 (F1 CI Guardrail) — fixture-based unit test
 
-**File:** `scripts/__tests__/check-style-guide-drift.test.ts`
+**File:** `src/__tests__/check-style-guide-drift.test.ts` (must live under `src/` — Vitest `root: "src"` does not discover tests outside this directory)
 
 ````ts
 import { describe, it, expect } from "vitest";
-import { checkDrift } from "../check-style-guide-drift";
+import { checkDrift } from "../../scripts/check-style-guide-drift";
 
 describe("check-style-guide-drift", () => {
   it("passes when doc matches theme", async () => {
     const result = await checkDrift({
-      themePath: "scripts/__tests__/fixtures/theme.fixture.ts",
-      docPath: "scripts/__tests__/fixtures/good-styleguide.md",
+      themePath: "src/__tests__/fixtures/theme.fixture.ts",
+      docPath: "src/__tests__/fixtures/good-styleguide.md",
     });
     expect(result.driftCount).toBe(0);
   });
 
   it("fails when doc references hex absent from theme", async () => {
     const result = await checkDrift({
-      themePath: "scripts/__tests__/fixtures/theme.fixture.ts",
-      docPath: "scripts/__tests__/fixtures/bad-styleguide.md",
+      themePath: "src/__tests__/fixtures/theme.fixture.ts",
+      docPath: "src/__tests__/fixtures/bad-styleguide.md",
     });
     expect(result.driftCount).toBeGreaterThan(0);
     expect(result.violations).toContainEqual(expect.objectContaining({ kind: "hex-not-in-theme" }));
@@ -63,7 +63,7 @@ describe("check-style-guide-drift", () => {
 });
 ````
 
-**Acceptance:** All 6 tests pass; coverage ≥ 90% lines on the script (matches repo-wide threshold).
+**Acceptance:** All 6 tests pass; coverage ≥ 90% lines on the `checkDrift` function. Test lives under `src/__tests__/` so Vitest discovers it automatically via `root: "src"` and the repo-wide coverage thresholds apply. The script itself (`scripts/check-style-guide-drift.ts`) imports from `src/shared/theme.ts` — only the exported `checkDrift` function needs unit coverage.
 
 ### Story 2.1 (F3 Touch Targets)
 
@@ -86,20 +86,50 @@ for (const { route, testid } of BUTTONS_TO_VERIFY) {
   test(`${testid} has ≥ ${MIN_TARGET}×${MIN_TARGET} tap area`, async ({ page }) => {
     await page.goto(route);
     const el = page.getByTestId(testid);
+
+    // Part 1: verify ::before inset via computed styles
+    // (boundingBox() only reflects the element's layout box — it does NOT include an
+    // absolutely-positioned ::before pseudo-element, so it cannot validate expanded hit area)
+    const inset = await el.evaluate((node) => {
+      const s = window.getComputedStyle(node, "::before");
+      return { top: parseFloat(s.top), left: parseFloat(s.left) };
+    });
+    const delta = (MIN_TARGET - 44) / 2; // base element is assumed ~25–32px
+    expect(inset.top).toBeLessThan(0); // negative = expanding upward
+    expect(inset.left).toBeLessThan(0); // negative = expanding left
+
+    // Part 2: edge-probe — click outside visual bounds, confirm handler fires
     const box = await el.boundingBox();
     expect(box).not.toBeNull();
-    expect(box!.width).toBeGreaterThanOrEqual(MIN_TARGET);
-    expect(box!.height).toBeGreaterThanOrEqual(MIN_TARGET);
+    let clicked = false;
+    await page.exposeFunction(`onClicked_${testid}`, () => {
+      clicked = true;
+    });
+    await el.evaluate(
+      (node, fn) =>
+        node.addEventListener("click", () =>
+          (window as unknown as Record<string, () => void>)[fn](),
+        ),
+      `onClicked_${testid}`,
+    );
+    // probe 8px to the left of the visual left edge (inside the ::before expanded zone)
+    await page.mouse.click(box!.x - 8, box!.y + box!.height / 2);
+    expect(clicked).toBe(true);
   });
 }
 
-test("modal close button has ≥ 44×44 tap area", async ({ page }) => {
+test("modal close button has ≥ 44×44 effective tap area", async ({ page }) => {
   await page.goto("/");
   await page.getByTestId("help-button").click();
   const close = page.getByTestId("modal-close-button");
-  const box = await close.boundingBox();
-  expect(box!.width).toBeGreaterThanOrEqual(MIN_TARGET);
-  expect(box!.height).toBeGreaterThanOrEqual(MIN_TARGET);
+
+  // Validate ::before inset (see comment above re boundingBox limitation)
+  const inset = await close.evaluate((node) => {
+    const s = window.getComputedStyle(node, "::before");
+    return { top: parseFloat(s.top), left: parseFloat(s.left) };
+  });
+  expect(inset.top).toBeLessThan(0);
+  expect(inset.left).toBeLessThan(0);
 });
 ```
 
@@ -127,9 +157,11 @@ test("HelpButton has hit-area expansion via ::before", () => {
 });
 ```
 
-**Note:** jsdom has limited pseudo-element support. If the unit test proves unreliable, rely on the E2E `boundingBox` assertion instead and skip the unit-level check.
+**Note:** jsdom has limited pseudo-element support. If the unit-level `getComputedStyle(el, "::before")` assertion proves unreliable, rely on the E2E edge-probe (`page.mouse.click()` at coordinates outside the visual element bounds) as the primary validation. Do NOT fall back to `boundingBox()` assertions — `boundingBox()` reflects only the element's layout box and will not include the overflowing `::before` hit-area expansion.
 
 ### Story 3.1 (F6 Tier 1 Contrast)
+
+> **Dependency note:** `@axe-core/playwright` is **not** currently in `package.json`. Before implementing this test, add it as a dev dependency (`yarn add -D @axe-core/playwright`) and route that decision through Amelia → Winston CR (since it is a new E2E dependency). Alternatively, use Lighthouse CLI (already available in the Playwright Docker container) for contrast auditing without adding a new package.
 
 **E2E test (axe-core):** `e2e/tests/accessibility-contrast.spec.ts` (new)
 

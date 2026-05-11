@@ -81,7 +81,7 @@ S
 7. Support `<!-- style-guide-ignore -->` inline marker
 8. Add `yarn check:style-guide` script to `package.json`
 9. Chain into existing `lint` script (e.g. `"lint": "eslint . && yarn check:style-guide"`)
-10. Add unit test in `scripts/__tests__/check-style-guide-drift.test.ts` with two fixtures: known-good (passes), known-bad (fails)
+10. Add unit test in `src/__tests__/check-style-guide-drift.test.ts` with two fixtures: known-good (passes), known-bad (fails) — must live under `src/` so Vitest (`root: "src"`) discovers it
 
 ### Acceptance Criteria
 
@@ -135,10 +135,10 @@ S (~2-3 hours)
 
 ### Acceptance Criteria
 
-- [ ] All flagged buttons have ≥ 44×44 effective tap area when measured via Playwright `boundingBox()` on the actual hit target
+- [ ] All flagged buttons have ≥ 44×44 effective tap area; validated via two-part E2E check: (a) computed-style assertion that `::before` `top`/`left` insets are sufficiently negative (i.e., total span ≥ 44 px), and (b) `page.mouse.click()` edge-probe at coordinates 1–2 px outside the visual button confirming the click handler fires — `boundingBox()` alone is NOT used because it reflects only the element's layout box, not the overflowing `::before`
 - [ ] Visual snapshots unchanged (visible footprint identical)
-- [ ] New unit test asserts `::before` pseudo-element exists with correct inset (use `data-testid` on parent, `getComputedStyle()` for the pseudo)
-- [ ] New E2E test in `e2e/tests/touch-targets.spec.ts` (or extension to existing accessibility spec) asserts measured size on each fixed button
+- [ ] New unit test asserts `::before` pseudo-element inset via `getComputedStyle(el, "::before")` (use `data-testid` on parent)
+- [ ] New E2E test in `e2e/tests/touch-targets.spec.ts` (or extension to existing accessibility spec) asserts hit area on each fixed button via edge-probe clicks
 
 ### Owner
 

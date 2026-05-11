@@ -57,10 +57,10 @@ rg -i '#(00ced1|2ecc71|0fc97f|44cc88)' src/  # known-old aquamarine/greens
 
 **Create:**
 
-- `scripts/check-style-guide-drift.ts`
-- `scripts/__tests__/check-style-guide-drift.test.ts`
-- `scripts/__tests__/fixtures/good-styleguide.md`
-- `scripts/__tests__/fixtures/bad-styleguide.md`
+- `scripts/check-style-guide-drift.ts` (the script itself lives in `scripts/`)
+- `src/__tests__/check-style-guide-drift.test.ts` (test lives under `src/` so Vitest discovers it; `root: "src"`)
+- `src/__tests__/fixtures/good-styleguide.md`
+- `src/__tests__/fixtures/bad-styleguide.md`
 
 **Modify:**
 
@@ -112,12 +112,33 @@ const HelpButton = styled.button`
 **Test the hit area:**
 
 ```ts
-// E2E test snippet
+// E2E test snippet — two-part hit-area validation
+// NOTE: boundingBox() is based on the element's layout box and will NOT include an
+// absolutely-positioned ::before pseudo-element. Use computed-style + edge-probe instead.
+
 const button = page.getByTestId("help-button");
+
+// Part 1: validate ::before inset via computed styles
+const inset = await button.evaluate((el) => {
+  const s = window.getComputedStyle(el, "::before");
+  return { top: parseFloat(s.top), left: parseFloat(s.left) };
+});
+expect(inset.top).toBeLessThanOrEqual(-10); // 25px base + 10px each side ≥ 44px
+expect(inset.left).toBeLessThanOrEqual(-10);
+
+// Part 2: edge-probe — click outside visual bounds, confirm handler fires
 const box = await button.boundingBox();
-expect(box.width).toBeGreaterThanOrEqual(44);
-expect(box.height).toBeGreaterThanOrEqual(44);
-// boundingBox() includes the ::before pseudo because it's part of the element's bounding rect
+let clicked = false;
+await page.exposeFunction("onHelpClicked", () => {
+  clicked = true;
+});
+await button.evaluate((el) =>
+  el.addEventListener("click", () =>
+    (window as unknown as Record<string, () => void>).onHelpClicked(),
+  ),
+);
+await page.mouse.click(box!.x - 8, box!.y + box!.height / 2); // probe left of visual edge
+expect(clicked).toBe(true);
 ```
 
 ### Story 3.1 (F6 Tier 1 Contrast)
@@ -129,8 +150,8 @@ expect(box.height).toBeGreaterThanOrEqual(44);
 **Verify with:**
 
 ```bash
-# Run all visual snapshots
-yarn test:e2e --update-snapshots=missing  # only updates missing, won't bulk-regen
+# Run all visual snapshots (use the safety wrapper — never call Playwright flags directly)
+yarn test:e2e:update-snapshots  # enforces Docker container via scripts/ensure-docker-snapshot-update.cjs
 ```
 
 **For axe-core integration**, check whether the project already has axe-core wired into Playwright. If not, the simplest add is:
@@ -243,8 +264,8 @@ PR body MUST include:
 From the project conventions:
 
 - **Vitest tests** are co-located with source files
-- **`fake-indexeddb/auto`** is globally polyfilled via `src/test/setup.ts` — no need to import per file for IDB-touching tests
-- **For RxDB tests** explicitly: `import "fake-indexeddb/auto"` at top, use `makeSaveStore(_createTestDb(getRxStorageMemory()))`
+- **`fake-indexeddb/auto`** is globally polyfilled via `src/test/setup.ts` (loaded by Vitest `setupFiles`) — do **not** add a per-file import in standard `yarn test` runs; it is already active
+- **For RxDB tests**: use `makeSaveStore(_createTestDb(getRxStorageMemory()))` — the polyfill is already active. Only import `fake-indexeddb/auto` explicitly in standalone scripts or processes that run **outside** Vitest and therefore bypass `src/test/setup.ts`.
 - **E2E tests** in `e2e/tests/` use `@playwright/test` against a `vite preview` build (production, not dev server)
 
 ---
