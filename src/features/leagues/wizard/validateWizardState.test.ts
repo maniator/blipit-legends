@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { validateAllSteps, validateWizardState, validateWizardStep } from "./validateWizardState";
+import {
+  ERR_MANAGED_TEAM,
+  ERR_PREFIX_HANDPICK,
+  ERR_PREFIX_MIXED,
+  ERR_PREFIX_SEED,
+  validateAllSteps,
+  validateWizardState,
+  validateWizardStep,
+} from "./validateWizardState";
 import { makeInitialState } from "./wizardReducer";
 
 describe("validateWizardState", () => {
@@ -18,7 +26,7 @@ describe("validateWizardState", () => {
     };
     const errors = validateWizardState(state);
     expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0]).toMatch(/8/);
+    expect(errors[0]).toMatch(new RegExp(ERR_PREFIX_HANDPICK));
   });
 
   it("step 2 handpick: valid when exactly 8 selected", () => {
@@ -85,7 +93,7 @@ describe("validateWizardState", () => {
     };
     const errors = validateWizardState(state);
     expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0]).toMatch(/seed/i);
+    expect(errors[0]).toMatch(new RegExp(ERR_PREFIX_SEED));
   });
 
   it("step 5: valid when masterSeed is non-empty", () => {
@@ -136,7 +144,7 @@ describe("validateWizardStep", () => {
     };
     const errors = validateWizardStep(state);
     expect(errors).toHaveLength(1);
-    expect(errors[0]).toMatch(/Mixed mode requires/i);
+    expect(errors[0]).toMatch(new RegExp(ERR_PREFIX_MIXED));
   });
 
   it("returns seed error only on seed step", () => {
@@ -147,7 +155,7 @@ describe("validateWizardStep", () => {
     };
     const errors = validateWizardStep(state);
     expect(errors).toHaveLength(1);
-    expect(errors[0]).toMatch(/Master seed/i);
+    expect(errors[0]).toMatch(new RegExp(ERR_PREFIX_SEED));
   });
 
   it("returns managed-team selection error on review step", () => {
@@ -159,6 +167,6 @@ describe("validateWizardStep", () => {
       userCustomTeamId: null,
     };
     const errors = validateWizardStep(state);
-    expect(errors).toContain("Please select which team you will manage.");
+    expect(errors).toContain(ERR_MANAGED_TEAM);
   });
 });
