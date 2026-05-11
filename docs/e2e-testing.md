@@ -274,7 +274,7 @@ The MCP browser (Chrome controlled by `mcp-server-playwright`) can reach `http:/
 
 ```bash
 # Build first (required — preview serves dist/)
-cd /home/runner/work/blipit-legends/blipit-legends
+# Run from the repo root
 yarn build
 
 # Start vite preview bound to all interfaces, detached from the shell
@@ -296,7 +296,7 @@ yarn build
 
 # Start the Playwright metrics test in the background.
 # Its webServer config starts `npx vite preview --port 5173` as a child process.
-cd /home/runner/work/blipit-legends/blipit-legends
+# Run from the repo root
 npx playwright test --config=playwright-metrics.config.ts --project=desktop >> playwright-bg.log 2>&1 &
 disown
 
@@ -331,7 +331,7 @@ Chrome writes a `SingletonLock` symlink into the user-data-dir when it starts an
 **Fix:**
 
 ```bash
-sudo rm -rf /root/.cache/ms-playwright/mcp-chrome
+sudo rm -rf /root/.cache/ms-playwright/mcp-chrome*
 ```
 
 `copilot-setup-steps.yml` now runs this automatically at the start of every agent session. If you encounter the error mid-session (after an unexpected Chrome crash), run the command above and retry the MCP tool call.
@@ -356,7 +356,7 @@ The MCP server (`mcp-server-playwright`) runs as `root` in the Copilot sandbox. 
 
 ```bash
 # Check for a stale lock file
-sudo ls /root/.cache/ms-playwright/mcp-chrome/SingletonLock 2>/dev/null \
+sudo ls /root/.cache/ms-playwright/mcp-chrome*/SingletonLock 2>/dev/null \
   && echo "stale lock — clear it" \
   || echo "no stale lock — sandbox issue, add --no-sandbox to MCP server args"
 ```
