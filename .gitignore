@@ -40,3 +40,7 @@ localhost-verify.png
 
 # temporary scan directories
 tmp-*/
+
+# QA artifact screenshots and throwaway scripts (only README.md and .md notes are tracked)
+e2e/qa-artifacts/screenshots/
+e2e/qa-artifacts/scripts/

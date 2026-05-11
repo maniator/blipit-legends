@@ -3572,6 +3572,7 @@ __metadata:
     jsdom: "npm:26.0.0"
     lint-staged: "npm:^15.5.2"
     madge: "npm:^8.0.0"
+    nanoid: "npm:3.3.11"
     prettier: "npm:^3"
     react: "npm:^19.2.4"
     react-dom: "npm:^19.2.4"
@@ -7004,7 +7005,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.3.11, nanoid@npm:^3.3.7":
+"nanoid@npm:3.3.11, nanoid@npm:^3.3.11, nanoid@npm:^3.3.7":
   version: 3.3.11
   resolution: "nanoid@npm:3.3.11"
   bin:

@@ -49,6 +49,24 @@ Auto-play is implemented in `src/features/gameplay/hooks/useAutoPlayScheduler.ts
 - **Decision detection** (`detectDecision` from `src/features/gameplay/context/reducer.ts`) — evaluated before each pitch in `usePitchDispatch`. Returns one of: `steal`, `bunt`, `count30`, `count02`, `ibb`, `ibb_or_steal`, `pinch_hitter`, `defensive_shift`, or `null`.
 - `DecisionPanel/index.tsx` renders the panel, plays a chime, shows a browser notification via service worker, and runs a 10-second countdown bar.
 
+### `managerModeAllowed` semantics
+
+`GameInner` holds `managerModeAllowed: boolean` state that gates the manager-mode toggle in `GameControls`. The rule is:
+
+| Game type                       | `managedTeam`    | `seasonGameId` | `managerModeAllowed` |
+| ------------------------------- | ---------------- | -------------- | -------------------- |
+| Exhibition (any matchup mode)   | `null` or `0\|1` | `undefined`    | **always `true`**    |
+| League — managed game           | `0\|1`           | set            | **`true`**           |
+| League — spectator / watch game | `null`           | set            | **`false`**          |
+
+Formula applied in all four paths in `GameInner` (fresh start, auto-restore, load save, modal-load):
+
+```ts
+setManagerModeAllowed(seasonGameId == null || managedTeam !== null);
+```
+
+**Do NOT change this to `managedTeam !== null` alone** — that would hide the manager-mode toggle for all exhibition games (regression introduced in PR #260 and fixed in the same branch).
+
 ### Handedness/Platoon Methodology
 
 - Matchups are resolved from batter/pitcher handedness buckets (`R_R`, `R_L`, `L_R`, `L_L`, `S_R`, `S_L`) in `src/features/gameplay/context/handednessMatchup.ts`.

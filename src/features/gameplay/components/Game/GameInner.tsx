@@ -137,6 +137,7 @@ const GameInner: React.FunctionComponent<Props> = ({
 
   const [gameKey, setGameKey] = React.useState(0);
   const [gameActive, setGameActive] = React.useState(false);
+  const [managerModeAllowed, setManagerModeAllowed] = React.useState(true);
   const [activeTeam, setActiveTeam] = React.useState<0 | 1>(0);
   // One-time dismissible toast shown when a loaded save's steal threshold is clamped.
   const [showStealClampToast, setShowStealClampToast] = React.useState(false);
@@ -219,8 +220,9 @@ const GameInner: React.FunctionComponent<Props> = ({
       },
     });
     setStrategy(setup.strategy);
-    if (setup.managedTeam !== null) setManagedTeam(setup.managedTeam);
-    setManagerMode(setup.managerMode);
+    setManagerModeAllowed(setup.seasonGameId == null || setup.managedTeam !== null);
+    setManagedTeam(setup.managedTeam ?? 0);
+    setManagerMode(setup.managerMode && setup.managedTeam !== null);
     maybeShowStealClampToast(setup.decisionValues, setShowStealClampToast);
     setDecisionValues(
       setup.decisionValues != null
@@ -251,9 +253,13 @@ const GameInner: React.FunctionComponent<Props> = ({
     awayTeamLabel: string,
     managedTeam: 0 | 1 | null,
     playerOverrides: PlayerOverrides,
+    seasonGameId?: string,
   ) => {
     // A fresh game is never "already final".
     setWasAlreadyFinalOnLoad(false);
+    // Exhibition games (no seasonGameId) always allow manager mode.
+    // League spectator games (seasonGameId set, managedTeam null) do not allow manager mode.
+    setManagerModeAllowed(seasonGameId == null || managedTeam !== null);
     setManagerMode(managedTeam !== null);
     if (managedTeam !== null) {
       setManagedTeam(managedTeam);
@@ -326,6 +332,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     dispatch({ type: "reset" });
     dispatchLog({ type: "reset" });
     setGameActive(false);
+    setManagerModeAllowed(true);
     setGameKey((k) => k + 1);
     // Navigate to /exhibition/new to start a fresh game.
     // onNewGame is optional only to support isolated unit tests; in production
@@ -370,6 +377,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       pendingGameSetup.awayTeamLabel,
       pendingGameSetup.managedTeam,
       pendingGameSetup.playerOverrides,
+      pendingGameSetup.seasonGameId,
     );
     onConsumeGameSetup?.();
   }, [pendingGameSetup, onConsumeGameSetup]);
@@ -403,7 +411,8 @@ const GameInner: React.FunctionComponent<Props> = ({
     });
 
     const setup = pendingLoadSave.setup;
-    setManagerMode(setup.managerMode);
+    setManagerModeAllowed(setup.seasonGameId == null || setup.managedTeam !== null);
+    setManagerMode(setup.managerMode && setup.managedTeam !== null);
     setManagedTeam(setup.managedTeam ?? 0);
     setStrategy(setup.strategy);
     maybeShowStealClampToast(setup.decisionValues, setShowStealClampToast);
@@ -463,7 +472,8 @@ const GameInner: React.FunctionComponent<Props> = ({
       });
 
       const { setup } = slot;
-      setManagerMode(setup.managerMode);
+      setManagerModeAllowed(setup.seasonGameId == null || setup.managedTeam !== null);
+      setManagerMode(setup.managerMode && setup.managedTeam !== null);
       setManagedTeam(setup.managedTeam ?? 0);
       setStrategy(setup.strategy);
       maybeShowStealClampToast(setup.decisionValues, setShowStealClampToast);
@@ -514,6 +524,7 @@ const GameInner: React.FunctionComponent<Props> = ({
           onLoadSave={handleModalLoad}
           onBackToHome={onBackToHome}
           isCommitting={isCommitting}
+          managerModeAllowed={managerModeAllowed}
         />
         <GameBody>
           <FieldPanel>

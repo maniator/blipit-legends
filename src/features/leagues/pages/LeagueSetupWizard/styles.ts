@@ -73,6 +73,38 @@ export const SeedInput = styled.input`
   }
 `;
 
+export const FieldSelect = styled.select`
+  width: 100%;
+  background: ${({ theme }) => theme.colors.bgInput};
+  border: 1px solid ${({ theme }) => theme.colors.borderForm};
+  color: ${({ theme }) => theme.colors.textPrimary};
+  border-radius: ${({ theme }) => theme.radii.lg};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.s10};
+  font-family: inherit;
+  font-size: ${({ theme }) => theme.fontSizes.md};
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 1px;
+  }
+`;
+
+export const FieldHint = styled.p`
+  margin: ${({ theme }) => theme.spacing.xs} 0 0;
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.textHint};
+`;
+
+export const ErrorList = styled.div`
+  margin-top: ${({ theme }) => theme.spacing.md};
+`;
+
+export const ErrorText = styled.p`
+  margin: ${({ theme }) => theme.spacing.xs} 0;
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.textDanger};
+`;
+
 export const FooterActions = styled.div`
   display: flex;
   flex-direction: row;
