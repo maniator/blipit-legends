@@ -61,10 +61,6 @@ describe("Sprint 2 Tier-2 contrast guardrails (Story 9.1)", () => {
     expect(contrast(theme.colors.textNavMid, theme.colors.bgGame)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(theme.colors.textNavMid, theme.colors.bgDeep)).toBeGreaterThanOrEqual(4.5);
   });
-
-  it("bsoCountText meets WCAG AAA (≥7:1) on bgGame (Story 6.1 guarantee)", () => {
-    expect(contrast(theme.colors.bsoCountText, theme.colors.bgGame)).toBeGreaterThanOrEqual(7);
-  });
 });
 
 describe("Sprint 2 font-size minimum guardrails (Story 8.1)", () => {

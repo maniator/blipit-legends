@@ -236,20 +236,4 @@ describe("LineScore — BSO accessibility (F5)", () => {
     const status = document.querySelector('[role="status"]');
     expect(status).toHaveAttribute("aria-label", "Count: 1 ball, 1 strike, 1 out");
   });
-
-  it("renders visible count label with aria-hidden=true", () => {
-    renderWithContext(<LineScore />, makeContextValue({ balls: 2, strikes: 1, outs: 0 }));
-    const labels = document.querySelectorAll('[aria-hidden="true"]');
-    const countLabel = Array.from(labels).find((el) => el.textContent?.includes("B "));
-    expect(countLabel).toBeTruthy();
-  });
-
-  it("count label reflects current ball/strike/out values", () => {
-    renderWithContext(<LineScore />, makeContextValue({ balls: 3, strikes: 0, outs: 2 }));
-    const labels = document.querySelectorAll('[aria-hidden="true"]');
-    const countLabel = Array.from(labels).find((el) => el.textContent?.includes("B "));
-    expect(countLabel?.textContent).toContain("B 3");
-    expect(countLabel?.textContent).toContain("S 0");
-    expect(countLabel?.textContent).toContain("O 2");
-  });
 });

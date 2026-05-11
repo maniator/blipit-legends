@@ -89,8 +89,6 @@ export const theme = {
     bsoBall: "#44cc88",
     bsoStrike: "#F2C14E",
     bsoOut: "#ff7070",
-    /** WCAG AAA (≥7:1) count label text on theme.colors.bgGame. */
-    bsoCountText: "#e8d5a3",
     /** Inner box-shadow on active BSO dots for grayscale/CVD distinguishability. */
     bsoDotInset: "rgba(0, 0, 0, 0.35)",
 
@@ -187,7 +185,6 @@ export const theme = {
     xl: "17px",
     dialogTitle: "18px",
     f20: "20px",
-    f24: "24px",
     // rem-based — body text (scales with root font size)
     tiny: "0.75rem",
     sub: "0.85rem",

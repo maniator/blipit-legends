@@ -6,7 +6,6 @@ import { Hit } from "@shared/constants/hitTypes";
 import { useTeamWithRoster } from "@shared/hooks/useTeamWithRoster";
 
 import {
-  BsoCountLabel,
   BsoGroup,
   BsoRow,
   DividerTd,
@@ -151,9 +150,6 @@ const LineScore: React.FunctionComponent = () => {
             <Dot key={i} $on={i < outs} $type="out" />
           ))}
         </BsoGroup>
-        <BsoCountLabel aria-hidden="true">
-          B {balls}&nbsp;&nbsp;S {strikes}&nbsp;&nbsp;O {outs}
-        </BsoCountLabel>
         {inning > 9 && !gameOver && <ExtraInningsBanner>EXTRA INNINGS</ExtraInningsBanner>}
         {gameOver && <GameOverBanner data-testid="game-over-banner">FINAL</GameOverBanner>}
       </BsoRow>

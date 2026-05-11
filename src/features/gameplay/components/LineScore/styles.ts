@@ -101,10 +101,8 @@ export const DividerTd = styled.td`
 
 export const BsoRow = styled.div`
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   column-gap: ${({ theme }) => theme.spacing.s14};
-  row-gap: 0;
   padding: ${({ theme }) => theme.spacing.s6} ${({ theme }) => theme.spacing.sm}
     ${({ theme }) => theme.spacing.xs};
   background: ${({ theme }) => theme.colors.bgGame};
@@ -143,27 +141,6 @@ export const Dot = styled.span<{ $on: boolean; $type: "ball" | "strike" | "out" 
       return theme.colors.bsoOut;
     }};
   box-shadow: ${({ $on, theme }) => ($on ? `inset 0 0 0 1px ${theme.colors.bsoDotInset}` : "none")};
-`;
-
-/** Count label shown beneath dots (mobile) or to the right (desktop). aria-hidden on the element itself.
- * Requires BsoRow to have `flex-wrap: wrap` so `flex-basis: 100%` forces a new row on mobile.
- */
-export const BsoCountLabel = styled.span`
-  font-size: ${({ theme }) => theme.fontSizes.f20};
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: ${({ theme }) => theme.letterSpacing.tight};
-  color: ${({ theme }) => theme.colors.bsoCountText};
-  line-height: 1;
-  /* Mobile: full-width so it wraps onto a new row beneath the dot cluster. */
-  flex-basis: 100%;
-  margin-top: ${({ theme }) => theme.spacing.xxs};
-
-  ${mq.notMobile} {
-    font-size: ${({ theme }) => theme.fontSizes.f24};
-    flex-basis: auto;
-    margin-top: 0;
-  }
 `;
 
 export const ExtraInningsBanner = styled.div`
