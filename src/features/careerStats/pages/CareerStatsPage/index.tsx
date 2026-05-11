@@ -32,6 +32,7 @@ const CareerStatsPage: React.FunctionComponent = () => {
     customTeams,
     dataLoading,
     eraLeader,
+    hasCompletedGames,
     hrLeader,
     isEmpty,
     noTeams,
@@ -137,9 +138,16 @@ const CareerStatsPage: React.FunctionComponent = () => {
             </TabBtn>
           </TabBar>
 
-          {isEmpty && (
+          {isEmpty && !hasCompletedGames && (
             <EmptyState data-testid="career-stats-empty">
               No completed games yet for this team.
+            </EmptyState>
+          )}
+
+          {isEmpty && hasCompletedGames && (
+            <EmptyState data-testid="career-stats-empty">
+              Player stats are not available for simulated season games. Play or watch a game
+              directly to see batting and pitching stats.
             </EmptyState>
           )}
 

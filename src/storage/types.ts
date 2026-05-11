@@ -100,6 +100,13 @@ export type ExhibitionGameSetup = {
    * Career-stats commits still occur via gameInstanceId regardless of this flag.
    */
   disableSave?: boolean;
+  /**
+   * When set, GameInner will call `applySeasonGameResult` on game completion to
+   * patch the seasonGames record to 'completed', update standings on seasonTeam
+   * docs, and advance seasons.currentGameDay. Only used for interactively played
+   * league season games; headless games handle this in runHeadlessGame directly.
+   */
+  seasonGameId?: string;
 };
 
 /** Context shape provided by AppShell through the React Router Outlet. */
