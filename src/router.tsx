@@ -1,11 +1,11 @@
 import * as React from "react";
 
 import ManageTeamsScreen from "@feat/customTeams/pages/ManageTeamsScreen";
+import AppLoadingFallback from "@feat/gameplay/components/AppLoadingFallback";
 import AppShell from "@feat/gameplay/components/AppShell";
 import HomeScreen from "@feat/gameplay/components/HomeScreen";
 import RootLayout from "@feat/gameplay/components/RootLayout";
 import { createBrowserRouter, Navigate, redirect, useOutletContext } from "react-router";
-import styled from "styled-components";
 
 import type { AppShellOutletContext } from "@storage/types";
 
@@ -16,21 +16,6 @@ const GamePage = React.lazy(() => import("@feat/gameplay/pages/GamePage"));
 const HelpPage = React.lazy(() => import("@feat/help/pages/HelpPage"));
 const PlayerCareerPage = React.lazy(() => import("@feat/careerStats/pages/PlayerCareerPage"));
 const SavesPage = React.lazy(() => import("@feat/saves/pages/SavesPage"));
-
-const AppFallbackMessage = styled.p`
-  color: ${({ theme }) => theme.colors.textMuted};
-  text-align: center;
-  margin: ${({ theme }) => theme.spacing.s48} auto;
-  font-family: monospace;
-`;
-
-function AppLoadingFallback({ label = "Loading app…" }: { label?: string }) {
-  return (
-    <AppFallbackMessage data-testid="app-loading-fallback" role="status">
-      {label}
-    </AppFallbackMessage>
-  );
-}
 
 function LazyRoute({ children }: { children: React.ReactNode }) {
   return (
