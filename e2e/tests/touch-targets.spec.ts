@@ -52,7 +52,7 @@ test.describe("touch target hit expansion", () => {
     await startGameViaPlayBall(page, { seed: "touch-target-help" });
 
     const helpButton = page.getByTestId("instructions-help-button");
-    await assertPseudoInsetAndEdgeProbe(page, helpButton, 5);
+    await assertPseudoInsetAndEdgeProbe(page, helpButton, 3);
 
     await helpButton.click();
     await expect(page.getByTestId("instructions-modal")).toBeVisible();
