@@ -10,12 +10,16 @@ This document is the visual source of truth for BlipIt Legends.
 ## Sprint 1 audited contrast tokens (F6 Tier 1)
 
 These are the high-impact contrast tokens tracked in Sprint 1.
+This list is updated incrementally as additional contrast tiers are audited in later sprints.
 
 - `theme.colors.textHint` (`#6e88b1`) — audited in Sprint 1
 - `theme.colors.textNavFaint` (`#5f7694`) — audited in Sprint 1
 - `theme.colors.textScoreDim` (`#8fa6bf`) — audited in Sprint 1
 - `theme.colors.textScore` (`#e8d5a3`) — scoreboard numerics tracked in Sprint 1
 - `theme.colors.textScoreHeader` (`#8abadf`) — scoreboard heading contrast tracked in Sprint 1
+
+Previous pre-audit values for these three tokens were darker and failed the Sprint 1 WCAG
+targets; they were replaced for compliance.
 
 ## Core rules
 

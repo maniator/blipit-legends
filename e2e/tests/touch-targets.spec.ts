@@ -34,7 +34,8 @@ const assertPseudoInsetAndEdgeProbe = async (
     el.addEventListener("click", handler, { capture: true, once: true });
   });
 
-  await page.mouse.click(box.x + box.width + 2, box.y + box.height / 2);
+  const edgeProbeOffset = Math.max(1, Math.floor(minInsetPx / 2));
+  await page.mouse.click(box.x + box.width + edgeProbeOffset, box.y + box.height / 2);
   const clickCount = await page.evaluate(() => {
     const w = window as Window & { __tapProbeCount?: number };
     return w.__tapProbeCount ?? 0;

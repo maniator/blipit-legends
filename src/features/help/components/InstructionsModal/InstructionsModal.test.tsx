@@ -3,6 +3,8 @@ import * as React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { expectPseudoInset } from "@test/testHelpers";
+
 import InstructionsModal from ".";
 
 describe("InstructionsModal", () => {
@@ -56,9 +58,9 @@ describe("InstructionsModal", () => {
   it("uses pseudo-element hit expansion for help and close icon buttons", () => {
     render(<InstructionsModal />);
 
-    expect(screen.getByTestId("instructions-help-button")).toBeInTheDocument();
-    expect(screen.getByTestId("instructions-close-button")).toBeInTheDocument();
-    expect(document.head.textContent).toMatch(/inset:\s*-10px/);
-    expect(document.head.textContent).toMatch(/inset:\s*-8px/);
+    const helpButton = screen.getByTestId("instructions-help-button");
+    const closeButton = screen.getByTestId("instructions-close-button");
+    expectPseudoInset(helpButton, -10);
+    expectPseudoInset(closeButton, -8);
   });
 });

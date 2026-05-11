@@ -2,6 +2,7 @@
 
 - Generated: 2026-05-11
 - Theme source: `src/shared/theme.ts`
+- Snapshot timing: this audit captures pre-Story-3.1 values and remains intentionally point-in-time.
 
 ## Source hex inventory (`rg -i "#[0-9a-f]{3,8}\b" src/`)
 

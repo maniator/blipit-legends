@@ -1,5 +1,6 @@
 import { readFileSync } from "fs";
 import path from "path";
+import { pathToFileURL } from "url";
 
 import { theme } from "../src/shared/theme";
 
@@ -147,7 +148,12 @@ const resolveDocPath = (): string => {
   return path.resolve(process.cwd(), "docs/style-guide.md");
 };
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+const isDirectExecution = (() => {
+  if (!process.argv[1]) return false;
+  return import.meta.url === pathToFileURL(process.argv[1]).href;
+})();
+
+if (isDirectExecution) {
   const docPath = resolveDocPath();
   const result = checkStyleGuideDrift(docPath);
   if (!result.ok) {
