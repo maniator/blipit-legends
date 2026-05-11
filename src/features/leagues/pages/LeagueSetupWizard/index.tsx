@@ -15,7 +15,7 @@ import { generateTeamId } from "@storage/generateId";
 import { fnv1a } from "@storage/hash";
 import type { TeamRecord } from "@storage/types";
 
-import { validateAllSteps } from "../../wizard/validateWizardState";
+import { validateAllSteps, validateWizardStep } from "../../wizard/validateWizardState";
 import type { WizardState } from "../../wizard/wizardReducer";
 import {
   clearWizardState,
@@ -31,8 +31,12 @@ import {
   CheckboxRow,
   DangerButton,
   DisabledBadge,
+  ErrorList,
+  ErrorText,
   FieldGroup,
+  FieldHint,
   FieldLabel,
+  FieldSelect,
   FooterActions,
   RadioOption,
   RadioRow,
@@ -91,9 +95,10 @@ interface Step2Props {
   state: WizardState;
   dispatch: React.Dispatch<Parameters<typeof wizardReducer>[1]>;
   customTeams: Array<{ id: string; name: string }>;
+  errors: string[];
 }
 
-function Step2({ state, dispatch, customTeams }: Step2Props): React.ReactElement {
+function Step2({ state, dispatch, customTeams, errors }: Step2Props): React.ReactElement {
   return (
     <StepContainer>
       <StepTitle>Team Setup</StepTitle>
@@ -122,6 +127,12 @@ function Step2({ state, dispatch, customTeams }: Step2Props): React.ReactElement
                 ? "Select exactly 8 teams"
                 : "Select teams to include (rest autogenned)"}
             </FieldLabel>
+            {state.teamMode === "mixed" && (
+              <FieldHint>
+                Handpick at least 1 team and at most 7 teams, then choose your managed team on
+                review.
+              </FieldHint>
+            )}
             {customTeams.length === 0 ? (
               <p style={{ margin: 0, fontSize: "12px", opacity: 0.7 }}>
                 No custom teams found. Switch to All autogen.
@@ -188,6 +199,13 @@ function Step2({ state, dispatch, customTeams }: Step2Props): React.ReactElement
           </div>
         )}
       </FieldGroup>
+      {errors.length > 0 && (
+        <ErrorList role="status" aria-live="polite">
+          {errors.map((err) => (
+            <ErrorText key={err}>⚠ {err}</ErrorText>
+          ))}
+        </ErrorList>
+      )}
     </StepContainer>
   );
 }
@@ -256,9 +274,10 @@ function Step3({ state, dispatch }: Step3Props): React.ReactElement {
 interface Step5Props {
   state: WizardState;
   dispatch: React.Dispatch<Parameters<typeof wizardReducer>[1]>;
+  errors: string[];
 }
 
-function Step5({ state, dispatch }: Step5Props): React.ReactElement {
+function Step5({ state, dispatch, errors }: Step5Props): React.ReactElement {
   return (
     <StepContainer>
       <StepTitle>Season Seed</StepTitle>
@@ -281,6 +300,13 @@ function Step5({ state, dispatch }: Step5Props): React.ReactElement {
           </p>
         </div>
       </FieldGroup>
+      {errors.length > 0 && (
+        <ErrorList role="status" aria-live="polite">
+          {errors.map((err) => (
+            <ErrorText key={err}>⚠ {err}</ErrorText>
+          ))}
+        </ErrorList>
+      )}
     </StepContainer>
   );
 }
@@ -357,7 +383,7 @@ function Step6({
               </RadioOption>
             </RadioRow>
           ) : (
-            <select
+            <FieldSelect
               value={state.userCustomTeamId ?? ""}
               onChange={(e) =>
                 dispatch({
@@ -366,6 +392,7 @@ function Step6({
                 })
               }
               aria-label="Select your team"
+              data-testid="managed-team-select"
             >
               <option value="">— Select a team —</option>
               {state.selectedTeamIds.map((id) => (
@@ -373,19 +400,17 @@ function Step6({
                   {teamNameById[id] ?? id}
                 </option>
               ))}
-            </select>
+            </FieldSelect>
           )}
         </div>
       </FieldGroup>
 
       {errors.length > 0 && (
-        <div style={{ marginTop: "16px" }} aria-live="polite">
+        <ErrorList aria-live="polite" role="status">
           {errors.map((err) => (
-            <p key={err} style={{ color: "#ff8080", fontSize: "12px", margin: "4px 0" }}>
-              ⚠ {err}
-            </p>
+            <ErrorText key={err}>⚠ {err}</ErrorText>
           ))}
-        </div>
+        </ErrorList>
       )}
       <div style={{ marginTop: "20px" }}>
         <ActionButton
@@ -571,6 +596,7 @@ function LeagueSetupWizardInner(): React.ReactElement {
     () => (state.step === 6 ? validateAllSteps(state) : []),
     [state],
   );
+  const currentStepErrors = React.useMemo(() => validateWizardStep(state), [state]);
 
   const isFirstStep = state.step === 1;
   const isLastStep = state.step === 6;
@@ -588,7 +614,7 @@ function LeagueSetupWizardInner(): React.ReactElement {
         <ActionButton
           type="button"
           onClick={() => dispatch({ type: "NEXT_STEP" })}
-          disabled={creating}
+          disabled={creating || currentStepErrors.length > 0}
         >
           Next →
         </ActionButton>
@@ -661,11 +687,18 @@ function LeagueSetupWizardInner(): React.ReactElement {
       case 1:
         return <Step1 />;
       case 2:
-        return <Step2 state={state} dispatch={dispatch} customTeams={customTeams} />;
+        return (
+          <Step2
+            state={state}
+            dispatch={dispatch}
+            customTeams={customTeams}
+            errors={currentStepErrors}
+          />
+        );
       case 3:
         return <Step3 state={state} dispatch={dispatch} />;
       case 5:
-        return <Step5 state={state} dispatch={dispatch} />;
+        return <Step5 state={state} dispatch={dispatch} errors={currentStepErrors} />;
       case 6:
         return (
           <Step6

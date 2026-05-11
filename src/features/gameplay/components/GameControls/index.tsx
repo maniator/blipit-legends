@@ -34,6 +34,8 @@ type Props = {
   onBackToHome?: () => void;
   /** When true, shows a disabled "Saving…" button instead of "New Game". */
   isCommitting?: boolean;
+  /** When false, manager controls are hidden and cannot be enabled (spectator/watch sessions). */
+  managerModeAllowed?: boolean;
 };
 
 const GameControls: React.FunctionComponent<Props> = ({
@@ -42,6 +44,7 @@ const GameControls: React.FunctionComponent<Props> = ({
   onLoadSave,
   onBackToHome,
   isCommitting = false,
+  managerModeAllowed = true,
 }) => {
   const {
     speed,
@@ -197,7 +200,7 @@ const GameControls: React.FunctionComponent<Props> = ({
             onToggleAnnouncementMute={handleToggleAnnouncementMute}
             onToggleAlertMute={handleToggleAlertMute}
           />
-          {gameStarted && (
+          {gameStarted && managerModeAllowed && (
             <ManagerModeControls
               managerMode={managerMode}
               strategy={strategy}

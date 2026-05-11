@@ -53,6 +53,25 @@ export function validateWizardState(state: WizardState): string[] {
 }
 
 /**
+ * Validates only the active wizard step.
+ * Used to gate step-level progression with inline errors.
+ */
+export function validateWizardStep(state: WizardState): string[] {
+  return validateWizardState({ ...state, step: state.step }).filter((error) => {
+    if (state.step === 2) {
+      return error.includes("Handpick mode requires") || error.includes("Mixed mode requires");
+    }
+    if (state.step === 5) {
+      return error.includes("Master seed");
+    }
+    if (state.step === 6) {
+      return error.includes("Please select which team you will manage.");
+    }
+    return false;
+  });
+}
+
+/**
  * Validates all steps up to and including the given step.
  * Used by Step 6 to confirm all prior steps are valid before creating the season.
  * Delegates to validateWizardState with step=6 so the rules stay in one place.

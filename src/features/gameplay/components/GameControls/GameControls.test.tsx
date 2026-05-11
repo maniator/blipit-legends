@@ -87,6 +87,11 @@ describe("GameControls", () => {
     expect(screen.queryByRole("checkbox", { name: /manager mode/i })).not.toBeInTheDocument();
   });
 
+  it("does NOT show Manager Mode checkbox when managerModeAllowed=false", () => {
+    renderWithContext(<GameControls gameStarted managerModeAllowed={false} />);
+    expect(screen.queryByRole("checkbox", { name: /manager mode/i })).not.toBeInTheDocument();
+  });
+
   it("shows volume sliders", () => {
     renderWithContext(<GameControls />);
     expect(screen.getByRole("slider", { name: /announcement volume/i })).toBeInTheDocument();

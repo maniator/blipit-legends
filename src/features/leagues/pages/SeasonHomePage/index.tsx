@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { runHeadlessGame } from "@feat/league/sim/runHeadlessGame";
 import { advanceSeason, simulateNextDay } from "@feat/league/storage/leagueStore";
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
 import { deriveStandings } from "@feat/league/utils/deriveStandings";
@@ -10,6 +11,7 @@ import { getTotalGameDays } from "@feat/leagues/utils/seasonPresets";
 import EmptyState from "@shared/components/EmptyState";
 import { BackBtn, PageContainer, PageHeader } from "@shared/components/PageLayout/styles";
 import { appLog } from "@shared/utils/logger";
+import { nanoid } from "nanoid";
 import { useNavigate, useParams } from "react-router";
 import { useLiveRxQuery } from "rxdb/plugins/react";
 
@@ -127,6 +129,31 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
     },
     [nextGameId, seasonId, userSeasonTeamId, navigate],
   );
+
+  const handleAutoSimNextGame = React.useCallback(async () => {
+    if (!nextGameId || !seasonId) return;
+    setLaunchingGame(true);
+    setSimError(null);
+    try {
+      await runHeadlessGame({ seasonGameId: nextGameId, claimToken: nanoid(12) });
+      if (userSeasonTeamId) {
+        const result = await advanceSeason({ seasonId, userSeasonTeamId });
+        setNextGameReady(result.nextGameId !== null);
+        setNextGameId(result.nextGameId);
+      } else {
+        await simulateNextDay(seasonId);
+        setNextGameReady(false);
+        setNextGameId(null);
+      }
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Unable to auto-simulate game. Please try again.";
+      appLog.error("[SeasonHomePage] auto-sim game error:", err);
+      setSimError(msg);
+    } finally {
+      setLaunchingGame(false);
+    }
+  }, [nextGameId, seasonId, userSeasonTeamId]);
 
   const gamesQuery = React.useMemo(
     () => ({
@@ -335,6 +362,19 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
                   data-testid="watch-next-game-button"
                 >
                   👁 Watch
+                </GameActionBtn>
+                <GameActionBtn
+                  type="button"
+                  $variant="secondary"
+                  onClick={() => {
+                    void handleAutoSimNextGame();
+                  }}
+                  disabled={launchingGame}
+                  aria-busy={launchingGame}
+                  aria-label={launchingGame ? "Auto-simulating game…" : "Auto-simulate next game"}
+                  data-testid="auto-sim-next-game-button"
+                >
+                  {launchingGame ? "Simulating…" : "⚡ Auto-simulate"}
                 </GameActionBtn>
               </GameActionRow>
             </>

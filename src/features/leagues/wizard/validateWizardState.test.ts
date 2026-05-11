@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { validateAllSteps, validateWizardState } from "./validateWizardState";
+import { validateAllSteps, validateWizardState, validateWizardStep } from "./validateWizardState";
 import { makeInitialState } from "./wizardReducer";
 
 describe("validateWizardState", () => {
@@ -123,5 +123,42 @@ describe("validateAllSteps", () => {
       masterSeed: "seed",
     };
     expect(validateAllSteps(state).length).toBeGreaterThan(0);
+  });
+});
+
+describe("validateWizardStep", () => {
+  it("returns step-2 team selection errors only on team setup step", () => {
+    const state = {
+      ...makeInitialState(),
+      step: 2 as const,
+      teamMode: "mixed" as const,
+      selectedTeamIds: [],
+    };
+    const errors = validateWizardStep(state);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(/Mixed mode requires/i);
+  });
+
+  it("returns seed error only on seed step", () => {
+    const state = {
+      ...makeInitialState(),
+      step: 5 as const,
+      masterSeed: "",
+    };
+    const errors = validateWizardStep(state);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(/Master seed/i);
+  });
+
+  it("returns managed-team selection error on review step", () => {
+    const state = {
+      ...makeInitialState(),
+      step: 6 as const,
+      teamMode: "handpick" as const,
+      selectedTeamIds: ["a", "b", "c", "d", "e", "f", "g", "h"],
+      userCustomTeamId: null,
+    };
+    const errors = validateWizardStep(state);
+    expect(errors).toContain("Please select which team you will manage.");
   });
 });
