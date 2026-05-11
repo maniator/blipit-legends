@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import ManageTeamsScreen from "@feat/customTeams/pages/ManageTeamsScreen";
+import AppLoadingFallback from "@feat/gameplay/components/AppLoadingFallback";
 import AppShell from "@feat/gameplay/components/AppShell";
 import HomeScreen from "@feat/gameplay/components/HomeScreen";
 import RootLayout from "@feat/gameplay/components/RootLayout";
@@ -15,6 +16,14 @@ const GamePage = React.lazy(() => import("@feat/gameplay/pages/GamePage"));
 const HelpPage = React.lazy(() => import("@feat/help/pages/HelpPage"));
 const PlayerCareerPage = React.lazy(() => import("@feat/careerStats/pages/PlayerCareerPage"));
 const SavesPage = React.lazy(() => import("@feat/saves/pages/SavesPage"));
+
+function LazyRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <React.Suspense fallback={<AppLoadingFallback label="Loading page…" />}>
+      {children}
+    </React.Suspense>
+  );
+}
 
 /** Route element for `/` — reads navigation callbacks from AppShell outlet context. */
 function HomeRoute() {
@@ -44,9 +53,9 @@ function TeamsRoute() {
  */
 function GameRoute() {
   return (
-    <React.Suspense fallback={null}>
+    <LazyRoute>
       <GamePage />
-    </React.Suspense>
+    </LazyRoute>
   );
 }
 
@@ -92,66 +101,66 @@ export const router = createBrowserRouter([
           {
             path: "saves",
             element: (
-              <React.Suspense fallback={null}>
+              <LazyRoute>
                 <SavesPage />
-              </React.Suspense>
+              </LazyRoute>
             ),
           },
           {
             path: "help",
             element: (
-              <React.Suspense fallback={null}>
+              <LazyRoute>
                 <HelpPage />
-              </React.Suspense>
+              </LazyRoute>
             ),
           },
           {
             path: "contact",
             element: (
-              <React.Suspense fallback={null}>
+              <LazyRoute>
                 <ContactPage />
-              </React.Suspense>
+              </LazyRoute>
             ),
           },
           {
             path: "exhibition/new",
             element: (
-              <React.Suspense fallback={null}>
+              <LazyRoute>
                 <ExhibitionSetupPage />
-              </React.Suspense>
+              </LazyRoute>
             ),
           },
           { path: "career-stats", element: <Navigate to="/stats" replace /> },
           {
             path: "stats",
             element: (
-              <React.Suspense fallback={null}>
+              <LazyRoute>
                 <CareerStatsPage />
-              </React.Suspense>
+              </LazyRoute>
             ),
           },
           {
             path: "stats/:teamId",
             element: (
-              <React.Suspense fallback={null}>
+              <LazyRoute>
                 <CareerStatsPage />
-              </React.Suspense>
+              </LazyRoute>
             ),
           },
           {
             path: "stats/:teamId/players/:playerId",
             element: (
-              <React.Suspense fallback={null}>
+              <LazyRoute>
                 <PlayerCareerPage />
-              </React.Suspense>
+              </LazyRoute>
             ),
           },
           {
             path: "stats/players/:playerId",
             element: (
-              <React.Suspense fallback={null}>
+              <LazyRoute>
                 <PlayerCareerPage />
-              </React.Suspense>
+              </LazyRoute>
             ),
           },
         ],

@@ -1,6 +1,36 @@
-import { describe, expect, it } from "vitest";
+import * as React from "react";
 
-import { router } from "./router";
+import { theme } from "@shared/theme";
+import { render, screen, waitFor } from "@testing-library/react";
+import { createMemoryRouter, RouterProvider } from "react-router";
+import { ThemeProvider } from "styled-components";
+import { describe, expect, it, vi } from "vitest";
+
+const savesPageSuspension = vi.hoisted(() => new Promise<never>(() => {}));
+
+vi.mock("@feat/saves/pages/SavesPage", () => ({
+  default: function SuspendedSavesPage(): never {
+    throw savesPageSuspension;
+  },
+}));
+
+vi.mock("@shared/hooks/useSeedDemoTeams", () => ({
+  useSeedDemoTeams: vi.fn(),
+}));
+
+vi.mock("@shared/hooks/useServiceWorkerUpdate", () => ({
+  useServiceWorkerUpdate: () => ({
+    updateAvailable: false,
+    dismiss: vi.fn(),
+    reload: vi.fn(),
+  }),
+}));
+
+const { router } = await import("./router");
+
+function renderWithTheme(ui: React.ReactNode) {
+  return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
+}
 
 /**
  * Smoke test for the app router — verifies the router is created and
@@ -20,5 +50,17 @@ describe("router", () => {
     // The router object exposes its internal route tree via `routes`
     expect(Array.isArray(router.routes)).toBe(true);
     expect(router.routes.length).toBeGreaterThan(0);
+  });
+
+  it("provides a visible fallback for lazy page routes", async () => {
+    const memoryRouter = createMemoryRouter(router.routes, {
+      initialEntries: ["/saves"],
+    });
+
+    renderWithTheme(<RouterProvider router={memoryRouter} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("app-loading-fallback")).toHaveTextContent("Loading page…");
+    });
   });
 });
