@@ -11,6 +11,8 @@ Files:
 - `01-qa-report.md` — QA report and next-step recommendations.
 - `02-github-issue-body.md` — GitHub issue body ready to paste into `maniator/blipit-legends`.
 - `03-bmad-implementation-plan-prompt.md` — prompt for BMAD to create the implementation plan.
+- `04-validation-status.md` — post-push validation status of each QA finding against current branch code.
+- `05-shift-left-regression-plan.md` — regression-testing strategy matrix (unit/component/integration/E2E) for every finding.
 - `screenshots/mixed-mode-review-dropdown-unreadable-user-screenshot.png` — user-provided screenshot showing the unreadable/inaccessible mixed-mode “Which team will you manage?” field.
 
 Note: Earlier QA screenshots from the live desktop run were not available as standalone files in this environment, so the report describes those findings textually and includes the available user-provided screenshot.
