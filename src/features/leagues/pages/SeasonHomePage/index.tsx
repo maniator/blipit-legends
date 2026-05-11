@@ -3,6 +3,7 @@ import * as React from "react";
 import { advanceSeason, simulateNextDay } from "@feat/league/storage/leagueStore";
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
 import { deriveStandings } from "@feat/league/utils/deriveStandings";
+import { GameActionBtn } from "@feat/leagues/components/styles";
 import { SeasonContextProvider, useSeasonContext } from "@feat/leagues/context/SeasonContext";
 import { buildSeasonGameSetup } from "@feat/leagues/utils/buildSeasonGameSetup";
 import { getTotalGameDays } from "@feat/leagues/utils/seasonPresets";
@@ -18,7 +19,6 @@ import type { GameLocationState } from "@storage/types";
 import {
   AdvanceReadyMsg,
   ChampionBanner,
-  GameActionBtn,
   GameActionRow,
   GameDayRow,
   NavCard,

@@ -86,6 +86,13 @@ export type ExhibitionGameSetup = {
   awayTeamLabel: string;
   managedTeam: 0 | 1 | null;
   playerOverrides: PlayerOverrides;
+  /**
+   * PRNG seed for this game. When provided, GameInner will call reinitSeed()
+   * before starting the game so the random sequence is deterministic.
+   * Required for league season games; optional for exhibition games (which
+   * already call reinitSeed via ExhibitionSetupPage before navigation).
+   */
+  seed?: string;
 };
 
 /** Context shape provided by AppShell through the React Router Outlet. */

@@ -342,6 +342,12 @@ const GameInner: React.FunctionComponent<Props> = ({
     // Prevent auto-resume from overwriting this fresh session even if RxDB saves
     // load asynchronously after this effect fires.
     restoredRef.current = true;
+    // If the setup carries a seed (e.g. league season games), reinit the PRNG
+    // here — at the correct point in the bootstrap sequence — rather than in
+    // the utility that builds the setup object.
+    if (pendingGameSetup.seed != null) {
+      reinitSeed(pendingGameSetup.seed);
+    }
     handleStartRef.current(
       pendingGameSetup.homeTeam,
       pendingGameSetup.awayTeam,

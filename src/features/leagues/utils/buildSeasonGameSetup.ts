@@ -3,6 +3,10 @@
  *
  * Loads the live custom team docs from the DB and populates rosters so the
  * game engine receives the full player data it needs for a live game session.
+ *
+ * NOTE: This function does NOT call reinitSeed. The returned `seed` field is
+ * set to `game.derivedSeed` so that GameInner can reinitSeed at the correct
+ * point in the game bootstrap sequence (after navigation, before handleStart).
  */
 import {
   customTeamToBenchRoster,
@@ -14,7 +18,6 @@ import {
 } from "@feat/customTeams/adapters/customTeamAdapter";
 import { populateRoster } from "@feat/customTeams/storage/customTeamRosterPersistence";
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
-import { reinitSeed } from "@shared/utils/rng";
 
 import type { BallgameDb } from "@storage/db";
 import type { ExhibitionGameSetup, TeamRecord } from "@storage/types";
@@ -43,15 +46,14 @@ export async function buildSeasonGameSetup(
     populateRoster(db, awayDoc.toJSON() as unknown as TeamRecord),
   ]);
 
-  // Reinit the PRNG with the game's derived seed so results are consistent.
-  reinitSeed(game.derivedSeed);
-
   return {
     homeTeam: homeSeasonTeam.customTeamId,
     awayTeam: awaySeasonTeam.customTeamId,
     homeTeamLabel: customTeamToDisplayName(homeTeam),
     awayTeamLabel: customTeamToDisplayName(awayTeam),
     managedTeam,
+    // Pass seed through so GameInner can reinitSeed at the correct point.
+    seed: game.derivedSeed,
     playerOverrides: {
       away: customTeamToPlayerOverrides(awayTeam),
       home: customTeamToPlayerOverrides(homeTeam),
