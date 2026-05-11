@@ -6,7 +6,6 @@ import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/ty
 import { deriveStandings } from "@feat/league/utils/deriveStandings";
 import { GameActionBtn } from "@feat/leagues/components/styles";
 import { SeasonContextProvider, useSeasonContext } from "@feat/leagues/context/SeasonContext";
-import { buildSeasonGameSetup } from "@feat/leagues/utils/buildSeasonGameSetup";
 import { getTotalGameDays } from "@feat/leagues/utils/seasonPresets";
 import EmptyState from "@shared/components/EmptyState";
 import { BackBtn, PageContainer, PageHeader } from "@shared/components/PageLayout/styles";
@@ -14,9 +13,6 @@ import { appLog } from "@shared/utils/logger";
 import { nanoid } from "nanoid";
 import { useNavigate, useParams } from "react-router";
 import { useLiveRxQuery } from "rxdb/plugins/react";
-
-import { getDb } from "@storage/db";
-import type { GameLocationState } from "@storage/types";
 
 import {
   AdvanceReadyMsg,
@@ -90,44 +86,16 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
   }, [seasonId, userSeasonTeamId]);
 
   const handlePlayNextGame = React.useCallback(
-    async (asManager: boolean) => {
-      if (!nextGameId || !seasonId) return;
-      setLaunchingGame(true);
-      try {
-        const db = await getDb();
-        const gameDoc = await db.seasonGames.findOne({ selector: { id: nextGameId } }).exec();
-        if (!gameDoc) throw new Error("Game record not found");
-        const game = gameDoc.toJSON() as unknown as SeasonGameRecord;
-        const [homeTeamDoc, awayTeamDoc] = await Promise.all([
-          db.seasonTeams.findOne({ selector: { id: game.homeSeasonTeamId } }).exec(),
-          db.seasonTeams.findOne({ selector: { id: game.awaySeasonTeamId } }).exec(),
-        ]);
-        if (!homeTeamDoc || !awayTeamDoc) throw new Error("Season team record not found");
-        const homeSeasonTeam = homeTeamDoc.toJSON() as unknown as SeasonTeamRecord;
-        const awaySeasonTeam = awayTeamDoc.toJSON() as unknown as SeasonTeamRecord;
-        // Derive managed side from actual game record (user may be home or away).
-        let managedTeam: 0 | 1 | null = null;
-        if (asManager && userSeasonTeamId) {
-          managedTeam = game.homeSeasonTeamId === userSeasonTeamId ? 1 : 0;
-        }
-        const setup = await buildSeasonGameSetup(
-          db,
-          game,
-          homeSeasonTeam,
-          awaySeasonTeam,
-          managedTeam,
-        );
-        const state: GameLocationState = { pendingGameSetup: setup, pendingLoadSave: null };
-        navigate("/game", { state });
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Unable to launch game. Please try again.";
-        appLog.error("[SeasonHomePage] launch game error:", err);
-        setSimError(msg);
-      } finally {
-        setLaunchingGame(false);
+    (asManager: boolean) => {
+      if (!nextGameId) return;
+      if (asManager) {
+        // Pass no managedTeam — LeagueGamePage derives it from season.userCustomTeamId.
+        navigate(`/game/league/${nextGameId}`, { state: {} });
+      } else {
+        navigate(`/game/league/${nextGameId}`, { state: { managedTeam: null } });
       }
     },
-    [nextGameId, seasonId, userSeasonTeamId, navigate],
+    [nextGameId, navigate],
   );
 
   const handleAutoSimNextGame = React.useCallback(async () => {
@@ -348,9 +316,7 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
                 <GameActionBtn
                   type="button"
                   $variant="primary"
-                  onClick={() => {
-                    void handlePlayNextGame(true);
-                  }}
+                  onClick={() => handlePlayNextGame(true)}
                   disabled={launchingGame}
                   aria-busy={launchingGame}
                   aria-label={launchingGame ? "Loading game…" : "Play next game in Manager Mode"}
@@ -361,9 +327,7 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
                 <GameActionBtn
                   type="button"
                   $variant="secondary"
-                  onClick={() => {
-                    void handlePlayNextGame(false);
-                  }}
+                  onClick={() => handlePlayNextGame(false)}
                   disabled={launchingGame}
                   aria-busy={launchingGame}
                   aria-label={launchingGame ? "Loading game…" : "Watch next game"}

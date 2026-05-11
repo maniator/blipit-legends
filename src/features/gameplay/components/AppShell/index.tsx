@@ -21,7 +21,10 @@ const AppShell: React.FunctionComponent = () => {
   // True once at least one completed game has been persisted or a game just ended — gates Career Stats.
   const [hasCareerStats, setHasCareerStats] = React.useState(false);
 
-  const isGameRoute = location.pathname === "/game";
+  const isGameRoute =
+    location.pathname === "/game" ||
+    location.pathname === "/game/exhibition" ||
+    location.pathname.startsWith("/game/league/");
 
   const volume = useVolumeControls();
   // Pass alertVolume = 0 on /game to stop music (game has its own audio: fanfare, chimes, stretch).
@@ -105,10 +108,10 @@ const AppShell: React.FunctionComponent = () => {
     navigate("/stats");
   }, [navigate]);
 
-  /** Called from /exhibition/new — navigates to /game with the setup as location state. */
+  /** Called from /exhibition/new — navigates to /game/exhibition with the setup as location state. */
   const handleStartFromExhibition = React.useCallback(
     (setup: ExhibitionGameSetup) => {
-      navigate("/game", { state: { pendingGameSetup: setup, pendingLoadSave: null } });
+      navigate("/game/exhibition", { state: { pendingGameSetup: setup } });
     },
     [navigate],
   );
