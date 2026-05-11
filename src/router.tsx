@@ -79,7 +79,6 @@ function GameRoute() {
 export const router = createBrowserRouter([
   {
     element: <RootLayout />,
-    hydrateFallbackElement: <AppLoadingFallback />,
     children: [
       {
         element: <AppShell />,

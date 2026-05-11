@@ -1,30 +1,29 @@
 import * as React from "react";
 
-import AppShell from "@feat/gameplay/components/AppShell";
 import { theme } from "@shared/theme";
 import { render, screen } from "@testing-library/react";
+import { createMemoryRouter, RouterProvider } from "react-router";
 import { ThemeProvider } from "styled-components";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { router } from "./router";
 
-type TestRoute = {
-  children?: TestRoute[];
-  element?: React.ReactNode;
-  hydrateFallbackElement?: React.ReactNode;
-  path?: string;
-};
+vi.mock("@feat/saves/pages/SavesPage", () => new Promise(() => {}));
+
+vi.mock("@shared/hooks/useSeedDemoTeams", () => ({
+  useSeedDemoTeams: vi.fn(),
+}));
+
+vi.mock("@shared/hooks/useServiceWorkerUpdate", () => ({
+  useServiceWorkerUpdate: () => ({
+    updateAvailable: false,
+    dismiss: vi.fn(),
+    reload: vi.fn(),
+  }),
+}));
 
 function renderWithTheme(ui: React.ReactNode) {
   return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
-}
-
-function getAppRoutes() {
-  const [rootRoute] = router.routes as TestRoute[];
-  const appShellRoute = rootRoute.children?.find(
-    (route) => React.isValidElement(route.element) && route.element.type === AppShell,
-  );
-  return appShellRoute?.children ?? [];
 }
 
 /**
@@ -47,25 +46,12 @@ describe("router", () => {
     expect(router.routes.length).toBeGreaterThan(0);
   });
 
-  it("provides an app hydrate fallback on the root route", () => {
-    const [rootRoute] = router.routes as TestRoute[];
-
-    expect(React.isValidElement(rootRoute.hydrateFallbackElement)).toBe(true);
-
-    renderWithTheme(rootRoute.hydrateFallbackElement);
-
-    expect(screen.getByTestId("app-loading-fallback")).toHaveTextContent("Loading app…");
-  });
-
   it("provides a visible fallback for lazy page routes", () => {
-    const savesRoute = getAppRoutes().find((route) => route.path === "saves");
+    const memoryRouter = createMemoryRouter(router.routes, {
+      initialEntries: ["/saves"],
+    });
 
-    if (!savesRoute?.element) {
-      throw new Error("Expected the saves route to have an element");
-    }
-
-    renderWithTheme(savesRoute.element);
-
+    renderWithTheme(<RouterProvider router={memoryRouter} />);
     expect(screen.getByTestId("app-loading-fallback")).toHaveTextContent("Loading page…");
   });
 });
