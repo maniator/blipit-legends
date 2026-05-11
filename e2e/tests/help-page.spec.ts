@@ -14,6 +14,7 @@ import { expect, test } from "@playwright/test";
 
 import { disableAnimations, resetAppState } from "../utils/helpers";
 
+// Includes the two League Mode sections added with the Mini Sprint season docs.
 const HELP_SECTION_COUNT = 13;
 
 /** Open every closed <details> in the help page and wait until all sections are open. */

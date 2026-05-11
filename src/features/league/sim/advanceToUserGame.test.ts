@@ -86,6 +86,7 @@ async function insertGame(
 }
 
 beforeEach(async () => {
+  vi.clearAllMocks();
   db = await makeTestDb();
 
   await db.seasons.insert({
@@ -199,7 +200,6 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  vi.clearAllMocks();
   await db.close();
 });
 
