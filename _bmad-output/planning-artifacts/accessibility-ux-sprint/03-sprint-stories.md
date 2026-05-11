@@ -197,28 +197,26 @@ M (depends on snapshot count)
 
 ---
 
-## Story 4.1 — F9: League Teaser Non-Affordance
+## Story 4.1 — F9: League Entry-State Regression Guard (v1)
 
 **As** a user on the home screen,
-**I want** the League Mode teaser to clearly signal that it is not yet available,
-**so that** I don't tap it expecting action and lose trust in the rest of the UI.
+**I want** league entry UI states (idle vs active season) to remain accurate,
+**so that** I always get the correct action ("Start a Season" vs "Continue Season") and trust the navigation.
 
 ### Tasks
 
-1. In `LeagueTeaserBox` styled component:
-   - Add `pointer-events: none`
-   - Add `cursor: default`
-2. Add a lock icon glyph (or similar non-interactive visual indicator) inside the box
-3. Update copy from "League play coming soon" to "🔒 League Mode — Coming [target quarter]" (e.g. "Q3 2026" — confirm target with John)
-4. Verify no `onClick` handler is bound (remove if present)
-5. Update visual snapshot
+1. Verify HomeScreen idle state includes `data-testid="home-browse-leagues-button"` and label "Start a Season"
+2. Verify active-season state includes `data-testid="home-continue-season-button"` and uses `activeSeasonLabel`
+3. Extend unit/E2E coverage where needed to lock both states:
+   - `src/features/gameplay/components/HomeScreen/HomeScreen.test.tsx`
+   - `e2e/tests/home.spec.ts` and/or `e2e/tests/league.spec.ts`
+4. Remove stale sprint instructions that still mention lock icon / pointer-events / "coming soon"
 
 ### Acceptance Criteria
 
-- [ ] Element no longer responds to clicks (Playwright test: `await element.click(); /* assert no navigation, no event */`)
-- [ ] Lock icon visible
-- [ ] Copy specifies a target quarter
-- [ ] Visual snapshot regenerated and reviewed
+- [ ] Idle state path to `/leagues` covered by automated tests
+- [ ] Active season "Continue Season" state covered by automated tests
+- [ ] Sprint artifacts no longer instruct pre-v1 "coming soon" teaser behavior
 
 ### Owner
 
@@ -226,11 +224,11 @@ Amelia
 
 ### Effort
 
-S
+XS
 
 ---
 
-## Story 5.1 — F10: `html lang="en"` Verification
+## Story 5.1 — F10: `lang` Attribute Regression Guard
 
 **As** a screen-reader user,
 **I want** the page to declare its language,
@@ -238,15 +236,14 @@ S
 
 ### Tasks
 
-1. Open `index.html`. Verify `<html lang="en">` is present
-2. If missing or different, add `lang="en"`
-3. Add a unit/E2E test that fails if the attribute is absent or empty (shift-left guardrail)
-   - Suggested: extend an existing `e2e/tests/accessibility.spec.ts` (or create one) to assert `await page.locator('html').getAttribute('lang')` returns `"en"`
-4. Document the test in `_bmad-output/planning-artifacts/accessibility-ux-sprint/05-test-strategy.md`
+1. Verify `src/index.html` root element remains `<html lang="en">`
+2. Add/retain a unit guard test that reads `src/index.html` directly (path-safe under Vitest root rules)
+3. Optionally mirror with a lightweight E2E assertion on `<html lang>`
+4. Document the guard in `_bmad-output/planning-artifacts/accessibility-ux-sprint/05-test-strategy.md`
 
 ### Acceptance Criteria
 
-- [ ] `<html lang="en">` present in `index.html`
+- [ ] `<html lang="en">` present in `src/index.html`
 - [ ] Automated test guards the attribute
 - [ ] Test failure surfaces in CI
 
@@ -256,7 +253,7 @@ Amelia
 
 ### Effort
 
-XS (~30 min)
+XS
 
 ---
 
@@ -275,8 +272,8 @@ Story 1.1 (F1 Audit, Paige)
 
 PARALLEL (no F1 dependency):
     Story 2.1 (F3 Touch Targets, Amelia)
-    Story 4.1 (F9 League Teaser, Amelia)
-    Story 5.1 (F10 lang Attr, Amelia)
+    Story 4.1 (F9 league state regression guard, Amelia)
+    Story 5.1 (F10 lang regression guard, Amelia)
 ```
 
 **Recommended execution order for the future implementing agent:**

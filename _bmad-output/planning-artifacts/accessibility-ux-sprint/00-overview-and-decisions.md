@@ -4,7 +4,7 @@
 
 BlipIt Legends underwent a heuristic UX/accessibility review that surfaced **10 findings** spanning P0 (critical) to P2 (minor). A full bmad multi-agent roundtable (7 agents + 6 persona interviews + a cross-talk round) produced unanimous signal that **low-contrast text (Finding #6) is the single biggest user-impact failure** — every one of the 6 user personas, from Casual Watcher to Power User, independently flagged it as their #1 or co-#1 pain.
 
-This sprint executes the highest-leverage subset of those findings, slices Finding #6 into tiers to manage visual-snapshot churn, and installs a CI guardrail to prevent regression of the foundational style-guide/theme drift problem.
+This sprint executes the highest-leverage subset of those findings, slices Finding #6 into tiers to manage visual-snapshot churn, and installs a CI guardrail to prevent regression of the foundational style-guide/theme drift problem. It is now re-baselined against the v1 leagues branch state and the QA follow-up package in `docs/blipit-qa-v1-followup-package.zip`.
 
 ## Sprint 1 Scope (LOCKED)
 
@@ -13,14 +13,15 @@ This sprint executes the highest-leverage subset of those findings, slices Findi
 | **F1**          | Style Guide ↔ Theme Drift + CI guardrail                                  | P0   | Paige (audit/doc) + Amelia (script) | M      | `docs/style-guide.md`, `src/shared/theme.ts`, `scripts/check-style-guide-drift.ts` (new) |
 | **F3**          | Touch targets ≥ 44×44 effective                                           | P1   | Amelia                              | S      | `HelpButton`, close buttons, save-card actions                                           |
 | **F6 (Tier 1)** | Contrast: `textHint`, `textNavFaint`, `textScoreDim`, scoreboard numerics | P1   | Amelia                              | M      | `src/shared/theme.ts` + ~8-12 snapshot updates                                           |
-| **F9**          | League Teaser non-affordance                                              | P2   | Amelia                              | S      | `LeagueTeaserBox`                                                                        |
-| **F10**         | `html lang="en"` verification                                             | P2   | Amelia                              | XS     | `index.html`                                                                             |
+| **F9**          | League entry-state regression guard (idle vs active season CTA clarity)   | P2   | Amelia                              | XS     | `HomeScreen`, `router.tsx`, `e2e/tests/home.spec.ts`, `e2e/tests/league.spec.ts`         |
+| **F10**         | `lang` attribute regression guard (`src/index.html`)                      | P2   | Amelia                              | XS     | `src/index.html`, static-html unit test                                                  |
 
-**Total estimated effort:** ~1 sprint (parallel with League Mode work).
+**Total estimated effort:** ~1 sprint (re-baselined after v1 leagues merge).
 
 **Out of Sprint 1 (deferred to Sprint 2):**
 
 - F2 (Logo PNG/SVG), F4 (small font sizes), F5 (BSO — spec ready, build deferred), F6 Tier 2/3 (remaining contrast tokens), F7 (light mode), F8 (focus rings)
+- League Mode v1 completion items from QA package (mixed-mode managed-team dropdown, watch/manage permissioning, managed-game auto-sim, hub/state completion) — track as a separate pre-v2 epic
 
 ## Key Decisions (with attribution)
 
@@ -101,6 +102,12 @@ const HelpButton = styled.button`
 
 **Winston's directive:** "If time allows" is how sprints slip. Either explicitly in or explicitly out — **OUT.** Revisit in Sprint 2 alongside F6 Tier 2.
 
+### D7 — v1 leagues changed F9/F10 from build work to regression-guard work
+
+The branch now ships `/leagues` routes, HomeScreen league CTAs (`home-browse-leagues-button`, `home-continue-season-button`), and `src/index.html` already declares `lang="en"`.
+
+**Implication:** F9/F10 remain in Sprint 1 as **verification + regression protection**, not net-new implementation.
+
 ## Agent Verdicts (final)
 
 | Agent      | Position                                                                                                                                                   |
@@ -118,7 +125,7 @@ const HelpButton = styled.button`
 - [ ] F1: `docs/style-guide.md` matches `src/shared/theme.ts` exactly; CI script blocks future drift; orphaned tokens flagged or removed
 - [ ] F3: All buttons currently below 44×44 (HelpButton, close buttons, save-card Load/Export/Delete) have ≥ 44×44 effective tap area; no visual layout regression on `responsive-smoke.spec.ts`
 - [ ] F6 Tier 1: `textHint`, `textNavFaint`, `textScoreDim` tokens meet WCAG 1.4.3 (≥ 4.5:1 for normal text); scoreboard numerics meet WCAG 1.4.6 (≥ 7:1 AAA); axe-core audit attached to PR shows 0 contrast violations on body/scoreboard surfaces
-- [ ] F9: League Teaser is non-interactive (`pointer-events: none`, `cursor: default`), shows lock icon, copy reads "Coming Soon" with target quarter; no longer dispatches click events
-- [ ] F10: `<html lang="en">` verified present in `index.html`
+- [ ] F9: Home league panel state is trustworthy — idle state exposes `home-browse-leagues-button` and active season state exposes `home-continue-season-button` with correct season label; existing E2E coverage retained/updated
+- [ ] F10: `<html lang="en">` remains present in `src/index.html` and is guarded by an automated test
 - [ ] Winston issues APPROVE on the consolidated PR
 - [ ] Sally signs off on WCAG evidence for F3 + F6 Tier 1

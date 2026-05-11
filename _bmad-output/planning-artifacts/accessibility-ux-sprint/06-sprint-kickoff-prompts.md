@@ -6,7 +6,7 @@ Copy-paste these prompts verbatim into a new agent session to kick off each spri
 
 ---
 
-## Sprint 1 — Critical Fixes (F1, F3, F6 Tier 1, F9, F10)
+## Sprint 1 — Critical Fixes (F1, F3, F6 Tier 1 + F9/F10 regression guards)
 
 ```
 Implement Sprint 1 of the Accessibility & UX sprint plan. The full plan is at:
@@ -18,6 +18,10 @@ Read the files in this order before starting:
   2. 00-overview-and-decisions.md  — scope (LOCKED), key decisions, guardrails
   3. 03-sprint-stories.md          — per-story acceptance criteria
   4. 04-implementation-notes.md    — file-level search commands and CI spec
+
+Also review QA context package:
+  docs/blipit-qa-v1-followup-package.zip
+  (especially 01-qa-report.md and 03-bmad-implementation-plan-prompt.md)
 
 ## Agent routing (REQUIRED — do not skip)
 - All implementation routes through bmad-agent-dev (Amelia). If the session
@@ -39,9 +43,9 @@ Read the files in this order before starting:
 1. Story 1.1 — F1 audit: run the rg commands in 04-implementation-notes.md,
    commit results to _bmad-output/planning-artifacts/accessibility-ux-sprint/audit-results/
 2. Stories 5.1, 4.1, 2.1 in parallel — quick wins with no F1 dependency:
-   - Story 5.1: verify/add <html lang="en"> + automated guard test
-   - Story 4.1: LeagueTeaserBox non-affordance (pointer-events:none, lock icon, copy —
-     confirm target quarter with John via bmad-agent-pm → M1 menu BEFORE writing copy)
+   - Story 5.1: verify `src/index.html` keeps `<html lang="en">` + automated guard test
+   - Story 4.1: league home-panel regression guard (idle "Start a Season" vs active
+     "Continue Season" states + route coverage in existing home/league tests)
    - Story 2.1: touch target hit expansion (::before pseudo, NOT real padding)
 3. Stories 1.2 + 1.3 — style-guide doc rewrite, then CI guardrail script
 4. Story 3.1 — F6 Tier 1 contrast token bumps (do last; highest snapshot risk)
@@ -59,6 +63,15 @@ Read the files in this order before starting:
 ## What is explicitly OUT of Sprint 1 (do not build)
 F2 (logo PNG), F4 (font sizes), F5 (BSO), F6 Tier 2/3, F7 (light mode),
 F8 (focus rings). Full specs for these live in the plan for Sprint 2.
+
+Also OUT: pre-v1 "league teaser coming soon" implementation work (lock icon,
+pointer-events none, target-quarter copy). v1 leagues is live; treat F9 as
+regression protection only.
+
+Also OUT: broader League Mode v1 completion items from the QA package
+(mixed-mode managed-team dropdown, watch/manage enforcement, managed-game
+headless sim, SeasonTeamPage/hub completion). Those belong in a dedicated
+pre-v2 follow-up epic, not this accessibility sprint.
 
 Do not stop to ask clarifying questions — all decisions are locked in the plan.
 ```

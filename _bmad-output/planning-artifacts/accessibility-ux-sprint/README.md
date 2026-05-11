@@ -15,11 +15,14 @@ inputs:
   - 6 persona interviews (P1 Casual Watcher → P6 Power User)
   - mary impact-math analysis
   - cross-talk round (sally↔buck, john↔mary, amelia↔paige, winston final verdict)
+  - docs/blipit-qa-v1-followup-package.zip (post-v1-leagues QA follow-up context)
 ---
 
 # Accessibility & UX Sprint — BlipIt Legends
 
 This is the consolidated planning artifact for the **Critical Accessibility & Trust Sprint**, generated through a full bmad multi-agent roundtable. A future implementing agent (Amelia) should be able to pick this up and execute Sprint 1 with no further clarification needed.
+
+> Re-baseline note (2026-05-11): v1 leagues is now live on this branch. This artifact has been refreshed to convert F9/F10 from implementation work to regression-guard work, and to account for the QA follow-up package in `docs/blipit-qa-v1-followup-package.zip`.
 
 ## Navigation
 
@@ -35,13 +38,13 @@ This is the consolidated planning artifact for the **Critical Accessibility & Tr
 
 ## TL;DR
 
-**Sprint 1 scope (one focused sprint, parallel with League Mode work):**
+**Sprint 1 scope (one focused sprint, re-baselined after v1 leagues merge):**
 
 1. **F1** — Style Guide ↔ Theme Drift fix + CI guardrail to prevent regression
 2. **F3** — Touch targets bumped to ≥ 44×44 effective tap area (WCAG AAA, transparent hit expansion)
 3. **F6 Tier 1** — Highest-impact contrast bumps: `textHint`, `textNavFaint`, `textScoreDim`, scoreboard numerics
-4. **F9** — League Teaser non-affordance (pointer-events:none, lock icon, accurate "coming soon" copy)
-5. **F10** — `html lang="en"` verification + add if missing
+4. **F9** — League entry-state regression guard (idle state shows "Start a Season"; active state shows "Continue Season")
+5. **F10** — `lang` attribute regression guard (already present in `src/index.html`; protect with automated test)
 
 **Sprint 2 (next):**
 
@@ -65,7 +68,7 @@ When picking up this work:
 
 1. Start with `bmad-agent-dev` (Amelia) → SR menu for the F1 audit and CI guardrail.
 2. F3, F6 Tier 1 → Amelia → UI menu (visual snapshot implementation), with Sally's design specs in `01-findings-detail.md`.
-3. F9, F10 → Amelia → SR menu (small mechanical fixes).
+3. F9, F10 → Amelia → SR menu (verification + regression-guard updates only; no teaser-lock implementation work).
 4. **Before merging any PR**: route to `bmad-agent-architect` (Winston) → CR menu for sign-off, since this sprint touches design tokens (high-value).
 5. Visual snapshot regen → `e2e-test-runner` operational specialist (must run inside `mcr.microsoft.com/playwright:v1.58.2-noble` Docker container).
 6. WCAG verification evidence (axe-core or Lighthouse output) → attached to PR by Amelia, signed off by Sally.

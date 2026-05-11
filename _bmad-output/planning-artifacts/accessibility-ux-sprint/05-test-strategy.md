@@ -223,40 +223,33 @@ describe("theme — Sprint 1 audited contrast tokens", () => {
 
 This unit test gives instant feedback on token regressions — no full E2E run needed.
 
-### Story 4.1 (F9 League Teaser)
+### Story 4.1 (F9 League entry-state regression guard)
 
-**E2E test:** `e2e/tests/league-teaser.spec.ts` (new) or extension to existing home spec
+**E2E tests (existing files):** `e2e/tests/home.spec.ts` + `e2e/tests/league.spec.ts`
 
 ```ts
-test("league teaser is non-interactive", async ({ page }) => {
+test("home idle league panel exposes Start a Season CTA", async ({ page }) => {
   await page.goto("/");
-  // Actual data-testid on HomeScreen: "league-play-teaser"
   const teaser = page.getByTestId("league-play-teaser");
-
-  // Verify CSS pointer-events
-  const pointerEvents = await teaser.evaluate((el) => window.getComputedStyle(el).pointerEvents);
-  expect(pointerEvents).toBe("none");
-
-  // Verify clicking does not navigate
-  const urlBefore = page.url();
-  await teaser.click({ force: true }); // force because pointer-events:none blocks normal click
-  await page.waitForTimeout(200);
-  expect(page.url()).toBe(urlBefore);
+  await expect(teaser).toContainText(/league mode/i);
+  await expect(page.getByTestId("home-browse-leagues-button")).toBeVisible();
 });
 
-test("league teaser shows lock icon and target quarter", async ({ page }) => {
+test("home idle Start a Season button navigates to /leagues", async ({ page }) => {
   await page.goto("/");
-  // Actual data-testid on HomeScreen: "league-play-teaser"
-  const teaser = page.getByTestId("league-play-teaser");
-  await expect(teaser).toContainText(/coming\s+(Q[1-4]|spring|summer|fall|winter)/i);
-  // Sprint 1 should add data-testid="lock-icon" to the lock icon element for stable assertion
-  await expect(teaser.locator("[data-testid='lock-icon']")).toBeVisible();
+  await page.getByTestId("home-browse-leagues-button").click();
+  await expect(page).toHaveURL(/\/leagues$/);
 });
 ```
 
-### Story 5.1 (F10 lang Attribute)
+**Unit test:** in `HomeScreen.test.tsx`, add explicit coverage for both states:
 
-**E2E test:** add to `e2e/tests/accessibility.spec.ts` (or create)
+- idle state: `home-browse-leagues-button` exists, `home-continue-season-button` absent
+- active state: `home-continue-season-button` exists, browse button absent
+
+### Story 5.1 (F10 lang regression guard)
+
+**E2E test:** add to existing accessibility/home spec only if no equivalent assertion exists
 
 ```ts
 test("html element declares lang", async ({ page }) => {
@@ -266,7 +259,7 @@ test("html element declares lang", async ({ page }) => {
 });
 ```
 
-**Unit test alternative** (if there's a way to render the static `index.html` content in jsdom):
+**Preferred unit guard (shift-left):**
 
 ```ts
 import { readFileSync } from "fs";
@@ -275,12 +268,10 @@ import { join } from "path";
 test("index.html declares lang='en' on html element", () => {
   // Use process.cwd() to anchor the path — Vitest root is "src" so relative paths
   // resolve to src/, not the repo root. process.cwd() is always the repo root.
-  const html = readFileSync(join(process.cwd(), "index.html"), "utf8");
+  const html = readFileSync(join(process.cwd(), "src/index.html"), "utf8");
   expect(html).toMatch(/<html\s[^>]*\blang=["']en["']/);
 });
 ```
-
-The unit test is cheaper and runs every Vitest pass — preferred per shift-left mindset.
 
 ---
 
@@ -304,8 +295,8 @@ Sprint 1 changes are limited to:
 - Documentation (F1)
 - New script (F1 CI)
 - CSS-only changes via theme tokens (F3, F6 Tier 1)
-- Static HTML (F10)
-- Component prop changes (F9)
+- Static HTML guard check (F10)
+- Home/league CTA regression coverage updates (F9)
 
 **None of these touch the simulation engine, PRNG, RxDB schema, or game state.** Therefore the existing determinism regression suite (`yarn playwright test --project=determinism e2e/tests/determinism.spec.ts`) is sufficient — no new determinism tests required.
 

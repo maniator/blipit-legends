@@ -293,39 +293,41 @@ No `prefers-color-scheme` or `prefers-contrast` media query handling. App is dar
 
 ---
 
-## F9 — League Teaser Affordance `[P2 — Sprint 1]`
+## F9 — League Entry-State Clarity (v1 Baseline) `[P2 — Sprint 1 verification]`
 
 ### What's broken
 
-`LeagueTeaserBox` uses gold text (`#f0c040`) styled like an interactive CTA but is non-interactive. Users tap/click it expecting a roadmap or signup flow; nothing happens.
+v1 leagues is now live. The risk shifted from "dead affordance" to **state trust drift**:
+
+- Idle state must clearly offer "Start a Season" navigation
+- Active-season state must clearly offer "Continue Season" with accurate day label
+- These states must not regress during future home-screen or leagues refactors
 
 ### Persona signals
 
-- **P1:** "I tapped that gold box. Then I tapped again thinking my first tap didn't register. Then I sat there for a second feeling mildly stupid before moving on. I felt vaguely tricked, and now I don't fully trust other things in the UI that look interactive."
-- **P2:** "Either make it do something or style it as a static badge so I stop trying to interact with it."
-- **P6:** "A developer shipped a component with interactive visual affordance without wiring it to any action. I've now lost confidence in whether _other_ interactive elements are wired correctly. I start stress-testing buttons I should be able to trust."
+- **P1/P2:** Need obvious path into league mode from home without hunting routes
+- **P4/P6:** Need confidence that "Continue Season" appears only when a season is active and points to the correct state
 
 ### Spec (Sprint 1)
 
-- Add `pointer-events: none` and `cursor: default` to outer container
-- Add a lock icon (or similar non-interactive glyph) to the visual to clearly signal "not yet"
-- Update copy from "League play coming soon" to a more concrete "🔒 League Mode — Coming [target quarter]"
-- Verify no `onClick` handler is bound
+- Keep/expand tests that assert idle state shows `home-browse-leagues-button` and navigates to `/leagues`
+- Add/keep tests that assert active-season state shows `home-continue-season-button` and season progress label
+- Preserve `league-play-teaser` presence as the stable home container test surface
+- Ensure docs/prompts no longer instruct lock-icon/pointer-events "coming soon" work
 
 ### Acceptance criteria
 
-- [ ] Element no longer responds to clicks (Playwright test confirms no event fires)
-- [ ] Lock icon visible
-- [ ] Copy is specific (target quarter, e.g., "Coming Q3 2026")
-- [ ] Visual snapshot updated
+- [ ] Idle state path to `/leagues` is covered by automated tests
+- [ ] Active season "Continue Season" state is covered by automated tests
+- [ ] No remaining "coming soon"/lock-icon implementation instructions in sprint artifacts
 
 ---
 
-## F10 — Missing `lang` Attribute Verification `[P2 — Sprint 1]`
+## F10 — `lang` Attribute Regression Guard `[P2 — Sprint 1 verification]`
 
 ### What's broken
 
-Need to confirm `<html lang="en">` is set in `index.html`.
+`src/index.html` already declares `<html lang="en">`. Risk is future accidental removal during template or build-tool edits.
 
 ### WCAG citation (Mary)
 
@@ -343,14 +345,14 @@ Need to confirm `<html lang="en">` is set in `index.html`.
 
 ### Spec
 
-- Verify `index.html` root element is `<html lang="en">`
-- If missing or different, add it
-- Effort: XS (one-line check + possibly one-line fix)
+- Verify `src/index.html` root element remains `<html lang="en">`
+- Add/retain a lightweight automated guard test that reads `src/index.html` directly
+- Keep this as a "never regress" check in CI
 
 ### Acceptance criteria
 
-- [ ] `<html lang="en">` present in `index.html`
-- [ ] Add a unit/E2E test that asserts the attribute is present (shift-left guardrail)
+- [ ] `<html lang="en">` present in `src/index.html`
+- [ ] Unit/E2E test asserts the attribute is present (shift-left guardrail)
 
 ---
 
@@ -368,5 +370,5 @@ Need to confirm `<html lang="en">` is set in `index.html`.
 | F6 Tier 3 | P2       | backlog     | M      | 1.4.3            | TBD                               |
 | F7        | P2       | roadmap     | L      | (multiple)       | TBD                               |
 | F8        | P2       | 2 candidate | XS-S   | 2.4.7 / 2.4.11   | TBD                               |
-| F9        | P2       | 1           | S      | — (UX)           | Amelia                            |
-| F10       | P2       | 1           | XS     | 3.1.1            | Amelia                            |
+| F9        | P2       | 1 (verify)  | XS     | — (UX)           | Amelia                            |
+| F10       | P2       | 1 (verify)  | XS     | 3.1.1            | Amelia                            |

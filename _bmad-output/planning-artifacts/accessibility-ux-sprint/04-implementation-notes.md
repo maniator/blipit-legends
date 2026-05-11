@@ -183,27 +183,30 @@ test("home page has no contrast violations", async ({ page }) => {
 
 If `@axe-core/playwright` is not in dependencies, raise to John for an `axe-core` adoption decision before adding it.
 
-### Story 4.1 (F9 League Teaser)
-
-**Find:**
-
-```bash
-rg "LeagueTeaser" src/
-```
-
-**Likely file:**
-
-- `src/features/home/components/LeagueTeaserBox/index.tsx` and `styles.ts`
-
-**Confirm target quarter** with John before writing the copy string.
-
-### Story 5.1 (F10 lang Attribute)
+### Story 4.1 (F9 League entry-state regression guard)
 
 **Read:**
 
-- `index.html`
+```bash
+rg "league-play-teaser|home-browse-leagues-button|home-continue-season-button" src/ e2e/tests
+```
 
-If `<html lang="en">` already present, the implementation reduces to **just adding the test**.
+**Primary files:**
+
+- `src/features/gameplay/components/HomeScreen/index.tsx`
+- `src/features/gameplay/components/HomeScreen/HomeScreen.test.tsx`
+- `e2e/tests/home.spec.ts`
+- `e2e/tests/league.spec.ts`
+
+Focus on regression coverage and stale-doc cleanup; do **not** implement pre-v1 lock-icon/"coming soon" behavior.
+
+### Story 5.1 (F10 lang regression guard)
+
+**Read/verify:**
+
+- `src/index.html`
+
+`src/index.html` currently includes `<html lang="en">`; story work is guard-test coverage only.
 
 ---
 

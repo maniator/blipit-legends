@@ -18,8 +18,8 @@ Severity from each persona's perspective (🚨 Critical / ⚠️ High / · Mediu
 | **F6 Low-Contrast** | **🚨**       | **🚨**           | **🚨**        | **🚨**        | **🚨**          | **🚨**           | **Sprint 1 (Tier 1)** |
 | F7 Light Mode       | ·            | ·                | ·             | ⚠️            | ·               | ·                | Roadmap               |
 | F8 Focus Rings      | —            | —                | ⚠️            | ·             | ⚠️              | ·                | Sprint 2 candidate    |
-| F9 League Teaser    | ·            | ·                | ·             | ·             | ·               | 🚨               | **Sprint 1**          |
-| F10 lang Attr       | —            | —                | ·             | ·             | ⚠️              | 🚨               | **Sprint 1**          |
+| F9 League Entry UX  | ·            | ·                | ·             | ·             | ·               | ⚠️               | **Sprint 1 (verify)** |
+| F10 lang Attr       | —            | —                | ·             | ·             | ⚠️              | ⚠️               | **Sprint 1 (verify)** |
 
 **Key observation:** **F6 (Low-Contrast Text) is the only finding flagged 🚨 Critical by ALL SIX personas.** This is the single strongest user-research signal in the audit and it is what drove the decision to slice F6 into tiers and pull Tier 1 into Sprint 1.
 
@@ -65,7 +65,7 @@ What each persona named as their #1 friction point in the closing question:
 | F1 Theme Drift       | **~all (perceived quality)**          | Universal cumulative trust erosion                                 |
 | F10 lang Attribute   | **~30-50**                            | SR users + occasional SR users + browser AT users                  |
 
-**Aggregate insight:** Sprint 1's chosen scope (F1 + F3 + F6 Tier 1 + F9 + F10) reaches the **largest cohort** (~250-600+ users meaningfully helped) at the **lowest implementation risk** (mostly CSS, with one new CI script).
+**Aggregate insight:** Sprint 1's re-baselined scope (F1 + F3 + F6 Tier 1 + F9/F10 regression guards) still reaches the **largest cohort** (~250-600+ users meaningfully helped) at low implementation risk, while avoiding stale pre-v1-leagues work.
 
 ---
 
@@ -97,8 +97,8 @@ How the persona feedback translated into the locked Sprint 1 scope:
 | All 6 personas flag F6 as #1 or co-#1 pain            | F6 sliced into 3 tiers; Tier 1 in Sprint 1 (D1)                          |
 | P4's data-safety concern: Load/Delete color confusion | F1 elevated as foundation for F6 fixes (fix tokens before fixing usages) |
 | P1 + P4 acute touch-target frustration                | F3 stays in Sprint 1                                                     |
-| P6 + P4 trust erosion from F9 dead affordance         | F9 in Sprint 1 (small effort, large trust win)                           |
-| P5 + P6 noted F10 as quality signal                   | F10 in Sprint 1 (XS effort)                                              |
+| v1 leagues launch resolved dead-affordance risk       | F9 changed to regression guard: protect idle/active league CTA states    |
+| P5 + P6 noted F10 as quality signal                   | F10 changed to regression guard: keep `lang="en"` protected in tests     |
 | P3 + P5 productivity gain from F8 focus rings         | F8 deferred to Sprint 2 — not blocking                                   |
 | P6 demand for unambiguous count                       | Drove BSO spec (F5) toward text-label-prominent + aria-live hybrid       |
 | Buck's stadium-authenticity counter                   | Killed shape-in-dot proposal; led to text-label-first F5 spec            |
