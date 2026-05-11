@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import AppShell from "@feat/gameplay/components/AppShell";
 import { theme } from "@shared/theme";
 import { render, screen } from "@testing-library/react";
 import { ThemeProvider } from "styled-components";
@@ -20,8 +21,8 @@ function renderWithTheme(ui: React.ReactNode) {
 
 function getAppRoutes() {
   const [rootRoute] = router.routes as TestRoute[];
-  const appShellRoute = rootRoute.children?.find((route) =>
-    route.children?.some((child) => child.path === "saves"),
+  const appShellRoute = rootRoute.children?.find(
+    (route) => React.isValidElement(route.element) && route.element.type === AppShell,
   );
   return appShellRoute?.children ?? [];
 }
