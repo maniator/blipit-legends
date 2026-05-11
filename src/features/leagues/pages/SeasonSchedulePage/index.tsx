@@ -192,7 +192,7 @@ const SeasonSchedulePageInner: React.FunctionComponent = () => {
                 const isUserHome = userSeasonTeamId === game.homeSeasonTeamId;
                 const isUserAway = userSeasonTeamId === game.awaySeasonTeamId;
                 const isUserGame = isUserHome || isUserAway;
-                // managedTeam: 0 = away, 1 = home
+                // managedTeam: 1 = home, 0 = away — only meaningful when isUserGame is true
                 const managedSide: 0 | 1 = isUserHome ? 1 : 0;
                 const isLaunching = launchingGameId === game.id;
                 return (
