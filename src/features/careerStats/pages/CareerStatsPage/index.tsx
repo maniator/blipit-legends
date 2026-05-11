@@ -139,13 +139,13 @@ const CareerStatsPage: React.FunctionComponent = () => {
           </TabBar>
 
           {isEmpty && !hasCompletedGames && (
-            <EmptyState data-testid="career-stats-empty">
+            <EmptyState data-testid="career-stats-empty-no-games">
               No completed games yet for this team.
             </EmptyState>
           )}
 
           {isEmpty && hasCompletedGames && (
-            <EmptyState data-testid="career-stats-empty">
+            <EmptyState data-testid="career-stats-empty-headless-only">
               Player stats are not available for simulated season games. Play or watch a game
               directly to see batting and pitching stats.
             </EmptyState>

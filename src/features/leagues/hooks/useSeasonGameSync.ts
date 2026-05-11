@@ -29,7 +29,9 @@ export const useSeasonGameSync = (
   const prevSeasonGameIdRef = React.useRef<string | undefined>(undefined);
 
   // Reset committed flag whenever the season game ID changes (new game session).
-
+  // This effect intentionally has no dependency array so it runs on every render
+  // to detect changes to seasonGameIdRef.current (refs don't trigger re-renders).
+  // This mirrors the identical pattern in useGameHistorySync.
   React.useEffect(() => {
     const current = seasonGameIdRef.current;
     if (current !== prevSeasonGameIdRef.current) {

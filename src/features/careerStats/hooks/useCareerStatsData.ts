@@ -164,7 +164,10 @@ export function useCareerStatsData() {
    * even if no per-player batting/pitching rows were written (e.g. headless
    * season games, which track only scores in v1).
    */
-  const hasCompletedGames = teamsWithHistory.includes(selectedTeamId);
+  const hasCompletedGames = React.useMemo(
+    () => teamsWithHistory.includes(selectedTeamId),
+    [teamsWithHistory, selectedTeamId],
+  );
 
   const selectedCustomTeam = React.useMemo(
     () => customTeams.find((team) => team.id === selectedTeamId),
