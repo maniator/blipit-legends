@@ -212,3 +212,44 @@ describe("LineScore", () => {
     expect(screen.queryByText("EXTRA INNINGS")).not.toBeInTheDocument();
   });
 });
+
+// ---------------------------------------------------------------------------
+// F5 BSO accessibility (Story 6.1)
+// ---------------------------------------------------------------------------
+describe("LineScore — BSO accessibility (F5)", () => {
+  it("renders BSO status container with role=status, aria-live=polite, aria-atomic=true", () => {
+    renderWithContext(<LineScore />, makeContextValue({ balls: 2, strikes: 1, outs: 0 }));
+    const status = document.querySelector('[role="status"]');
+    expect(status).toBeInTheDocument();
+    expect(status).toHaveAttribute("aria-live", "polite");
+    expect(status).toHaveAttribute("aria-atomic", "true");
+  });
+
+  it("computes plural aria-label correctly for balls > 1, strikes > 1, outs > 1", () => {
+    renderWithContext(<LineScore />, makeContextValue({ balls: 3, strikes: 2, outs: 1 }));
+    const status = document.querySelector('[role="status"]');
+    expect(status).toHaveAttribute("aria-label", "Count: 3 balls, 2 strikes, 1 out");
+  });
+
+  it("computes singular aria-label for balls=1, strikes=1, outs=1", () => {
+    renderWithContext(<LineScore />, makeContextValue({ balls: 1, strikes: 1, outs: 1 }));
+    const status = document.querySelector('[role="status"]');
+    expect(status).toHaveAttribute("aria-label", "Count: 1 ball, 1 strike, 1 out");
+  });
+
+  it("renders visible count label with aria-hidden=true", () => {
+    renderWithContext(<LineScore />, makeContextValue({ balls: 2, strikes: 1, outs: 0 }));
+    const labels = document.querySelectorAll('[aria-hidden="true"]');
+    const countLabel = Array.from(labels).find((el) => el.textContent?.includes("B "));
+    expect(countLabel).toBeTruthy();
+  });
+
+  it("count label reflects current ball/strike/out values", () => {
+    renderWithContext(<LineScore />, makeContextValue({ balls: 3, strikes: 0, outs: 2 }));
+    const labels = document.querySelectorAll('[aria-hidden="true"]');
+    const countLabel = Array.from(labels).find((el) => el.textContent?.includes("B "));
+    expect(countLabel?.textContent).toContain("B 3");
+    expect(countLabel?.textContent).toContain("S 0");
+    expect(countLabel?.textContent).toContain("O 2");
+  });
+});

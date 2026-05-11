@@ -6,6 +6,7 @@ import { Hit } from "@shared/constants/hitTypes";
 import { useTeamWithRoster } from "@shared/hooks/useTeamWithRoster";
 
 import {
+  BsoCountLabel,
   BsoGroup,
   BsoRow,
   DividerTd,
@@ -126,25 +127,33 @@ const LineScore: React.FunctionComponent = () => {
           ))}
         </tbody>
       </Table>
-      <BsoRow>
+      <BsoRow
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        aria-label={`Count: ${balls} ball${balls !== 1 ? "s" : ""}, ${strikes} strike${strikes !== 1 ? "s" : ""}, ${outs} out${outs !== 1 ? "s" : ""}`}
+      >
         <BsoGroup>
           B
           {[0, 1, 2].map((i) => (
-            <Dot key={i} $on={i < balls} $color="#4caf50" />
+            <Dot key={i} $on={i < balls} $type="ball" />
           ))}
         </BsoGroup>
         <BsoGroup>
           S
           {[0, 1].map((i) => (
-            <Dot key={i} $on={i < strikes} $color="#f5c842" />
+            <Dot key={i} $on={i < strikes} $type="strike" />
           ))}
         </BsoGroup>
         <BsoGroup>
           O
           {[0, 1].map((i) => (
-            <Dot key={i} $on={i < outs} $color="#e05050" />
+            <Dot key={i} $on={i < outs} $type="out" />
           ))}
         </BsoGroup>
+        <BsoCountLabel aria-hidden="true">
+          B {balls}&nbsp;&nbsp;S {strikes}&nbsp;&nbsp;O {outs}
+        </BsoCountLabel>
         {inning > 9 && !gameOver && <ExtraInningsBanner>EXTRA INNINGS</ExtraInningsBanner>}
         {gameOver && <GameOverBanner data-testid="game-over-banner">FINAL</GameOverBanner>}
       </BsoRow>
