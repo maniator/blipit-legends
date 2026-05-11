@@ -9,7 +9,7 @@ This comment provides:
 
 1. All prompts needed for BMAD-driven execution
 2. What can run in parallel safely
-3. What must run in strict sequence to avoid conflicts
+3. What must run in strict sequencing order to avoid conflicts
 
 ### 0) Ground rules (applies to every track)
 
@@ -102,7 +102,7 @@ This comment provides:
 
 ### 5) What can run in parallel vs sequence
 
-## Sequence-only (avoid conflicts)
+### Sequence-only (avoid conflicts)
 
 1. PM kickoff board
 2. UX spec for screenshot-critical selector
@@ -112,7 +112,7 @@ This comment provides:
 
 Reason: these slices overlap routes/state and can cause merge conflicts or stale assumptions if run out of order.
 
-## Parallel-safe tracks
+### Parallel-safe tracks
 
 - Tech-writer documentation updates can run in parallel with dev slices
 - Test authoring for already-stable files in current slice can run in parallel inside that slice
