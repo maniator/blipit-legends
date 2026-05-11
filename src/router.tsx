@@ -21,9 +21,11 @@ import type { AppShellOutletContext, SeasonRecord } from "@storage/types";
 
 const CareerStatsPage = React.lazy(() => import("@feat/careerStats/pages/CareerStatsPage"));
 const ContactPage = React.lazy(() => import("@feat/contact/pages/ContactPage"));
+const ExhibitionGamePage = React.lazy(() => import("@feat/exhibition/pages/ExhibitionGamePage"));
 const ExhibitionSetupPage = React.lazy(() => import("@feat/exhibition/pages/ExhibitionSetupPage"));
 const GamePage = React.lazy(() => import("@feat/gameplay/pages/GamePage"));
 const HelpPage = React.lazy(() => import("@feat/help/pages/HelpPage"));
+const LeagueGamePage = React.lazy(() => import("@feat/leagues/pages/LeagueGamePage"));
 const LeagueSetupWizard = React.lazy(() => import("@feat/leagues/pages/LeagueSetupWizard"));
 const LeaguesHubPage = React.lazy(() => import("@feat/leagues/pages/LeaguesHubPage"));
 const PlayerCareerPage = React.lazy(() => import("@feat/careerStats/pages/PlayerCareerPage"));
@@ -132,6 +134,22 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <HomeRoute /> },
           { path: "game", element: <GameRoute /> },
+          {
+            path: "game/exhibition",
+            element: (
+              <LazyRoute>
+                <ExhibitionGamePage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: "game/league/:seasonGameId",
+            element: (
+              <LazyRoute>
+                <LeagueGamePage />
+              </LazyRoute>
+            ),
+          },
           { path: "teams", element: <TeamsRoute /> },
           { path: "teams/new", element: <TeamsRoute /> },
           {
