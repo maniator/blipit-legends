@@ -28,7 +28,7 @@ export const GameActionBtn = styled.button<{ $variant?: "primary" | "secondary" 
   }
 
   &:focus-visible {
-    outline: 2px solid aquamarine;
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
     outline-offset: 2px;
   }
 

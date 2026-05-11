@@ -22,6 +22,7 @@ import {
   GameRowHome,
   GameRowResult,
   GameRowStatus,
+  LaunchErrorMsg,
   PageTitle,
   ScheduleList,
 } from "./styles";
@@ -172,11 +173,7 @@ const SeasonSchedulePageInner: React.FunctionComponent = () => {
         <EmptyState title="No games scheduled" body="No games have been generated yet." />
       ) : (
         <ScheduleList>
-          {launchError !== null && (
-            <p role="alert" style={{ color: "var(--color-danger, #ff7070)", fontSize: "0.85rem" }}>
-              {launchError}
-            </p>
-          )}
+          {launchError !== null && <LaunchErrorMsg role="alert">{launchError}</LaunchErrorMsg>}
           {byDay.map(([day, dayGames]) => (
             <DaySection key={day}>
               <DayHeader>Day {day + 1}</DayHeader>
@@ -218,8 +215,13 @@ const SeasonSchedulePageInner: React.FunctionComponent = () => {
                                 void handleLaunchGame(game, managedSide);
                               }}
                               disabled={isLaunching}
+                              aria-busy={isLaunching}
                               data-testid={`play-game-${game.id}`}
-                              aria-label={`Play ${awayAbbrev} @ ${homeAbbrev} in Manager Mode`}
+                              aria-label={
+                                isLaunching
+                                  ? "Loading game…"
+                                  : `Play ${awayAbbrev} @ ${homeAbbrev} in Manager Mode`
+                              }
                             >
                               {isLaunching ? "…" : "▶ Play"}
                             </GameActionBtn>
@@ -231,8 +233,11 @@ const SeasonSchedulePageInner: React.FunctionComponent = () => {
                               void handleLaunchGame(game, null);
                             }}
                             disabled={isLaunching}
+                            aria-busy={isLaunching}
                             data-testid={`watch-game-${game.id}`}
-                            aria-label={`Watch ${awayAbbrev} @ ${homeAbbrev}`}
+                            aria-label={
+                              isLaunching ? "Loading game…" : `Watch ${awayAbbrev} @ ${homeAbbrev}`
+                            }
                           >
                             {isLaunching ? "…" : "👁 Watch"}
                           </GameActionBtn>
