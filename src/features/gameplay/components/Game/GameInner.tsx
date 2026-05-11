@@ -258,7 +258,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     // A fresh game is never "already final".
     setWasAlreadyFinalOnLoad(false);
     // Exhibition games (no seasonGameId) always allow manager mode.
-    // League spectator games (seasonGameId set, managedTeam null) block it.
+    // League spectator games (seasonGameId set, managedTeam null) do not allow manager mode.
     setManagerModeAllowed(seasonGameId == null || managedTeam !== null);
     setManagerMode(managedTeam !== null);
     if (managedTeam !== null) {
