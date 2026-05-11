@@ -56,6 +56,41 @@ async function insertTeam(db: BallgameDb, id: string, name: string): Promise<voi
   });
 }
 
+async function insertTeamPlayerFixtures(db: BallgameDb, teamId: string): Promise<void> {
+  const now = new Date().toISOString();
+  await db.players.bulkInsert([
+    {
+      id: `${teamId}_lineup_1`,
+      teamId,
+      section: "lineup",
+      orderIndex: 0,
+      name: `${teamId} Batter`,
+      role: "batter",
+      position: "CF",
+      handedness: "R",
+      batting: { contact: 50, power: 50, speed: 50, stamina: 50 },
+      createdAt: now,
+      updatedAt: now,
+      schemaVersion: 1,
+    },
+    {
+      id: `${teamId}_pitcher_1`,
+      teamId,
+      section: "pitchers",
+      orderIndex: 0,
+      name: `${teamId} Pitcher`,
+      role: "pitcher",
+      position: "SP",
+      handedness: "R",
+      pitchingRole: "SP",
+      pitching: { velocity: 50, control: 50, movement: 50, stamina: 60 },
+      createdAt: now,
+      updatedAt: now,
+      schemaVersion: 1,
+    },
+  ]);
+}
+
 /** Builds a minimal CreateSeasonInput with the given team IDs in one league. */
 function makeSeasonInput(teamIds: string[]) {
   return {
@@ -133,6 +168,38 @@ describe("createSeason", () => {
     const active = await store.getActiveSeason();
     expect(active).not.toBeNull();
     expect(active!.status).toBe("active");
+  });
+
+  it("stores lineup/bench/pitchers in season roster snapshots and initializes pitcher state", async () => {
+    const teamIds: string[] = [];
+    for (let i = 0; i < 8; i++) {
+      const id = `ct_snap${String(i).padStart(3, "0")}`;
+      await insertTeam(db, id, `Snapshot Team ${i}`);
+      await insertTeamPlayerFixtures(db, id);
+      teamIds.push(id);
+    }
+
+    const season = await store.createSeason(makeSeasonInput(teamIds));
+    const seasonTeams = await store.getSeasonTeams(season.id);
+    expect(seasonTeams).toHaveLength(8);
+
+    for (const team of seasonTeams) {
+      const snap = team.rosterSnapshot as {
+        lineup?: unknown[];
+        bench?: unknown[];
+        pitchers?: unknown[];
+      };
+      expect(Array.isArray(snap.lineup)).toBe(true);
+      expect(Array.isArray(snap.bench)).toBe(true);
+      expect(Array.isArray(snap.pitchers)).toBe(true);
+      expect(snap.lineup).toHaveLength(1);
+      expect(snap.pitchers).toHaveLength(1);
+    }
+
+    const pitcherStates = await db.seasonPlayerState
+      .find({ selector: { seasonId: season.id } })
+      .exec();
+    expect(pitcherStates).toHaveLength(8);
   });
 });
 
