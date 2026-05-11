@@ -74,5 +74,3 @@ export const LaunchErrorMsg = styled.p`
   color: ${({ theme }) => theme.colors.textDanger};
   margin: ${({ theme }) => theme.spacing.xs} 0 0;
 `;
-
-export { GameActionBtn } from "@feat/leagues/components/styles";

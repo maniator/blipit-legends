@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
+import { GameActionBtn } from "@feat/leagues/components/styles";
 import { SeasonContextProvider, useSeasonContext } from "@feat/leagues/context/SeasonContext";
 import { buildSeasonGameSetup } from "@feat/leagues/utils/buildSeasonGameSetup";
 import EmptyState from "@shared/components/EmptyState";
@@ -15,7 +16,6 @@ import type { GameLocationState } from "@storage/types";
 import {
   DayHeader,
   DaySection,
-  GameActionBtn,
   GameRow,
   GameRowActions,
   GameRowAway,

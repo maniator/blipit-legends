@@ -156,14 +156,16 @@ describe("buildSeasonGameSetup", () => {
     expect(playAwaySetup.managedTeam).toBe(0);
   });
 
-  it("calls reinitSeed with the game derivedSeed", async () => {
+  it("returns the game derivedSeed in the setup (reinitSeed called by GameInner, not here)", async () => {
     const homeSeasonTeam = makeSeasonTeamRecord("st-home", "season-1", homeCustomTeamId);
     const awaySeasonTeam = makeSeasonTeamRecord("st-away", "season-1", awayCustomTeamId);
     const game = makeSeasonGameRecord("st-home", "st-away");
 
-    await buildSeasonGameSetup(db, game, homeSeasonTeam, awaySeasonTeam, null);
+    const setup = await buildSeasonGameSetup(db, game, homeSeasonTeam, awaySeasonTeam, null);
 
-    expect(reinitSeed).toHaveBeenCalledWith("test-seed-42");
+    expect(setup.seed).toBe("test-seed-42");
+    // buildSeasonGameSetup must NOT call reinitSeed — GameInner owns PRNG seeding.
+    expect(reinitSeed).not.toHaveBeenCalled();
   });
 
   it("includes playerOverrides with lineup orders matching roster", async () => {

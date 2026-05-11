@@ -12,7 +12,7 @@ export const GameActionBtn = styled.button<{ $variant?: "primary" | "secondary" 
   padding: 4px 10px;
   font-size: ${({ theme }) => theme.fontSizes.sm};
   font-weight: 600;
-  min-height: 28px;
+  min-height: 32px;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s;

@@ -230,5 +230,3 @@ export const GameActionRow = styled.div`
   flex-wrap: wrap;
   margin-top: ${({ theme }) => theme.spacing.xs};
 `;
-
-export { GameActionBtn } from "@feat/leagues/components/styles";
