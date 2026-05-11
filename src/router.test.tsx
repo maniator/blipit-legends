@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { theme } from "@shared/theme";
-import { act, render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { ThemeProvider } from "styled-components";
 import { describe, expect, it, vi } from "vitest";
@@ -57,11 +57,10 @@ describe("router", () => {
       initialEntries: ["/saves"],
     });
 
-    await act(async () => {
-      renderWithTheme(<RouterProvider router={memoryRouter} />);
-      await Promise.resolve();
-    });
+    renderWithTheme(<RouterProvider router={memoryRouter} />);
 
-    expect(screen.getByTestId("app-loading-fallback")).toHaveTextContent("Loading page…");
+    await waitFor(() => {
+      expect(screen.getByTestId("app-loading-fallback")).toHaveTextContent("Loading page…");
+    });
   });
 });
