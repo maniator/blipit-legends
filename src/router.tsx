@@ -16,6 +16,14 @@ const HelpPage = React.lazy(() => import("@feat/help/pages/HelpPage"));
 const PlayerCareerPage = React.lazy(() => import("@feat/careerStats/pages/PlayerCareerPage"));
 const SavesPage = React.lazy(() => import("@feat/saves/pages/SavesPage"));
 
+function AppHydrateFallback() {
+  return (
+    <p data-testid="app-hydrate-fallback" role="status">
+      Loading app…
+    </p>
+  );
+}
+
 /** Route element for `/` — reads navigation callbacks from AppShell outlet context. */
 function HomeRoute() {
   const ctx = useOutletContext<AppShellOutletContext>();
@@ -70,6 +78,7 @@ function GameRoute() {
 export const router = createBrowserRouter([
   {
     element: <RootLayout />,
+    hydrateFallbackElement: <AppHydrateFallback />,
     children: [
       {
         element: <AppShell />,

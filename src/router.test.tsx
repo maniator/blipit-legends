@@ -1,3 +1,6 @@
+import * as React from "react";
+
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { router } from "./router";
@@ -20,5 +23,17 @@ describe("router", () => {
     // The router object exposes its internal route tree via `routes`
     expect(Array.isArray(router.routes)).toBe(true);
     expect(router.routes.length).toBeGreaterThan(0);
+  });
+
+  it("provides an app hydrate fallback on the root route", () => {
+    const [rootRoute] = router.routes as Array<{
+      hydrateFallbackElement?: React.ReactNode;
+    }>;
+
+    expect(React.isValidElement(rootRoute.hydrateFallbackElement)).toBe(true);
+
+    render(rootRoute.hydrateFallbackElement);
+
+    expect(screen.getByTestId("app-hydrate-fallback")).toHaveTextContent("Loading app…");
   });
 });
