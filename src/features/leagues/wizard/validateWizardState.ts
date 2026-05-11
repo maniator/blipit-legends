@@ -55,34 +55,8 @@ export function validateWizardState(state: WizardState): string[] {
 /**
  * Validates all steps up to and including the given step.
  * Used by Step 6 to confirm all prior steps are valid before creating the season.
+ * Delegates to validateWizardState with step=6 so the rules stay in one place.
  */
 export function validateAllSteps(state: WizardState): string[] {
-  const errors: string[] = [];
-
-  // Step 2
-  if (state.teamMode === "handpick") {
-    if (state.selectedTeamIds.length !== MINI_TEAM_COUNT) {
-      errors.push(
-        `Handpick mode requires exactly ${MINI_TEAM_COUNT} teams (${state.selectedTeamIds.length} selected).`,
-      );
-    }
-  } else if (state.teamMode === "mixed") {
-    if (state.selectedTeamIds.length === 0 || state.selectedTeamIds.length > MINI_TEAM_COUNT - 1) {
-      errors.push(
-        `Mixed mode requires 1–${MINI_TEAM_COUNT - 1} handpicked teams (${state.selectedTeamIds.length} selected).`,
-      );
-    }
-  }
-
-  // Step 5
-  if (!state.masterSeed || state.masterSeed.trim() === "") {
-    errors.push("Master seed must not be empty.");
-  }
-
-  // Step 6: for handpick/mixed, user must select which team they manage.
-  if (state.teamMode !== "allAutogen" && state.userCustomTeamId === null) {
-    errors.push("Please select which team you will manage.");
-  }
-
-  return errors;
+  return validateWizardState({ ...state, step: 6 });
 }

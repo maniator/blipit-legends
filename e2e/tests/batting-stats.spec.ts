@@ -66,12 +66,16 @@ test.describe("Batting Stats — seed 30nl0i", () => {
 
   test("game reaches FINAL state", async ({ page }) => {
     await startGameViaPlayBall(page, { seed: SEED });
-    await expect(page.getByText("FINAL")).toBeVisible({ timeout: GAME_TIMEOUT - 60_000 });
+    await expect(page.getByTestId("game-over-banner")).toBeVisible({
+      timeout: GAME_TIMEOUT - 60_000,
+    });
   });
 
   test("slot 2 vs slot 3: AB gap, when present, is explained by walks", async ({ page }) => {
     await startGameViaPlayBall(page, { seed: SEED });
-    await expect(page.getByText("FINAL")).toBeVisible({ timeout: GAME_TIMEOUT - 60_000 });
+    await expect(page.getByTestId("game-over-banner")).toBeVisible({
+      timeout: GAME_TIMEOUT - 60_000,
+    });
 
     // Away-team batting stats tab is active by default
     const table = page.getByTestId("batting-stats-table");
@@ -94,7 +98,9 @@ test.describe("Batting Stats — seed 30nl0i", () => {
 
   test("K <= AB for every away batter (strikeouts always count as at-bats)", async ({ page }) => {
     await startGameViaPlayBall(page, { seed: SEED });
-    await expect(page.getByText("FINAL")).toBeVisible({ timeout: GAME_TIMEOUT - 60_000 });
+    await expect(page.getByTestId("game-over-banner")).toBeVisible({
+      timeout: GAME_TIMEOUT - 60_000,
+    });
 
     const table = page.getByTestId("batting-stats-table");
     await expect(table).toBeVisible();

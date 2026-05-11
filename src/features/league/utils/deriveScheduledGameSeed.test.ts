@@ -81,8 +81,8 @@ describe("deriveScheduledGameSeed", () => {
     });
     const unexpectedPrefixSeed = deriveScheduledGameSeed({
       ...base,
-      homeCustomTeamId: "st_home",
-      awayCustomTeamId: "st_away",
+      homeCustomTeamId: "other_home",
+      awayCustomTeamId: "other_away",
     });
 
     expect(unexpectedPrefixSeed).toMatch(/^[0-9a-z]+$/);

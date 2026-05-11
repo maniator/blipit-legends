@@ -152,12 +152,12 @@ describe("LineScore", () => {
 
   it("shows FINAL banner when gameOver is true", () => {
     renderWithContext(<LineScore />, makeContextValue({ gameOver: true }));
-    expect(screen.getByText("FINAL")).toBeInTheDocument();
+    expect(screen.getByTestId("game-over-banner")).toBeInTheDocument();
   });
 
   it("does not show FINAL banner when game is in progress", () => {
     renderWithContext(<LineScore />, makeContextValue({ gameOver: false }));
-    expect(screen.queryByText("FINAL")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("game-over-banner")).not.toBeInTheDocument();
   });
 
   it("renders BSO dot groups (B / S / O labels)", () => {
