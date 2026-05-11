@@ -1,5 +1,5 @@
 generated: "2026-05-11T18:47:41.946Z"
-last_updated: "2026-05-11T19:00:00.000Z"
+last_updated: "2026-05-11T19:10:00.000Z"
 project: blipit-legends
 project_key: BL
 tracking_system: github
@@ -57,3 +57,69 @@ development_status:
   sprint-1-retrospective:
     status: done
     description: "Sprint 1 retrospective — completed; artifact at _bmad-output/implementation-artifacts/sprint-1-retro-2026-05-11.md"
+
+  # Sprint 1 next-steps (retro action items)
+  sprint-1-next-steps-a1:
+    status: done
+    description: "A1: 'gap ≥ 2× inset' rule documented in docs/style-guide.md touch-target section"
+
+  sprint-1-next-steps-a2:
+    status: done
+    description: "A2: Responsive CSS assertion guidance added to docs/e2e-testing.md (use mobile/minimum breakpoint value)"
+
+  sprint-1-next-steps-a3:
+    status: done
+    description: "A3: 04-implementation-notes.md sketch values annotated with 'verify neighbor gap before using' warning"
+
+  sprint-1-next-steps-a4:
+    status: done
+    description: "A4: Sprint 2 story files created (6.1–10.1) in _bmad-output/implementation-artifacts/"
+
+  sprint-1-next-steps-a5:
+    status: done
+    description: "A5: Buck F5 BSO sign-off artifact created at _bmad-output/implementation-artifacts/buck-f5-bso-signoff.md"
+
+  # Sprint 2 — planned (not yet started)
+  epic-6:
+    status: planned
+    description: "F5 — BSO Color-Only Information (Sprint 2)"
+
+  epic-7:
+    status: planned
+    description: "F2 — Logo PNG with srcset (Sprint 2)"
+
+  epic-8:
+    status: planned
+    description: "F4 — Font Size Minimum Bump (Sprint 2)"
+
+  epic-9:
+    status: planned
+    description: "F6 Tier 2 — Secondary Metadata Contrast (Sprint 2)"
+
+  epic-10:
+    status: planned
+    description: "F8 — Focus Indicator Audit (Sprint 2)"
+
+  6-1-f5-bso-accessibility:
+    status: planned
+    description: "Story 6.1: BSO text label + CVD dot border + ARIA; spec at 6-1-f5-bso-accessibility.md; Buck sign-off recorded"
+
+  7-1-f2-logo-png-srcset:
+    status: planned
+    description: "Story 7.1: Switch blipit.svg (base64 PNG in SVG wrapper) to blipit-512.png with srcset; audit manifest.webmanifest"
+
+  8-1-f4-font-size-minimum:
+    status: planned
+    description: "Story 8.1: Raise xs/tiny/sm tokens to ≥ 12px minimum; snapshot regen via e2e-test-runner required"
+
+  9-1-f6-tier2-contrast:
+    status: planned
+    description: "Story 9.1: Tier 2 contrast tokens (textDimmer, secondary metadata) bumped to WCAG AA; builds on Sprint 1 tokens"
+
+  10-1-f8-focus-ring-audit:
+    status: planned
+    description: "Story 10.1: Focus indicator audit; :focus-visible rings visible and meet WCAG 2.4.7 / 2.4.11 on all interactive elements"
+
+  sprint-2-retrospective:
+    status: not-started
+    description: "Sprint 2 retrospective — to be run after all Sprint 2 stories are done"
