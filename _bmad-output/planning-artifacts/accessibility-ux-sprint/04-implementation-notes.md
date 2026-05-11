@@ -64,11 +64,18 @@ rg -i '#(00ced1|2ecc71|0fc97f|44cc88)' src/  # known-old aquamarine/greens
 
 **Modify:**
 
-- `package.json` — add `"check:style-guide": "tsx scripts/check-style-guide-drift.ts"`, chain into `"lint"`
+- `package.json` — add `"check:style-guide": "<runner> scripts/check-style-guide-drift.ts"`, chain into `"lint"`
+
+  > **⚠️ Dependency note:** The repo currently has **no `tsx` dependency** and `scripts/` contains only `.mjs`/`.cjs` utilities. The implementing agent must choose one of two paths:
+  >
+  > - **(a) Add `tsx` as a devDependency** — run `yarn add -D tsx`, then use `"check:style-guide": "tsx scripts/check-style-guide-drift.ts"`. Document the new dependency in this plan and get architect sign-off (Winston).
+  > - **(b) Write the script as plain `.mjs`** — rename to `scripts/check-style-guide-drift.mjs` and use `"check:style-guide": "node scripts/check-style-guide-drift.mjs"`. No new dependency required; simpler path.
+  >
+  > Prefer option (b) unless TypeScript types are strictly needed in the script.
 
 **Reference patterns from existing scripts:**
 
-- Look in `scripts/` for any existing tsx-style runners as template
+- Existing scripts in `scripts/` use `.mjs` or `.cjs` (e.g., `check-spec-sizes.mjs`, `ensure-docker-snapshot-update.cjs`) — **not** `.ts`. Use those as template if going with option (b).
 - The test lives under `src/__tests__/` (not alongside the script) because Vitest `root: "src"` will not discover tests outside `src/`
 
 ### Story 2.1 (F3 Touch Targets)
@@ -116,7 +123,10 @@ const HelpButton = styled.button`
 // NOTE: boundingBox() is based on the element's layout box and will NOT include an
 // absolutely-positioned ::before pseudo-element. Use computed-style + edge-probe instead.
 
-const button = page.getByTestId("help-button");
+const button = page.getByTestId("home-help-button");
+// NOTE: "home-help-button" is the stable data-testid on HomeScreen.
+// The instructions modal that opens is "instructions-modal" (no close-button testid yet —
+// Sprint 1 must add one; see docs/e2e-testing.md for the testid registry).
 
 // Part 1: validate ::before inset via computed styles
 const inset = await button.evaluate((el) => {

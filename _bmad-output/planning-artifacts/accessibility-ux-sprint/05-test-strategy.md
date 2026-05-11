@@ -75,11 +75,12 @@ import { test, expect } from "@playwright/test";
 const MIN_TARGET = 44;
 
 const BUTTONS_TO_VERIFY = [
-  { route: "/", testid: "help-button" },
-  { route: "/saves", testid: "save-load-button" }, // first save card
-  { route: "/saves", testid: "save-export-button" },
-  { route: "/saves", testid: "save-delete-button" },
-  // close buttons require opening a modal first
+  // Existing stable testids (docs/e2e-testing.md):
+  { route: "/", testid: "home-help-button" }, // HomeScreen help icon
+  { route: "/saves", testid: "load-save-button" }, // first save card
+  { route: "/saves", testid: "export-save-button" },
+  { route: "/saves", testid: "delete-save-button" },
+  // close buttons require opening a modal first (see separate test below)
 ];
 
 for (const { route, testid } of BUTTONS_TO_VERIFY) {
@@ -124,8 +125,11 @@ for (const { route, testid } of BUTTONS_TO_VERIFY) {
 
 test("modal close button has ≥ 44×44 effective tap area", async ({ page }) => {
   await page.goto("/");
-  await page.getByTestId("help-button").click();
-  const close = page.getByTestId("modal-close-button");
+  // "home-help-button" opens the instructions dialog (data-testid="instructions-modal").
+  // The close button inside the modal currently has NO stable testid — Sprint 1 must add
+  // data-testid="instructions-modal-close-button" and register it in docs/e2e-testing.md.
+  await page.getByTestId("home-help-button").click();
+  const close = page.getByTestId("instructions-modal-close-button");
 
   // Validate ::before inset (see comment above re boundingBox limitation)
   const inset = await close.evaluate((node) => {
@@ -226,7 +230,8 @@ This unit test gives instant feedback on token regressions — no full E2E run n
 ```ts
 test("league teaser is non-interactive", async ({ page }) => {
   await page.goto("/");
-  const teaser = page.getByTestId("league-teaser");
+  // Actual data-testid on HomeScreen: "league-play-teaser"
+  const teaser = page.getByTestId("league-play-teaser");
 
   // Verify CSS pointer-events
   const pointerEvents = await teaser.evaluate((el) => window.getComputedStyle(el).pointerEvents);
@@ -241,8 +246,10 @@ test("league teaser is non-interactive", async ({ page }) => {
 
 test("league teaser shows lock icon and target quarter", async ({ page }) => {
   await page.goto("/");
-  const teaser = page.getByTestId("league-teaser");
+  // Actual data-testid on HomeScreen: "league-play-teaser"
+  const teaser = page.getByTestId("league-play-teaser");
   await expect(teaser).toContainText(/coming\s+(Q[1-4]|spring|summer|fall|winter)/i);
+  // Sprint 1 should add data-testid="lock-icon" to the lock icon element for stable assertion
   await expect(teaser.locator("[data-testid='lock-icon']")).toBeVisible();
 });
 ```
@@ -263,9 +270,12 @@ test("html element declares lang", async ({ page }) => {
 
 ```ts
 import { readFileSync } from "fs";
+import { join } from "path";
 
 test("index.html declares lang='en' on html element", () => {
-  const html = readFileSync("index.html", "utf8");
+  // Use process.cwd() to anchor the path — Vitest root is "src" so relative paths
+  // resolve to src/, not the repo root. process.cwd() is always the repo root.
+  const html = readFileSync(join(process.cwd(), "index.html"), "utf8");
   expect(html).toMatch(/<html\s[^>]*\blang=["']en["']/);
 });
 ```
