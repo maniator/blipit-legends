@@ -19,5 +19,23 @@ export const expectPseudoInset = (element: HTMLElement, insetMagnitude: number):
     return;
   }
 
-  expect(document.head.textContent).toMatch(new RegExp(`inset:\\s*-${Math.abs(insetMagnitude)}px`));
+  // Fallback for jsdom/happy-dom where ::before computed styles return NaN.
+  // Scope the search to a CSS rule that references one of this element's own class
+  // names to avoid false positives when another component injects the same inset value.
+  const classes = element.className.split(/\s+/).filter(Boolean);
+  const insetPx = `-${Math.abs(insetMagnitude)}px`;
+  const headText = document.head.textContent ?? "";
+
+  const matched = classes.some((cls) => {
+    // Match a rule containing this class name that also contains the expected inset
+    // within the same ::before block.  [^{]* / [^}]* safely skip other properties
+    // without crossing block boundaries.
+    const pattern = new RegExp(
+      `\\.${cls}[^{]*::before[^{]*\\{[^}]*inset:\\s*${insetPx}`,
+      "s",
+    );
+    return pattern.test(headText);
+  });
+
+  expect(matched, `Expected ::before on .${classes.join("/.")} to have inset: ${insetPx}`).toBe(true);
 };

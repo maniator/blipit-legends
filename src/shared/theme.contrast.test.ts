@@ -34,7 +34,7 @@ const contrast = (foreground: string, background: string): number => {
 
 describe("Sprint 1 contrast guardrails (Story 3.1)", () => {
   it("keeps textHint at WCAG AA contrast on key dark surfaces", () => {
-    expect(contrast(theme.colors.textHint, "#0d1b2e")).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(theme.colors.textHint, theme.colors.bgDeep)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(theme.colors.textHint, theme.colors.bgSurface)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(theme.colors.textHint, theme.colors.bgGame)).toBeGreaterThanOrEqual(4.5);
   });
