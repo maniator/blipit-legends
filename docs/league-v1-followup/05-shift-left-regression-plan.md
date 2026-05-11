@@ -55,9 +55,9 @@ Required regression checks tied to that screenshot:
 
 Implement these regression checks first, in this order:
 
-1. Watch-mode permissions (P0-2)
-2. Managed-team auto-sim branch (P0-3)
-3. Mixed-mode managed-team selector + validation (P0-1 + P0-4)
+1. Watch-mode permission enforcement
+2. Managed-team auto-sim branch
+3. Mixed-mode managed-team selector + validation
 4. Season write-back and schedule/standings consistency
 
 These four capture the highest-risk correctness regressions before v2 expansion.
