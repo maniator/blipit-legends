@@ -34,6 +34,13 @@ export interface GameSessionContextValue {
   seasonGameId: string | null;
   /** Which team (if any) the user manages — mirrors ExhibitionGameSetup.managedTeam. */
   managedTeam: 0 | 1 | null;
+  /**
+   * True once the session is fully hydrated and safe to start the game loop.
+   * Always true for ExhibitionGamePage and LeagueGamePage (setup is synchronous).
+   * Starts false on GamePage (auto-resume) and flips to true in the same useEffect
+   * that dispatches restore_game. useAutoPlayScheduler must gate on this flag.
+   */
+  sessionReady: boolean;
 }
 
 export const GameSessionContext =
@@ -101,30 +108,21 @@ const derivedSession: GameSessionContextValue = {
   disableSave: true,
   seasonGameId: seasonGameIdParam,
   managedTeam: managedTeamIdx,
+  sessionReady: true, // LeagueGamePage fetches before mounting <Game>
 };
 ```
 
 **Legacy saves session** (from `location.state.pendingLoadSave` — `GamePage` on `/game`):
 
-`GamePage` must also wrap `<GameSessionProvider>`. The save-resume flow reads the
-`SaveRecord.setup.managedTeam` from the restored state to derive `managerModeAllowed`:
+`GamePage` must also wrap `<GameSessionProvider>` using a `useState`-based value. `sessionReady`
+starts `false` for the auto-resume path (reactive saves list) and flips to `true` in the same
+`useEffect` that dispatches `restore_game`. This is the scheduler guard — see `02-winston-arch-spec.md`
+for the exact pattern and timing.
 
-```typescript
-// GamePage derives session after consuming pendingLoadSave:
-const derivedSaveSession: GameSessionContextValue = {
-  sessionType: "exhibition", // saves are always exhibition games
-  managerModeAllowed: slot.setup.managedTeam !== null,
-  disableSave: false, // saves always write back
-  seasonGameId: null,
-  managedTeam: slot.setup.managedTeam,
-};
-```
-
-For the **auto-resume path** (no `pendingLoadSave` — `GamePage` restores from the reactive
-saves list on first mount), `GamePage` defaults to `managerModeAllowed: true` until the save
-is consumed, then updates the `GameSessionContextValue` once the auto-resume effect fires.
-This requires `GameSessionContextValue` to be mutable state inside `GamePage` (a `useState`),
-not a static derivation at render time.
+**Page-refresh fallback:** `location.state` is in-memory only and is lost on browser refresh.
+If `pendingLoadSave` is `null` after the state read, default the session to
+`{ sessionReady: false, managerModeAllowed: false, managedTeam: null }` and let the auto-resume
+reactive-saves flow recover. Do NOT crash on missing state.
 
 **Story 2 must include `GamePage` in the files-changed list.** Failure to wrap `GamePage` with
 `<GameSessionProvider>` causes a runtime crash ("useGameSessionContext must be used within
@@ -155,6 +153,13 @@ playerActions → reducer` must stay free of UI-layer imports. `GameSessionConte
 5. **Do NOT deprecate or remove the `/game` route in this epic.**
    Save-resume navigation (`SavesPage` → `/game`) must continue to work. Migration of that flow is
    post-v2 scope.
+
+6. **`useAutoPlayScheduler` MUST gate on `sessionReady`.** Add `if (!sessionReady) return;`
+   at the top of the scheduler's `tick()` function in Story 2. Without this, a pitch can fire
+   against an uninitialized game state during the one render cycle before the auto-resume effect.
+
+7. **Do NOT touch `GamePage.tsx` in Story 1.** Story 1 is routes only. Any accidental edit to
+   `GamePage.tsx` in Story 1 will conflict with Story 2 and break the three-PR revert path.
 
 ---
 

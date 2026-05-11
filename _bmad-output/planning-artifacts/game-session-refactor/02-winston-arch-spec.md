@@ -5,7 +5,7 @@
 
 ---
 
-## Context Interface
+## `GameSessionContextValue` Interface
 
 ```typescript
 // src/features/gameplay/context/GameSessionContext.tsx
@@ -49,6 +49,19 @@ export interface GameSessionContextValue {
    * Mirrors ExhibitionGameSetup.managedTeam.
    */
   managedTeam: 0 | 1 | null;
+
+  /**
+   * True once the session is fully hydrated and ready to start.
+   * On GamePage (save-resume) this starts false and flips to true
+   * when the auto-resume effect fires and setSessionCtx is called.
+   * On ExhibitionGamePage and LeagueGamePage this is always true
+   * because the setup is synchronously available before render.
+   *
+   * useAutoPlayScheduler MUST gate on `sessionReady` — it must return
+   * early if sessionReady is false to prevent a pitch from firing
+   * against an uninitialized game state.
+   */
+  sessionReady: boolean;
 }
 ```
 
@@ -101,6 +114,7 @@ function deriveExhibitionSession(setup: ExhibitionGameSetup): GameSessionContext
     disableSave: false,
     seasonGameId: null,
     managedTeam: setup.managedTeam,
+    sessionReady: true, // setup is synchronously available before render
   };
 }
 ```
@@ -118,15 +132,38 @@ function deriveLeagueSession(
     disableSave: true,
     seasonGameId,
     managedTeam: managedTeamIdx,
+    sessionReady: true, // LeagueGamePage fetches BEFORE rendering <Game>; ready on mount
   };
 }
 ```
+
+Note: `LeagueGamePage` must not render `<Game>` until the 6-step hydration chain completes —
+show a loading spinner until all data is available, then render `<Game>` with
+`sessionReady: true`. Never render `<Game>` with a partial session.
+
+## Scheduler Guard (Required in `useAutoPlayScheduler`)
+
+After Story 2, `useAutoPlayScheduler` must gate on `sessionReady`:
+
+```typescript
+// useAutoPlayScheduler.ts — after Story 2
+const { sessionReady } = useGameSessionContext();
+
+// At the top of the tick() function:
+if (!sessionReady) return; // block scheduler until session is hydrated
+```
+
+This ensures no pitch fires against an uninitialized game state during the one-render-cycle
+window on GamePage before the auto-resume effect fires.
+
+---
 
 ## How `GamePage` Wraps the Context (Legacy Save-Resume Path)
 
 `GamePage` cannot derive `GameSessionContextValue` statically at render time because the auto-resume
 flow reads the `SaveRecord` asynchronously (reactive save list, then matched save effect). The value
-must be mutable state:
+must be mutable state. `sessionReady` starts as `false` so the scheduler does not tick before the
+save is loaded.
 
 ```typescript
 // GamePage.tsx — after Story 2
@@ -136,22 +173,42 @@ const [sessionCtx, setSessionCtx] = React.useState<GameSessionContextValue>(() =
   disableSave: false,
   seasonGameId: null,
   managedTeam: pendingLoadSave?.setup.managedTeam ?? null,
+  // sessionReady starts false when using save-resume — scheduler must not tick yet.
+  // Flips to true in the same setSessionCtx call that fires after the save is consumed.
+  sessionReady: pendingLoadSave != null, // true only if a specific save was passed in state
 }));
 
-// After auto-resume effect fires (when the reactive save is matched and consumed):
-// setSessionCtx({ ...sessionCtx, managerModeAllowed: restoredSave.setup.managedTeam !== null, ... });
-
-return (
-  <GameSessionProvider value={sessionCtx}>
-    <GameProviderWrapper>
-      <GameInner ... />
-    </GameProviderWrapper>
-  </GameSessionProvider>
-);
+// Inside the auto-resume effect, AFTER dispatch({ type: "restore_game", ... }):
+setSessionCtx((prev) => ({
+  ...prev,
+  managerModeAllowed: restoredSave.setup.managedTeam !== null,
+  managedTeam: restoredSave.setup.managedTeam,
+  sessionReady: true, // ← scheduler now allowed to fire
+}));
 ```
 
+**Timing rule:** `setSessionCtx({ sessionReady: true })` is called inside the same `useEffect`
+callback that runs `dispatch({ type: "restore_game", ... })`. This is not a loader — it is a
+post-mount `useEffect`. The component renders once with `sessionReady: false` (scheduler blocked),
+the effect fires on the next event-loop turn, and then `sessionReady` flips to `true`. The scheduler
+then starts normally. This is safe because `useAutoPlayScheduler` is a `setTimeout`-based loop —
+there is no render-phase logic at risk.
+
+**Note on `pendingLoadSave` path:** When `pendingLoadSave` is present in `location.state` at
+`GamePage` mount, `sessionReady` starts `true` immediately because the save metadata is available
+synchronously. The auto-resume path (save matched from reactive list) is the only path that starts
+with `sessionReady: false`.
+
+**`managedTeam` page-refresh fallback:** `location.state` (including `managedTeam`) is
+**in-memory only** and is lost on browser refresh. If a user refreshes `/game` mid-session,
+`GamePage` must not crash. Guard: if `pendingLoadSave` is `null` after the state read, default the
+session to `{ sessionReady: false, managerModeAllowed: false, managedTeam: null }` and allow the
+auto-resume flow to recover from the reactive saves list. This is the same path as a cold-start with
+no pending state — the existing auto-resume logic handles it.
+
 `GamePage` **must** be in Story 2's files-changed list. Forgetting it causes a runtime crash
-on any save-resume flow once Story 2 is live.
+("useGameSessionContext must be used within GameSessionProvider") on any save-resume flow once
+Story 2 ships.
 
 ---
 
@@ -214,17 +271,53 @@ export function makeGameSessionContext(
     disableSave: false,
     seasonGameId: null,
     managedTeam: null,
+    sessionReady: true, // default true so tests don't need to opt-in
     ...overrides,
   };
 }
 
-// Usage in tests:
+// Usage in component tests:
 // render(
 //   <GameSessionProvider value={makeGameSessionContext({ managerModeAllowed: false })}>
 //     <GameControls />
 //   </GameSessionProvider>
 // );
 ```
+
+## Hook Unit Test Isolation Strategy
+
+`useRxdbGameSync` and `useSeasonGameSync` call `useGameSessionContext()` internally. Unit tests
+for these hooks **must NOT** wrap in a real `<GameSessionProvider>` — that would pull in RxDB setup
+(`fake-indexeddb/auto`, `_createTestDb`) for tests that don't need persistence.
+
+Instead, mock the hook at the module level:
+
+```typescript
+// In useRxdbGameSync.test.ts and useSeasonGameSync.test.ts:
+import { vi } from "vitest";
+import { makeGameSessionContext } from "@test/testHelpers";
+
+vi.mock("@feat/gameplay/context/index", () => ({
+  useGameSessionContext: vi.fn(),
+  // ...other exports as needed
+}));
+
+import { useGameSessionContext } from "@feat/gameplay/context/index";
+
+beforeEach(() => {
+  vi.mocked(useGameSessionContext).mockReturnValue(
+    makeGameSessionContext({ disableSave: false, seasonGameId: null }),
+  );
+});
+```
+
+This pattern is consistent with how `useSaveStore` is mocked elsewhere in the codebase.
+
+## Cycle-Free Module Order — Hook Placement
+
+`useRxdbGameSync` and `useSeasonGameSync` are **leaf consumers** of `GameSessionContext`. They
+import from context; context does NOT import from them. This is a one-way dependency that does not
+create a cycle. Verify with `yarn check:circular-deps` after Story 3.
 
 ## BLOCK Constraints (mandatory — stop if violated)
 
@@ -234,3 +327,5 @@ export function makeGameSessionContext(
    `strategy → advanceRunners → gameOver → playerOut → hitBall → buntAttempt → playerActions → reducer`
 4. Do NOT bundle route split (Story 1) and context introduction (Story 2) in the same PR.
 5. Do NOT remove or deprecate the `/game` route in this epic.
+6. Do NOT render `<Game>` inside `LeagueGamePage` until all 6 hydration steps complete (`sessionReady: true`).
+7. `useAutoPlayScheduler` MUST gate on `sessionReady` — see "Scheduler Guard" section above.

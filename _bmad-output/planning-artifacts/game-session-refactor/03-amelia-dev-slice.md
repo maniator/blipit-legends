@@ -54,8 +54,27 @@ Key: `ExhibitionGamePage` is intentionally thin in Story 1. It is a routing shim
 //    - Set null if user is watching (no managed team)
 // Renders <Game> component — no GameSessionProvider yet (Story 2 adds this)
 // Loading state: show spinner while DB fetch is in flight; do not render <Game> until ready
-// Error/not-found guard: redirect to /leagues if seasonGameId is invalid or record missing
+// Error/not-found guard — TWO distinct failure modes:
+// 1. Invalid ID: RxDB finds no document for seasonGameId → redirect to /leagues
+// 2. Missing setup: document exists but hydration fails (e.g. corrupt team record) →
+//    show a brief error message, then redirect to /leagues after 2 seconds
+// Both paths must show a loading spinner WHILE the check runs, not a blank screen.
+// Direct URL load of /game/league/invalid-id must not flash a blank frame.
 ```
+
+### Story 1 hard stop: do NOT touch `GamePage.tsx`
+
+`GamePage.tsx` must not change in Story 1, not even for cleanup. Any edit creates a conflict with
+Story 2's `<GameSessionProvider>` addition, making revert impossible and potentially merging two
+architectural changes into the same diff.
+
+### Unit tests for Story 1
+
+- Both new page components: assert they render without crashing on a happy path (basic smoke)
+- `ExhibitionGamePage`: assert that missing `pendingGameSetup` in location state triggers a redirect to `/exhibition/new`
+- `LeagueGamePage`: assert loading state renders when fetch is in flight
+- `LeagueGamePage`: assert redirect to `/leagues` on invalid `seasonGameId`
+- `AppShell.handleStartFromExhibition`: unit test that verifies it navigates to `/game/exhibition` (not `/game`)
 
 ### E2E tests for Story 1
 
@@ -103,6 +122,33 @@ yarn build
   throw at runtime. Audit every `render(<GameControls ...>)` call and wrap.
 - `GameControls/index.tsx` `Props` type — remove `managerModeAllowed?: boolean`. Check for any
   other callers with `grep -r "managerModeAllowed" src/`.
+- **`GamePage.tsx` auto-resume path** — after `setSessionCtx({ sessionReady: true })` fires,
+  `useAutoPlayScheduler` must receive the updated value. Verify the scheduler re-evaluates
+  `sessionReady` on context change, not just on mount.
+- **`useAutoPlayScheduler`** — must add `if (!sessionReady) return;` at the top of the `tick`
+  function in Story 2. Without this, a pitch fires before the save is restored. This is a Story 2
+  change; add `src/features/gameplay/hooks/useAutoPlayScheduler.ts` to the Story 2 file list.
+
+### Hook unit test isolation
+
+`useRxdbGameSync` and `useSeasonGameSync` will call `useGameSessionContext()` after Story 3.
+Their unit tests must use `vi.mock`, not a real `<GameSessionProvider>` wrapper (which pulls in
+RxDB setup unnecessarily). Pattern:
+
+```typescript
+vi.mock("@feat/gameplay/context/index", () => ({
+  useGameSessionContext: vi.fn(),
+}));
+import { useGameSessionContext } from "@feat/gameplay/context/index";
+
+beforeEach(() => {
+  vi.mocked(useGameSessionContext).mockReturnValue(
+    makeGameSessionContext({ disableSave: false, seasonGameId: null }),
+  );
+});
+```
+
+Add this pattern to `useRxdbGameSync.test.ts` and `useSeasonGameSync.test.ts` in Story 3.
 
 ### Validation cadence (Story 2)
 
@@ -112,6 +158,7 @@ yarn format:check
 yarn typecheck
 yarn test src/features/gameplay/context/GameSessionContext.test.tsx
 yarn test src/features/gameplay/components/GameControls/
+yarn test src/features/gameplay/hooks/useAutoPlayScheduler.test.ts
 yarn build
 ```
 
@@ -122,8 +169,8 @@ yarn build
 ### Files to modify
 
 - `src/features/gameplay/components/Game/GameInner.tsx` — replace all session if-checks with `useGameSessionContext()` reads
-- `src/features/gameplay/hooks/useRxdbGameSync.ts` — receive `disableSave` from context (not from prop/ref)
-- `src/features/leagues/hooks/useSeasonGameSync.ts` — receive `seasonGameId` from context (not from ref)
+- `src/features/gameplay/hooks/useRxdbGameSync.ts` — hook reads `disableSave` from context internally; update tests with `vi.mock` pattern
+- `src/features/leagues/hooks/useSeasonGameSync.ts` — hook reads `seasonGameId` from context internally; remove `seasonGameIdRef` param; update tests with `vi.mock` pattern
 - `src/storage/types.ts` — add `@deprecated` JSDoc comment to `ExhibitionGameSetup.disableSave` and `ExhibitionGameSetup.seasonGameId`
 
 ### What gets removed from `GameInner`
@@ -137,7 +184,7 @@ const seasonGameIdRef = React.useRef<string | undefined>(undefined);
 // Remove the managerModeAllowed prop pass to <GameControls>
 
 // Replace with:
-const { managerModeAllowed, seasonGameId, disableSave } = useGameSessionContext();
+const { managerModeAllowed, seasonGameId, disableSave, sessionReady } = useGameSessionContext();
 ```
 
 ### `useRxdbGameSync` signature change
@@ -146,6 +193,7 @@ const { managerModeAllowed, seasonGameId, disableSave } = useGameSessionContext(
 // Before: receives disableSave info indirectly via refs/state in GameInner
 // After: hook calls useGameSessionContext() internally to read disableSave
 // No prop or parameter change at the call site in GameInner — the hook self-sources from context
+// Tests: add vi.mock("@feat/gameplay/context/index", ...) — see hook test isolation section above
 ```
 
 ### `useSeasonGameSync` signature change
@@ -155,6 +203,7 @@ const { managerModeAllowed, seasonGameId, disableSave } = useGameSessionContext(
 // After: hook calls useGameSessionContext() internally to read seasonGameId (string | null)
 // Remove the seasonGameIdRef parameter from the hook signature
 // Remove the corresponding ref from GameInner
+// Tests: add vi.mock("@feat/gameplay/context/index", ...) — see hook test isolation section above
 ```
 
 **There is no "OR" here.** Both hooks read from `useGameSessionContext()` internally. Passing

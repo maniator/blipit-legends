@@ -135,24 +135,34 @@ repository. Story 1 (route split) is already merged. Read these files IN ORDER b
 7. CRITICAL — Update `src/features/gameplay/components/Game/GamePage.tsx`
    - MUST add `<GameSessionProvider>` wrapping `<GameProviderWrapper>`.
    - GamePage uses a `useState`-based session value because the auto-resume path updates
-     managerModeAllowed asynchronously after the save is matched.
-   - See `02-winston-arch-spec.md` §"How GamePage Wraps the Context" for the exact pattern.
-   - Failure to do this causes a runtime crash: "useGameSessionContext must be used within
-     GameSessionProvider" on every save-resume flow once Story 2 ships.
-   - Missing-setup guard: if GamePage has no pendingLoadSave and no auto-resume save, default
-     session to { managerModeAllowed: true, disableSave: false, seasonGameId: null, managedTeam: null }
+     `managerModeAllowed` asynchronously after the save is matched.
+   - `sessionReady` starts false for the auto-resume path; flips to true inside the same
+     useEffect that dispatches restore_game. See `02-winston-arch-spec.md` §"How GamePage Wraps
+     the Context" for the exact pattern.
+   - Page-refresh fallback: if pendingLoadSave is null, default session to
+     { sessionReady: false, managerModeAllowed: false, managedTeam: null, disableSave: false,
+       sessionType: "exhibition", seasonGameId: null } and let auto-resume recover.
+   - Failure to include this causes a runtime crash on every save-resume flow.
 
-8. Update `src/test/testHelpers.ts`
+8. REQUIRED — Update `src/features/gameplay/hooks/useAutoPlayScheduler.ts`
+   - Add `const { sessionReady } = useGameSessionContext();` at the top of the hook.
+   - Add `if (!sessionReady) return;` at the top of the scheduler's tick function.
+   - Without this, a pitch fires before save-restore completes on GamePage auto-resume.
+   - Update `useAutoPlayScheduler.test.ts` to wrap renderHook with GameSessionProvider.
+
+9. Update `src/test/testHelpers.ts`
    - Add `makeGameSessionContext(overrides?)` helper (see `02-winston-arch-spec.md`)
+   - Include `sessionReady: true` in the default — tests opt-in to sessionReady: false if needed
 
-9. Update `src/features/gameplay/components/GameControls/GameControls.test.tsx`
-   - Wrap every `render(<GameControls ...>)` with `<GameSessionProvider value={makeGameSessionContext(...)}>`
-   - Tests verifying managerModeAllowed=false: pass `{ managerModeAllowed: false }` to makeGameSessionContext
+10. Update `src/features/gameplay/components/GameControls/GameControls.test.tsx`
+    - Wrap every `render(<GameControls ...>)` with `<GameSessionProvider value={makeGameSessionContext(...)}>`
+    - Tests verifying managerModeAllowed=false: pass `{ managerModeAllowed: false }` to makeGameSessionContext
 
-10. Create `src/features/gameplay/context/GameSessionContext.test.tsx`
+11. Create `src/features/gameplay/context/GameSessionContext.test.tsx`
     - Test: `useGameSessionContext()` throws outside provider
     - Test: values provided by `GameSessionProvider` are readable via hook
     - Test: `makeGameSessionContext({ managerModeAllowed: false })` produces correct shape
+    - Test: `makeGameSessionContext({ sessionReady: false })` — sessionReady can be overridden
 
 ## Agent routing
 
@@ -168,6 +178,7 @@ repository. Story 1 (route split) is already merged. Read these files IN ORDER b
   hitBall, buntAttempt, playerActions, reducer
 - Do NOT remove session if-checks from GameInner in this story — that is Story 3
 - Do NOT bundle Story 2 and Story 3 in the same PR
+- Do NOT touch GamePage.tsx in Story 1 — Story 2 adds GameSessionProvider there
 
 ## Validation before creating the PR
 
@@ -177,6 +188,7 @@ repository. Story 1 (route split) is already merged. Read these files IN ORDER b
   yarn typecheck:e2e
   yarn test src/features/gameplay/context/GameSessionContext.test.tsx
   yarn test src/features/gameplay/components/GameControls/
+  yarn test src/features/gameplay/hooks/useAutoPlayScheduler.test.ts
   yarn build
 
 E2E: route to e2e-test-runner to confirm existing game-routes.spec.ts still passes.
@@ -202,7 +214,7 @@ repository. Stories 1 and 2 are already merged. Read these files IN ORDER before
    - Remove: `const [managerModeAllowed, setManagerModeAllowed] = React.useState(true);`
    - Remove: `const seasonGameIdRef = React.useRef<string | undefined>(undefined);`
    - Remove: the `consumeSetup` effect block that sets managerModeAllowed and seasonGameIdRef
-   - Add: `const { managerModeAllowed, seasonGameId, disableSave, managedTeam } = useGameSessionContext();`
+   - Add: `const { managerModeAllowed, seasonGameId, disableSave, managedTeam, sessionReady } = useGameSessionContext();`
    - Remove all direct reads of `pendingGameSetup.disableSave`, `.seasonGameId`, `.managedTeam`
    - GameInner may still receive `pendingGameSetup` for simulation engine init (teams, seed, overrides)
      but must not branch on session-type fields
@@ -213,7 +225,17 @@ repository. Stories 1 and 2 are already merged. Read these files IN ORDER before
 
 3. Update `src/features/leagues/hooks/useSeasonGameSync.ts`
    - Hook calls `useGameSessionContext()` internally to read `seasonGameId`
+2. Update `src/features/gameplay/hooks/useRxdbGameSync.ts`
+   - Hook calls `useGameSessionContext()` internally to read `disableSave`
+   - Remove any `disableSave` prop/param it currently receives from GameInner
+   - Update `useRxdbGameSync.test.ts`: add vi.mock pattern (see `02-winston-arch-spec.md`
+     §"Hook Unit Test Isolation Strategy") — do NOT wrap in a real GameSessionProvider
+
+3. Update `src/features/leagues/hooks/useSeasonGameSync.ts`
+   - Hook calls `useGameSessionContext()` internally to read `seasonGameId`
    - Remove `seasonGameIdRef` parameter (was `React.MutableRefObject<string | undefined>`)
+   - Update `useSeasonGameSync.test.ts`: add vi.mock pattern — do NOT wrap in a real provider
+   - Add test: unmount during hydration → assert no season write occurred (guard for partial write)
 
 4. Update `src/storage/types.ts`
    - Add `@deprecated Use GameSessionContext instead` JSDoc to `ExhibitionGameSetup.disableSave`
@@ -223,6 +245,13 @@ repository. Stories 1 and 2 are already merged. Read these files IN ORDER before
 5. Audit remaining direct reads of ExhibitionGameSetup.disableSave / .seasonGameId
    - Run: grep -r "disableSave\|seasonGameId" src/ --include="*.ts" --include="*.tsx"
    - Confirm only `@storage/types.ts` declarations and the new page components remain
+
+6. Verify PWA precache manifest
+   - Run `yarn build` and inspect `dist/sw.js`
+   - Confirm `self.__WB_MANIFEST` does NOT exclude `/game/exhibition` or `/game/league/*`
+   - These are SPA routes sharing `index.html` — they are covered by the existing precache
+   - If `vite.config.ts` has a `navigateFallbackDenylist`, confirm the new paths are not in it
+   - Run `yarn check:circular-deps` to confirm hooks are leaf consumers (no new cycles)
 
 ## Agent routing
 
@@ -236,6 +265,7 @@ repository. Stories 1 and 2 are already merged. Read these files IN ORDER before
   strategy → advanceRunners → gameOver → playerOut → hitBall → buntAttempt → playerActions → reducer
 - Do NOT remove disableSave / seasonGameId fields from ExhibitionGameSetup in this story
 - Do NOT touch any PRNG, RxDB schema, or simulation reducer logic
+- useRxdbGameSync and useSeasonGameSync tests MUST use vi.mock — not real GameSessionProvider
 
 ## Validation before creating the PR
 
@@ -245,6 +275,7 @@ repository. Stories 1 and 2 are already merged. Read these files IN ORDER before
   yarn typecheck:e2e
   yarn test
   yarn build
+  yarn check:circular-deps
 
 Full E2E — route to e2e-test-runner to run all 7 Playwright device projects in Docker.
 The e2e-test-runner must confirm:
@@ -256,14 +287,35 @@ The e2e-test-runner must confirm:
 
 After e2e-test-runner confirms pass, Winston CR → APPROVE → create PR.
 
-After the PR merges, route to Paige (bmad-agent-tech-writer) to produce the required doc updates:
-  - docs/architecture.md — add /game/exhibition and /game/league/:seasonGameId routes; mark /game
-    as legacy; update onStartGame description; add GameSessionContext section; update auto-play
-    section to include ExhibitionGamePage and LeagueGamePage
-  - docs/repo-layout.md — add ExhibitionGamePage and LeagueGamePage file entries; update router
-  - .github/copilot-instructions.md — add two new route rows to the route table
-  - docs/game-session-refactor/01-architecture-decision-record.md — update Status to IMPLEMENTED
-Paige's doc updates must be reviewed and approved by Winston before being merged.
+After the PR merges, invoke bmad-agent-tech-writer (Paige) to produce all required doc updates.
+Pass Paige the following exact content spec:
+
+--- PAIGE CONTENT SPEC BEGIN ---
+Update `docs/architecture.md`:
+  - In the Route table, add two rows:
+    /game/exhibition | ExhibitionGamePage | Exhibition games (from ExhibitionSetupPage via AppShell); provides GameSessionProvider; new in game-session-refactor epic
+    /game/league/:seasonGameId | LeagueGamePage | League season games (from SeasonSchedulePage/SeasonHomePage); fetches SeasonGameRecord from RxDB; provides GameSessionProvider with disableSave:true; new in game-session-refactor epic
+  - Mark the /game row as: "[Legacy] GamePage — save resume from SavesPage; not deprecated; migration to /game/exhibition post-v2"
+  - Update onStartGame description: "navigates to /game/exhibition (was /game before game-session-refactor epic)"
+  - In the auto-play section: replace "pauses when (c) GamePage unmounts" with "pauses when (c) GamePage, ExhibitionGamePage, or LeagueGamePage unmounts"
+  - Add a new section "GameSessionContext" after the route table:
+    "GameSessionContext (src/features/gameplay/context/GameSessionContext.tsx) is the UI-layer context encoding session-level rules: sessionType, managerModeAllowed, disableSave, seasonGameId, managedTeam, sessionReady. Derived at the route level and wraps GameProviderWrapper. GameContext (simulation engine) remains session-unaware. See docs/game-session-refactor/01-architecture-decision-record.md for the full ADR."
+
+Update `docs/repo-layout.md`:
+  - Add ExhibitionGamePage to the exhibition feature section
+  - Add LeagueGamePage to the leagues feature section
+  - Update the router.tsx description to include the two new routes
+
+Update `.github/copilot-instructions.md` Route table:
+  - Add: /game/exhibition | ExhibitionGamePage | Exhibition games from ExhibitionSetupPage (post game-session-refactor epic)
+  - Add: /game/league/:seasonGameId | LeagueGamePage | League season games (post game-session-refactor epic)
+
+Update `docs/game-session-refactor/01-architecture-decision-record.md`:
+  - Change Status from APPROVED to IMPLEMENTED
+--- PAIGE CONTENT SPEC END ---
+
+Paige's doc updates must be reviewed and APPROVED by Winston (bmad-agent-architect → CR menu)
+before being merged.
 
 Do not stop to ask clarifying questions — all decisions are locked in the plan files.
 ```
@@ -276,10 +328,13 @@ After all three stories are merged and green on `master`, confirm:
 
 - [ ] `GameInner` has zero direct reads of `ExhibitionGameSetup.disableSave/seasonGameId/managedTeam`
 - [ ] `GameControls` has no `managerModeAllowed` prop
-- [ ] `useRxdbGameSync` has no `disableSave` parameter
-- [ ] `useSeasonGameSync` has no `seasonGameIdRef` parameter
+- [ ] `useRxdbGameSync` has no `disableSave` parameter; tests use `vi.mock`
+- [ ] `useSeasonGameSync` has no `seasonGameIdRef` parameter; tests use `vi.mock`
+- [ ] `useAutoPlayScheduler` gates on `sessionReady`
 - [ ] `GameSessionContext` is NOT imported by any module in the cycle-free chain
+- [ ] `yarn check:circular-deps` passes with zero new cycles
+- [ ] `dist/sw.js` precache manifest covers `/game/exhibition` and `/game/league/*` SPA paths
 - [ ] All 7 Playwright device projects pass on `master`
 - [ ] Winston issued APPROVE for all three story PRs
-- [ ] Paige produced doc updates for `docs/architecture.md`, `docs/repo-layout.md`, `.github/copilot-instructions.md`
+- [ ] Paige produced doc updates for `docs/architecture.md`, `docs/repo-layout.md`, `.github/copilot-instructions.md`; Winston approved them
 - [ ] `docs/game-session-refactor/01-architecture-decision-record.md` status updated to IMPLEMENTED
