@@ -146,7 +146,7 @@ const LineScore: React.FunctionComponent = () => {
           ))}
         </BsoGroup>
         {inning > 9 && !gameOver && <ExtraInningsBanner>EXTRA INNINGS</ExtraInningsBanner>}
-        {gameOver && <GameOverBanner>FINAL</GameOverBanner>}
+        {gameOver && <GameOverBanner data-testid="game-over-banner">FINAL</GameOverBanner>}
       </BsoRow>
     </Wrapper>
   );

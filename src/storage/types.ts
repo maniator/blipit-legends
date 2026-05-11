@@ -31,6 +31,13 @@ export type {
   UpdateCustomTeamInput,
 } from "@feat/customTeams/storage/types";
 export type {
+  SeasonGameRecord,
+  SeasonLeague,
+  SeasonPlayerStateRecord,
+  SeasonRecord,
+  SeasonTeamRecord,
+} from "@feat/league/storage/types";
+export type {
   EventRecord,
   GameEvent,
   GameSaveSetup,
@@ -41,6 +48,8 @@ export type {
   SaveRecord,
   ScoreSnapshot,
   StateSnapshot,
+  V2BundleCollections,
+  V2BundleHeader,
 } from "@feat/saves/storage/types";
 
 // Cross-feature / app-shell types (genuinely shared)
@@ -77,6 +86,27 @@ export type ExhibitionGameSetup = {
   awayTeamLabel: string;
   managedTeam: 0 | 1 | null;
   playerOverrides: PlayerOverrides;
+  /**
+   * PRNG seed for this game. When provided, GameInner will call reinitSeed()
+   * before starting the game so the random sequence is deterministic.
+   * Required for league season games; optional for exhibition games (which
+   * already call reinitSeed via ExhibitionSetupPage before navigation).
+   */
+  seed?: string;
+  /**
+   * When true, GameInner will skip creating a mid-game RxDB save slot for this
+   * session. Used for league season games, which are tracked separately via
+   * seasonGames records and should not appear in the general Load Saved Game list.
+   * Career-stats commits still occur via gameInstanceId regardless of this flag.
+   */
+  disableSave?: boolean;
+  /**
+   * When set, GameInner will call `applySeasonGameResult` on game completion to
+   * patch the seasonGames record to 'completed', update standings on seasonTeam
+   * docs, and advance seasons.currentGameDay. Only used for interactively played
+   * league season games; headless games handle this in runHeadlessGame directly.
+   */
+  seasonGameId?: string;
 };
 
 /** Context shape provided by AppShell through the React Router Outlet. */

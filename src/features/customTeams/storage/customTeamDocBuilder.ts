@@ -33,6 +33,7 @@ export function buildNewTeamDoc(input: CreateCustomTeamInput, id: string): TeamR
       archived: input.metadata?.archived ?? false,
     },
     ...(input.statsProfile !== undefined && { statsProfile: input.statsProfile }),
+    ...(input.autogen !== undefined && { autogen: input.autogen }),
   };
   doc.fingerprint = buildTeamFingerprint(doc);
   return doc;

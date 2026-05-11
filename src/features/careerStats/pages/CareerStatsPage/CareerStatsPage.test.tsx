@@ -224,7 +224,7 @@ describe("CareerStatsPage", () => {
 
     renderPage();
     await waitFor(() => {
-      expect(screen.getByTestId("career-stats-empty")).toBeInTheDocument();
+      expect(screen.getByTestId("career-stats-empty-no-games")).toBeInTheDocument();
     });
   });
 
@@ -350,7 +350,7 @@ describe("CareerStatsPage", () => {
     );
     renderPage();
     await waitFor(() => {
-      expect(screen.getByTestId("career-stats-empty")).toBeInTheDocument();
+      expect(screen.getByTestId("career-stats-empty-no-games")).toBeInTheDocument();
     });
   });
 

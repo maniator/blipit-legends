@@ -17,6 +17,7 @@ import {
   sanitizeManagerDecisionValues,
   STEAL_PCT_MIN,
 } from "@feat/gameplay/context/managerDecisionValues";
+import { useSeasonGameSync } from "@feat/leagues/hooks/useSeasonGameSync";
 import { useRxdbGameSync } from "@feat/saves/hooks/useRxdbGameSync";
 import { useSaveStore } from "@feat/saves/hooks/useSaveStore";
 import { useCustomTeams } from "@shared/hooks/useCustomTeams";
@@ -147,12 +148,17 @@ const GameInner: React.FunctionComponent<Props> = ({
   // Tracks the RxDB save ID for the current game session.
   const rxSaveIdRef = React.useRef<string | null>(null);
 
+  // Tracks the season game ID for the current session (undefined for exhibition games).
+  // Set when a league season game setup is consumed; cleared on new-game reset.
+  const seasonGameIdRef = React.useRef<string | undefined>(undefined);
+
   // True when the currently-loaded save was already in FINAL state on load.
   // Prevents useGameHistorySync from re-committing stats for a completed game.
   const [wasAlreadyFinalOnLoad, setWasAlreadyFinalOnLoad] = React.useState(false);
 
   useRxdbGameSync(rxSaveIdRef, actionBufferRef, { wasAlreadyFinalOnLoad });
   const { isCommitting } = useGameHistorySync(rxSaveIdRef, wasAlreadyFinalOnLoad);
+  useSeasonGameSync(seasonGameIdRef);
 
   React.useEffect(() => {
     onSavingStateChange?.(isCommitting);
@@ -282,27 +288,32 @@ const GameInner: React.FunctionComponent<Props> = ({
     // Create a new RxDB save for this session (fire-and-forget).
     // currentSeedStr() returns the seed that was already initialized for this
     // page load — it does NOT generate a new one.
-    const setup: GameSaveSetup = {
-      strategy,
-      managedTeam,
-      managerMode: managedTeam !== null,
-      homeTeam,
-      awayTeam,
-      decisionValues: sanitizeManagerDecisionValues(currentDecisionValues ?? {}),
-    };
-    createSave(
-      {
-        homeTeamId: homeTeam,
-        awayTeamId: awayTeam,
-        seed: currentSeedStr(),
-        setup,
-      },
-      { name: `${awayTeamLabel} vs ${homeTeamLabel}` },
-    )
-      .then((id) => {
-        rxSaveIdRef.current = id;
-      })
-      .catch(() => {});
+    // Skip for league season games (pendingGameSetup.disableSave === true) —
+    // those are tracked via seasonGames records and must not appear in the
+    // general Load Saved Game list. Career stats still commit via gameInstanceId.
+    if (!pendingGameSetup?.disableSave) {
+      const setup: GameSaveSetup = {
+        strategy,
+        managedTeam,
+        managerMode: managedTeam !== null,
+        homeTeam,
+        awayTeam,
+        decisionValues: sanitizeManagerDecisionValues(currentDecisionValues ?? {}),
+      };
+      createSave(
+        {
+          homeTeamId: homeTeam,
+          awayTeamId: awayTeam,
+          seed: currentSeedStr(),
+          setup,
+        },
+        { name: `${awayTeamLabel} vs ${homeTeamLabel}` },
+      )
+        .then((id) => {
+          rxSaveIdRef.current = id;
+        })
+        .catch(() => {});
+    }
 
     setGameActive(true);
     onGameSessionStarted?.();
@@ -311,6 +322,7 @@ const GameInner: React.FunctionComponent<Props> = ({
 
   const handleNewGame = () => {
     rxSaveIdRef.current = null;
+    seasonGameIdRef.current = undefined;
     dispatch({ type: "reset" });
     dispatchLog({ type: "reset" });
     setGameActive(false);
@@ -342,6 +354,15 @@ const GameInner: React.FunctionComponent<Props> = ({
     // Prevent auto-resume from overwriting this fresh session even if RxDB saves
     // load asynchronously after this effect fires.
     restoredRef.current = true;
+    // Capture the season game ID so useSeasonGameSync can record the result
+    // after the game ends. Clear previous session's ID first.
+    seasonGameIdRef.current = pendingGameSetup.seasonGameId;
+    // If the setup carries a seed (e.g. league season games), reinit the PRNG
+    // here — at the correct point in the bootstrap sequence — rather than in
+    // the utility that builds the setup object.
+    if (pendingGameSetup.seed != null) {
+      reinitSeed(pendingGameSetup.seed);
+    }
     handleStartRef.current(
       pendingGameSetup.homeTeam,
       pendingGameSetup.awayTeam,

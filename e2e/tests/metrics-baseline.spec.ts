@@ -76,7 +76,7 @@ async function waitForFinal(
   let lastChangeTime = Date.now();
 
   await expect(async () => {
-    if (await page.getByText("FINAL").isVisible()) return;
+    if (await page.getByTestId("game-over-banner").isVisible()) return;
 
     const currentText = await page
       .getByTestId("scoreboard")

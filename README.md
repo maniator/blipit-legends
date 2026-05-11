@@ -16,7 +16,19 @@ A self-playing, talking baseball simulator that runs entirely in your browser. W
 | ----------------------------------------------------------- | --------------------------------------------------------- |
 | ![Home screen — desktop](docs/screenshots/home-desktop.png) | ![Home screen — mobile](docs/screenshots/home-mobile.png) |
 
-### New Game setup
+### League Mode — season hub (standings)
+
+| Desktop                                                          | Mobile                                                         |
+| ---------------------------------------------------------------- | -------------------------------------------------------------- |
+| ![League hub — desktop](docs/screenshots/league-hub-desktop.png) | ![League hub — mobile](docs/screenshots/league-hub-mobile.png) |
+
+### League Mode — schedule
+
+| Desktop                                                                    | Mobile                                                                   |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| ![League schedule — desktop](docs/screenshots/league-schedule-desktop.png) | ![League schedule — mobile](docs/screenshots/league-schedule-mobile.png) |
+
+### New Exhibition Game setup
 
 | Desktop                                                            | Mobile                                                           |
 | ------------------------------------------------------------------ | ---------------------------------------------------------------- |
@@ -69,6 +81,7 @@ A self-playing, talking baseball simulator that runs entirely in your browser. W
 ## Features
 
 - **Installable PWA** — add to your Android or desktop home screen for a native app experience with its own ⚾ icon.
+- **League Mode** — create a Mini season with 8 teams, a 14-day Sprint schedule, and full standings tracking. Choose All autogen, Mixed, or Hand-pick team mode. Four autogen themes: Classic (city + animal), Sci-fi (planet + role), Whimsical (food + verb-er), or Mix. Use the parity slider to control how evenly matched teams are. Advance the season day-by-day with the Simulate Next Day button — each simulation is fully deterministic from the master seed.
 - **Step-by-step or auto-play** — press _Batter Up!_ (or Spacebar) for one pitch at a time, or enable Auto-play and choose Slow / Normal / Fast speed.
 - **Play-by-play announcements** — the Web Speech API narrates every pitch, hit, and out.
 - **Live scoreboard** — line score with per-inning runs, hits, balls/strikes/outs indicator, and an EXTRA INNINGS banner when the game goes deep.
