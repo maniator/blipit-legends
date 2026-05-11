@@ -65,6 +65,21 @@ export default tseslint.config(
 
       // General
       "no-console": "warn",
+
+      // Deprecated shim guard: import sanctionedWrite from the canonical path only.
+      // TODO(League Mode v2 cleanup): remove this rule once the shim file is deleted.
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@feat/league/storage/sanctionedWrite",
+              message:
+                "Import from @storage/sanctionedWrite instead. The @feat/league/storage/sanctionedWrite shim is deprecated.",
+            },
+          ],
+        },
+      ],
     },
   },
 

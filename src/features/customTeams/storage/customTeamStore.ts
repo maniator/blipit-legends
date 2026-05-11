@@ -43,13 +43,13 @@ import { FREE_AGENT_TEAM_ID } from "./schemaV1";
 type GetDb = () => Promise<BallgameDb>;
 
 /**
- * Module-level lock cache: a microtask-scoped Set of team IDs currently enrolled
- * in active seasons. The cache is invalidated after one microtask tick so
- * repeated writes within the same synchronous batch reuse the same DB query
- * result, while writes in subsequent ticks always re-validate.
+ * Module-level lock cache: a macrotask-scoped Set of team IDs currently enrolled
+ * in active seasons. The cache is invalidated after one macrotask tick (setTimeout 0)
+ * so repeated writes within the same async batch reuse the same DB query
+ * result, while writes in subsequent event-loop turns always re-validate.
  */
 let lockCache: Set<string> | null = null;
-let lockCacheInvalidation: Promise<void> | null = null;
+let lockCacheInvalidation: ReturnType<typeof setTimeout> | null = null;
 
 async function getLockedTeamIds(db: BallgameDb): Promise<Set<string>> {
   if (lockCache !== null) return lockCache;
@@ -70,13 +70,14 @@ async function getLockedTeamIds(db: BallgameDb): Promise<Set<string>> {
   }
 
   lockCache = lockedIds;
-  // Invalidate after one microtask tick so the cache never persists across
-  // separate async operations.
-  if (!lockCacheInvalidation) {
-    lockCacheInvalidation = Promise.resolve().then(() => {
+  // Invalidate after one macrotask tick so the cache is still reusable within
+  // the current async batch (e.g. bulk writes), but never carries over to a
+  // later event-loop turn.
+  if (lockCacheInvalidation === null) {
+    lockCacheInvalidation = setTimeout(() => {
       lockCache = null;
       lockCacheInvalidation = null;
-    });
+    }, 0);
   }
   return lockedIds;
 }
@@ -109,7 +110,10 @@ async function assertTeamNotLocked(
  */
 export function _resetLockCacheForTests(): void {
   lockCache = null;
-  lockCacheInvalidation = null;
+  if (lockCacheInvalidation !== null) {
+    clearTimeout(lockCacheInvalidation);
+    lockCacheInvalidation = null;
+  }
 }
 
 function buildStore(getDbFn: GetDb) {
