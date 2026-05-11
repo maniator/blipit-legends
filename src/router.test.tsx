@@ -8,7 +8,13 @@ import { describe, expect, it, vi } from "vitest";
 
 import { router } from "./router";
 
-vi.mock("@feat/saves/pages/SavesPage", () => new Promise(() => {}));
+const savesPageSuspension = vi.hoisted(() => new Promise<never>(() => {}));
+
+vi.mock("@feat/saves/pages/SavesPage", () => ({
+  default: function SuspendedSavesPage(): never {
+    throw savesPageSuspension;
+  },
+}));
 
 vi.mock("@shared/hooks/useSeedDemoTeams", () => ({
   useSeedDemoTeams: vi.fn(),
