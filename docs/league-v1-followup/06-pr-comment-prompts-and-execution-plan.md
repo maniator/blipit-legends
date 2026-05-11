@@ -1,4 +1,4 @@
-# 06 — PR comment payload: prompts + sync vs sequence execution plan
+# 06 — PR comment payload: prompts + parallel vs sequence execution plan
 
 Use the block below as the PR comment body.
 
@@ -102,7 +102,7 @@ This comment provides:
 
 ### 5) What can run in parallel vs sequence
 
-### Sequence-only (avoid conflicts)
+#### Sequence-only (avoid conflicts)
 
 1. PM kickoff board
 2. UX spec for screenshot-critical selector
@@ -112,7 +112,7 @@ This comment provides:
 
 Reason: these slices overlap routes/state and can cause merge conflicts or stale assumptions if run out of order.
 
-### Parallel-safe tracks
+#### Parallel-safe tracks
 
 - Tech-writer documentation updates can run in parallel with dev slices
 - Test authoring for already-stable files in current slice can run in parallel inside that slice
