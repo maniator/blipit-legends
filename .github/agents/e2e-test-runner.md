@@ -410,3 +410,19 @@ Use the `SENIOR LEAD REVIEW REQUEST` template from `.github/agents/prompt-exampl
 - [ ] All `data-testid` selectors referenced in new tests exist in the app source
 - [ ] `yarn typecheck:e2e` passes (catches Playwright API type errors in `e2e/**/*.ts`)
 - [ ] `yarn lint` — zero ESLint errors (applies to test files too)
+
+## Troubleshooting: Playwright MCP "Browser already in use"
+
+This agent does not use the Playwright MCP for test execution (it uses `docker run`). If you are asked to do live-browser QA via MCP and encounter:
+
+```
+Error: Browser is already in use for /root/.cache/ms-playwright/mcp-chrome
+```
+
+Run this first, then retry the MCP tool call:
+
+```bash
+sudo rm -rf /root/.cache/ms-playwright/mcp-chrome*
+```
+
+For the root cause and permanent fix, see `docs/e2e-testing.md` § "Troubleshooting: Browser already in use".

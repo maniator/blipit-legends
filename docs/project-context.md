@@ -112,6 +112,23 @@ yarn build         # Production build to dist/
 | GitHub Actions / CI workflow YAML                  | `ci-workflow`     | `copilot-setup-steps.yml` must NOT use `container:` — catastrophic, non-obvious bootstrap failure                          |
 | Live QA against blipit.net                         | `playwright-prod` | Localhost reverse proxy must be started first — no other documented path to production QA                                  |
 
+## Playwright MCP Local App Access Rule
+
+- For Playwright MCP local-browser sessions, start `npx vite preview` with `--host 0.0.0.0` so Chrome can reach it over IPv4.
+- **Recommended bootstrap:** `nohup npx vite preview --port 5173 --host 0.0.0.0 >> vite-preview.log 2>&1 & disown`, wait 4 seconds, then verify with `curl -s -o /dev/null -w "HTTP %{http_code}" http://127.0.0.1:5173/`.
+- The Playwright CLI `webServer` approach (e.g. `npx playwright test --config=playwright.config.ts --project=desktop`) also works and is still valid for standard E2E runs — it is no longer the _only_ option.
+- Navigate the MCP browser to `http://127.0.0.1:5173` (not `localhost:5173`).
+- **Prerequisite:** `--no-sandbox` must be present in the `mcp-server-playwright` MCP server args (Settings → Copilot → MCP servers → playwright-mcp). Without it Chrome fails to start regardless of how the server was launched.
+- Full rationale and troubleshooting live in `docs/e2e-testing.md`.
+
+## Playwright MCP "Browser already in use" Fix
+
+If any `playwright-browser_*` tool throws `"Browser is already in use for /root/.cache/ms-playwright/mcp-chrome"`:
+
+1. **Quick fix (stale lock from crash):** `sudo rm -rf /root/.cache/ms-playwright/mcp-chrome*` then retry. `copilot-setup-steps.yml` does this automatically on session start.
+2. **Permanent fix:** Add `--no-sandbox` (or `--isolated`) to the `mcp-server-playwright` args in GitHub repo Copilot MCP settings (Settings → Copilot → MCP servers → playwright-mcp). Root cause: the MCP server runs system Chrome as root with sandbox enabled; `--no-sandbox` disables it; `--isolated` uses an in-memory profile that avoids the issue entirely.
+3. Full diagnosis guide: `docs/e2e-testing.md` § "Troubleshooting: Browser already in use".
+
 ## Sub-Agent Push Rule
 
 Sub-agents must **never** run `git push`, `gh`, or `report_progress`. Sub-agents may create local commits, then must report the commit SHA back to the root Copilot agent so the root Copilot agent can push using `report_progress`.
