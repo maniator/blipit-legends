@@ -12,9 +12,7 @@ import {
 // ---------------------------------------------------------------------------
 
 test.describe("League QA — watch-mode spectator gating", () => {
-  test.beforeEach(async ({ page }) => {
-    await resetAppState(page);
-  });
+  // No beforeEach reset here — createAutogenSeason already calls resetAppState internally.
 
   test(
     "watch launches are spectator-only with no manager controls",
@@ -57,9 +55,11 @@ test.describe("League QA — mixed-mode wizard validation", () => {
       const nextBtn = page.getByTestId("wizard-next-button");
       await expect(nextBtn).toBeEnabled({ timeout: 15_000 });
 
-      // Advance to step 2 (Team Setup).
+      // Advance to step 2 (Team Setup) — wait for title to change deterministically.
+      const titleEl = page.locator('[data-testid="league-setup-wizard"] dialog h2').first();
+      const titleStep1 = await titleEl.textContent();
       await nextBtn.click();
-      await page.waitForTimeout(200);
+      await expect(titleEl).not.toHaveText(titleStep1 ?? "", { timeout: 10_000 });
 
       // Switch to Mixed mode and pick one team.
       const mixedRadio = page.locator('input[type="radio"][name="teamMode"][value="mixed"]');
@@ -74,8 +74,9 @@ test.describe("League QA — mixed-mode wizard validation", () => {
       // click above, 3 more Next clicks land on Review: 2→3, 3→5, 5→6).
       for (let step = 2; step <= 4; step++) {
         await expect(page.getByTestId("wizard-next-button")).toBeEnabled({ timeout: 10_000 });
+        const titleBefore = await titleEl.textContent();
         await page.getByTestId("wizard-next-button").click();
-        await page.waitForTimeout(200);
+        await expect(titleEl).not.toHaveText(titleBefore ?? "", { timeout: 10_000 });
       }
 
       // Step 6 (review): managed-team select must be visible, Create must be disabled.

@@ -5,14 +5,18 @@ import { importTeamsFixture } from "./helpers.flows";
 
 /**
  * Advances through one wizard step by clicking the stable "wizard-next-button"
- * testid and waiting for the button to re-enable (next step rendered).
+ * testid and waiting for the modal title to change, confirming the next step
+ * has rendered. This is deterministic and avoids the flakiness of a fixed timeout.
  */
 async function advanceWizardStep(page: Page): Promise<void> {
   const nextBtn = page.getByTestId("wizard-next-button");
   await expect(nextBtn).toBeEnabled({ timeout: 10_000 });
+  // Capture current title to detect step transition.
+  const titleEl = page.locator('[data-testid="league-setup-wizard"] dialog h2').first();
+  const titleBefore = await titleEl.textContent();
   await nextBtn.click();
-  // Brief pause for step transition; avoids double-click on rapid mobile renders.
-  await page.waitForTimeout(200);
+  // Wait for the title to change — deterministic indicator that the next step rendered.
+  await expect(titleEl).not.toHaveText(titleBefore ?? "", { timeout: 10_000 });
 }
 
 /**

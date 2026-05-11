@@ -125,7 +125,7 @@ function Step2({ state, dispatch, customTeams, errors }: Step2Props): React.Reac
             <FieldLabel>
               {state.teamMode === "handpick"
                 ? "Select exactly 8 teams"
-                : "Select teams to include (rest autogenned)"}
+                : "Select teams to include (rest auto-generated)"}
             </FieldLabel>
             {state.teamMode === "mixed" && (
               <FieldHint>

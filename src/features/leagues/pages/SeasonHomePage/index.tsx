@@ -330,7 +330,7 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
           <SimulateButton
             type="button"
             onClick={handleSimulateDay}
-            disabled={simulating}
+            disabled={simulating || launchingGame}
             data-testid="simulate-day-button"
           >
             {simulating
