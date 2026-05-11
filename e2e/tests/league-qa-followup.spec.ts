@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  advanceWizardStep,
   createAutogenSeason,
   createMixedManagedSeason,
   importTeamsFixture,
@@ -52,14 +53,10 @@ test.describe("League QA — mixed-mode wizard validation", () => {
       await expect(page).toHaveURL(/\/leagues\/new/, { timeout: 15_000 });
 
       // Wait for wizard to finish loading.
-      const nextBtn = page.getByTestId("wizard-next-button");
-      await expect(nextBtn).toBeEnabled({ timeout: 15_000 });
+      await expect(page.getByTestId("wizard-next-button")).toBeEnabled({ timeout: 15_000 });
 
-      // Advance to step 2 (Team Setup) — wait for title to change deterministically.
-      const titleEl = page.locator('[data-testid="league-setup-wizard"] dialog h2').first();
-      const titleStep1 = await titleEl.textContent();
-      await nextBtn.click();
-      await expect(titleEl).not.toHaveText(titleStep1 ?? "", { timeout: 10_000 });
+      // Advance to step 2 (Team Setup) — use the shared deterministic helper.
+      await advanceWizardStep(page);
 
       // Switch to Mixed mode and pick one team.
       const mixedRadio = page.locator('input[type="radio"][name="teamMode"][value="mixed"]');
@@ -71,12 +68,9 @@ test.describe("League QA — mixed-mode wizard validation", () => {
       await page.locator('input[type="checkbox"]').first().check();
 
       // Advance through steps 2→4 (STEP_ORDER=[1,2,3,5,6]: after the step-1→2
-      // click above, 3 more Next clicks land on Review: 2→3, 3→5, 5→6).
+      // advance above, 3 more Next clicks land on Review: 2→3, 3→5, 5→6).
       for (let step = 2; step <= 4; step++) {
-        await expect(page.getByTestId("wizard-next-button")).toBeEnabled({ timeout: 10_000 });
-        const titleBefore = await titleEl.textContent();
-        await page.getByTestId("wizard-next-button").click();
-        await expect(titleEl).not.toHaveText(titleBefore ?? "", { timeout: 10_000 });
+        await advanceWizardStep(page);
       }
 
       // Step 6 (review): managed-team select must be visible, Create must be disabled.

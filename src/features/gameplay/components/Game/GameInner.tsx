@@ -221,7 +221,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     });
     setStrategy(setup.strategy);
     setManagerModeAllowed(setup.seasonGameId == null || setup.managedTeam !== null);
-    if (setup.managedTeam !== null) setManagedTeam(setup.managedTeam);
+    setManagedTeam(setup.managedTeam ?? 0);
     setManagerMode(setup.managerMode && setup.managedTeam !== null);
     maybeShowStealClampToast(setup.decisionValues, setShowStealClampToast);
     setDecisionValues(
