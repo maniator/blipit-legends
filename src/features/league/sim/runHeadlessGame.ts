@@ -33,6 +33,7 @@
 import { GameHistoryStore } from "@feat/careerStats/storage/gameHistoryStore";
 import { runHeadlessGameSim } from "@feat/gameplay/sim/headless";
 import type { SeasonPlayerStateRecord } from "@feat/league/storage/types";
+import { applySeasonGameResult } from "@feat/leagues/utils/applySeasonGameResult";
 import { appLog } from "@shared/utils/logger";
 import { reinitSeed } from "@shared/utils/rng";
 
@@ -160,7 +161,7 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
   // runHeadlessGameSim() consumes random() calls from the just-reinit'd PRNG.
   // -------------------------------------------------------------------------
   const simResult = runHeadlessGameSim();
-  const { homeScore, awayScore, completedAt, boxscore } = simResult;
+  const { homeScore, awayScore, completedAt } = simResult;
 
   // -------------------------------------------------------------------------
   // STEP 7 — AI rotation policy for both teams.
@@ -227,16 +228,13 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
   // Order: game completion (durable sentinel) → player state → standings.
   // If a crash occurs after game completion but before player state, the
   // resetStaleGames() recovery path on next startup handles it.
+  //
+  // applySeasonGameResult handles: patch seasonGames to 'completed', update
+  // standings on seasonTeam docs, and advance currentGameDay (steps 9 + 10).
+  // The liveGameDoc is already claimed (in_progress); applySeasonGameResult
+  // will still patch it because it only skips docs already at 'completed'.
   // -------------------------------------------------------------------------
-  const runDiff = homeScore - awayScore;
-
-  // Commit game as completed.
-  await liveGameDoc.patch({
-    status: "completed",
-    boxscore,
-    completedAt,
-    claimedBy: null,
-  });
+  await applySeasonGameResult(db, liveGameDoc.id, { homeScore, awayScore });
 
   // -------------------------------------------------------------------------
   // STEP 9b — Write a CompletedGameRecord to gameHistory so team W/L stats
@@ -269,30 +267,6 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
     appLog.warn("[runHeadlessGame] gameHistory commit failed (non-fatal):", err);
   }
 
-  // Update standings on seasonTeam docs.
-  if (homeScore > awayScore) {
-    await homeTeamDoc.patch({
-      wins: homeTeamDoc.wins + 1,
-      runDifferential: homeTeamDoc.runDifferential + runDiff,
-    });
-    await awayTeamDoc.patch({
-      losses: awayTeamDoc.losses + 1,
-      runDifferential: awayTeamDoc.runDifferential - runDiff,
-    });
-  } else if (awayScore > homeScore) {
-    await awayTeamDoc.patch({
-      wins: awayTeamDoc.wins + 1,
-      runDifferential: awayTeamDoc.runDifferential + Math.abs(runDiff),
-    });
-    await homeTeamDoc.patch({
-      losses: homeTeamDoc.losses + 1,
-      runDifferential: homeTeamDoc.runDifferential - Math.abs(runDiff),
-    });
-  } else {
-    await homeTeamDoc.patch({ ties: homeTeamDoc.ties + 1 });
-    await awayTeamDoc.patch({ ties: awayTeamDoc.ties + 1 });
-  }
-
   // Apply pitcher fatigue patches (includes pitcherStartsThisSeason increment for SPs).
   if (fatiguePatches.length > 0) {
     const allStatesById = new Map(playerStates.map((d) => [d.id, d]));
@@ -306,29 +280,6 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
         });
       }),
     );
-  }
-
-  // -------------------------------------------------------------------------
-  // STEP 10 — Advance seasons.currentGameDay if all games for this day are done.
-  // RC1 (Winston CR): conditional patch — no-op if another writer already advanced.
-  // -------------------------------------------------------------------------
-  if (seasonDoc) {
-    const pendingOnDay = await db.seasonGames
-      .find({
-        selector: {
-          seasonId: liveGameDoc.seasonId,
-          gameDay: liveGameDoc.gameDay,
-          status: { $in: ["scheduled", "in_progress"] },
-        },
-      })
-      .exec();
-
-    if (pendingOnDay.length === 0) {
-      // All games for this day complete — advance if still on this day.
-      if (seasonDoc.currentGameDay === liveGameDoc.gameDay) {
-        await seasonDoc.patch({ currentGameDay: liveGameDoc.gameDay + 1 });
-      }
-    }
   }
 
   return { status: "completed", homeScore, awayScore };

@@ -57,6 +57,9 @@ export async function buildSeasonGameSetup(
     // League season games are tracked via seasonGames records — skip the
     // general-purpose save slot so they don't appear in Load Saved Game.
     disableSave: true,
+    // Pass the season game ID so GameInner can mark the game completed in the
+    // seasonGames collection and advance currentGameDay when the game ends.
+    seasonGameId: game.id,
     playerOverrides: {
       away: customTeamToPlayerOverrides(awayTeam),
       home: customTeamToPlayerOverrides(homeTeam),

@@ -159,6 +159,13 @@ export function useCareerStatsData() {
   const isEmpty =
     !dataLoading && selectedTeamId !== "" && battingRows.length === 0 && pitchingRows.length === 0;
 
+  /**
+   * True when the selected team has at least one CompletedGameRecord in the DB,
+   * even if no per-player batting/pitching rows were written (e.g. headless
+   * season games, which track only scores in v1).
+   */
+  const hasCompletedGames = teamsWithHistory.includes(selectedTeamId);
+
   const selectedCustomTeam = React.useMemo(
     () => customTeams.find((team) => team.id === selectedTeamId),
     [customTeams, selectedTeamId],
@@ -172,6 +179,7 @@ export function useCareerStatsData() {
     customTeams,
     dataLoading,
     eraLeader,
+    hasCompletedGames,
     hrLeader,
     isEmpty,
     noTeams,
