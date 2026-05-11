@@ -1,9 +1,28 @@
 import * as React from "react";
 
+import { theme } from "@shared/theme";
 import { render, screen } from "@testing-library/react";
+import { ThemeProvider } from "styled-components";
 import { describe, expect, it } from "vitest";
 
 import { router } from "./router";
+
+type TestRoute = {
+  children?: TestRoute[];
+  element?: React.ReactNode;
+  hydrateFallbackElement?: React.ReactNode;
+  path?: string;
+};
+
+function renderWithTheme(ui: React.ReactNode) {
+  return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
+}
+
+function getAppRoutes() {
+  const [rootRoute] = router.routes as TestRoute[];
+  const [appShellRoute] = rootRoute.children ?? [];
+  return appShellRoute.children ?? [];
+}
 
 /**
  * Smoke test for the app router — verifies the router is created and
@@ -26,14 +45,22 @@ describe("router", () => {
   });
 
   it("provides an app hydrate fallback on the root route", () => {
-    const [rootRoute] = router.routes as Array<{
-      hydrateFallbackElement?: React.ReactNode;
-    }>;
+    const [rootRoute] = router.routes as TestRoute[];
 
     expect(React.isValidElement(rootRoute.hydrateFallbackElement)).toBe(true);
 
-    render(rootRoute.hydrateFallbackElement);
+    renderWithTheme(rootRoute.hydrateFallbackElement);
 
-    expect(screen.getByTestId("app-hydrate-fallback")).toHaveTextContent("Loading app…");
+    expect(screen.getByTestId("app-loading-fallback")).toHaveTextContent("Loading app…");
+  });
+
+  it("provides a visible fallback for lazy page routes", () => {
+    const savesRoute = getAppRoutes().find((route) => route.path === "saves");
+
+    expect(savesRoute?.element).toBeDefined();
+
+    renderWithTheme(savesRoute?.element);
+
+    expect(screen.getByTestId("app-loading-fallback")).toHaveTextContent("Loading page…");
   });
 });
