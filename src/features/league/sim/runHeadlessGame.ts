@@ -30,6 +30,7 @@
  * seasonGames.status='completed' is the durable sentinel — once that is set, the game
  * is considered done and a second run is a no-op (claim step returns 'already_complete').
  */
+import { GameHistoryStore } from "@feat/careerStats/storage/gameHistoryStore";
 import { runHeadlessGameSim } from "@feat/gameplay/sim/headless";
 import type { SeasonPlayerStateRecord } from "@feat/league/storage/types";
 import { appLog } from "@shared/utils/logger";
@@ -236,6 +237,37 @@ export async function runHeadlessGame(input: RunHeadlessGameInput): Promise<Head
     completedAt,
     claimedBy: null,
   });
+
+  // -------------------------------------------------------------------------
+  // STEP 9b — Write a CompletedGameRecord to gameHistory so team W/L stats
+  // appear on the /stats/:teamId career stats pages.
+  // Placed AFTER the durable sentinel write (status='completed') so a crash
+  // between steps 9 and 9b never leaves a gameHistory record without a
+  // corresponding completed seasonGames entry.
+  // Empty batting/pitching rows: headless sim has no per-player tracking (v2).
+  // -------------------------------------------------------------------------
+  try {
+    await GameHistoryStore.commitCompletedGame(
+      liveGameDoc.id,
+      {
+        playedAt: completedAt,
+        seed: derivedSeed,
+        rngState: null,
+        homeTeamId: homeTeamDoc.customTeamId,
+        awayTeamId: awayTeamDoc.customTeamId,
+        homeScore,
+        awayScore,
+        // TODO(Phase 4): replace with simResult.innings once the full reducer
+        // loop runs extra-inning games. The v1 stub always returns 9.
+        innings: simResult.innings,
+      },
+      [],
+      [],
+    );
+  } catch (err) {
+    // Non-fatal: standings and seasonGames are already written. Log and continue.
+    appLog.warn("[runHeadlessGame] gameHistory commit failed (non-fatal):", err);
+  }
 
   // Update standings on seasonTeam docs.
   if (homeScore > awayScore) {

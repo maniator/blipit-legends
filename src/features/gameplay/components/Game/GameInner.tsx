@@ -282,27 +282,32 @@ const GameInner: React.FunctionComponent<Props> = ({
     // Create a new RxDB save for this session (fire-and-forget).
     // currentSeedStr() returns the seed that was already initialized for this
     // page load — it does NOT generate a new one.
-    const setup: GameSaveSetup = {
-      strategy,
-      managedTeam,
-      managerMode: managedTeam !== null,
-      homeTeam,
-      awayTeam,
-      decisionValues: sanitizeManagerDecisionValues(currentDecisionValues ?? {}),
-    };
-    createSave(
-      {
-        homeTeamId: homeTeam,
-        awayTeamId: awayTeam,
-        seed: currentSeedStr(),
-        setup,
-      },
-      { name: `${awayTeamLabel} vs ${homeTeamLabel}` },
-    )
-      .then((id) => {
-        rxSaveIdRef.current = id;
-      })
-      .catch(() => {});
+    // Skip for league season games (pendingGameSetup.disableSave === true) —
+    // those are tracked via seasonGames records and must not appear in the
+    // general Load Saved Game list. Career stats still commit via gameInstanceId.
+    if (!pendingGameSetup?.disableSave) {
+      const setup: GameSaveSetup = {
+        strategy,
+        managedTeam,
+        managerMode: managedTeam !== null,
+        homeTeam,
+        awayTeam,
+        decisionValues: sanitizeManagerDecisionValues(currentDecisionValues ?? {}),
+      };
+      createSave(
+        {
+          homeTeamId: homeTeam,
+          awayTeamId: awayTeam,
+          seed: currentSeedStr(),
+          setup,
+        },
+        { name: `${awayTeamLabel} vs ${homeTeamLabel}` },
+      )
+        .then((id) => {
+          rxSaveIdRef.current = id;
+        })
+        .catch(() => {});
+    }
 
     setGameActive(true);
     onGameSessionStarted?.();

@@ -17,6 +17,14 @@ import { runHeadlessGame } from "./runHeadlessGame";
 
 vi.mock("@storage/db", () => ({ getDb: vi.fn() }));
 
+// Mock GameHistoryStore so runHeadlessGame's step-9b gameHistory commit does not
+// attempt to open the completedGames collection (not present in makeTestDb).
+vi.mock("@feat/careerStats/storage/gameHistoryStore", () => ({
+  GameHistoryStore: {
+    commitCompletedGame: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 // We test the core claim → sim → write flow by injecting a minimal test DB.
 // runHeadlessGame() uses getDb() which opens IndexedDB; to avoid that we
 // test the logic directly with an inline function that accepts a db param.
@@ -396,6 +404,18 @@ describe("runHeadlessGame — full flow", () => {
     // Verify the game is now completed.
     const updatedGame = await testDb.seasonGames.findOne(gameId).exec();
     expect(updatedGame?.status).toBe("completed");
+
+    // Verify step-9b: GameHistoryStore.commitCompletedGame called with customTeamIds.
+    const { GameHistoryStore } = await import("@feat/careerStats/storage/gameHistoryStore");
+    expect(GameHistoryStore.commitCompletedGame).toHaveBeenCalledWith(
+      gameId,
+      expect.objectContaining({
+        homeTeamId: "ct_home",
+        awayTeamId: "ct_away",
+      }),
+      [],
+      [],
+    );
 
     await testDb.close();
   });
