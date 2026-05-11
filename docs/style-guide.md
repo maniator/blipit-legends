@@ -1,4 +1,4 @@
-# Ballgame UI Style Guide
+# BlipIt Legends UI Style Guide
 
 This document is the visual source of truth for BlipIt Legends.
 

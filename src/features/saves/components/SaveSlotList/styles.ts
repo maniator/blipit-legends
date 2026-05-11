@@ -64,7 +64,7 @@ export const SaveDate = styled.div`
 
 export const SaveActions = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: ${({ theme }) => theme.spacing.md};
   flex-shrink: 0;
 
   ${mq.mobile} {

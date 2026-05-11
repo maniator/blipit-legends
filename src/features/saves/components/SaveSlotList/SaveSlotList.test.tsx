@@ -65,8 +65,8 @@ describe("SaveSlotList", () => {
 
   it("uses pseudo-element hit expansion on save action buttons", () => {
     render(<SaveSlotList {...defaultProps} />);
-    expectPseudoInset(screen.getByTestId("load-save-button"), -6);
-    expectPseudoInset(screen.getByTestId("export-save-button"), -6);
-    expectPseudoInset(screen.getByTestId("delete-save-button"), -6);
+    expectPseudoInset(screen.getByTestId("load-save-button"), 6);
+    expectPseudoInset(screen.getByTestId("export-save-button"), 6);
+    expectPseudoInset(screen.getByTestId("delete-save-button"), 6);
   });
 });

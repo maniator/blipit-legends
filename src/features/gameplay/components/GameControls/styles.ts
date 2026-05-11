@@ -129,7 +129,11 @@ export const HelpButton = styled.button`
   &::before {
     content: "";
     position: absolute;
-    inset: -10px;
+    inset: -5px;
+
+    ${mq.mobile} {
+      inset: -3px;
+    }
   }
 
   &:hover {

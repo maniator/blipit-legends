@@ -60,7 +60,7 @@ describe("InstructionsModal", () => {
 
     const helpButton = screen.getByTestId("instructions-help-button");
     const closeButton = screen.getByTestId("instructions-close-button");
-    expectPseudoInset(helpButton, -10);
-    expectPseudoInset(closeButton, -8);
+    expectPseudoInset(helpButton, 5);
+    expectPseudoInset(closeButton, 8);
   });
 });
