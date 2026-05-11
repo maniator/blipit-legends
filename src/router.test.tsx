@@ -1,12 +1,10 @@
 import * as React from "react";
 
 import { theme } from "@shared/theme";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { ThemeProvider } from "styled-components";
 import { describe, expect, it, vi } from "vitest";
-
-import { router } from "./router";
 
 const savesPageSuspension = vi.hoisted(() => new Promise<never>(() => {}));
 
@@ -27,6 +25,8 @@ vi.mock("@shared/hooks/useServiceWorkerUpdate", () => ({
     reload: vi.fn(),
   }),
 }));
+
+const { router } = await import("./router");
 
 function renderWithTheme(ui: React.ReactNode) {
   return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
@@ -52,12 +52,16 @@ describe("router", () => {
     expect(router.routes.length).toBeGreaterThan(0);
   });
 
-  it("provides a visible fallback for lazy page routes", () => {
+  it("provides a visible fallback for lazy page routes", async () => {
     const memoryRouter = createMemoryRouter(router.routes, {
       initialEntries: ["/saves"],
     });
 
-    renderWithTheme(<RouterProvider router={memoryRouter} />);
+    await act(async () => {
+      renderWithTheme(<RouterProvider router={memoryRouter} />);
+      await Promise.resolve();
+    });
+
     expect(screen.getByTestId("app-loading-fallback")).toHaveTextContent("Loading page…");
   });
 });
