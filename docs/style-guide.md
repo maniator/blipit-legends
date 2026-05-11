@@ -74,7 +74,7 @@ Use tokens by semantic role, not by hex.
 | `theme.colors.textBody`          | `#cce0ff` | Body copy                    |
 | `theme.colors.textDialog`        | `#e0f0ff` | Dialog content               |
 | `theme.colors.textMuted`         | `#BFC7CF` | Secondary copy               |
-| `theme.colors.textDimmer`        | `#6B7785` | Quiet metadata               |
+| `theme.colors.textDimmer`        | `#8a9aaa` | Quiet metadata               |
 | `theme.colors.textHint`          | `#6e88b1` | Labels/hints                 |
 | `theme.colors.textLink`          | `#aaccff` | Link and CTA secondary text  |
 | `theme.colors.textSecondaryLink` | `#88bbee` | Secondary interactive labels |
