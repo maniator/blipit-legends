@@ -112,6 +112,14 @@ yarn build         # Production build to dist/
 | GitHub Actions / CI workflow YAML                  | `ci-workflow`     | `copilot-setup-steps.yml` must NOT use `container:` — catastrophic, non-obvious bootstrap failure                          |
 | Live QA against blipit.net                         | `playwright-prod` | Localhost reverse proxy must be started first — no other documented path to production QA                                  |
 
+## Playwright MCP Local App Access Rule
+
+- For Playwright MCP local-browser sessions, **do not** start `yarn dev` or `npx vite preview` manually from bash.
+- Start localhost access via Playwright CLI so `webServer` owns preview startup (for example `npx playwright test --config=playwright-metrics.config.ts --project=desktop`).
+- Then navigate the MCP browser to `http://localhost:5173`.
+- If the Playwright process exits, restart the same command before continuing MCP browser actions.
+- Full rationale and troubleshooting live in `docs/e2e-testing.md` under “Starting the preview server for MCP browser automation.”
+
 ## Sub-Agent Push Rule
 
 Sub-agents must **never** run `git push`, `gh`, or `report_progress`. Sub-agents may create local commits, then must report the commit SHA back to the root Copilot agent so the root Copilot agent can push using `report_progress`.
