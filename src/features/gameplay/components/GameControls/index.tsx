@@ -7,6 +7,7 @@ import { useCustomTeams } from "@shared/hooks/useCustomTeams";
 import type { SaveRecord } from "@storage/types";
 
 import { SPEED_STEP_LABELS, SPEED_STEPS } from "./constants";
+import ManagerDecisionValuesPanel from "./ManagerDecisionValuesPanel";
 import ManagerModeControls from "./ManagerModeControls";
 import {
   AutoPlayGroup,
@@ -209,14 +210,19 @@ const GameControls: React.FunctionComponent<Props> = ({
               notifPermission={notifPermission}
               gameStarted={gameStarted}
               gameOver={gameOver}
-              decisionValues={decisionValues}
               onManagerModeChange={handleManagerModeChange}
               onStrategyChange={(e) => setStrategy(e.target.value as Strategy)}
               onManagedTeamChange={(e) => setManagedTeam(Number(e.target.value) === 1 ? 1 : 0)}
               onRequestNotifPermission={handleRequestNotifPermission}
-              onDecisionValuesChange={setDecisionValues}
-              onDecisionValuesReset={resetDecisionValues}
-              onDecisionPanelOpenChange={handleDecisionPanelOpenChange}
+            />
+          )}
+          {gameStarted && (
+            <ManagerDecisionValuesPanel
+              spectatorMode={!managerModeAllowed}
+              values={decisionValues}
+              onChange={setDecisionValues}
+              onReset={resetDecisionValues}
+              onOpenChange={handleDecisionPanelOpenChange}
             />
           )}
         </AutoPlayGroup>

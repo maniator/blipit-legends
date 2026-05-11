@@ -4,10 +4,8 @@ import type { PitchingRole } from "@feat/gameplay/components/SubstitutionPanel";
 import SubstitutionPanel from "@feat/gameplay/components/SubstitutionPanel";
 import { useGameContext } from "@feat/gameplay/context/index";
 import { Strategy } from "@feat/gameplay/context/index";
-import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
 import { useTeamWithRoster } from "@shared/hooks/useTeamWithRoster";
 
-import ManagerDecisionValuesPanel from "./ManagerDecisionValuesPanel";
 import { NotifBadge, Select, SubButton, ToggleLabel } from "./styles";
 
 type Props = {
@@ -18,14 +16,10 @@ type Props = {
   notifPermission: NotificationPermission | "unavailable";
   gameStarted?: boolean;
   gameOver?: boolean;
-  decisionValues: ManagerDecisionValues;
   onManagerModeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onStrategyChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   onManagedTeamChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   onRequestNotifPermission: () => void;
-  onDecisionValuesChange: (values: ManagerDecisionValues) => void;
-  onDecisionValuesReset: () => void;
-  onDecisionPanelOpenChange?: (open: boolean) => void;
 };
 
 /** Inner sub-component that accesses game context for the substitution button. */
@@ -94,14 +88,10 @@ const ManagerModeControls: React.FunctionComponent<Props> = ({
   notifPermission,
   gameStarted = false,
   gameOver = false,
-  decisionValues,
   onManagerModeChange,
   onStrategyChange,
   onManagedTeamChange,
   onRequestNotifPermission,
-  onDecisionValuesChange,
-  onDecisionValuesReset,
-  onDecisionPanelOpenChange,
 }) => (
   <>
     <ToggleLabel>
@@ -159,12 +149,6 @@ const ManagerModeControls: React.FunctionComponent<Props> = ({
         )}
       </>
     )}
-    <ManagerDecisionValuesPanel
-      values={decisionValues}
-      onChange={onDecisionValuesChange}
-      onReset={onDecisionValuesReset}
-      onOpenChange={onDecisionPanelOpenChange}
-    />
   </>
 );
 

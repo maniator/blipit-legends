@@ -92,6 +92,27 @@ describe("GameControls", () => {
     expect(screen.queryByRole("checkbox", { name: /manager mode/i })).not.toBeInTheDocument();
   });
 
+  it("shows Decision Tuning toggle in spectator mode (managerModeAllowed=false, gameStarted=true)", () => {
+    renderWithContext(<GameControls gameStarted managerModeAllowed={false} />);
+    expect(screen.getByTestId("manager-decision-tuning-toggle")).toBeInTheDocument();
+    expect(screen.getByTestId("manager-decision-tuning-toggle").textContent).toMatch(
+      /Simulation Style/,
+    );
+  });
+
+  it("shows Decision Tuning toggle in manager mode (managerModeAllowed=true, gameStarted=true)", () => {
+    renderWithContext(<GameControls gameStarted managerModeAllowed={true} />);
+    expect(screen.getByTestId("manager-decision-tuning-toggle")).toBeInTheDocument();
+    expect(screen.getByTestId("manager-decision-tuning-toggle").textContent).toMatch(
+      /Decision Tuning/,
+    );
+  });
+
+  it("does NOT show Decision Tuning toggle when gameStarted=false", () => {
+    renderWithContext(<GameControls gameStarted={false} />);
+    expect(screen.queryByTestId("manager-decision-tuning-toggle")).not.toBeInTheDocument();
+  });
+
   it("shows volume sliders", () => {
     renderWithContext(<GameControls />);
     expect(screen.getByRole("slider", { name: /announcement volume/i })).toBeInTheDocument();

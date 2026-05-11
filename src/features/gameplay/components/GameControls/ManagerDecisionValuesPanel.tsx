@@ -36,6 +36,13 @@ interface Props {
    * the field, then restore the prior pause state on close.
    */
   onOpenChange?: (open: boolean) => void;
+  /**
+   * When true, hides all player-facing controls (steal master switch, offer
+   * threshold, bunt, IBB, pinch hitter, defensive shift) and shows only the
+   * AI-affecting settings (AI steal threshold, AI pitching aggressiveness).
+   * Used in spectator/watch mode where the human has no agency.
+   */
+  spectatorMode?: boolean;
 }
 
 /**
@@ -59,6 +66,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
   onChange,
   onReset,
   onOpenChange,
+  spectatorMode = false,
 }) => {
   const [open, setOpen] = React.useState(false);
   const [confirmReset, setConfirmReset] = React.useState(false);
@@ -130,6 +138,8 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
 
   const atDefaults = isAtDefaults(values);
   const stealDisabled = !values.stealEnabled;
+  const toggleLabel = spectatorMode ? "⚙️ Simulation Style" : "⚙️ Decision Tuning";
+  const panelTitle = spectatorMode ? "AI Simulation Style" : "Manager & AI Decision Values";
 
   return (
     <div data-testid="manager-decision-tuning-container">
@@ -140,7 +150,8 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
         aria-expanded={open}
         data-testid="manager-decision-tuning-toggle"
       >
-        ⚙️ Decision Tuning{atDefaults ? " · defaults" : ""} {open ? "▲" : "▼"}
+        {toggleLabel}
+        {atDefaults ? " · defaults" : ""} {open ? "▲" : "▼"}
       </DecisionTuningToggle>
 
       {open && (
@@ -165,7 +176,7 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
             data-testid="manager-decision-tuning-panel"
           >
             <DecisionPanelTitleRow>
-              <DecisionPanelTitle id={titleId}>Manager &amp; AI Decision Values</DecisionPanelTitle>
+              <DecisionPanelTitle id={titleId}>{panelTitle}</DecisionPanelTitle>
               <DecisionPanelClose
                 ref={closeBtnRef}
                 type="button"
@@ -177,131 +188,161 @@ const ManagerDecisionValuesPanel: React.FunctionComponent<Props> = ({
               </DecisionPanelClose>
             </DecisionPanelTitleRow>
 
-            {/* ── Steal ──────────────────────────────────────────────── */}
-            <DecisionPanelSection>
-              {/* Master switch lives at the top of its dependent-sliders section
-                so the reading order matches dependency order. */}
-              <DecisionToggleRow>
-                <label htmlFor="steal-enabled">
-                  Steal attempts
-                  <TouchTooltip label="Master switch for stolen-base attempts. Off = neither you nor the AI is ever offered or attempts a steal (team-wide stop sign). Disables the two steal-threshold sliders below." />
-                </label>
-                <input
-                  id="steal-enabled"
-                  type="checkbox"
-                  checked={values.stealEnabled}
-                  onChange={(e) => set("stealEnabled", e.target.checked)}
-                  data-testid="steal-enabled-toggle"
-                />
-              </DecisionToggleRow>
+            {spectatorMode ? (
+              <>
+                {/* ── AI steal threshold (spectator-only) ──────────────── */}
+                <DecisionPanelSection>
+                  <DecisionRow>
+                    <DecisionRowLabel htmlFor="ai-steal-threshold">
+                      AI steal threshold
+                      <TouchTooltip label="Minimum steal success % for the AI to attempt a steal." />
+                    </DecisionRowLabel>
+                    <input
+                      id="ai-steal-threshold"
+                      type="range"
+                      min={STEAL_PCT_MIN}
+                      max={STEAL_PCT_MAX}
+                      step={1}
+                      value={values.aiStealThreshold}
+                      onChange={(e) => set("aiStealThreshold", Number(e.target.value))}
+                      aria-label="AI steal threshold"
+                      data-testid="ai-steal-threshold-slider"
+                    />
+                    <DecisionRowValue data-testid="ai-steal-threshold-value">
+                      {values.aiStealThreshold}%
+                    </DecisionRowValue>
+                  </DecisionRow>
+                </DecisionPanelSection>
+              </>
+            ) : (
+              <>
+                {/* ── Steal ──────────────────────────────────────────────── */}
+                <DecisionPanelSection>
+                  {/* Master switch lives at the top of its dependent-sliders section
+                    so the reading order matches dependency order. */}
+                  <DecisionToggleRow>
+                    <label htmlFor="steal-enabled">
+                      Steal attempts
+                      <TouchTooltip label="Master switch for stolen-base attempts. Off = neither you nor the AI is ever offered or attempts a steal (team-wide stop sign). Disables the two steal-threshold sliders below." />
+                    </label>
+                    <input
+                      id="steal-enabled"
+                      type="checkbox"
+                      checked={values.stealEnabled}
+                      onChange={(e) => set("stealEnabled", e.target.checked)}
+                      data-testid="steal-enabled-toggle"
+                    />
+                  </DecisionToggleRow>
 
-              <DecisionRow $disabled={stealDisabled}>
-                <DecisionRowLabel htmlFor="steal-min-offer-pct">
-                  Steal offer threshold
-                  <TouchTooltip label="Minimum steal success % for you to be prompted. Lower = offer more steals." />
-                </DecisionRowLabel>
-                <input
-                  id="steal-min-offer-pct"
-                  type="range"
-                  min={STEAL_PCT_MIN}
-                  max={STEAL_PCT_MAX}
-                  step={1}
-                  value={values.stealMinOfferPct}
-                  onChange={(e) => set("stealMinOfferPct", Number(e.target.value))}
-                  aria-label="Steal offer threshold"
-                  // aria-disabled omitted: the `disabled` HTML attribute already communicates
-                  // disabled state to AT. aria-disabled is only needed when preserving keyboard
-                  // focus while visually indicating disabled state, which is not the intent here.
-                  disabled={stealDisabled}
-                  data-testid="manager-steal-min-pct-slider"
-                />
-                <DecisionRowValue data-testid="manager-steal-min-pct-value">
-                  {values.stealMinOfferPct}%
-                </DecisionRowValue>
-              </DecisionRow>
+                  <DecisionRow $disabled={stealDisabled}>
+                    <DecisionRowLabel htmlFor="steal-min-offer-pct">
+                      Steal offer threshold
+                      <TouchTooltip label="Minimum steal success % for you to be prompted. Lower = offer more steals." />
+                    </DecisionRowLabel>
+                    <input
+                      id="steal-min-offer-pct"
+                      type="range"
+                      min={STEAL_PCT_MIN}
+                      max={STEAL_PCT_MAX}
+                      step={1}
+                      value={values.stealMinOfferPct}
+                      onChange={(e) => set("stealMinOfferPct", Number(e.target.value))}
+                      aria-label="Steal offer threshold"
+                      // aria-disabled omitted: the `disabled` HTML attribute already communicates
+                      // disabled state to AT. aria-disabled is only needed when preserving keyboard
+                      // focus while visually indicating disabled state, which is not the intent here.
+                      disabled={stealDisabled}
+                      data-testid="manager-steal-min-pct-slider"
+                    />
+                    <DecisionRowValue data-testid="manager-steal-min-pct-value">
+                      {values.stealMinOfferPct}%
+                    </DecisionRowValue>
+                  </DecisionRow>
 
-              <DecisionRow $disabled={stealDisabled}>
-                <DecisionRowLabel htmlFor="ai-steal-threshold">
-                  AI steal threshold
-                  <TouchTooltip label="Minimum steal success % for the AI to attempt a steal. Must be ≤ offer threshold." />
-                </DecisionRowLabel>
-                <input
-                  id="ai-steal-threshold"
-                  type="range"
-                  min={STEAL_PCT_MIN}
-                  max={values.stealMinOfferPct}
-                  step={1}
-                  value={values.aiStealThreshold}
-                  onChange={(e) => set("aiStealThreshold", Number(e.target.value))}
-                  aria-label="AI steal threshold"
-                  // aria-disabled omitted: same reason as steal-min-offer-pct above.
-                  disabled={stealDisabled}
-                  data-testid="ai-steal-threshold-slider"
-                />
-                <DecisionRowValue data-testid="ai-steal-threshold-value">
-                  {values.aiStealThreshold}%
-                </DecisionRowValue>
-              </DecisionRow>
-            </DecisionPanelSection>
+                  <DecisionRow $disabled={stealDisabled}>
+                    <DecisionRowLabel htmlFor="ai-steal-threshold">
+                      AI steal threshold
+                      <TouchTooltip label="Minimum steal success % for the AI to attempt a steal. Must be ≤ offer threshold." />
+                    </DecisionRowLabel>
+                    <input
+                      id="ai-steal-threshold"
+                      type="range"
+                      min={STEAL_PCT_MIN}
+                      max={values.stealMinOfferPct}
+                      step={1}
+                      value={values.aiStealThreshold}
+                      onChange={(e) => set("aiStealThreshold", Number(e.target.value))}
+                      aria-label="AI steal threshold"
+                      // aria-disabled omitted: same reason as steal-min-offer-pct above.
+                      disabled={stealDisabled}
+                      data-testid="ai-steal-threshold-slider"
+                    />
+                    <DecisionRowValue data-testid="ai-steal-threshold-value">
+                      {values.aiStealThreshold}%
+                    </DecisionRowValue>
+                  </DecisionRow>
+                </DecisionPanelSection>
 
-            {/* ── Tactical toggles ──────────────────────────────────── */}
-            <DecisionPanelSection>
-              <DecisionToggleRow>
-                <label htmlFor="bunt-enabled">
-                  Sacrifice bunt
-                  <TouchTooltip label="Offer / attempt sacrifice bunt only when tied or trailing in late close games (within 2 runs)." />
-                </label>
-                <input
-                  id="bunt-enabled"
-                  type="checkbox"
-                  checked={values.buntEnabled}
-                  onChange={(e) => set("buntEnabled", e.target.checked)}
-                  data-testid="bunt-enabled-toggle"
-                />
-              </DecisionToggleRow>
+                {/* ── Tactical toggles ──────────────────────────────────── */}
+                <DecisionPanelSection>
+                  <DecisionToggleRow>
+                    <label htmlFor="bunt-enabled">
+                      Sacrifice bunt
+                      <TouchTooltip label="Offer / attempt sacrifice bunt only when tied or trailing in late close games (within 2 runs)." />
+                    </label>
+                    <input
+                      id="bunt-enabled"
+                      type="checkbox"
+                      checked={values.buntEnabled}
+                      onChange={(e) => set("buntEnabled", e.target.checked)}
+                      data-testid="bunt-enabled-toggle"
+                    />
+                  </DecisionToggleRow>
 
-              <DecisionToggleRow>
-                <label htmlFor="ibb-enabled">
-                  Intentional walk (IBB)
-                  <TouchTooltip label="Offer / attempt intentional walk: 1st base open, 2 outs, late inning, close game." />
-                </label>
-                <input
-                  id="ibb-enabled"
-                  type="checkbox"
-                  checked={values.ibbEnabled}
-                  onChange={(e) => set("ibbEnabled", e.target.checked)}
-                  data-testid="ibb-enabled-toggle"
-                />
-              </DecisionToggleRow>
+                  <DecisionToggleRow>
+                    <label htmlFor="ibb-enabled">
+                      Intentional walk (IBB)
+                      <TouchTooltip label="Offer / attempt intentional walk: 1st base open, 2 outs, late inning, close game." />
+                    </label>
+                    <input
+                      id="ibb-enabled"
+                      type="checkbox"
+                      checked={values.ibbEnabled}
+                      onChange={(e) => set("ibbEnabled", e.target.checked)}
+                      data-testid="ibb-enabled-toggle"
+                    />
+                  </DecisionToggleRow>
 
-              <DecisionToggleRow>
-                <label htmlFor="pinch-hitter-enabled">
-                  Pinch hitter
-                  <TouchTooltip label="Offer / attempt pinch hitter substitution in late innings with runners on base." />
-                </label>
-                <input
-                  id="pinch-hitter-enabled"
-                  type="checkbox"
-                  checked={values.pinchHitterEnabled}
-                  onChange={(e) => set("pinchHitterEnabled", e.target.checked)}
-                  data-testid="pinch-hitter-enabled-toggle"
-                />
-              </DecisionToggleRow>
+                  <DecisionToggleRow>
+                    <label htmlFor="pinch-hitter-enabled">
+                      Pinch hitter
+                      <TouchTooltip label="Offer / attempt pinch hitter substitution in late innings with runners on base." />
+                    </label>
+                    <input
+                      id="pinch-hitter-enabled"
+                      type="checkbox"
+                      checked={values.pinchHitterEnabled}
+                      onChange={(e) => set("pinchHitterEnabled", e.target.checked)}
+                      data-testid="pinch-hitter-enabled-toggle"
+                    />
+                  </DecisionToggleRow>
 
-              <DecisionToggleRow>
-                <label htmlFor="defensive-shift-enabled">
-                  Defensive shift
-                  <TouchTooltip label="Offer / apply defensive shift (pre-2023 rules). Off = 2023 MLB shift ban." />
-                </label>
-                <input
-                  id="defensive-shift-enabled"
-                  type="checkbox"
-                  checked={values.defensiveShiftEnabled}
-                  onChange={(e) => set("defensiveShiftEnabled", e.target.checked)}
-                  data-testid="defensive-shift-enabled-toggle"
-                />
-              </DecisionToggleRow>
-            </DecisionPanelSection>
+                  <DecisionToggleRow>
+                    <label htmlFor="defensive-shift-enabled">
+                      Defensive shift
+                      <TouchTooltip label="Offer / apply defensive shift (pre-2023 rules). Off = 2023 MLB shift ban." />
+                    </label>
+                    <input
+                      id="defensive-shift-enabled"
+                      type="checkbox"
+                      checked={values.defensiveShiftEnabled}
+                      onChange={(e) => set("defensiveShiftEnabled", e.target.checked)}
+                      data-testid="defensive-shift-enabled-toggle"
+                    />
+                  </DecisionToggleRow>
+                </DecisionPanelSection>
+              </>
+            )}
 
             {/* ── AI pitching aggressiveness ─────────────────────────── */}
             <DecisionPanelSection>

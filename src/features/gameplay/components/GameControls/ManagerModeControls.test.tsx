@@ -1,7 +1,6 @@
 import * as React from "react";
 
 import { GameContext } from "@feat/gameplay/context/index";
-import { DEFAULT_MANAGER_DECISION_VALUES } from "@feat/gameplay/context/managerDecisionValues";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
@@ -40,13 +39,10 @@ describe("ManagerModeControls", () => {
     managedTeam: 0 as const,
     teams: ["Yankees", "Red Sox"],
     notifPermission: "granted" as NotificationPermission,
-    decisionValues: DEFAULT_MANAGER_DECISION_VALUES,
     onManagerModeChange: noop,
     onStrategyChange: noop,
     onManagedTeamChange: noop,
     onRequestNotifPermission: noop,
-    onDecisionValuesChange: noop,
-    onDecisionValuesReset: noop,
   };
 
   it("renders Manager Mode checkbox", () => {
@@ -169,147 +165,5 @@ describe("ManagerModeControls", () => {
       />,
     );
     expect(screen.queryByRole("button", { name: /substitution/i })).toBeNull();
-  });
-
-  it("shows Decision Tuning toggle when managerMode is true", () => {
-    render(<ManagerModeControls {...defaultProps} managerMode={true} />);
-    expect(screen.getByTestId("manager-decision-tuning-toggle")).toBeTruthy();
-  });
-
-  it("shows Decision Tuning toggle even when managerMode is false (panel is always accessible)", () => {
-    render(<ManagerModeControls {...defaultProps} managerMode={false} />);
-    expect(screen.getByTestId("manager-decision-tuning-toggle")).toBeTruthy();
-  });
-
-  it("toggle label includes '· defaults' when all values equal defaults", () => {
-    render(<ManagerModeControls {...defaultProps} managerMode={true} />);
-    const toggle = screen.getByTestId("manager-decision-tuning-toggle");
-    expect(toggle.textContent).toContain("· defaults");
-  });
-
-  it("toggle label does NOT include '· defaults' when a value differs from defaults", () => {
-    const modified = { ...DEFAULT_MANAGER_DECISION_VALUES, aiStealThreshold: 80 };
-    render(<ManagerModeControls {...defaultProps} managerMode={true} decisionValues={modified} />);
-    const toggle = screen.getByTestId("manager-decision-tuning-toggle");
-    expect(toggle.textContent).not.toContain("· defaults");
-  });
-
-  it("does not show Decision Tuning panel until toggle is clicked", () => {
-    render(<ManagerModeControls {...defaultProps} managerMode={true} />);
-    expect(screen.queryByTestId("manager-decision-tuning-panel")).toBeNull();
-  });
-
-  it("shows Decision Tuning panel after toggle is clicked", async () => {
-    render(<ManagerModeControls {...defaultProps} managerMode={true} />);
-    await userEvent.click(screen.getByTestId("manager-decision-tuning-toggle"));
-    expect(screen.getByTestId("manager-decision-tuning-panel")).toBeTruthy();
-  });
-
-  it("calls onDecisionValuesReset when reset button is clicked (requires confirmation)", async () => {
-    const onReset = vi.fn();
-    render(
-      <ManagerModeControls {...defaultProps} managerMode={true} onDecisionValuesReset={onReset} />,
-    );
-    await userEvent.click(screen.getByTestId("manager-decision-tuning-toggle"));
-    // First click shows the confirmation row; reset is NOT called yet.
-    await userEvent.click(screen.getByTestId("manager-decision-tuning-reset"));
-    expect(onReset).not.toHaveBeenCalled();
-    expect(screen.getByTestId("manager-decision-tuning-reset-confirm-row")).toBeTruthy();
-    // Second click (on the "Yes, reset" confirm button) fires onReset.
-    await userEvent.click(screen.getByTestId("manager-decision-tuning-reset-confirm"));
-    expect(onReset).toHaveBeenCalledOnce();
-  });
-
-  it("renders the Steal attempts toggle (defaults checked) and propagates change", async () => {
-    const onChange = vi.fn();
-    render(
-      <ManagerModeControls
-        {...defaultProps}
-        managerMode={true}
-        onDecisionValuesChange={onChange}
-      />,
-    );
-    await userEvent.click(screen.getByTestId("manager-decision-tuning-toggle"));
-    const stealToggle = screen.getByTestId("steal-enabled-toggle") as HTMLInputElement;
-    expect(stealToggle.checked).toBe(true);
-    await userEvent.click(stealToggle);
-    expect(onChange).toHaveBeenCalled();
-    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0];
-    expect(lastCall.stealEnabled).toBe(false);
-  });
-
-  it("AI pitching aggressiveness label uses ±4 deadband around default 50 ('Modern')", async () => {
-    // Anything within ±4 of the default 50 reads as "Modern" so small slider
-    // nudges don't flip the label between Modern / Old-school / Bullpen.
-    const renderWithAggressiveness = (val: number) =>
-      render(
-        <ManagerModeControls
-          {...defaultProps}
-          managerMode={true}
-          decisionValues={{
-            ...DEFAULT_MANAGER_DECISION_VALUES,
-            aiPitchingChangeAggressiveness: val,
-          }}
-        />,
-      );
-
-    // Lower edge of the deadband (46): label should read "Modern (46)".
-    let { unmount } = renderWithAggressiveness(46);
-    await userEvent.click(screen.getByTestId("manager-decision-tuning-toggle"));
-    expect(screen.getByTestId("ai-pitching-aggressiveness-value").textContent).toBe("Modern (46)");
-    unmount();
-
-    // Default (50): label should read "Modern (50)".
-    ({ unmount } = renderWithAggressiveness(50));
-    await userEvent.click(screen.getByTestId("manager-decision-tuning-toggle"));
-    expect(screen.getByTestId("ai-pitching-aggressiveness-value").textContent).toBe("Modern (50)");
-    unmount();
-
-    // Upper edge of the deadband (54): still "Modern".
-    ({ unmount } = renderWithAggressiveness(54));
-    await userEvent.click(screen.getByTestId("manager-decision-tuning-toggle"));
-    expect(screen.getByTestId("ai-pitching-aggressiveness-value").textContent).toBe("Modern (54)");
-    unmount();
-
-    // Just below the deadband (45): switches to "Old-school".
-    ({ unmount } = renderWithAggressiveness(45));
-    await userEvent.click(screen.getByTestId("manager-decision-tuning-toggle"));
-    expect(screen.getByTestId("ai-pitching-aggressiveness-value").textContent).toBe(
-      "Old-school (45)",
-    );
-    unmount();
-
-    // Just above the deadband (55): switches to "Bullpen".
-    ({ unmount } = renderWithAggressiveness(55));
-    await userEvent.click(screen.getByTestId("manager-decision-tuning-toggle"));
-    expect(screen.getByTestId("ai-pitching-aggressiveness-value").textContent).toBe("Bullpen (55)");
-    unmount();
-  });
-
-  it("Decision Tuning tooltips are tappable on touch devices (no native title-attribute reliance)", async () => {
-    // Regression test for: native `<span title="…">` tooltips do not display on
-    // touch devices (no hover state). The Decision Tuning panel uses
-    // <TouchTooltip> instead so the explanations are reachable on a Pixel 8a
-    // and other phones via tap.
-    render(<ManagerModeControls {...defaultProps} managerMode={true} />);
-    await userEvent.click(screen.getByTestId("manager-decision-tuning-toggle"));
-
-    // Find every tooltip trigger inside the panel — they're the only buttons
-    // with the ⓘ glyph as content.
-    const triggers = screen.getAllByRole("button").filter((b) => b.textContent?.includes("ⓘ"));
-    // 8 tooltip rows in the panel.
-    expect(triggers.length).toBe(8);
-
-    // Pick the first one and tap it — the role=tooltip bubble must appear.
-    const first = triggers[0]!;
-    expect(first.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByRole("tooltip")).toBeNull();
-    await userEvent.click(first);
-    expect(first.getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByRole("tooltip").textContent).toMatch(/steal/i);
-
-    // Tap again to dismiss.
-    await userEvent.click(first);
-    expect(first.getAttribute("aria-expanded")).toBe("false");
   });
 });
