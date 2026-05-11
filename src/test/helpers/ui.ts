@@ -27,11 +27,14 @@ export const expectPseudoInset = (element: HTMLElement, insetMagnitude: number):
   const headText = document.head.textContent ?? "";
 
   const matched = classes.some((cls) => {
+    // Escape the class name so that any regex metacharacters (e.g., from
+    // styled-components generated hashes) are treated as literals.
+    const escapedCls = cls.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     // Match a rule containing this class name that also contains the expected inset
     // within the same ::before block.  [^{]* / [^}]* safely skip other properties
     // without crossing block boundaries.
     const pattern = new RegExp(
-      `\\.${cls}[^{]*::before[^{]*\\{[^}]*inset:\\s*${insetPx}`,
+      `\\.${escapedCls}[^{]*::before[^{]*\\{[^}]*inset:\\s*${insetPx}`,
       "s",
     );
     return pattern.test(headText);
