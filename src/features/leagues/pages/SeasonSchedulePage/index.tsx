@@ -2,15 +2,22 @@ import * as React from "react";
 
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
 import { SeasonContextProvider, useSeasonContext } from "@feat/leagues/context/SeasonContext";
+import { buildSeasonGameSetup } from "@feat/leagues/utils/buildSeasonGameSetup";
 import EmptyState from "@shared/components/EmptyState";
 import { BackBtn, PageContainer, PageHeader } from "@shared/components/PageLayout/styles";
+import { appLog } from "@shared/utils/logger";
 import { useNavigate, useParams } from "react-router";
 import { useLiveRxQuery } from "rxdb/plugins/react";
+
+import { getDb } from "@storage/db";
+import type { GameLocationState } from "@storage/types";
 
 import {
   DayHeader,
   DaySection,
+  GameActionBtn,
   GameRow,
+  GameRowActions,
   GameRowAway,
   GameRowHome,
   GameRowResult,
@@ -57,6 +64,53 @@ const SeasonSchedulePageInner: React.FunctionComponent = () => {
     }
     return map;
   }, [seasonTeams]);
+
+  // Build a lookup: seasonTeamId → SeasonTeamRecord for game launch.
+  const seasonTeamById = React.useMemo(() => {
+    const map: Record<string, SeasonTeamRecord> = {};
+    for (const t of seasonTeams as SeasonTeamRecord[]) {
+      map[t.id] = t;
+    }
+    return map;
+  }, [seasonTeams]);
+
+  // Which season team ID does the user manage (if any)?
+  const userSeasonTeamId = React.useMemo(() => {
+    if (!season?.userCustomTeamId) return null;
+    return seasonTeams.find((t) => t.customTeamId === season.userCustomTeamId)?.id ?? null;
+  }, [season, seasonTeams]);
+
+  const [launchingGameId, setLaunchingGameId] = React.useState<string | null>(null);
+  const [launchError, setLaunchError] = React.useState<string | null>(null);
+
+  const handleLaunchGame = React.useCallback(
+    async (game: SeasonGameRecord, managedTeam: 0 | 1 | null) => {
+      setLaunchingGameId(game.id);
+      setLaunchError(null);
+      try {
+        const db = await getDb();
+        const homeSeasonTeam = seasonTeamById[game.homeSeasonTeamId];
+        const awaySeasonTeam = seasonTeamById[game.awaySeasonTeamId];
+        if (!homeSeasonTeam || !awaySeasonTeam) throw new Error("Season team record not found");
+        const setup = await buildSeasonGameSetup(
+          db,
+          game,
+          homeSeasonTeam,
+          awaySeasonTeam,
+          managedTeam,
+        );
+        const state: GameLocationState = { pendingGameSetup: setup, pendingLoadSave: null };
+        navigate("/game", { state });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Unable to launch game.";
+        appLog.error("[SeasonSchedulePage] launch game error:", err);
+        setLaunchError(msg);
+      } finally {
+        setLaunchingGameId(null);
+      }
+    },
+    [navigate, seasonTeamById],
+  );
 
   // Group games by gameDay
   const byDay = React.useMemo(() => {
@@ -118,6 +172,11 @@ const SeasonSchedulePageInner: React.FunctionComponent = () => {
         <EmptyState title="No games scheduled" body="No games have been generated yet." />
       ) : (
         <ScheduleList>
+          {launchError !== null && (
+            <p role="alert" style={{ color: "var(--color-danger, #ff7070)", fontSize: "0.85rem" }}>
+              {launchError}
+            </p>
+          )}
           {byDay.map(([day, dayGames]) => (
             <DaySection key={day}>
               <DayHeader>Day {day + 1}</DayHeader>
@@ -130,6 +189,12 @@ const SeasonSchedulePageInner: React.FunctionComponent = () => {
                     : null;
                 const homeScore = bs && typeof bs.homeScore === "number" ? bs.homeScore : null;
                 const awayScore = bs && typeof bs.awayScore === "number" ? bs.awayScore : null;
+                const isUserHome = userSeasonTeamId === game.homeSeasonTeamId;
+                const isUserAway = userSeasonTeamId === game.awaySeasonTeamId;
+                const isUserGame = isUserHome || isUserAway;
+                // managedTeam: 0 = away, 1 = home
+                const managedSide: 0 | 1 = isUserHome ? 1 : 0;
+                const isLaunching = launchingGameId === game.id;
                 return (
                   <GameRow key={game.id} data-testid={`game-row-${game.id}`}>
                     <GameRowAway>{awayAbbrev}</GameRowAway>
@@ -140,9 +205,39 @@ const SeasonSchedulePageInner: React.FunctionComponent = () => {
                         {awayScore}–{homeScore}
                       </GameRowResult>
                     ) : (
-                      <GameRowStatus $status={game.status}>
-                        {game.status === "in_progress" ? "Live" : "—"}
-                      </GameRowStatus>
+                      <>
+                        <GameRowStatus $status={game.status}>
+                          {game.status === "in_progress" ? "Live" : "—"}
+                        </GameRowStatus>
+                        <GameRowActions>
+                          {isUserGame && (
+                            <GameActionBtn
+                              type="button"
+                              $variant="primary"
+                              onClick={() => {
+                                void handleLaunchGame(game, managedSide);
+                              }}
+                              disabled={isLaunching}
+                              data-testid={`play-game-${game.id}`}
+                              aria-label={`Play ${awayAbbrev} @ ${homeAbbrev} in Manager Mode`}
+                            >
+                              {isLaunching ? "…" : "▶ Play"}
+                            </GameActionBtn>
+                          )}
+                          <GameActionBtn
+                            type="button"
+                            $variant="secondary"
+                            onClick={() => {
+                              void handleLaunchGame(game, null);
+                            }}
+                            disabled={isLaunching}
+                            data-testid={`watch-game-${game.id}`}
+                            aria-label={`Watch ${awayAbbrev} @ ${homeAbbrev}`}
+                          >
+                            {isLaunching ? "…" : "👁 Watch"}
+                          </GameActionBtn>
+                        </GameRowActions>
+                      </>
                     )}
                   </GameRow>
                 );

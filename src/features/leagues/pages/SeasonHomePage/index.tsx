@@ -4,6 +4,7 @@ import { advanceSeason, simulateNextDay } from "@feat/league/storage/leagueStore
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
 import { deriveStandings } from "@feat/league/utils/deriveStandings";
 import { SeasonContextProvider, useSeasonContext } from "@feat/leagues/context/SeasonContext";
+import { buildSeasonGameSetup } from "@feat/leagues/utils/buildSeasonGameSetup";
 import { getTotalGameDays } from "@feat/leagues/utils/seasonPresets";
 import EmptyState from "@shared/components/EmptyState";
 import { BackBtn, PageContainer, PageHeader } from "@shared/components/PageLayout/styles";
@@ -11,9 +12,14 @@ import { appLog } from "@shared/utils/logger";
 import { useNavigate, useParams } from "react-router";
 import { useLiveRxQuery } from "rxdb/plugins/react";
 
+import { getDb } from "@storage/db";
+import type { GameLocationState } from "@storage/types";
+
 import {
   AdvanceReadyMsg,
   ChampionBanner,
+  GameActionBtn,
+  GameActionRow,
   GameDayRow,
   NavCard,
   NavCardGrid,
@@ -46,6 +52,8 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
   const [simulating, setSimulating] = React.useState(false);
   const [simError, setSimError] = React.useState<string | null>(null);
   const [nextGameReady, setNextGameReady] = React.useState(false);
+  const [nextGameId, setNextGameId] = React.useState<string | null>(null);
+  const [launchingGame, setLaunchingGame] = React.useState(false);
 
   // Find the user's season team if one is configured.
   const userSeasonTeamId = React.useMemo(() => {
@@ -57,12 +65,14 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
     if (!seasonId) return;
     setSimError(null);
     setNextGameReady(false);
+    setNextGameId(null);
     setSimulating(true);
     try {
       if (userSeasonTeamId) {
         const result = await advanceSeason({ seasonId, userSeasonTeamId });
         if (result.nextGameId !== null) {
           setNextGameReady(true);
+          setNextGameId(result.nextGameId);
         }
       } else {
         await simulateNextDay(seasonId);
@@ -76,6 +86,42 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
       setSimulating(false);
     }
   }, [seasonId, userSeasonTeamId]);
+
+  const handlePlayNextGame = React.useCallback(
+    async (managedTeam: 0 | 1 | null) => {
+      if (!nextGameId || !seasonId) return;
+      setLaunchingGame(true);
+      try {
+        const db = await getDb();
+        const gameDoc = await db.seasonGames.findOne({ selector: { id: nextGameId } }).exec();
+        if (!gameDoc) throw new Error("Game record not found");
+        const game = gameDoc.toJSON() as unknown as SeasonGameRecord;
+        const [homeTeamDoc, awayTeamDoc] = await Promise.all([
+          db.seasonTeams.findOne({ selector: { id: game.homeSeasonTeamId } }).exec(),
+          db.seasonTeams.findOne({ selector: { id: game.awaySeasonTeamId } }).exec(),
+        ]);
+        if (!homeTeamDoc || !awayTeamDoc) throw new Error("Season team record not found");
+        const homeSeasonTeam = homeTeamDoc.toJSON() as unknown as SeasonTeamRecord;
+        const awaySeasonTeam = awayTeamDoc.toJSON() as unknown as SeasonTeamRecord;
+        const setup = await buildSeasonGameSetup(
+          db,
+          game,
+          homeSeasonTeam,
+          awaySeasonTeam,
+          managedTeam,
+        );
+        const state: GameLocationState = { pendingGameSetup: setup, pendingLoadSave: null };
+        navigate("/game", { state });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Unable to launch game. Please try again.";
+        appLog.error("[SeasonHomePage] launch game error:", err);
+        setSimError(msg);
+      } finally {
+        setLaunchingGame(false);
+      }
+    },
+    [nextGameId, seasonId, navigate],
+  );
 
   const gamesQuery = React.useMemo(
     () => ({
@@ -242,18 +288,35 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
                 : "▶ Simulate Next Day"}
           </SimulateButton>
           {nextGameReady && (
-            <AdvanceReadyMsg>
-              Your next game is ready —{" "}
-              <a
-                href="/game"
-                onClick={(e: React.MouseEvent) => {
-                  e.preventDefault();
-                  navigate("/game");
-                }}
-              >
-                click to play it in Manager Mode
-              </a>
-            </AdvanceReadyMsg>
+            <>
+              <AdvanceReadyMsg data-testid="next-game-ready-msg">
+                Your next game is ready!
+              </AdvanceReadyMsg>
+              <GameActionRow data-testid="next-game-action-row">
+                <GameActionBtn
+                  type="button"
+                  $variant="primary"
+                  onClick={() => {
+                    void handlePlayNextGame(userSeasonTeamId !== null ? 1 : null);
+                  }}
+                  disabled={launchingGame}
+                  data-testid="play-next-game-button"
+                >
+                  {launchingGame ? "Loading…" : "▶ Play in Manager Mode"}
+                </GameActionBtn>
+                <GameActionBtn
+                  type="button"
+                  $variant="secondary"
+                  onClick={() => {
+                    void handlePlayNextGame(null);
+                  }}
+                  disabled={launchingGame}
+                  data-testid="watch-next-game-button"
+                >
+                  👁 Watch
+                </GameActionBtn>
+              </GameActionRow>
+            </>
           )}
           {simError !== null && <SimulateError>{simError}</SimulateError>}
         </SimulateSection>
