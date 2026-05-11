@@ -22,9 +22,10 @@ export const expectPseudoInset = (element: HTMLElement, insetMagnitude: number):
     return;
   }
 
-  // Fallback for jsdom/happy-dom where ::before computed styles return NaN.
-  // Scope the search to a CSS rule that references one of this element's own class
-  // names to avoid false positives when another component injects the same inset value.
+  // Fallback for happy-dom (our test environment), which returns NaN for
+  // pseudo-element computed styles. Scope the search to a CSS rule that references
+  // one of this element's own class names to avoid false positives when another
+  // component injects the same inset value.
   const classes = element.className.split(/\s+/).filter(Boolean);
   const insetPx = `-${Math.abs(insetMagnitude)}px`;
   const headText = document.head.textContent ?? "";
@@ -40,5 +41,7 @@ export const expectPseudoInset = (element: HTMLElement, insetMagnitude: number):
     return pattern.test(headText);
   });
 
-  expect(matched, `Expected ::before on .${classes.join("/.")} to have inset: ${insetPx}`).toBe(true);
+  expect(matched, `Expected ::before on .${classes.join("/.")} to have inset: ${insetPx}`).toBe(
+    true,
+  );
 };
