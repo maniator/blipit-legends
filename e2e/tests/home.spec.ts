@@ -20,6 +20,10 @@ test.describe("Home Screen", () => {
     await expect(page.getByTestId("home-manage-teams-button")).toBeVisible();
   });
 
+  test("html shell keeps lang=en", async ({ page }) => {
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  });
+
   test("New Exhibition Game button navigates to exhibition setup page", async ({ page }) => {
     await waitForNewGameDialog(page);
     await expect(page.getByTestId("exhibition-setup-page")).toBeVisible({ timeout: 15_000 });
@@ -207,6 +211,12 @@ test.describe("Home page League teaser", () => {
     await expect(browseBtn).toBeVisible();
     await browseBtn.click();
     await expect(page).toHaveURL(/\/leagues/);
+  });
+
+  test("Home page idle league teaser does not show Continue Season CTA", async ({ page }) => {
+    await expect(page.getByTestId("home-screen")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("home-browse-leagues-button")).toBeVisible();
+    await expect(page.getByTestId("home-continue-season-button")).toHaveCount(0);
   });
 
   test("League teaser outer element is not an anchor tag", async ({ page }) => {

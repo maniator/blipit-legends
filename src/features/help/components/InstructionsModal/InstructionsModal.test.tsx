@@ -52,4 +52,13 @@ describe("InstructionsModal", () => {
     fireEvent.click(dialog, { clientX: 0, clientY: 0 });
     expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
+
+  it("uses pseudo-element hit expansion for help and close icon buttons", () => {
+    render(<InstructionsModal />);
+
+    expect(screen.getByTestId("instructions-help-button")).toBeInTheDocument();
+    expect(screen.getByTestId("instructions-close-button")).toBeInTheDocument();
+    expect(document.head.textContent).toMatch(/inset:\s*-10px/);
+    expect(document.head.textContent).toMatch(/inset:\s*-8px/);
+  });
 });

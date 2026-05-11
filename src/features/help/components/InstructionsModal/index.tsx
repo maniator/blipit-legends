@@ -30,14 +30,14 @@ const InstructionsModal: React.FunctionComponent = () => {
 
   return (
     <>
-      <HelpButton onClick={open} aria-label="How to play">
+      <HelpButton onClick={open} aria-label="How to play" data-testid="instructions-help-button">
         ?
       </HelpButton>
 
       <Dialog ref={ref} onClick={handleClick} data-testid="instructions-modal">
         <DialogHeader>
           <DialogTitle>⚾ How to Play</DialogTitle>
-          <CloseXButton onClick={close} aria-label="Close">
+          <CloseXButton onClick={close} aria-label="Close" data-testid="instructions-close-button">
             ✕
           </CloseXButton>
         </DialogHeader>

@@ -70,6 +70,13 @@ export const CloseXButton = styled.button`
   line-height: 1;
   padding: 0;
   flex-shrink: 0;
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+  }
 
   &:hover {
     background: ${({ theme }) => theme.colors.bgFormAlpha60};

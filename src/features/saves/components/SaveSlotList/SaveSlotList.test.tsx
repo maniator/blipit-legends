@@ -61,4 +61,12 @@ describe("SaveSlotList", () => {
     fireEvent.click(screen.getByTestId("delete-save-button"));
     expect(onDelete).not.toHaveBeenCalled();
   });
+
+  it("uses pseudo-element hit expansion on save action buttons", () => {
+    render(<SaveSlotList {...defaultProps} />);
+    expect(screen.getByTestId("load-save-button")).toBeInTheDocument();
+    expect(screen.getByTestId("export-save-button")).toBeInTheDocument();
+    expect(screen.getByTestId("delete-save-button")).toBeInTheDocument();
+    expect(document.head.textContent).toMatch(/inset:\s*-6px/);
+  });
 });

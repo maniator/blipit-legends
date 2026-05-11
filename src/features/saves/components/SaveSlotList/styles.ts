@@ -91,6 +91,13 @@ export const ActionBtn = styled.button<{ $variant?: ActionBtnVariant }>`
   font-family: inherit;
   cursor: pointer;
   min-height: ${({ theme }) => theme.sizes.inputMd};
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+  }
 
   &:focus-visible {
     outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
