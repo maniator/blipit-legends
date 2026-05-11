@@ -30,8 +30,9 @@ export async function createAutogenSeason(page: Page): Promise<void> {
   // Wait for the DB-backed wizard to finish loading and show the Next button.
   await expect(page.getByTestId("wizard-next-button")).toBeVisible({ timeout: 15_000 });
 
-  // Steps 1–5: advance through each step.
-  for (let step = 1; step <= 5; step++) {
+  // Steps 1–4: advance through each step.
+  // STEP_ORDER = [1, 2, 3, 5, 6] — step 4 was removed; 4 Next clicks reach Review.
+  for (let step = 1; step <= 4; step++) {
     await advanceWizardStep(page);
   }
 
@@ -72,8 +73,10 @@ export async function createMixedManagedSeason(page: Page): Promise<void> {
   await expect(firstCheckbox).toBeVisible({ timeout: 5_000 });
   await firstCheckbox.check();
 
-  // Steps 2–5: advance through remaining steps.
-  for (let step = 2; step <= 5; step++) {
+  // Steps 2–4: advance through remaining steps.
+  // STEP_ORDER = [1, 2, 3, 5, 6] — after the manual step 1→2 advance above,
+  // 3 more Next clicks are needed: 2→3, 3→5, 5→6 (Review).
+  for (let step = 2; step <= 4; step++) {
     await advanceWizardStep(page);
   }
 

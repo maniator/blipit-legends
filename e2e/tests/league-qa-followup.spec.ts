@@ -66,8 +66,9 @@ test.describe("League QA — mixed-mode wizard validation", () => {
       }
       await page.locator('input[type="checkbox"]').first().check();
 
-      // Advance through steps 2→5.
-      for (let step = 2; step <= 5; step++) {
+      // Advance through steps 2→4 (STEP_ORDER=[1,2,3,5,6]: after the step-1→2
+      // click above, 3 more Next clicks land on Review: 2→3, 3→5, 5→6).
+      for (let step = 2; step <= 4; step++) {
         await expect(page.getByTestId("wizard-next-button")).toBeEnabled({ timeout: 10_000 });
         await page.getByTestId("wizard-next-button").click();
         await page.waitForTimeout(200);
