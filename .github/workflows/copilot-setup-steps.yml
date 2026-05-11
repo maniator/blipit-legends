@@ -34,3 +34,17 @@ jobs:
         # need to repair package.json/yarn.lock drift. Keep this non-immutable so
         # the agent can start; immutable installs remain enforced by normal CI.
         run: yarn install --no-immutable
+
+      - name: Clear stale Playwright MCP browser lock
+        # The Playwright MCP server (mcp-server-playwright) runs as root and stores its
+        # Chrome user-data-dir at /root/.cache/ms-playwright/mcp-chrome*.
+        # If a previous agent session crashed mid-session, Chrome may leave a stale
+        # SingletonLock file inside that directory. On the next session the MCP server
+        # tries to launch Chrome with the same dir, Chrome sees the stale lock, and
+        # every launch attempt fails — playwright retries 5 × and then misreports this
+        # as "Browser is already in use … use --isolated".
+        # Clearing the dir here ensures each agent session starts from a clean slate.
+        # The PERMANENT fix is to add "--no-sandbox" (or "--isolated") to the
+        # mcp-server-playwright args in the GitHub repo Copilot MCP settings
+        # (Settings → Copilot → MCP servers → playwright-mcp → args).
+        run: sudo rm -rf /root/.cache/ms-playwright/mcp-chrome* || true

@@ -30,6 +30,17 @@ curl -sf http://localhost:3456 -o /dev/null || {
 
 Then navigate using `http://localhost:3456` — **never** `https://blipit.net`.
 
+## If MCP browser throws "Browser already in use"
+
+If any `playwright-browser_*` call returns `Error: Browser is already in use for /root/.cache/ms-playwright/mcp-chrome`:
+
+1. **Quick fix** — clear the stale Chrome lock and retry:
+   ```bash
+   sudo rm -rf /root/.cache/ms-playwright/mcp-chrome
+   ```
+2. **Permanent fix** — add `--no-sandbox` (or `--isolated`) to the `mcp-server-playwright` args in GitHub repo settings → Copilot → MCP servers → playwright-mcp.
+3. Full diagnosis in `docs/e2e-testing.md` § "Troubleshooting: Browser already in use".
+
 ## Why you must use http://localhost:3456 instead of https://blipit.net
 
 The Copilot sandbox enforces two independent network layers:

@@ -300,6 +300,54 @@ npx vite preview --port 5173 --host ::1         # binds [::1]:5173
 
 **Important:** The background Playwright test will eventually time out (60-minute timeout) and kill its vite preview server. If the server goes away mid-session, restart it with the same command above.
 
+### Troubleshooting: "Browser already in use" error
+
+When any `playwright-browser_*` tool call throws:
+
+```
+Error: Browser is already in use for /root/.cache/ms-playwright/mcp-chrome,
+use --isolated to run multiple instances of the same browser
+```
+
+This is **NOT** truly a concurrency issue. It is a misleading error produced after 5 failed launch retries. The real causes are:
+
+#### Root cause A — stale SingletonLock (most common after a crash)
+
+Chrome writes a `SingletonLock` symlink into the user-data-dir when it starts and removes it on clean exit. If a previous agent session crashed, the lock file remains. The next launch attempt sees the stale lock and exits immediately.
+
+**Fix:**
+
+```bash
+sudo rm -rf /root/.cache/ms-playwright/mcp-chrome
+```
+
+`copilot-setup-steps.yml` now runs this automatically at the start of every agent session. If you encounter the error mid-session (after an unexpected Chrome crash), run the command above and retry the MCP tool call.
+
+#### Root cause B — sandbox failure (fresh session, no stale lock)
+
+The MCP server (`mcp-server-playwright`) runs as `root` in the Copilot sandbox. By default it uses system Chrome (`google-chrome`, `channel: "chrome"`) **with** Chromium sandbox enabled (`chromiumSandbox: true`). Running Chrome as root with the sandbox enabled and a CDP port causes Chrome to fail with `"Invalid URL: undefined"` — playwright catches this, retries 5×, and then throws "Browser already in use".
+
+**Permanent fix — add `--no-sandbox` to the MCP server args in GitHub repo settings:**
+
+1. Go to **Settings → Copilot → MCP servers → playwright-mcp**
+2. Add `--no-sandbox` to the args list (alongside the existing `--headless`)
+3. The new arg list should be: `--headless --no-sandbox`
+
+**Alternative permanent fix — add `--isolated` instead:**
+
+1. `--isolated` switches to the `IsolatedContextFactory`, which does not use a persistent
+   user-data-dir or a CDP port, completely avoiding both root causes above.
+2. Tradeoff: browser profile is not preserved between MCP tool calls.
+
+#### Diagnosing which cause applies
+
+```bash
+# Check for a stale lock file
+sudo ls /root/.cache/ms-playwright/mcp-chrome/SingletonLock 2>/dev/null \
+  && echo "stale lock — clear it" \
+  || echo "no stale lock — sandbox issue, add --no-sandbox to MCP server args"
+```
+
 ### Agent method: MCP browser with batch-loop evaluate (preferred for tuning rounds)
 
 This is the **fastest way for an agent to collect 200+ browser game metrics**. In Instant mode, game simulation completes in essentially **zero wall-clock time** — a 9-inning game renders in <100ms on the active tab. The only real timing cost is MCP tool-call overhead (~2–3 seconds per `playwright-browser_*` call).
