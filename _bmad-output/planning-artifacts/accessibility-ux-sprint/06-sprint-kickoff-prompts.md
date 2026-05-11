@@ -1,5 +1,7 @@
 # Sprint Kickoff Prompts
 
+<!-- generated: 2026-05-11 | plan version: accessibility-ux-sprint v1 | re-verify paths and story numbers if plan files have changed since this date -->
+
 Copy-paste these prompts verbatim into a new agent session to kick off each sprint. All routing rules, guardrails, and tips are embedded — the session needs no prior context beyond what is in this repository.
 
 ---
@@ -23,10 +25,12 @@ Read the files in this order before starting:
   start; switch to the UI menu for F3 and F6 Tier 1 work.
 - F1 audit documentation routes through bmad-agent-tech-writer (Paige) for
   the style-guide rewrite (Story 1.2). Amelia executes the grep/script work.
+- Story 3.1 (F6 Tier 1) WCAG evidence must be reviewed and signed off by
+  bmad-agent-ux-designer (Sally) — hard gate before the PR is created.
 - After all stories are complete, BEFORE calling create_pull_request, route to
   bmad-agent-architect (Winston) → CR menu for engineering sign-off. Winston
-  must issue APPROVE before the PR is created — this is a hard gate, not
-  optional.
+  must issue APPROVE before the PR is created — hard gate, not optional.
+  Both Sally and Winston gates must clear; order: Sally → Winston → PR.
 - Visual snapshot regeneration (if needed after F6 Tier 1) routes EXCLUSIVELY
   to the e2e-test-runner operational specialist. Snapshots MUST be regenerated
   inside mcr.microsoft.com/playwright:v1.58.2-noble. Never regen locally.
@@ -36,14 +40,16 @@ Read the files in this order before starting:
    commit results to _bmad-output/planning-artifacts/accessibility-ux-sprint/audit-results/
 2. Stories 5.1, 4.1, 2.1 in parallel — quick wins with no F1 dependency:
    - Story 5.1: verify/add <html lang="en"> + automated guard test
-   - Story 4.1: LeagueTeaserBox non-affordance (pointer-events:none, lock icon, copy)
+   - Story 4.1: LeagueTeaserBox non-affordance (pointer-events:none, lock icon, copy —
+     confirm target quarter with John via bmad-agent-pm → M1 menu BEFORE writing copy)
    - Story 2.1: touch target hit expansion (::before pseudo, NOT real padding)
 3. Stories 1.2 + 1.3 — style-guide doc rewrite, then CI guardrail script
 4. Story 3.1 — F6 Tier 1 contrast token bumps (do last; highest snapshot risk)
 
 ## Hard guardrails — stop and raise these, do not push through
-- F6 Tier 1 (Story 3.1): if more than 15 visual snapshots break, STOP and
-  surface the count to the user for re-triage. Do not bulk-regenerate.
+- F6 Tier 1 (Story 3.1): review every affected snapshot diff individually —
+  no bulk-regenerate regardless of count. If more than 15 break, STOP and
+  surface the count to the user for re-triage before touching any more.
 - All values introduced or modified MUST flow through src/shared/theme.ts
   tokens. Zero hardcoded hex values. Zero inline @media strings — use mq
   helpers from @shared/utils/mediaQueries.
@@ -70,18 +76,22 @@ Read these files before starting:
   _bmad-output/planning-artifacts/accessibility-ux-sprint/00-overview-and-decisions.md
   _bmad-output/planning-artifacts/accessibility-ux-sprint/01-findings-detail.md
   _bmad-output/planning-artifacts/accessibility-ux-sprint/03-sprint-stories.md  (Sprint 2 shells at bottom)
+  _bmad-output/planning-artifacts/accessibility-ux-sprint/04-implementation-notes.md
   _bmad-output/planning-artifacts/accessibility-ux-sprint/05-test-strategy.md
 
 ## What to build (Sprint 2 story shells — all specs are in 01-findings-detail.md)
 - Story 6.1 — F5: BSO accessibility
-    Spec is LOCKED in 01-findings-detail.md (Sally's final design + Buck's
-    sign-off). Key points: visible text label "B 3  S 2  O 1", 20px/700 mobile,
+    Design spec is LOCKED in 01-findings-detail.md (Sally's final design).
+    Key points: visible text label "B 3  S 2  O 1", 20px/700 mobile,
     24px/700 desktop, tabular-nums, WCAG AAA (≥7:1) contrast; dots keep color
     but get 1px inner border; screen-reader: role="status" aria-live="polite"
     aria-atomic="true" on container, visible text aria-hidden="true".
-    Buck must sign off on F5 via bmad-agent-baseball-manager → RL menu before
-    the story is considered complete.
+    Buck must still sign off on the IMPLEMENTATION via bmad-agent-baseball-manager
+    → RL menu before Story 6.1 is closed — the design lock does not substitute
+    for implementation RL approval.
 - Story 7.1 — F2: Logo SVG → PNG with srcset + manifest audit
+    Route format/resolution/manifest decisions through bmad-agent-ux-designer
+    (Sally) before Winston CR — Sally owns final design spec (D5).
 - Story 8.1 — F4: Font size minimum bump (xs → 12px minimum), token migration
     All font size changes MUST update src/shared/theme.ts tokens — no one-off px.
 - Story 9.1 — F6 Tier 2: secondary metadata, timestamps, footer contrast bumps

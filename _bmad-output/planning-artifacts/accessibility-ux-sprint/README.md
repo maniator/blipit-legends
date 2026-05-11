@@ -31,7 +31,7 @@ This is the consolidated planning artifact for the **Critical Accessibility & Tr
 | [`03-sprint-stories.md`](./03-sprint-stories.md)                 | Per-story acceptance criteria, ready-for-Amelia story shells             | Amelia (implementer)    |
 | [`04-implementation-notes.md`](./04-implementation-notes.md)     | File-level technical notes, snapshot cascade warnings, CI guardrail spec | Amelia                  |
 | [`05-test-strategy.md`](./05-test-strategy.md)                   | Unit + a11y + E2E test additions (shift-left first)                      | Amelia, e2e-test-runner |
-| [`06-sprint-kickoff-prompts.md`](./06-sprint-kickoff-prompts.md) | Copy-paste agent session prompts for Sprint 1 and Sprint 2               | Implementing agent      |
+| [`06-sprint-kickoff-prompts.md`](./06-sprint-kickoff-prompts.md) | Copy-paste agent session prompts for Sprint 1 and Sprint 2               | Amelia                  |
 
 ## TL;DR
 
