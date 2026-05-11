@@ -310,54 +310,17 @@ With this approach the Playwright process owns the server. It has a 60-minute ti
 
 Vite's default `--host` resolves to `::1` (IPv6 loopback). MCP Chrome connects over IPv4, so it cannot reach `::1`. Always pass `--host 0.0.0.0` when starting preview manually.
 
-If you encounter connection problems, see § "Troubleshooting: "Browser already in use"" below.
+If you encounter connection problems, see § "Troubleshooting: MCP browser not working" below.
 
-### Troubleshooting: "Browser already in use" error
+### Troubleshooting: MCP browser not working
 
-When any `playwright-isolated-browser_*` tool call throws:
-
-```
-Error: Browser is already in use for /root/.cache/ms-playwright/mcp-chrome,
-use --isolated to run multiple instances of the same browser
-```
-
-This is **NOT** truly a concurrency issue. It is a misleading error produced after 5 failed launch retries. The real causes are:
-
-#### Root cause A — stale SingletonLock (most common after a crash)
-
-Chrome writes a `SingletonLock` symlink into the user-data-dir when it starts and removes it on clean exit. If a previous agent session crashed, the lock file remains. The next launch attempt sees the stale lock and exits immediately.
-
-> **Note:** The `playwright-isolated` server uses `--isolated` which bypasses the persistent user-data-dir entirely, so Root cause A should not apply to `playwright-isolated-browser_*` calls. If you do see this error from the isolated server, it most likely means the `playwright-isolated` key was not configured correctly (see Root cause C below).
-
-**Fix for the legacy `playwright-browser_*` tools (if still in use):**
+If a `playwright-isolated-browser_*` call fails or the browser won't start, first confirm the `playwright-isolated` process is running with the correct flags:
 
 ```bash
-sudo rm -rf /root/.cache/ms-playwright/mcp-chrome*
-```
-
-`copilot-setup-steps.yml` now runs this automatically at the start of every agent session. If you encounter the error mid-session (after an unexpected Chrome crash), run the command above and retry the MCP tool call.
-
-#### Root cause B — sandbox failure (fresh session, no stale lock)
-
-The MCP server runs as `root` in the Copilot sandbox. By default it uses system Chrome **with** Chromium sandbox enabled (`chromiumSandbox: true`). Running Chrome as root with the sandbox enabled and a CDP port causes Chrome to fail with `"Invalid URL: undefined"` — Playwright catches this, retries 5×, and then throws "Browser already in use".
-
-The `playwright-isolated` server uses `--isolated`, which switches to `IsolatedContextFactory` and does **not** use a CDP port or a persistent user-data-dir, so this root cause does not apply to `playwright-isolated-browser_*` calls. The `--no-sandbox` flag in the server args provides a belt-and-suspenders guard.
-
-#### Root cause C — MCP server key collision (now resolved)
-
-Previously the repo's MCP config used the key `"playwright"`, which collided with the pre-started systemd service (`playwright-mcp.service`, port 3100, no `--no-sandbox`). The runtime used the existing service and ignored the repo config entirely. The fix was to rename the key to `"playwright-isolated"` in GitHub repo settings → Copilot → MCP servers. This causes the runtime to spawn a separate process with `--no-sandbox --isolated`. This is now the configured state for this repo; do not rename the key back to `"playwright"`.
-
-#### Diagnosing which cause applies
-
-```bash
-# Check for a stale lock file (Root cause A)
-sudo ls /root/.cache/ms-playwright/mcp-chrome*/SingletonLock 2>/dev/null \
-  && echo "stale lock — clear it with: sudo rm -rf /root/.cache/ms-playwright/mcp-chrome*" \
-  || echo "no stale lock — check Root causes B/C"
-
-# Check whether the playwright-isolated process is running with correct flags (Root cause C)
 ps -ef | grep "playwright-mcp --no-sandbox --isolated" | grep -v grep
 ```
+
+If the process is missing, the `playwright-isolated` MCP server was not spawned. Verify the GitHub repo settings under **Settings → Copilot → MCP servers** contain a `"playwright-isolated"` key (not `"playwright"`) with args `["@playwright/mcp@latest", "--no-sandbox", "--isolated"]`. The key name must **not** be `"playwright"` — that name collides with the default pre-started systemd service and the repo config will be silently ignored.
 
 ### Agent method: MCP browser with batch-loop evaluate (preferred for tuning rounds)
 
@@ -406,18 +369,18 @@ This is the **fastest way for an agent to collect 200+ browser game metrics**. I
      localStorage.setItem("metricsConsoleErrors", JSON.stringify(msgs));
    };
    ```
-   > **Note:** The shim captures errors from the current page context only. When you navigate between pages the shim is reset — reinstall it after each page load, or use `playwright-browser_console_messages` at the end to see all accumulated messages for the session.
+   > **Note:** The shim captures errors from the current page context only. When you navigate between pages the shim is reset — reinstall it after each page load, or use `playwright-isolated-browser_console_messages` at the end to see all accumulated messages for the session.
 
 #### Running a single game and collecting stats
 
 ```js
 // ── 1. Navigate to the new game form ──────────────────────────────────────
-// (use playwright-browser_navigate to go to http://localhost:5173/exhibition/new)
-// (use playwright-browser_wait_for to wait for "Play Ball" to appear)
+// (use playwright-isolated-browser_navigate to go to http://localhost:5173/exhibition/new)
+// (use playwright-isolated-browser_wait_for to wait for "Play Ball" to appear)
 
 // ── 2. Set teams + seed via JS injection ──────────────────────────────────
 // Speed does NOT need to be set here — it is already Instant via localStorage.
-// (use playwright-browser_evaluate with the snippet below)
+// (use playwright-isolated-browser_evaluate with the snippet below)
 (async function (away, home, seed) {
   await new Promise((r) => {
     const c = () =>
@@ -450,10 +413,10 @@ This is the **fastest way for an agent to collect 200+ browser game metrics**. I
 })("Charlotte Bears", "Denver Raiders", "s1g1");
 
 // ── 3. Wait for FINAL ─────────────────────────────────────────────────────
-// (use playwright-browser_wait_for with text="FINAL", timeout ~30s)
+// (use playwright-isolated-browser_wait_for with text="FINAL", timeout ~30s)
 
 // ── 4. Collect stats and accumulate in localStorage ───────────────────────
-// (use playwright-browser_evaluate with the snippet below)
+// (use playwright-isolated-browser_evaluate with the snippet below)
 (async () => {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   // Ensure "This game" tab is active
@@ -516,7 +479,7 @@ This is the **fastest way for an agent to collect 200+ browser game metrics**. I
 
 #### Combined collect + start next game (preferred — halves MCP tool-call count)
 
-Instead of 4 tool calls per game (switch tab → collect evaluate → navigate → inject+start evaluate), use a single `playwright-browser_evaluate` that collects stats **and** clicks "New Game" then injects the next matchup — reducing to 2 calls per game (switch tab → combined evaluate):
+Instead of 4 tool calls per game (switch tab → collect evaluate → navigate → inject+start evaluate), use a single `playwright-isolated-browser_evaluate` that collects stats **and** clicks "New Game" then injects the next matchup — reducing to 2 calls per game (switch tab → combined evaluate):
 
 ```js
 // After a game reaches FINAL, use this single evaluate to collect AND start the next game.
@@ -644,7 +607,7 @@ const runs = r.reduce((s, g) => s + g.awayScore + g.homeScore, 0);
 
 #### Reading console errors and warnings
 
-After a batch of games, use the **`playwright-browser_console_messages`** tool to retrieve all console messages accumulated since the browser session started. This is the most reliable way to see errors across page navigations.
+After a batch of games, use the **`playwright-isolated-browser_console_messages`** tool to retrieve all console messages accumulated since the browser session started. This is the most reliable way to see errors across page navigations.
 
 For a quick summary filtered to actionable errors only (excludes known noise like the RxDB premium banner and blocked GTM):
 
@@ -676,7 +639,7 @@ If you see errors outside this table — especially React render errors, unhandl
 
 **⚠️ Background tabs do NOT advance.** Browsers throttle background-tab JavaScript timers to a minimum of ~1000ms. In Instant mode, a game that completes in <100ms on the active tab would take several minutes frozen in a background tab. Do not rely on pipelining across tabs.
 
-The recommended approach is the **single-tab batch-loop evaluate**: a single `playwright-browser_evaluate` call that loops over multiple games sequentially on the active tab. Simulation in Instant mode takes <100ms per game; the only overhead is the polling sleep calls inside the evaluate. 10 games complete inside a single evaluate call in ~2–3 seconds of wall-clock time.
+The recommended approach is the **single-tab batch-loop evaluate**: a single `playwright-isolated-browser_evaluate` call that loops over multiple games sequentially on the active tab. Simulation in Instant mode takes <100ms per game; the only overhead is the polling sleep calls inside the evaluate. 10 games complete inside a single evaluate call in ~2–3 seconds of wall-clock time.
 
 ```js
 // Single batch-loop evaluate: runs N games on the current tab in one MCP call.
