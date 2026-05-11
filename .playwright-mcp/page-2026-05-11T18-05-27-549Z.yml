@@ -1,0 +1,28 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - heading "BlipIt Baseball Legends" [level=1] [ref=e4]:
+      - img "BlipIt Baseball Legends" [ref=e5]
+    - paragraph [ref=e6]: Self-playing baseball simulator
+    - generic [ref=e7]:
+      - paragraph [ref=e8]: 🏆 League Mode
+      - paragraph [ref=e9]: Create a season, track standings, and crown a champion.
+      - button "Start a Season" [ref=e10] [cursor=pointer]
+    - paragraph [ref=e11]: Exhibition
+    - generic [ref=e12]:
+      - button "New Exhibition Game" [ref=e13] [cursor=pointer]
+      - button "Load Saved Game" [ref=e14] [cursor=pointer]
+      - button "Manage Teams" [ref=e15] [cursor=pointer]
+      - button "How to Play" [ref=e16] [cursor=pointer]
+      - separator [ref=e17]
+      - button "Contact / Report Bug" [ref=e18] [cursor=pointer]
+    - paragraph [ref=e19]:
+      - text: Created by
+      - link "naftali.dev" [ref=e20] [cursor=pointer]:
+        - /url: https://naftali.dev
+  - generic [ref=e21]:
+    - generic [ref=e22]:
+      - button "Mute announcements" [ref=e23] [cursor=pointer]: 🔊
+      - slider "Announcement volume" [ref=e24] [cursor=pointer]: "1"
+    - generic [ref=e25]:
+      - button "Mute music" [ref=e26] [cursor=pointer]: 🎵
+      - slider "Music volume" [ref=e27] [cursor=pointer]: "1"
