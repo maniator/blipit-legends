@@ -613,6 +613,7 @@ function LeagueSetupWizardInner(): React.ReactElement {
       {!isLastStep && (
         <ActionButton
           type="button"
+          data-testid="wizard-next-button"
           onClick={() => dispatch({ type: "NEXT_STEP" })}
           disabled={creating || currentStepErrors.length > 0}
         >

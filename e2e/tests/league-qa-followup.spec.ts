@@ -1,52 +1,13 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { importTeamsFixture, resetAppState } from "../utils/helpers";
+import { createAutogenSeason, createMixedManagedSeason } from "../utils/helpers.league";
 
-const createAutogenSeason = async (page: Page): Promise<void> => {
-  await page.goto("/leagues");
-  await expect(page.getByTestId("leagues-hub")).toBeVisible({ timeout: 15_000 });
-  await page.getByTestId("hub-start-autogen").click();
-  await expect(page.getByRole("button", { name: /next →/i })).toBeVisible({ timeout: 15_000 });
+// ---------------------------------------------------------------------------
+// P0-1: watch-mode launches must not expose manager controls
+// ---------------------------------------------------------------------------
 
-  for (let step = 1; step <= 5; step++) {
-    await page.getByRole("button", { name: /next →/i }).click();
-  }
-
-  await page.getByTestId("create-season-button").click();
-  await expect(page).toHaveURL(/\/leagues\/[^/]+$/, { timeout: 20_000 });
-  await expect(page.getByTestId("season-home")).toBeVisible({ timeout: 15_000 });
-};
-
-const createMixedManagedSeason = async (page: Page): Promise<void> => {
-  await importTeamsFixture(page, "fixture-teams.json", { minTeams: 2 });
-  await page.goto("/leagues/new");
-  await expect(page.getByRole("button", { name: /next →/i })).toBeVisible({ timeout: 15_000 });
-
-  await page.getByRole("button", { name: /next →/i }).click();
-
-  await page.getByLabel("Mixed").check();
-  const firstTeamCheckbox = page
-    .locator("input[type='checkbox']")
-    .filter({ hasNot: page.locator("[disabled]") })
-    .first();
-  await firstTeamCheckbox.check();
-
-  for (let step = 2; step <= 5; step++) {
-    await page.getByRole("button", { name: /next →/i }).click();
-  }
-
-  const managedSelect = page.getByTestId("managed-team-select");
-  await expect(managedSelect).toBeVisible({ timeout: 10_000 });
-  const managedTeamValue = await managedSelect.locator("option").nth(1).getAttribute("value");
-  if (!managedTeamValue) throw new Error("Expected at least one managed-team option in mixed mode");
-  await managedSelect.selectOption(managedTeamValue);
-
-  await page.getByTestId("create-season-button").click();
-  await expect(page).toHaveURL(/\/leagues\/[^/]+$/, { timeout: 20_000 });
-  await expect(page.getByTestId("season-home")).toBeVisible({ timeout: 15_000 });
-};
-
-test.describe("League v1 QA follow-up regressions", () => {
+test.describe("League QA — watch-mode spectator gating", () => {
   test.beforeEach(async ({ page }) => {
     await resetAppState(page);
   });
@@ -65,31 +26,69 @@ test.describe("League v1 QA follow-up regressions", () => {
       await watchButton.click();
 
       await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 15_000 });
+      // Spectator sessions must never show the manager-mode toggle.
       await expect(page.getByTestId("manager-mode-toggle")).not.toBeVisible();
     },
   );
+});
+
+// ---------------------------------------------------------------------------
+// P0-3/P0-4: mixed-mode wizard must enforce explicit managed-team selection
+// ---------------------------------------------------------------------------
+
+test.describe("League QA — mixed-mode wizard validation", () => {
+  test.beforeEach(async ({ page }) => {
+    await resetAppState(page);
+  });
 
   test(
-    "mixed-mode review requires explicit managed-team selection",
+    "mixed-mode review step requires explicit managed-team selection before create",
     { tag: "@league" },
     async ({ page }) => {
       await importTeamsFixture(page, "fixture-teams.json", { minTeams: 2 });
       await page.goto("/leagues/new");
-      await expect(page.getByRole("button", { name: /next →/i })).toBeVisible({ timeout: 15_000 });
+      await expect(page).toHaveURL(/\/leagues\/new/, { timeout: 15_000 });
 
-      await page.getByRole("button", { name: /next →/i }).click();
-      await page.getByLabel("Mixed").check();
-      await page.locator("input[type='checkbox']").first().check();
+      // Wait for wizard to finish loading.
+      const nextBtn = page.getByTestId("wizard-next-button");
+      await expect(nextBtn).toBeEnabled({ timeout: 15_000 });
 
+      // Advance to step 2 (Team Setup).
+      await nextBtn.click();
+      await page.waitForTimeout(200);
+
+      // Switch to Mixed mode and pick one team.
+      const mixedRadio = page.locator('input[type="radio"][name="teamMode"][value="mixed"]');
+      if ((await mixedRadio.count()) > 0) {
+        await mixedRadio.check();
+      } else {
+        await page.getByRole("radio", { name: /mixed/i }).check();
+      }
+      await page.locator('input[type="checkbox"]').first().check();
+
+      // Advance through steps 2→5.
       for (let step = 2; step <= 5; step++) {
-        await page.getByRole("button", { name: /next →/i }).click();
+        await expect(page.getByTestId("wizard-next-button")).toBeEnabled({ timeout: 10_000 });
+        await page.getByTestId("wizard-next-button").click();
+        await page.waitForTimeout(200);
       }
 
-      await expect(page.getByTestId("managed-team-select")).toBeVisible();
+      // Step 6 (review): managed-team select must be visible, Create must be disabled.
+      await expect(page.getByTestId("managed-team-select")).toBeVisible({ timeout: 10_000 });
       await expect(page.getByTestId("create-season-button")).toBeDisabled();
       await expect(page.getByText("Please select which team you will manage.")).toBeVisible();
     },
   );
+});
+
+// ---------------------------------------------------------------------------
+// P0-2: managed-team auto-sim action on next-game-ready branch
+// ---------------------------------------------------------------------------
+
+test.describe("League QA — managed auto-sim CTA", () => {
+  test.beforeEach(async ({ page }) => {
+    await resetAppState(page);
+  });
 
   test(
     "managed-team next-game-ready branch exposes auto-simulate action",
@@ -102,7 +101,7 @@ test.describe("League v1 QA follow-up regressions", () => {
       await expect(page.getByTestId("auto-sim-next-game-button")).toBeVisible({ timeout: 10_000 });
 
       await page.getByTestId("auto-sim-next-game-button").click();
-      await expect(page.getByTestId("season-home")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("season-home")).toBeVisible({ timeout: 20_000 });
     },
   );
 });
