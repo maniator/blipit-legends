@@ -265,10 +265,9 @@ Seeds are strings: `s1g1`, `s1g2`, … `s1g20` for matchup block s1 with 20 seed
 
 ### Starting the preview server for MCP browser automation
 
-The MCP browser (Chrome controlled by `mcp-server-playwright`) can reach `http://127.0.0.1:5173/` directly — the Playwright `webServer` handshake is **not the only path**; a plain `nohup` server also works. The two prerequisites are:
+The `playwright-isolated-browser_*` MCP tools (Chrome controlled by the `playwright-isolated` MCP server) can reach `http://127.0.0.1:5173/` directly — the Playwright `webServer` handshake is **not the only path**; a plain `nohup` server also works. The one prerequisite is:
 
-1. **`--no-sandbox` in the MCP server args** (see § "Troubleshooting: Browser already in use" → Root cause B). Without it Chrome fails to start and connections are refused regardless of how the server was launched.
-2. **Vite bound to `0.0.0.0`**, not the default `::1` loopback.
+1. **Vite bound to `0.0.0.0`**, not the default `::1` loopback.
 
 **Recommended bootstrap — direct `nohup` approach:**
 
@@ -286,7 +285,7 @@ sleep 4
 curl -s -o /dev/null -w "HTTP %{http_code}" http://127.0.0.1:5173/
 ```
 
-Once the server is up, navigate the MCP browser to `http://127.0.0.1:5173`.
+Once the server is up, navigate the MCP browser to `http://127.0.0.1:5173` using `playwright-isolated-browser_navigate`.
 
 **Alternative — let Playwright own the server (also works):**
 
@@ -311,11 +310,11 @@ With this approach the Playwright process owns the server. It has a 60-minute ti
 
 Vite's default `--host` resolves to `::1` (IPv6 loopback). MCP Chrome connects over IPv4, so it cannot reach `::1`. Always pass `--host 0.0.0.0` when starting preview manually.
 
-If you encounter connection problems, see § "Troubleshooting: Browser already in use" below for the `--no-sandbox` fix and the stale-lock diagnosis command.
+If you encounter connection problems, see § "Troubleshooting: "Browser already in use"" below.
 
 ### Troubleshooting: "Browser already in use" error
 
-When any `playwright-browser_*` tool call throws:
+When any `playwright-isolated-browser_*` tool call throws:
 
 ```
 Error: Browser is already in use for /root/.cache/ms-playwright/mcp-chrome,
@@ -328,7 +327,9 @@ This is **NOT** truly a concurrency issue. It is a misleading error produced aft
 
 Chrome writes a `SingletonLock` symlink into the user-data-dir when it starts and removes it on clean exit. If a previous agent session crashed, the lock file remains. The next launch attempt sees the stale lock and exits immediately.
 
-**Fix:**
+> **Note:** The `playwright-isolated` server uses `--isolated` which bypasses the persistent user-data-dir entirely, so Root cause A should not apply to `playwright-isolated-browser_*` calls. If you do see this error from the isolated server, it most likely means the `playwright-isolated` key was not configured correctly (see Root cause C below).
+
+**Fix for the legacy `playwright-browser_*` tools (if still in use):**
 
 ```bash
 sudo rm -rf /root/.cache/ms-playwright/mcp-chrome*
@@ -338,34 +339,31 @@ sudo rm -rf /root/.cache/ms-playwright/mcp-chrome*
 
 #### Root cause B — sandbox failure (fresh session, no stale lock)
 
-The MCP server (`mcp-server-playwright`) runs as `root` in the Copilot sandbox. By default it uses system Chrome (`google-chrome`, `channel: "chrome"`) **with** Chromium sandbox enabled (`chromiumSandbox: true`). Running Chrome as root with the sandbox enabled and a CDP port causes Chrome to fail with `"Invalid URL: undefined"` — playwright catches this, retries 5×, and then throws "Browser already in use".
+The MCP server runs as `root` in the Copilot sandbox. By default it uses system Chrome **with** Chromium sandbox enabled (`chromiumSandbox: true`). Running Chrome as root with the sandbox enabled and a CDP port causes Chrome to fail with `"Invalid URL: undefined"` — Playwright catches this, retries 5×, and then throws "Browser already in use".
 
-**Permanent fix — add `--no-sandbox` to the MCP server args in GitHub repo settings:**
+The `playwright-isolated` server uses `--isolated`, which switches to `IsolatedContextFactory` and does **not** use a CDP port or a persistent user-data-dir, so this root cause does not apply to `playwright-isolated-browser_*` calls. The `--no-sandbox` flag in the server args provides a belt-and-suspenders guard.
 
-1. Go to **Settings → Copilot → MCP servers → playwright-mcp**
-2. Add `--no-sandbox` to the args list (alongside the existing `--headless`)
-3. The new arg list should be: `--headless --no-sandbox`
+#### Root cause C — MCP server key collision (now resolved)
 
-**Alternative permanent fix — add `--isolated` instead:**
-
-1. `--isolated` switches to the `IsolatedContextFactory`, which does not use a persistent
-   user-data-dir or a CDP port, completely avoiding both root causes above.
-2. Tradeoff: browser profile is not preserved between MCP tool calls.
+Previously the repo's MCP config used the key `"playwright"`, which collided with the pre-started systemd service (`playwright-mcp.service`, port 3100, no `--no-sandbox`). The runtime used the existing service and ignored the repo config entirely. The fix was to rename the key to `"playwright-isolated"` in GitHub repo settings → Copilot → MCP servers. This causes the runtime to spawn a separate process with `--no-sandbox --isolated`. This is now the configured state for this repo; do not rename the key back to `"playwright"`.
 
 #### Diagnosing which cause applies
 
 ```bash
-# Check for a stale lock file
+# Check for a stale lock file (Root cause A)
 sudo ls /root/.cache/ms-playwright/mcp-chrome*/SingletonLock 2>/dev/null \
-  && echo "stale lock — clear it" \
-  || echo "no stale lock — sandbox issue, add --no-sandbox to MCP server args"
+  && echo "stale lock — clear it with: sudo rm -rf /root/.cache/ms-playwright/mcp-chrome*" \
+  || echo "no stale lock — check Root causes B/C"
+
+# Check whether the playwright-isolated process is running with correct flags (Root cause C)
+ps -ef | grep "playwright-mcp --no-sandbox --isolated" | grep -v grep
 ```
 
 ### Agent method: MCP browser with batch-loop evaluate (preferred for tuning rounds)
 
-This is the **fastest way for an agent to collect 200+ browser game metrics**. In Instant mode, game simulation completes in essentially **zero wall-clock time** — a 9-inning game renders in <100ms on the active tab. The only real timing cost is MCP tool-call overhead (~2–3 seconds per `playwright-browser_*` call).
+This is the **fastest way for an agent to collect 200+ browser game metrics**. In Instant mode, game simulation completes in essentially **zero wall-clock time** — a 9-inning game renders in <100ms on the active tab. The only real timing cost is MCP tool-call overhead (~2–3 seconds per `playwright-isolated-browser_*` call).
 
-> **Key insight: use a single `evaluate` call that loops over many games.** A single `playwright-browser_evaluate` call can start a game, `await waitForFinal()`, collect stats, and immediately start the next game — all inside the JS context, with zero MCP round-trips between games. 10 games per tab = 1 evaluate call ≈ 2–3 seconds of wall-clock time. For a 200-game run, change the loop to `g<=20` (20 games per tab, one evaluate call per tab across 10 tabs) = ~10 evaluate calls + ~10 tab-switch calls ≈ **under 2 minutes of total wall-clock time**.
+> **Key insight: use a single `evaluate` call that loops over many games.** A single `playwright-isolated-browser_evaluate` call can start a game, `await waitForFinal()`, collect stats, and immediately start the next game — all inside the JS context, with zero MCP round-trips between games. 10 games per tab = 1 evaluate call ≈ 2–3 seconds of wall-clock time. For a 200-game run, change the loop to `g<=20` (20 games per tab, one evaluate call per tab across 10 tabs) = ~10 evaluate calls + ~10 tab-switch calls ≈ **under 2 minutes of total wall-clock time**.
 
 > **Background tabs DO NOT advance.** Browsers throttle background-tab JS timers to a minimum of ~1000ms. In Instant mode, a game that completes in <100ms on the active tab takes several minutes frozen in a background tab. **Do not rely on background tabs finishing games while you are on another tab.** The batch-loop approach below handles this correctly by running all games for a tab sequentially within a single active-tab evaluate call.
 
