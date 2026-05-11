@@ -181,6 +181,34 @@ Use `theme.spacing.*` values (`xxs` through `s48`) instead of raw px values.
 - BSO colors: `bsoBall`, `bsoStrike`, `bsoOut`.
 - Decision panels: `bgDecisionOverlay`, `bgDecisionSection`, `bgDecisionButton`.
 
+## Touch-target hit-area expansion (Sprint 1 — audited)
+
+Buttons with a visual footprint below 44×44 CSS px use a transparent `::before` pseudo-element to expand the interactive hit area without altering layout:
+
+```ts
+const SmallButton = styled.button`
+  position: relative;
+  /* expand hit area to ≥ 44×44 without shifting layout */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -<N>px; /* choose N so visual_size + 2N ≥ 44 */
+  }
+`;
+```
+
+### Gap rule (mandatory — enforced by Sprint 1)
+
+When applying `::before` hit-area expansion to **adjacent buttons in a flex row**, the `gap` between them **must be ≥ 2 × inset** to prevent overlapping hit areas. Overlapping pseudo-elements mis-route taps to the wrong button.
+
+| Component               | Button size | Inset                      | Required gap                                           |
+| ----------------------- | ----------- | -------------------------- | ------------------------------------------------------ |
+| `HelpButton`            | 25px        | −5px desktop / −3px mobile | 10px desktop / 6px mobile (Controls gap provides this) |
+| `ActionBtn` (save card) | 32px height | −6px                       | ≥ 12px (`spacing.md`)                                  |
+| Modal close buttons     | 28px        | −8px                       | N/A (isolated, no adjacent button)                     |
+
+**Pre-PR checklist item:** Before submitting a PR that adds or changes `::before` inset on any button in a flex container, verify the adjacent `gap` value satisfies `gap ≥ 2 × |inset|`.
+
 ## Verification checklist for UI changes
 
 Before merging UI/token changes:
@@ -190,3 +218,4 @@ Before merging UI/token changes:
 - [ ] Responsive changes use `mq` helpers only.
 - [ ] Modal sizing uses `dvh` where viewport constrained.
 - [ ] Any touched contrast-sensitive token updates are reflected in this guide.
+- [ ] Any `::before` hit-area expansion satisfies `gap ≥ 2 × |inset|` for adjacent buttons.

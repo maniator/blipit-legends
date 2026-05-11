@@ -1,5 +1,5 @@
 generated: "2026-05-11T18:47:41.946Z"
-last_updated: "2026-05-11T18:47:41.946Z"
+last_updated: "2026-05-11T19:00:00.000Z"
 project: blipit-legends
 project_key: BL
 tracking_system: github
@@ -55,5 +55,5 @@ development_status:
     description: "Story 5.1: indexHtmlLang.test.ts guards <html lang=en>; regex uses /<html[^>]*\\slang=\"en\"/i to handle any attribute order"
 
   sprint-1-retrospective:
-    status: optional
-    description: "Sprint 1 retrospective — run after PR merge"
+    status: done
+    description: "Sprint 1 retrospective — completed; artifact at _bmad-output/implementation-artifacts/sprint-1-retro-2026-05-11.md"
