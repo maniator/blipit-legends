@@ -78,7 +78,7 @@ export default defineConfig(({ mode }) => ({
     // location" errors that occur in jsdom when using the vmForks pool.
     environment: "happy-dom",
     globals: true,
-    setupFiles: ["./test/crypto-subtle.ts", "./test/react-global.ts", "./test/setup.ts"],
+    setupFiles: ["./test/react-global.ts", "./test/crypto-subtle.ts", "./test/setup.ts"],
     coverage: {
       provider: "v8",
       // Patterns are relative to the vitest root, which is "src/" (set by

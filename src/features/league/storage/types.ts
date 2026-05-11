@@ -83,7 +83,7 @@ export interface SeasonGameRecord {
 
 /**
  * Persisted per-player season state — tracks pitcher fatigue and availability.
- * Primary key is composite: `${seasonId}:${playerId}`.
+ * Primary key is composite: `${seasonId}:${seasonTeamId}:${playerId}`.
  */
 export interface SeasonPlayerStateRecord {
   /** Composite key: `${seasonId}:${seasonTeamId}:${playerId}` */
