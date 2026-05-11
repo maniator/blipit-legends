@@ -114,11 +114,11 @@ yarn build         # Production build to dist/
 
 ## Playwright MCP Local App Access Rule
 
-- For Playwright MCP local-browser sessions, **do not** start `yarn dev` or `npx vite preview` manually from bash.
-- Start localhost access via a Playwright CLI command whose config defines `webServer` for `http://localhost:5173` (for example `npx playwright test --config=playwright.config.ts --project=desktop`).
-- Use `playwright.config.ts` for standard E2E workflows; use `playwright-metrics.config.ts` only for metrics baseline runs.
-- Then navigate the MCP browser to `http://localhost:5173`.
-- If the Playwright process exits, restart the same command before continuing MCP browser actions.
+- For Playwright MCP local-browser sessions, start `npx vite preview` with `--host 0.0.0.0` so Chrome can reach it over IPv4.
+- **Recommended bootstrap:** `nohup npx vite preview --port 5173 --host 0.0.0.0 >> vite-preview.log 2>&1 & disown`, wait 4 seconds, then verify with `curl -s -o /dev/null -w "HTTP %{http_code}" http://127.0.0.1:5173/`.
+- The Playwright CLI `webServer` approach (e.g. `npx playwright test --config=playwright.config.ts --project=desktop`) also works and is still valid for standard E2E runs — it is no longer the _only_ option.
+- Navigate the MCP browser to `http://127.0.0.1:5173` (not `localhost:5173`).
+- **Prerequisite:** `--no-sandbox` must be present in the `mcp-server-playwright` MCP server args (Settings → Copilot → MCP servers → playwright-mcp). Without it Chrome fails to start regardless of how the server was launched.
 - Full rationale and troubleshooting live in `docs/e2e-testing.md`.
 
 ## Playwright MCP "Browser already in use" Fix

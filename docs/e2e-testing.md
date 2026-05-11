@@ -265,40 +265,53 @@ Seeds are strings: `s1g1`, `s1g2`, … `s1g20` for matchup block s1 with 20 seed
 
 ### Starting the preview server for MCP browser automation
 
-The MCP browser (Chrome controlled by the `mcp-server-playwright` process) can **only** reach `localhost:5173` when the vite preview server is started by the **Playwright CLI's `webServer` config**, not when started manually from bash.
+The MCP browser (Chrome controlled by `mcp-server-playwright`) can reach `http://127.0.0.1:5173/` directly — the Playwright `webServer` handshake is **not the only path**; a plain `nohup` server also works. The two prerequisites are:
 
-**What works — let Playwright own the server:**
+1. **`--no-sandbox` in the MCP server args** (see § "Troubleshooting: Browser already in use" → Root cause B). Without it Chrome fails to start and connections are refused regardless of how the server was launched.
+2. **Vite bound to `0.0.0.0`**, not the default `::1` loopback.
+
+**Recommended bootstrap — direct `nohup` approach:**
+
+```bash
+# Build first (required — preview serves dist/)
+cd /home/runner/work/blipit-legends/blipit-legends
+yarn build
+
+# Start vite preview bound to all interfaces, detached from the shell
+nohup npx vite preview --port 5173 --host 0.0.0.0 >> vite-preview.log 2>&1 &
+disown
+
+# Wait for the server to come up, then verify
+sleep 4
+curl -s -o /dev/null -w "HTTP %{http_code}" http://127.0.0.1:5173/
+```
+
+Once the server is up, navigate the MCP browser to `http://127.0.0.1:5173`.
+
+**Alternative — let Playwright own the server (also works):**
 
 ```bash
 # Build first (required — preview serves dist/)
 yarn build
 
 # Start the Playwright metrics test in the background.
-# Its webServer config starts `npx vite preview --port 5173` as a child process,
-# which is the only method that makes localhost:5173 reachable in the MCP browser.
+# Its webServer config starts `npx vite preview --port 5173` as a child process.
 cd /home/runner/work/blipit-legends/blipit-legends
-npx playwright test --config=playwright-metrics.config.ts --project=desktop > /tmp/pltest.txt 2>&1 &
+npx playwright test --config=playwright-metrics.config.ts --project=desktop >> playwright-bg.log 2>&1 &
+disown
 
 # Wait ~12 seconds for vite preview to boot, then verify
 sleep 12 && ss -tlnp | grep 5173
-curl -s -o /dev/null -w "HTTP %{http_code}" http://localhost:5173/
+curl -s -o /dev/null -w "HTTP %{http_code}" http://127.0.0.1:5173/
 ```
 
-Once the server is up, navigate the MCP browser to `http://localhost:5173`.
+With this approach the Playwright process owns the server. It has a 60-minute timeout; if it exits mid-session, restart it with the same command.
 
-**What does NOT work (manually started servers are unreachable from MCP Chrome):**
+**Key requirement — bind address:**
 
-```bash
-# ❌ All of these fail in the MCP browser with ERR_CONNECTION_REFUSED or ERR_FAILED:
-npx vite preview --port 5173                    # binds [::1]:5173
-npx vite preview --port 5173 --host 0.0.0.0    # binds 0.0.0.0:5173
-npx vite preview --port 5173 --host 127.0.0.1  # binds 127.0.0.1:5173
-npx vite preview --port 5173 --host ::1         # binds [::1]:5173
-```
+Vite's default `--host` resolves to `::1` (IPv6 loopback). MCP Chrome connects over IPv4, so it cannot reach `::1`. Always pass `--host 0.0.0.0` when starting preview manually.
 
-**Root cause:** The MCP browser (`mcp-server-playwright`) controls the Chrome process (PID visible via `pgrep -f "chrome.*playwright"`). When `npx playwright test` runs it connects to the same Chrome process and registers `localhost:5173` with Chrome's networking stack via the webServer handshake. A manually-started server never goes through that handshake, so Chrome's network service rejects connections to it regardless of bind address.
-
-**Important:** The background Playwright test will eventually time out (60-minute timeout) and kill its vite preview server. If the server goes away mid-session, restart it with the same command above.
+If you encounter connection problems, see § "Troubleshooting: Browser already in use" below for the `--no-sandbox` fix and the stale-lock diagnosis command.
 
 ### Troubleshooting: "Browser already in use" error
 
@@ -358,8 +371,8 @@ This is the **fastest way for an agent to collect 200+ browser game metrics**. I
 
 #### One-time setup per session
 
-1. Build the app and start the Playwright webServer (see above).
-2. Navigate the MCP browser to `http://localhost:5173`.
+1. Build the app and start the preview server (see above).
+2. Navigate the MCP browser to `http://127.0.0.1:5173`.
 3. Set localStorage for Instant mode + no-manager — **this applies to all tabs on the same origin**:
    ```js
    localStorage.setItem("speed", "0"); // SPEED_INSTANT
