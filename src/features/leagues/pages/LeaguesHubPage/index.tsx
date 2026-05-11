@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { getTotalGameDays } from "@feat/leagues/utils/seasonPresets";
 import EmptyState from "@shared/components/EmptyState";
 import { BackBtn, PageContainer, PageHeader } from "@shared/components/PageLayout/styles";
 import { appLog } from "@shared/utils/logger";
@@ -189,7 +190,9 @@ const LeaguesHubPageInner: React.FunctionComponent = () => {
   // State 3 — Active season, no historical
   // State 4 — Active season + historical
   if (activeSeason) {
-    const progressText = `Continue: ${activeSeason.name} · day ${activeSeason.currentGameDay} / 30`;
+    const totalGameDays = getTotalGameDays(activeSeason.preset, activeSeason.seasonLength);
+    const displayDay = Math.min(activeSeason.currentGameDay + 1, totalGameDays);
+    const progressText = `Continue: ${activeSeason.name} · Day ${displayDay} / ${totalGameDays}`;
     const progressId = "hub-season-progress";
 
     return (

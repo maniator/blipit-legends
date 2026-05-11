@@ -200,6 +200,8 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
     season.status === "complete" && season.championTeamId
       ? (teamNameById[season.championTeamId] ?? null)
       : null;
+  const totalGameDays = getTotalGameDays(season.preset, season.seasonLength);
+  const displayDay = Math.min(season.currentGameDay + 1, totalGameDays);
 
   return (
     <PageContainer data-testid="season-home">
@@ -221,12 +223,12 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
 
       <SeasonMeta>
         <GameDayRow>
-          Day {season.currentGameDay} / {getTotalGameDays(season.preset, season.seasonLength)}
+          Day {displayDay} / {totalGameDays}
         </GameDayRow>
         <SeasonProgress
-          value={season.currentGameDay}
-          max={getTotalGameDays(season.preset, season.seasonLength)}
-          aria-label={`Season progress: day ${season.currentGameDay} of ${getTotalGameDays(season.preset, season.seasonLength)}`}
+          value={displayDay}
+          max={totalGameDays}
+          aria-label={`Season progress: day ${displayDay} of ${totalGameDays}`}
         />
       </SeasonMeta>
 

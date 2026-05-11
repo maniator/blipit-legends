@@ -8,6 +8,7 @@
  * Follow the `buildStore(getDbFn)` / singleton pattern from saveStore and
  * customTeamStore so tests can inject an in-memory DB via `makeLeagueStore`.
  */
+import { populateRoster } from "@feat/customTeams/storage/customTeamRosterPersistence";
 import { makeCustomTeamStore } from "@feat/customTeams/storage/customTeamStore";
 import type { AutogenParity, AutogenTheme } from "@feat/league/autogen/generateLeagueTeams";
 import { generateLeagueTeams } from "@feat/league/autogen/generateLeagueTeams";
@@ -29,6 +30,7 @@ import { getDb } from "@storage/db";
 import { generateSeasonId, generateSeasonTeamId, generateTeamId } from "@storage/generateId";
 import { fnv1a } from "@storage/hash";
 import { SANCTIONED_WRITE_CTX, withSanctionedCustomTeamWrite } from "@storage/sanctionedWrite";
+import type { TeamRecord } from "@storage/types";
 
 // ---------------------------------------------------------------------------
 // Season constants
@@ -189,9 +191,22 @@ function buildStore(getDbFn: GetDb) {
         for (const customTeamId of league.teamIds) {
           // Build a roster snapshot from the stored team doc.
           const teamDoc = await db.teams.findOne(customTeamId).exec();
-          const rosterSnapshot: Record<string, unknown> = teamDoc
-            ? (teamDoc.toJSON() as unknown as Record<string, unknown>)
-            : {};
+          const rosterSnapshot: Record<string, unknown> = {};
+          if (teamDoc) {
+            const hydratedTeam = await populateRoster(
+              db,
+              teamDoc.toJSON() as unknown as TeamRecord,
+            );
+            rosterSnapshot["id"] = hydratedTeam.id;
+            rosterSnapshot["name"] = hydratedTeam.name;
+            rosterSnapshot["abbreviation"] = hydratedTeam.abbreviation;
+            rosterSnapshot["city"] = hydratedTeam.city;
+            rosterSnapshot["nickname"] = hydratedTeam.nickname;
+            rosterSnapshot["slug"] = hydratedTeam.slug;
+            rosterSnapshot["lineup"] = hydratedTeam.roster.lineup;
+            rosterSnapshot["bench"] = hydratedTeam.roster.bench ?? [];
+            rosterSnapshot["pitchers"] = hydratedTeam.roster.pitchers;
+          }
 
           const seasonTeamId = generateSeasonTeamId();
           seasonTeamIdByCustomTeamId[customTeamId] = seasonTeamId;

@@ -6,14 +6,14 @@ import { createSeason, quickStart } from "@feat/league/storage/leagueStore";
 import { useActiveSeason } from "@feat/leagues/hooks/useActiveSeason";
 import ModalShell from "@shared/components/ModalShell";
 import StatusBanner from "@shared/components/StatusBanner";
-import { useCustomTeams } from "@shared/hooks/useCustomTeams";
 import { appLog } from "@shared/utils/logger";
-import { useNavigate } from "react-router";
-import { RxDatabaseProvider } from "rxdb/plugins/react";
+import { useNavigate, useSearchParams } from "react-router";
+import { RxDatabaseProvider, useLiveRxQuery } from "rxdb/plugins/react";
 
 import { type BallgameDb, getDb } from "@storage/db";
 import { generateTeamId } from "@storage/generateId";
 import { fnv1a } from "@storage/hash";
+import type { TeamRecord } from "@storage/types";
 
 import { validateAllSteps } from "../../wizard/validateWizardState";
 import type { WizardState } from "../../wizard/wizardReducer";
@@ -415,12 +415,42 @@ const STEP_LABELS: Record<number, string> = {
 
 function LeagueSetupWizardInner(): React.ReactElement {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { activeSeason, loading } = useActiveSeason();
-  const { teams: customTeams } = useCustomTeams();
+  const modeParam = searchParams.get("mode");
+  const requestedTeamMode: WizardState["teamMode"] | null =
+    modeParam === "allAutogen" ? "allAutogen" : null;
+
+  const customTeamsQuery = React.useMemo(() => ({ selector: {} }), []);
+  const { results: customTeamResults } = useLiveRxQuery<TeamRecord>({
+    collection: "teams",
+    query: customTeamsQuery,
+  });
+  const customTeams = React.useMemo(
+    () =>
+      customTeamResults
+        .map((d) => d.toJSON() as unknown as TeamRecord)
+        .filter((team) => team.metadata?.archived !== true)
+        .map((team) => ({ id: team.id, name: team.name })),
+    [customTeamResults],
+  );
 
   const [state, dispatch] = React.useReducer(wizardReducer, undefined, () => {
-    return loadWizardState() ?? makeInitialState();
+    const base = loadWizardState() ?? makeInitialState();
+    if (requestedTeamMode !== "allAutogen") return base;
+    const initialState: WizardState = {
+      ...base,
+      teamMode: "allAutogen",
+      userCustomTeamId: null,
+    };
+    return initialState;
   });
+
+  React.useEffect(() => {
+    if (requestedTeamMode !== "allAutogen" || state.teamMode === "allAutogen") return;
+    dispatch({ type: "SET_TEAM_MODE", mode: "allAutogen" });
+    dispatch({ type: "SET_USER_TEAM", customTeamId: null });
+  }, [requestedTeamMode, state.teamMode]);
 
   const [creating, setCreating] = React.useState(false);
   const [createError, setCreateError] = React.useState<string | null>(null);
