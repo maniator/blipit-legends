@@ -199,8 +199,25 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  vi.clearAllMocks();
   await db.close();
 });
+
+const mockCompletedHeadlessGames = () => {
+  vi.mocked(runHeadlessGame).mockImplementation(async ({ seasonGameId }) => {
+    const game = await db.seasonGames.findOne(seasonGameId).exec();
+    await game?.patch({
+      status: "completed",
+      boxscore: { homeScore: 5, awayScore: 3 },
+      completedAt: Date.now(),
+    });
+    return {
+      status: "completed",
+      homeScore: 5,
+      awayScore: 3,
+    };
+  });
+};
 
 describe("advanceToUserGame — batch ordering logic", () => {
   it("identifies the user's next game correctly when a non-user game precedes it", async () => {
@@ -275,35 +292,11 @@ describe("advanceToUserGame — batch ordering logic", () => {
 
 describe("advanceToUserGame — full function", () => {
   it("returns immediately when user game is the next scheduled", async () => {
-    const testDb = await makeTestDb();
-    vi.mocked(getDb).mockResolvedValue(testDb as any);
-    vi.mocked(runHeadlessGame).mockResolvedValue({
-      status: "completed",
-      homeScore: 5,
-      awayScore: 3,
-    });
-
-    // Insert season.
-    await testDb.seasons.insert({
-      id: SEASON_ID,
-      name: "Test Season",
-      status: "active",
-      createdAt: Date.now(),
-      preset: "mini",
-      seasonLength: "sprint",
-      masterSeed: "testseed",
-      leagues: [],
-      tradeDeadlineGameDay: null,
-      playoffFormat: null,
-      featureFlags: {},
-      currentGameDay: 0,
-      championTeamId: null,
-      rulesetVersion: 1,
-      awards: [],
-    });
+    vi.mocked(getDb).mockResolvedValue(db as any);
+    mockCompletedHeadlessGames();
 
     // Insert a user game as the first scheduled game.
-    await testDb.seasonGames.insert({
+    await db.seasonGames.insert({
       id: "sg_user_first",
       seasonId: SEASON_ID,
       gameDay: 0,
@@ -328,77 +321,14 @@ describe("advanceToUserGame — full function", () => {
     expect(result.nextGameId).toBe("sg_user_first");
     expect(result.gamesSimulated).toBe(0);
     expect(vi.mocked(runHeadlessGame)).not.toHaveBeenCalled();
-
-    await testDb.close();
   });
 
   it("advances through prior games headlessly", async () => {
-    const testDb = await makeTestDb();
-    vi.mocked(getDb).mockResolvedValue(testDb as any);
-    vi.mocked(runHeadlessGame).mockResolvedValue({
-      status: "completed",
-      homeScore: 5,
-      awayScore: 3,
-    });
-
-    // Insert season.
-    await testDb.seasons.insert({
-      id: SEASON_ID,
-      name: "Test Season",
-      status: "active",
-      createdAt: Date.now(),
-      preset: "mini",
-      seasonLength: "sprint",
-      masterSeed: "testseed",
-      leagues: [],
-      tradeDeadlineGameDay: null,
-      playoffFormat: null,
-      featureFlags: {},
-      currentGameDay: 0,
-      championTeamId: null,
-      rulesetVersion: 1,
-      awards: [],
-    });
-
-    // Insert teams.
-    await testDb.seasonTeams.bulkInsert([
-      {
-        id: USER_ST_ID,
-        seasonId: SEASON_ID,
-        leagueId: "l_1",
-        customTeamId: "ct_user",
-        rosterSnapshot: ROSTER,
-        wins: 0,
-        losses: 0,
-        ties: 0,
-        runDifferential: 0,
-      },
-      {
-        id: OTHER_ST_A,
-        seasonId: SEASON_ID,
-        leagueId: "l_1",
-        customTeamId: "ct_otherA",
-        rosterSnapshot: ROSTER,
-        wins: 0,
-        losses: 0,
-        ties: 0,
-        runDifferential: 0,
-      },
-      {
-        id: OTHER_ST_B,
-        seasonId: SEASON_ID,
-        leagueId: "l_1",
-        customTeamId: "ct_otherB",
-        rosterSnapshot: ROSTER,
-        wins: 0,
-        losses: 0,
-        ties: 0,
-        runDifferential: 0,
-      },
-    ]);
+    vi.mocked(getDb).mockResolvedValue(db as any);
+    mockCompletedHeadlessGames();
 
     // Insert games: 2 non-user games on day 0, then a user game on day 1.
-    await testDb.seasonGames.bulkInsert([
+    await db.seasonGames.bulkInsert([
       {
         id: "sg_other_d0a",
         seasonId: SEASON_ID,
@@ -463,13 +393,10 @@ describe("advanceToUserGame — full function", () => {
     expect(result.nextGameId).toBe("sg_user_d1");
     expect(result.gamesSimulated).toBe(2);
     expect(vi.mocked(runHeadlessGame)).toHaveBeenCalledTimes(2);
-
-    await testDb.close();
   });
 
   it("handles missing season", async () => {
-    const testDb = await makeTestDb();
-    vi.mocked(getDb).mockResolvedValue(testDb as any);
+    vi.mocked(getDb).mockResolvedValue(db as any);
 
     const result = await advanceToUserGame({
       seasonId: "s_nonexistent",
@@ -478,7 +405,5 @@ describe("advanceToUserGame — full function", () => {
 
     expect(result.nextGameId).toBeNull();
     expect(result.gamesSimulated).toBe(0);
-
-    await testDb.close();
   });
 });

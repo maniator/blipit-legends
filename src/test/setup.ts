@@ -1,29 +1,6 @@
 import "fake-indexeddb/auto";
 import "@testing-library/jest-dom/vitest";
 
-// ---------------------------------------------------------------------------
-// crypto.subtle polyfill — required for RxDB in vmForks pool.
-// In vmForks, each test file runs in a fresh V8 VM context. Some environments
-// provide globalThis.crypto but without the subtle sub-object. RxDB checks for
-// crypto.subtle at init time and throws UT8 if it is missing.
-// We patch it here (before any RxDB import) using Node's built-in webcrypto.
-// ---------------------------------------------------------------------------
-import { webcrypto } from "node:crypto";
-
-if (typeof globalThis.crypto === "undefined") {
-  Object.defineProperty(globalThis, "crypto", {
-    value: webcrypto,
-    configurable: true,
-    writable: true,
-  });
-} else if (typeof globalThis.crypto.subtle === "undefined") {
-  Object.defineProperty(globalThis.crypto, "subtle", {
-    value: webcrypto.subtle,
-    configurable: true,
-    writable: true,
-  });
-}
-
 import { addRxPlugin } from "rxdb";
 import { RxDBMigrationSchemaPlugin } from "rxdb/plugins/migration-schema";
 

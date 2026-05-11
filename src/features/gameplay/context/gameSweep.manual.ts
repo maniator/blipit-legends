@@ -10,10 +10,11 @@
  *   SB/game:  0.85
  *
  * Run in isolation with:
- *   npx vitest run --reporter=verbose src/features/gameplay/context/gameSweep.test.ts
+ *   npx vitest run --reporter=verbose src/features/gameplay/context/gameSweep.manual.ts
  *
- * This file is deliberately skipped in the normal test suite (`describe.skip`)
- * to avoid inflating CI times.  Remove the `.skip` to regenerate baselines.
+ * This file is deliberately named `.manual.ts` and skipped in the normal test
+ * suite to avoid inflating CI memory and run time.  Remove the `.skip` and run
+ * the explicit command above to regenerate baselines.
  */
 
 import { selectPitchType } from "@feat/gameplay/constants/pitchTypes";

@@ -37,7 +37,7 @@ const teamsSchemaV1: RxJsonSchema<TeamRecord> = {
      */
     fingerprint: { type: "string", maxLength: 16 },
     /**
-     * League IDs of active seasons this team is currently participating in.
+     * Active season IDs this team is currently participating in.
      * Optional — absent on teams not enrolled in any active season.
      */
     activeLeagueIds: { type: "array", items: { type: "string" } },
@@ -59,11 +59,11 @@ const teamsSchemaV1: RxJsonSchema<TeamRecord> = {
   indexes: ["updatedAt", "nameLowercase"],
 };
 
-/** v1 collection config for the `teams` collection. Includes v0 → v1 migration. */
+/** Collection config for the `teams` collection. Includes v0 → v2 migrations. */
 export const teamsV1CollectionConfig = {
   schema: teamsSchemaV1,
   migrationStrategies: {
-    // v0 → v1: adds optional fields activeLeagueIds and autogen — identity migration is safe.
+    // v0 → v1: adds optional fields activeLeagueIds (season IDs) and autogen.
     1: (oldDoc: Record<string, unknown>) => oldDoc,
     // v1 → v2: autogen marker shape changes from paritySeed to parity/baseSeed.
     2: (oldDoc: Record<string, unknown>) => {

@@ -46,8 +46,9 @@ function HomeRoute() {
         if (docs.length > 0) {
           const s = docs[0].toJSON() as unknown as SeasonRecord;
           setActiveSeasonId(s.id);
+          const displayGameDay = s.currentGameDay + 1;
           setActiveSeasonLabel(
-            `${s.name} · day ${s.currentGameDay} / ${getTotalGameDays(s.preset, s.seasonLength)}`,
+            `${s.name} · day ${displayGameDay} / ${getTotalGameDays(s.preset, s.seasonLength)}`,
           );
         } else {
           setActiveSeasonId(null);
