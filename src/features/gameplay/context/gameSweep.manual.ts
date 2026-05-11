@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
 /**
- * gameSweep.test.ts
+ * gameSweep.manual.ts
  *
  * 100-game simulation sweep (seeds 0–99, decimal) — baseline stats capture.
  *

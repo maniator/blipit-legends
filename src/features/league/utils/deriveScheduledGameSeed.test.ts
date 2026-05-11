@@ -67,6 +67,28 @@ describe("deriveScheduledGameSeed", () => {
     expect(a).not.toBe(b);
   });
 
+  it("treats team IDs as opaque values and distinguishes unexpected prefixes", () => {
+    const base = {
+      seasonId: "s_prefix_contract",
+      seasonRoundIdx: 0,
+      gameInSeriesIdx: 0,
+    };
+
+    const customTeamSeed = deriveScheduledGameSeed({
+      ...base,
+      homeCustomTeamId: "ct_home",
+      awayCustomTeamId: "ct_away",
+    });
+    const unexpectedPrefixSeed = deriveScheduledGameSeed({
+      ...base,
+      homeCustomTeamId: "st_home",
+      awayCustomTeamId: "st_away",
+    });
+
+    expect(unexpectedPrefixSeed).toMatch(/^[0-9a-z]+$/);
+    expect(unexpectedPrefixSeed).not.toBe(customTeamSeed);
+  });
+
   it("returns a valid base-36 string (no colons or invalid chars)", () => {
     const seed = deriveScheduledGameSeed({
       seasonId: "s_abc:def",
