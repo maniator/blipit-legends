@@ -17,6 +17,9 @@ context and does not rediscover these through QA.
 
 Deferred to v2 (P1). Not a v1 blocker — no crash, no data loss, no save corruption.
 
+> **Party-mode amendment (2026-05-11, Round 2):** Winston issued REQUEST_CHANGES on the original spec.
+> Three amendments required before Amelia picks up implementation — see sections below.
+
 ### Bug description
 
 When the League Setup Wizard runs in `allAutogen` or `mixed` mode and the user creates
@@ -71,6 +74,103 @@ migration` for the full procedure.
    - All-new autogen: `createCustomTeam` called N times, all IDs fresh.
    - Partial dedup: called N−1 times; pre-existing ID appears in `allTeamIds`.
    - Full dedup: called zero times; reuse-notice flag is truthy.
+
+### Amendment 1 — Lock guard interaction (Winston BLOCK)
+
+The lock guard at `customTeamStore.ts:85-97` blocks edits to teams bound to an active season.
+`handleCreate`'s dedup path must **not** silently bypass this guard. Required behavior:
+
+- Before reusing a matched doc, check whether it is locked.
+- If locked to a **different** active season (i.e., Season 1 is still in progress), fall through to
+  a fresh insert rather than reuse. Two concurrently-running seasons may not share a team doc.
+- If locked to **no** active season (Season 1 is completed/abandoned), reuse is safe.
+- Document this rule explicitly in the `resolveAutogenTeams` function JSDoc.
+
+### Amendment 2 — Add `autogen.version` to compound index (Winston)
+
+The proposed index `["autogen.baseSeed", "autogen.theme", "autogen.parity"]` must be extended to
+`["autogen.baseSeed", "autogen.theme", "autogen.parity", "autogen.version"]`. Without `version`, a
+future algorithm revision (new `autogen.version`) would match old docs during the index scan and
+require a post-filter to discard them — this is a performance trap and a future footgun. Including
+`version` in the index ensures each algorithm revision naturally forces fresh inserts. Add this as a
+single RxDB schema version bump (one migration) covering both the index and the autogen compound key.
+
+### Amendment 3 — Cross-season stat attribution must be an explicit design decision (Winston + Amelia)
+
+`gameHistory` records link to `customTeamId`. If Season 1 and Season 2 share the same team doc IDs
+(via fingerprint dedup), career-stats pages will aggregate records from both seasons automatically.
+
+**Decision:** This is intentional and correct. `customTeams` docs represent _team identity_, not
+season-scoped snapshots. Multi-season stat aggregation via a shared `customTeamId` is the franchise
+model (same team, multiple seasons). This is safe provided `gameHistory` records carry a `seasonId`
+field that season-scoped views can use to filter.
+
+**Pre-implementation gate:** Before Amelia picks up D-01, audit `gameHistoryStore` query paths to
+confirm every season-scoped stats view filters by `seasonId`. If any cross-season aggregation view
+is missing the filter, that view must be fixed first (separate story, no blocker to D-01 spec).
+
+### Amendment 4 — `resolveAutogenTeams` return type (Amelia)
+
+The return type must be:
+
+```typescript
+interface ResolveAutogenTeamsResult {
+  teamIds: string[]; // final ordered list (positional — matches input `generated` order)
+  insertedCount: number; // net-new docs written
+  recycledCount: number; // matched existing docs reused
+  modeChanged: boolean; // allAutogen → mixed due to detected managed-team overlap
+}
+```
+
+The `teamIds` order must be stable and match the input `generated` array order — schedule generation
+relies on positional assignment.
+
+### Amendment 5 — Second-season unit test cases (Amelia + John)
+
+In addition to the three test cases in the original spec, add:
+
+```typescript
+it("returns recycledCount === N and insertedCount === 0 when all N teams already exist");
+// ^ The key regression gate for second-season reuse with same seed
+
+it("teamIds order matches input `generated` order when all teams are recycled");
+// ^ Protects schedule generation positional assignment
+
+it("does not insert duplicate docs when called twice with same seed");
+// ^ Integration-flavored: collection length unchanged after second call
+
+it("recycledCount is 0 when a different seed produces different fingerprints");
+// ^ Sanity: different seed = zero reuse, no false positives
+
+it("falls through to fresh insert when matched doc is locked to a different active season");
+// ^ Covers the lock guard interaction (Amendment 1)
+```
+
+### Amendment 6 — Mode-switch notification clarification (John)
+
+The notification fires only when the user's effective mode changes from what they explicitly selected.
+Rules:
+
+- If user selected `allAutogen` and all generated teams are brand-new inserts → no notice.
+- If user selected `allAutogen` and some/all generated teams are recycled from a previous season,
+  but no managed team is involved → no notice (mode is still `allAutogen`; recycling is transparent).
+- If user selected `allAutogen` but a recycled team happens to be a user's custom-managed team
+  → notice fires ("Your league will include one custom team alongside your generated teams").
+- If user selected `allAutogen` and **all** teams are recycled from a prior season → show one
+  informational line: "Using your existing teams from a previous season." Non-blocking, review step only.
+
+Update the wizard copy constants in `validateWizardState.ts` to add the "fully recycled" string.
+
+### Additional acceptance criteria (cross-season scenario — John)
+
+> **Given** an autogenned team doc was created in Season 1 and is now reused (by fingerprint match)
+> for Season 2, **when** Season 2's slot assignments reference that team, **then** the team doc's
+> base roster and attributes are unchanged from its original autogenned state — no Season 1
+> mutations bleed onto the shared doc.
+
+> **Given** the same `baseSeed + theme + parity + version` fingerprint is used across multiple
+> seasons, **when** each season is viewed independently, **then** each season's standings, stats,
+> and schedule reference their own season records — never the other season's data.
 
 ### PRNG safety
 
