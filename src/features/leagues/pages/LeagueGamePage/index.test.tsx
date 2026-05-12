@@ -54,7 +54,7 @@ vi.mock("@feat/gameplay/context/index", async (importOriginal) => {
 import { buildSeasonGameSetup } from "@feat/leagues/utils/buildSeasonGameSetup";
 
 import { getDb } from "@storage/db";
-import type { AppShellOutletContext } from "@storage/types";
+import type { AppShellOutletContext, ExhibitionGameSetup } from "@storage/types";
 
 import LeagueGamePage from "./index";
 
@@ -72,15 +72,13 @@ const mockCtx: AppShellOutletContext = {
   onGameOver: vi.fn(),
 };
 
-const mockSetup = {
+const mockSetup: ExhibitionGameSetup = {
   homeTeam: "home",
   awayTeam: "away",
   homeTeamLabel: "Home",
   awayTeamLabel: "Away",
-  managedTeam: null as null,
+  managedTeam: null,
   playerOverrides: { away: {}, home: {}, awayOrder: [], homeOrder: [] },
-  disableSave: true,
-  seasonGameId: "sg-1",
 };
 
 type DbOverrides = {

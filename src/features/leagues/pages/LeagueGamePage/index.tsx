@@ -111,7 +111,7 @@ const LeagueGamePage: React.FunctionComponent = () => {
     };
   }, [seasonGameId, spectatorMode]);
 
-  // Auto-redirect after not_found or error
+  // Auto-redirect immediately when game record is not found.
   React.useEffect(() => {
     if (fetchState.status === "not_found") {
       navigate("/leagues", { replace: true });
