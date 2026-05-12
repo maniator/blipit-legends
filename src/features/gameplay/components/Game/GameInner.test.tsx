@@ -1,14 +1,19 @@
 import * as React from "react";
 
 import type { Strategy } from "@feat/gameplay/context/index";
-import { GameContext, GameProviderWrapper, useGameContext } from "@feat/gameplay/context/index";
+import {
+  GameContext,
+  GameProviderWrapper,
+  GameSessionProvider,
+  useGameContext,
+} from "@feat/gameplay/context/index";
 import * as rngModule from "@shared/utils/rng";
 import * as savesModule from "@shared/utils/saves";
 import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { SaveRecord } from "@storage/types";
-import { makeContextValue, makeState } from "@test/testHelpers";
+import { makeContextValue, makeGameSessionContext, makeState } from "@test/testHelpers";
 
 import Game from ".";
 import GameInner from "./GameInner";
@@ -101,9 +106,11 @@ vi.mock("@shared/hooks/useTeamWithRoster", () => ({
 describe("GameInner", () => {
   it("renders without crashing", () => {
     render(
-      <GameContext.Provider value={makeContextValue()}>
-        <GameInner />
-      </GameContext.Provider>,
+      <GameSessionProvider value={makeGameSessionContext()}>
+        <GameContext.Provider value={makeContextValue()}>
+          <GameInner />
+        </GameContext.Provider>
+      </GameSessionProvider>,
     );
     expect(screen.getByTestId("scoreboard")).toBeInTheDocument();
   });
@@ -112,11 +119,13 @@ describe("GameInner", () => {
     const onNewGame = vi.fn();
     // Render with a game-over context so the "New Game" button is visible in GameControls
     render(
-      <GameContext.Provider
-        value={makeContextValue({ gameOver: true, teams: ["Yankees", "Mets"] })}
-      >
-        <GameInner onNewGame={onNewGame} />
-      </GameContext.Provider>,
+      <GameSessionProvider value={makeGameSessionContext()}>
+        <GameContext.Provider
+          value={makeContextValue({ gameOver: true, teams: ["Yankees", "Mets"] })}
+        >
+          <GameInner onNewGame={onNewGame} />
+        </GameContext.Provider>
+      </GameSessionProvider>,
     );
     // "New Game" button is present because gameOver=true in context and onNewGame provided
     expect(screen.getByRole("button", { name: /new game/i })).toBeInTheDocument();
@@ -444,9 +453,11 @@ describe("GameInner — custom team label resolution", () => {
       },
     };
     render(
-      <GameContext.Provider value={makeContextValue({ dispatch })}>
-        <GameInner pendingGameSetup={customPendingSetup} />
-      </GameContext.Provider>,
+      <GameSessionProvider value={makeGameSessionContext()}>
+        <GameContext.Provider value={makeContextValue({ dispatch })}>
+          <GameInner pendingGameSetup={customPendingSetup} />
+        </GameContext.Provider>
+      </GameSessionProvider>,
     );
     await act(async () => {});
     const setTeamsCall = dispatch.mock.calls.find((c) => c[0]?.type === "setTeams");
@@ -510,9 +521,11 @@ describe("GameInner — custom team label resolution", () => {
     const dispatch = vi.fn();
     await act(async () => {
       render(
-        <GameContext.Provider value={makeContextValue({ dispatch })}>
-          <GameInner />
-        </GameContext.Provider>,
+        <GameSessionProvider value={makeGameSessionContext()}>
+          <GameContext.Provider value={makeContextValue({ dispatch })}>
+            <GameInner />
+          </GameContext.Provider>
+        </GameSessionProvider>,
       );
     });
     const restoreCall = dispatch.mock.calls.find((c) => c[0]?.type === "restore_game");
@@ -679,11 +692,13 @@ describe("GameInner — onNewGame prop (external navigation)", () => {
   it("calls onNewGame when the in-game New Game button is clicked (game over)", () => {
     const onNewGame = vi.fn();
     render(
-      <GameContext.Provider
-        value={makeContextValue({ gameOver: true, teams: ["Yankees", "Mets"] })}
-      >
-        <GameInner onNewGame={onNewGame} />
-      </GameContext.Provider>,
+      <GameSessionProvider value={makeGameSessionContext()}>
+        <GameContext.Provider
+          value={makeContextValue({ gameOver: true, teams: ["Yankees", "Mets"] })}
+        >
+          <GameInner onNewGame={onNewGame} />
+        </GameContext.Provider>
+      </GameSessionProvider>,
     );
     // "New Game" button is visible because gameOver=true in context and onNewGame provided
     expect(screen.getByRole("button", { name: /new game/i })).toBeInTheDocument();
@@ -699,15 +714,19 @@ describe("GameInner — onGameOver prop", () => {
   it("calls onGameOver when gameOver transitions from false to true", () => {
     const onGameOver = vi.fn();
     const { rerender } = render(
-      <GameContext.Provider value={makeContextValue({ gameOver: false })}>
-        <GameInner onGameOver={onGameOver} />
-      </GameContext.Provider>,
+      <GameSessionProvider value={makeGameSessionContext()}>
+        <GameContext.Provider value={makeContextValue({ gameOver: false })}>
+          <GameInner onGameOver={onGameOver} />
+        </GameContext.Provider>
+      </GameSessionProvider>,
     );
     expect(onGameOver).not.toHaveBeenCalled();
     rerender(
-      <GameContext.Provider value={makeContextValue({ gameOver: true })}>
-        <GameInner onGameOver={onGameOver} />
-      </GameContext.Provider>,
+      <GameSessionProvider value={makeGameSessionContext()}>
+        <GameContext.Provider value={makeContextValue({ gameOver: true })}>
+          <GameInner onGameOver={onGameOver} />
+        </GameContext.Provider>
+      </GameSessionProvider>,
     );
     expect(onGameOver).toHaveBeenCalledTimes(1);
   });
@@ -715,14 +734,18 @@ describe("GameInner — onGameOver prop", () => {
   it("calls onGameOver only once even on multiple re-renders after game over", () => {
     const onGameOver = vi.fn();
     const { rerender } = render(
-      <GameContext.Provider value={makeContextValue({ gameOver: true })}>
-        <GameInner onGameOver={onGameOver} />
-      </GameContext.Provider>,
+      <GameSessionProvider value={makeGameSessionContext()}>
+        <GameContext.Provider value={makeContextValue({ gameOver: true })}>
+          <GameInner onGameOver={onGameOver} />
+        </GameContext.Provider>
+      </GameSessionProvider>,
     );
     rerender(
-      <GameContext.Provider value={makeContextValue({ gameOver: true })}>
-        <GameInner onGameOver={onGameOver} />
-      </GameContext.Provider>,
+      <GameSessionProvider value={makeGameSessionContext()}>
+        <GameContext.Provider value={makeContextValue({ gameOver: true })}>
+          <GameInner onGameOver={onGameOver} />
+        </GameContext.Provider>
+      </GameSessionProvider>,
     );
     expect(onGameOver).toHaveBeenCalledTimes(1);
   });
@@ -801,9 +824,11 @@ describe("GameInner — modal save load (onLoadSave / handleModalLoad)", () => {
     const onGameSessionStarted = vi.fn();
     await act(async () => {
       render(
-        <GameContext.Provider value={makeContextValue({ dispatch })}>
-          <GameInner onGameSessionStarted={onGameSessionStarted} />
-        </GameContext.Provider>,
+        <GameSessionProvider value={makeGameSessionContext()}>
+          <GameContext.Provider value={makeContextValue({ dispatch })}>
+            <GameInner onGameSessionStarted={onGameSessionStarted} />
+          </GameContext.Provider>
+        </GameSessionProvider>,
       );
     });
 
@@ -851,9 +876,11 @@ describe("GameInner — modal save load (onLoadSave / handleModalLoad)", () => {
     const dispatch = vi.fn();
     await act(async () => {
       render(
-        <GameContext.Provider value={makeContextValue({ dispatch })}>
-          <GameInner />
-        </GameContext.Provider>,
+        <GameSessionProvider value={makeGameSessionContext()}>
+          <GameContext.Provider value={makeContextValue({ dispatch })}>
+            <GameInner />
+          </GameContext.Provider>
+        </GameSessionProvider>,
       );
     });
 

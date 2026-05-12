@@ -1,6 +1,8 @@
 import * as React from "react";
 
 import type { ContextValue, GameAction, State } from "./gameStateTypes";
+import type { GameSessionContextValue } from "./GameSessionContext";
+import { GameSessionProvider } from "./GameSessionContext";
 import { createFreshGameState } from "./initialState";
 import type { LogAction } from "./logReducer";
 import { logReducer } from "./logReducer";
@@ -30,6 +32,15 @@ export const useGameContext = (): ContextValue => {
 };
 
 const initialState: State = createFreshGameState(["A", "B"]);
+
+const defaultGameSessionValue: GameSessionContextValue = {
+  sessionType: "exhibition",
+  managerModeAllowed: true,
+  disableSave: false,
+  seasonGameId: null,
+  managedTeam: null,
+  sessionReady: true,
+};
 
 export const GameProviderWrapper: React.FunctionComponent<{
   children?: React.ReactNode;
@@ -74,15 +85,17 @@ export const GameProviderWrapper: React.FunctionComponent<{
   }, []);
 
   return (
-    <GameContext.Provider
-      value={{
-        ...state,
-        dispatch,
-        log: logState.announcements,
-        dispatchLog: injectingDispatch,
-      }}
-    >
-      {children}
-    </GameContext.Provider>
+    <GameSessionProvider value={defaultGameSessionValue}>
+      <GameContext.Provider
+        value={{
+          ...state,
+          dispatch,
+          log: logState.announcements,
+          dispatchLog: injectingDispatch,
+        }}
+      >
+        {children}
+      </GameContext.Provider>
+    </GameSessionProvider>
   );
 };
