@@ -68,10 +68,14 @@ test.describe("game-routes — league game flow", () => {
       await page.waitForTimeout(3_000);
     }
 
-    // If there is a "Watch Game" or "Play Game" CTA we confirm the route.
-    const playBtn = page.getByRole("button", { name: /watch game|play game/i });
-    if (await playBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
-      await playBtn.click();
+    // If there is a "Play in Manager Mode" or "Watch" CTA we confirm the route.
+    // Use data-testid to reliably match the actual button elements.
+    const playBtn = page.getByTestId("play-next-game-button");
+    const watchBtn = page.getByTestId("watch-next-game-button");
+    const playVisible = await playBtn.isVisible({ timeout: 5_000 }).catch(() => false);
+    const watchVisible = await watchBtn.isVisible({ timeout: 5_000 }).catch(() => false);
+    if (playVisible || watchVisible) {
+      await (playVisible ? playBtn : watchBtn).click();
       await expect(page).toHaveURL(/\/game\/league\//, { timeout: 15_000 });
       await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 15_000 });
     } else {

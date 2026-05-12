@@ -112,7 +112,11 @@ const ManagerModeControls: React.FunctionComponent<Props> = ({
         <ToggleLabel>
           Team
           {lockManagedTeam ? (
-            <LockedTeamDisplay data-testid="managed-team-display">
+            <LockedTeamDisplay
+              data-testid="managed-team-display"
+              aria-disabled="true"
+              aria-label={`Managing: ${teams[managedTeam]} (locked)`}
+            >
               {teams[managedTeam]}
             </LockedTeamDisplay>
           ) : (
