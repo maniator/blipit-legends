@@ -2,6 +2,7 @@
 applyTo: "**/*"
 excludeAgent: "cloud-agent"
 ---
+
 # BMAD-Style Code Review Instructions
 
 When reviewing code in this repository, apply a **two-step BMAD review process**:

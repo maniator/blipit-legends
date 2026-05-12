@@ -256,10 +256,7 @@ export const RenameInput = styled.input`
   }
 `;
 
-/**
- * Flex row that holds the RenameInput + save/cancel icon buttons.
- * Gap is set to 2× the ::before inset (10px) so adjacent hit areas don't overlap.
- */
+/** Flex row that holds the RenameInput + save/cancel icon buttons. */
 export const RenameRow = styled.div`
   display: flex;
   align-items: center;
@@ -270,11 +267,15 @@ export const RenameRow = styled.div`
 
 /**
  * Ghost icon button used for the ✏️ rename trigger and the ✓/✕ save/cancel actions.
- * position: relative + ::before pseudo-element expands the hit area to ≥ 44px
- * per the Sprint 1 touch-target policy.
+ * Fixed 44×44 px footprint via min-width/min-height meets the touch-target policy
+ * without ::before expansion that can overlap adjacent inline elements.
  */
 export const RenameIconBtn = styled.button`
-  position: relative;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   cursor: pointer;
@@ -282,12 +283,6 @@ export const RenameIconBtn = styled.button`
   padding: ${({ theme }) => theme.spacing.xs};
   color: ${({ theme }) => theme.colors.textHint};
   line-height: 1;
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: -10px;
-  }
 
   &:hover {
     color: ${({ theme }) => theme.colors.textPrimary};
