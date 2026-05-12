@@ -17,6 +17,7 @@ const AppShell: React.FunctionComponent = () => {
   const navigate = useNavigate();
   const matches = useMatches();
   const { handleGameSessionStarted, handleGameOver } = useAppSession();
+  // AppShell only writes — the stored value is read by ExhibitionGamePage on arrival.
   const [, setPendingExhibitionSetup] = useSessionStorage<ExhibitionGameSetup | null>(
     "pendingExhibitionSetup",
     null,

@@ -43,15 +43,17 @@ const ExhibitionGamePage: React.FunctionComponent = () => {
     return <Navigate to="/exhibition/new" replace />;
   }
 
+  const pendingSetup = pendingSetupRef.current;
+
   return (
     <GamePageWrapper>
       {(onSavingStateChange) => (
-        <GameSessionProvider value={deriveExhibitionSession(pendingSetupRef.current!)}>
+        <GameSessionProvider value={deriveExhibitionSession(pendingSetup)}>
           <Game
             onBackToHome={ctx.onBackToHome}
             onNewGame={handleNewGame}
             onGameSessionStarted={ctx.onGameSessionStarted}
-            pendingGameSetup={pendingSetupRef.current}
+            pendingGameSetup={pendingSetup}
             onConsumeGameSetup={handleConsumeSetup}
             pendingLoadSave={null}
             onConsumePendingLoad={handleConsumePendingLoad}
