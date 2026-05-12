@@ -261,4 +261,8 @@ export const BlockedActions = styled.div`
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
   margin-top: ${({ theme }) => theme.spacing.lg};
+
+/** Wrapper for a step's primary action button with top spacing. */
+export const ActionRow = styled.div`
+  margin-top: ${({ theme }) => theme.spacing.xl};
 `;
