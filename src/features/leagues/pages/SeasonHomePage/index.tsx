@@ -129,9 +129,11 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
   );
 
   const handlePlayNextGame = React.useCallback(
-    (_asManager: boolean) => {
+    (asManager: boolean) => {
       if (!nextGameId) return;
-      navigate(`/game/league/${nextGameId}`);
+      navigate(`/game/league/${nextGameId}`, {
+        state: { spectatorMode: !asManager },
+      });
     },
     [nextGameId, navigate],
   );

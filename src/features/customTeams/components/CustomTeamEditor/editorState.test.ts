@@ -499,6 +499,15 @@ describe("editorReducer", () => {
     expect(next.error).toBe("");
   });
 
+  it("SET_FIELD name clears generated nickname so city+name is used for display", () => {
+    // Simulate: user clicked Generate Defaults (sets city + nickname) then edits the name.
+    const state = { ...initEditorState(), city: "Atlanta", nickname: "Panthers", name: "Panthers" };
+    const next = editorReducer(state, { type: "SET_FIELD", field: "name", value: "Original Name" });
+    expect(next.name).toBe("Original Name");
+    expect(next.nickname).toBe("");
+    expect(next.city).toBe("Atlanta");
+  });
+
   it("ADD_PLAYER appends to lineup", () => {
     const state = initEditorState();
     const player = makePlayer("Jake");
