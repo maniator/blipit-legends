@@ -61,11 +61,16 @@ export function customTeamToAbbreviation(
  */
 export function resolveTeamLabel(
   gameId: string,
-  teams: Pick<TeamRecord, "id" | "name" | "city" | "abbreviation">[],
+  teams: Pick<TeamRecord, "id" | "name" | "city" | "abbreviation" | "nickname">[],
 ): string {
   const doc = teams.find((t) => t.id === gameId);
   if (!doc) return "Unknown Team";
-  return doc.city ? `${doc.city} ${doc.name}` : doc.name;
+  // Mirrors the logic in customTeamToDisplayName: prefer city+nickname when
+  // both are present so autogen teams ("Galena Jaguars") are not doubled to
+  // "Galena Galena Jaguars" when the name field already contains the city.
+  if (doc.city && doc.nickname) return `${doc.city} ${doc.nickname}`;
+  if (doc.city) return `${doc.city} ${doc.name}`;
+  return doc.name;
 }
 
 /**
