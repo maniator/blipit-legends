@@ -103,9 +103,8 @@ describe("useSeasonGameSync", () => {
 
   describe("committedRef resets when seasonGameId changes", () => {
     it("commits again after seasonGameId changes to a new value", async () => {
-      let currentSeasonGameId = "sg-first";
-      vi.mocked(useGameSessionContext).mockImplementation(() =>
-        makeGameSessionContext({ seasonGameId: currentSeasonGameId, disableSave: true }),
+      vi.mocked(useGameSessionContext).mockReturnValue(
+        makeGameSessionContext({ seasonGameId: "sg-first", disableSave: true }),
       );
 
       const { rerender } = renderSync({ gameOver: true, score: [1, 2] });
@@ -113,8 +112,8 @@ describe("useSeasonGameSync", () => {
         expect(applySeasonGameResult).toHaveBeenCalledTimes(1);
       });
 
-      // Switch to a new season game ID — committedRef must reset.
-      currentSeasonGameId = "sg-second";
+      // Switch to a new season game ID — committedRef must reset and a second
+      // commit must fire for the new game.
       vi.mocked(useGameSessionContext).mockReturnValue(
         makeGameSessionContext({ seasonGameId: "sg-second", disableSave: true }),
       );
