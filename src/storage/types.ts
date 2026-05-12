@@ -43,6 +43,7 @@ export type {
   GameSaveSetup,
   GameSetup,
   InningSnapshot,
+  PortableSaveExport,
   ProgressSummary,
   RxdbExportedSave,
   SaveRecord,

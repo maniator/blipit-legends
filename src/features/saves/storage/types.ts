@@ -108,14 +108,24 @@ export interface ProgressSummary {
 }
 
 /** Portable export format: save header + full event log, signed for integrity. */
+export interface PortableSaveExport {
+  version: 1;
+  header: SaveRecord;
+  events: EventRecord[];
+  /** FNV-1a 32-bit signature of export key + JSON.stringify({header, events}) */
+  sig: string;
+}
+
+/**
+ * Wire-level union of supported export envelopes.
+ *
+ * - v1 is the legacy single-save envelope. Its shape is identical to
+ *   {@link PortableSaveExport} and the Dexie save store uses that name for the
+ *   backend-neutral spelling.
+ * - v2 is the multi-collection bundle introduced for league exports.
+ */
 export type RxdbExportedSave =
-  | {
-      version: 1;
-      header: SaveRecord;
-      events: EventRecord[];
-      /** FNV-1a 32-bit signature of RXDB_EXPORT_KEY + JSON.stringify({header, events}) */
-      sig: string;
-    }
+  | PortableSaveExport
   | {
       version: 2;
       header: V2BundleHeader;
