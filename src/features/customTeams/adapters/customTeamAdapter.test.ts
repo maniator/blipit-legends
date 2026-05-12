@@ -379,7 +379,7 @@ describe("resolveTeamLabel", () => {
     expect(resolveTeamLabel("New York Yankees", [])).toBe("Unknown Team");
   });
 
-  it("returns full display name (City + Name) for a known custom team", () => {
+  it("returns city + name when city is set but nickname is absent", () => {
     const teams = [{ ...makeTeam(), id: "ct_abc", city: "Austin", name: "Eagles" }];
     expect(resolveTeamLabel("ct_abc", teams)).toBe("Austin Eagles");
   });
@@ -397,6 +397,21 @@ describe("resolveTeamLabel", () => {
   it("resolves a custom team ID that contains hyphens", () => {
     const teams = [{ ...makeTeam(), id: "ct-hyphen-id", city: "Test", name: "Rockets" }];
     expect(resolveTeamLabel("ct-hyphen-id", teams)).toBe("Test Rockets");
+  });
+
+  it("returns city + nickname (not city + name) when both city and nickname are set — regression for autogen double-city bug", () => {
+    // Autogen teams store `name` as the full display name ("Canton Krakens") AND
+    // set `city` and `nickname` separately. Old code returned "Canton Canton Krakens".
+    const teams = [
+      {
+        ...makeTeam(),
+        id: "ct_autogen",
+        city: "Canton",
+        name: "Canton Krakens",
+        nickname: "Krakens",
+      },
+    ];
+    expect(resolveTeamLabel("ct_autogen", teams)).toBe("Canton Krakens");
   });
 });
 

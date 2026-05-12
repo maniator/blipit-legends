@@ -50,4 +50,28 @@ describe("UpdateBanner", () => {
     fireEvent.click(screen.getByRole("button", { name: /reload app/i }));
     expect(onDismiss).not.toHaveBeenCalled();
   });
+
+  it("reload button has aria-label so screen readers skip the emoji — regression for missing aria-label", () => {
+    render(<UpdateBanner onDismiss={onDismiss} onReload={onReload} />);
+    const btn = screen.getByRole("button", { name: "Reload app" });
+    expect(btn.getAttribute("aria-label")).toBe("Reload app");
+  });
+
+  it("reload emoji is aria-hidden so screen readers do not announce it — regression for missing aria-hidden", () => {
+    render(<UpdateBanner onDismiss={onDismiss} onReload={onReload} />);
+    const btn = screen.getByRole("button", { name: "Reload app" });
+    const emojiSpan = btn.querySelector("span[aria-hidden]");
+    expect(emojiSpan).toBeTruthy();
+    expect(emojiSpan!.getAttribute("aria-hidden")).toBe("true");
+    expect(emojiSpan!.textContent).toBe("🔄");
+  });
+
+  it("warning emoji in message is aria-hidden so screen readers do not announce it", () => {
+    render(<UpdateBanner onDismiss={onDismiss} onReload={onReload} />);
+    const message = document.querySelector("p");
+    const emojiSpan = message?.querySelector("span[aria-hidden]");
+    expect(emojiSpan).toBeTruthy();
+    expect(emojiSpan!.getAttribute("aria-hidden")).toBe("true");
+    expect(emojiSpan!.textContent).toMatch(/⚠️/);
+  });
 });
