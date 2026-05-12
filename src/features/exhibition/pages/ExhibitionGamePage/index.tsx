@@ -5,6 +5,7 @@ import GamePageWrapper from "@feat/gameplay/components/GamePageWrapper";
 import { GameSessionProvider } from "@feat/gameplay/context/index";
 import { deriveExhibitionSession } from "@feat/gameplay/utils/gameSessionDerive";
 import { Navigate, useNavigate, useOutletContext } from "react-router";
+import { useSessionStorage } from "usehooks-ts";
 
 import type { AppShellOutletContext, ExhibitionGameSetup } from "@storage/types";
 
@@ -12,22 +13,21 @@ const ExhibitionGamePage: React.FunctionComponent = () => {
   const ctx = useOutletContext<AppShellOutletContext>();
   const navigate = useNavigate();
 
-  // Read the pending setup from sessionStorage once on first render.
-  // Using a ref-guarded read so it only fires once, even in Strict Mode.
-  const hasReadStorageRef = React.useRef(false);
-  const pendingSetupRef = React.useRef<ExhibitionGameSetup | null>(null);
-  if (!hasReadStorageRef.current) {
-    hasReadStorageRef.current = true;
-    const setupJson = sessionStorage.getItem("pendingExhibitionSetup");
-    if (setupJson) {
-      sessionStorage.removeItem("pendingExhibitionSetup");
-      try {
-        pendingSetupRef.current = JSON.parse(setupJson) as ExhibitionGameSetup;
-      } catch {
-        pendingSetupRef.current = null;
-      }
-    }
-  }
+  // useSessionStorage reads from sessionStorage synchronously into React state,
+  // so `storedSetup` is available on the very first render — no ref guards needed.
+  const [storedSetup, , removeStoredSetup] = useSessionStorage<ExhibitionGameSetup | null>(
+    "pendingExhibitionSetup",
+    null,
+  );
+
+  // Snapshot the initial value so subsequent renders (after removal sets the hook
+  // state to null) don't trigger a spurious redirect to /exhibition/new.
+  const pendingSetupRef = React.useRef<ExhibitionGameSetup | null>(storedSetup);
+
+  // Clear from sessionStorage on mount so a page refresh doesn't re-enter the game.
+  React.useEffect(() => {
+    removeStoredSetup();
+  }, [removeStoredSetup]);
 
   const handleConsumeSetup = React.useCallback(() => {
     pendingSetupRef.current = null;
