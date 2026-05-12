@@ -103,7 +103,7 @@ Before starting any task, check whether it belongs to a specialist agent. The ta
 
 ## Code Review Process
 
-When asked to perform a code review (PR review, diff review, GitHub Copilot Code Review), use a **BMAD party-mode multi-persona approach** rather than a single generic reviewer.
+When asked to perform a code review (PR review, diff review, GitHub Copilot Code Review), use a **BMAD party-mode multi-persona approach** (see `bmad-party-mode` skill in the routing table above) rather than a single generic reviewer.
 
 ### 1 — Inspect the diff and activate relevant personas
 
@@ -113,7 +113,7 @@ Read the changed files and select only the personas whose domain is represented:
 | ------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | **QA / Test Architect**               | test files, E2E specs, coverage gaps, regression risk, Playwright                              |
 | **Frontend / UI / UX**                | React components, styled-components, accessibility, responsive layout, visual regressions      |
-| **Architecture / Tech Lead**          | module boundaries, state flow, coupling, maintainability, file organisation                    |
+| **Architecture / Tech Lead**          | module boundaries, state flow, coupling, maintainability, file organization                    |
 | **Persistence / Data**                | RxDB collections, schema changes, migrations, save/load, export/import, backward compatibility |
 | **Product / PM**                      | feature-spec alignment, acceptance criteria, user-facing workflow gaps                         |
 | **Game Simulation / Baseball Domain** | baseball rules, simulation logic, stats, league flow, game-management behaviour                |
