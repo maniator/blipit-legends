@@ -28,6 +28,8 @@ const LeagueGamePage: React.FunctionComponent = () => {
   const locationState = location.state as LeagueGameLocationState;
   // Use explicit key-presence check so managedTeam: null (watch) is distinguished
   // from managedTeam: undefined (not set — LeagueGamePage derives from season).
+  // locationState may be null (no state passed) or undefined (useLocation default),
+  // so != null intentionally guards both cases.
   const managedTeamFromState: 0 | 1 | null | undefined =
     locationState != null && "managedTeam" in locationState ? locationState.managedTeam : undefined;
 
@@ -43,7 +45,7 @@ const LeagueGamePage: React.FunctionComponent = () => {
 
     let cancelled = false;
 
-    async function fetchAndBuild() {
+    async function fetchGameDataAndBuildSetup() {
       try {
         const db = await getDb();
 
@@ -103,7 +105,7 @@ const LeagueGamePage: React.FunctionComponent = () => {
       }
     }
 
-    void fetchAndBuild();
+    void fetchGameDataAndBuildSetup();
 
     return () => {
       cancelled = true;
