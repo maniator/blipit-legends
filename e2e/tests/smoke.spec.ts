@@ -18,7 +18,9 @@ test.describe("Smoke", () => {
     await expect(page.getByTestId("home-manage-teams-button")).toBeVisible();
   });
 
-  test("New Game button on Home screen shows the Exhibition Setup page", async ({ page }) => {
+  test("New Exhibition Game button on Home screen shows the Exhibition Setup page", async ({
+    page,
+  }) => {
     await resetAppState(page);
     await waitForNewGameDialog(page);
     await expect(page.getByTestId("exhibition-setup-page")).toBeVisible({ timeout: 15_000 });
@@ -96,7 +98,13 @@ test.describe("Smoke", () => {
       test.setTimeout(60_000);
 
       await loadFixture(page, "finished-game.json");
-      await expect(page.getByText("FINAL")).toBeVisible({ timeout: 15_000 });
+      // Scope to the scoreboard to avoid matching "final" text inside the
+      // instructions modal dialog (which is in the DOM but hidden) — that
+      // modal now contains League Mode help text referencing "final score/step"
+      // which Playwright's case-insensitive getByText would otherwise match.
+      await expect(page.getByTestId("scoreboard").getByText("FINAL", { exact: true })).toBeVisible({
+        timeout: 15_000,
+      });
 
       // After FINAL, the scoreboard should still be visible and no errors thrown.
       await expect(page.getByTestId("scoreboard")).toBeVisible();
@@ -139,7 +147,8 @@ test.describe("Smoke", () => {
       let lastLogCount = 0;
       let lastLogChangeTime = Date.now();
       await expect(async () => {
-        if (await page.getByText("FINAL").isVisible()) return;
+        if (await page.getByTestId("scoreboard").getByText("FINAL", { exact: true }).isVisible())
+          return;
 
         const currentCount = await page.locator("[data-log-index]").count();
         if (currentCount > lastLogCount) {

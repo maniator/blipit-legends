@@ -1,0 +1,5 @@
+# Explicitly-allowed empty commits.
+# These are automated scaffold commits created by the copilot-swe-agent
+# during initial branch setup before any real changes land.
+# Each line is a full commit SHA.  Do NOT add human-authored commits here.
+9d80c229f977fa3b66ca7b15be5a662aab35b254

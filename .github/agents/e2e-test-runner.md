@@ -145,7 +145,12 @@ docker run --rm \
 sudo chown -hR "$(id -u):$(id -g)" dist/ node_modules/ .yarn/ 2>/dev/null || true
 ```
 
-> **Tip:** On a fresh runner, the first `docker run` may pull `mcr.microsoft.com/playwright:v1.58.2-noble` automatically. If you want to warm it up first, run `docker pull mcr.microsoft.com/playwright:v1.58.2-noble`.
+> **Required preflight:** Before the first Playwright container run in a session, verify the image is present and pull it if missing:
+>
+> ```bash
+> docker image inspect mcr.microsoft.com/playwright:v1.58.2-noble >/dev/null 2>&1 \
+>   || docker pull mcr.microsoft.com/playwright:v1.58.2-noble
+> ```
 
 ## Playwright projects reference
 
@@ -410,3 +415,13 @@ Use the `SENIOR LEAD REVIEW REQUEST` template from `.github/agents/prompt-exampl
 - [ ] All `data-testid` selectors referenced in new tests exist in the app source
 - [ ] `yarn typecheck:e2e` passes (catches Playwright API type errors in `e2e/**/*.ts`)
 - [ ] `yarn lint` — zero ESLint errors (applies to test files too)
+
+## Troubleshooting: Playwright MCP browser not working
+
+This agent does not use the Playwright MCP for test execution (it uses `docker run`). If you are asked to do live-browser QA via MCP, use the `playwright-isolated-browser_*` tools. If the browser fails to start, check that the `playwright-isolated` MCP server process is running:
+
+```bash
+ps -ef | grep "@playwright/mcp" | grep -- "--isolated" | grep -v grep
+```
+
+If the process is missing, verify GitHub repo settings → Copilot → MCP servers contains the `"playwright-isolated"` key (not `"playwright"`). See `docs/e2e-testing.md` § "Troubleshooting: MCP browser not working" for full details.

@@ -2,14 +2,16 @@
 
 This directory contains the main engineering and contributor reference docs for [Ballgame](../README.md).
 
-| Document                                       | What it covers                                                                                                                                                                                         |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [style-guide.md](style-guide.md)               | **UI Style Guide** — color palette, typography, breakpoints, buttons, form elements, modals, cards, tables, and all status patterns. **Consult before adding any new color, font size, or component.** |
-| [architecture.md](architecture.md)             | Route architecture, auto-play scheduler, Manager Mode, notification system, shared logger                                                                                                              |
-| [repo-layout.md](repo-layout.md)               | Full directory tree, file descriptions, path aliases                                                                                                                                                   |
-| [rxdb-persistence.md](rxdb-persistence.md)     | RxDB setup, schema versioning, collections, SaveStore/CustomTeamStore APIs, fingerprints, export/import bundles                                                                                        |
-| [e2e-testing.md](e2e-testing.md)               | Playwright projects, E2E helpers, `data-testid` reference, visual snapshots, CI workflows, save fixtures                                                                                               |
-| [league-mode/README.md](league-mode/README.md) | **League Mode** — full v0–v4 plan, locked decisions, data model, setup wizard, autogeneration, fatigue & injuries, playoffs & trades, awards, routing, UI reuse, risks                                 |
+| Document                                   | What it covers                                                                                                                                                                                         |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [style-guide.md](style-guide.md)           | **UI Style Guide** — color palette, typography, breakpoints, buttons, form elements, modals, cards, tables, and all status patterns. **Consult before adding any new color, font size, or component.** |
+| [architecture.md](architecture.md)         | Route architecture, auto-play scheduler, Manager Mode, notification system, shared logger                                                                                                              |
+| [repo-layout.md](repo-layout.md)           | Full directory tree, file descriptions, path aliases                                                                                                                                                   |
+| [rxdb-persistence.md](rxdb-persistence.md) | RxDB setup, schema versioning, collections, SaveStore/CustomTeamStore APIs, fingerprints, export/import bundles                                                                                        |
+| [e2e-testing.md](e2e-testing.md)           | Playwright projects, E2E helpers, `data-testid` reference, visual snapshots, CI workflows, save fixtures                                                                                               |
+
+**League Mode planning artifacts** (bmad distillate — single source of truth for v1–v4 design decisions, data model, routing, fatigue, autogen, playoffs, awards):  
+[`_bmad-output/planning-artifacts/league-mode-distillate/`](../_bmad-output/planning-artifacts/league-mode-distillate/)
 
 ---
 

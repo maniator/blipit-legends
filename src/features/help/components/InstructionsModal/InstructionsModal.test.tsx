@@ -3,6 +3,8 @@ import * as React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { expectPseudoInset } from "@test/testHelpers";
+
 import InstructionsModal from ".";
 
 describe("InstructionsModal", () => {
@@ -51,5 +53,14 @@ describe("InstructionsModal", () => {
     }));
     fireEvent.click(dialog, { clientX: 0, clientY: 0 });
     expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
+  });
+
+  it("uses pseudo-element hit expansion for help and close icon buttons", () => {
+    render(<InstructionsModal />);
+
+    const helpButton = screen.getByTestId("instructions-help-button");
+    const closeButton = screen.getByTestId("instructions-close-button");
+    expectPseudoInset(helpButton, 5);
+    expectPseudoInset(closeButton, 8);
   });
 });

@@ -48,21 +48,21 @@ export const theme = {
     textSemiLight: "#bbbbbb",
     textLight: "#cccccc",
     textDisabled: "#555555",
-    textDimmer: "#6B7785",
+    textDimmer: "#8a9aaa",
     textDropdown: "#dddddd",
-    textHint: "#6680aa",
+    textHint: "#6e88b1",
     textLink: "#aaccff",
     textSecondaryLink: "#88bbee",
     textScore: "#e8d5a3",
     textScoreHeader: "#8abadf",
-    textScoreDim: "#3d5a7a",
+    textScoreDim: "#8fa6bf",
     textNav: "#6ab0e0",
     textNavDim: "#4a8abe",
-    textNavFaint: "#3a5070",
+    textNavFaint: "#5f7694",
     textFaint: "#a0b4d0",
     textModalLink: "#7a9abf",
     textReadOnly: "#8899bb",
-    textNavMid: "#5577aa",
+    textNavMid: "#7798cc",
     textAccent: "#FF9A1F",
     textTeamInfo: "#C99A2E",
 
@@ -89,6 +89,8 @@ export const theme = {
     bsoBall: "#44cc88",
     bsoStrike: "#F2C14E",
     bsoOut: "#ff7070",
+    /** Inner box-shadow on active BSO dots for grayscale/CVD distinguishability. */
+    bsoDotInset: "rgba(0, 0, 0, 0.35)",
 
     // Countdown bar states
     countdownWarn: "#FF9A1F",
@@ -153,6 +155,18 @@ export const theme = {
 
     // Subdued text (between textMuted and textDimmer)
     textSubdued: "#8895A2",
+
+    // Chip / pill status backing colors
+    chipSuccessBg: "rgba(74, 222, 128, 0.15)",
+    chipSuccessBorder: "rgba(74, 222, 128, 0.3)",
+    chipWarnBg: "rgba(242, 193, 78, 0.15)",
+    chipWarnBorder: "rgba(242, 193, 78, 0.3)",
+    chipDangerBg: "rgba(255, 107, 107, 0.15)",
+    chipDangerBorder: "rgba(255, 107, 107, 0.3)",
+    chipAccentBg: "rgba(255, 154, 31, 0.15)",
+    chipAccentBorder: "rgba(255, 154, 31, 0.3)",
+    chipNeutralBg: "rgba(160, 180, 208, 0.15)",
+    chipNeutralBorder: "rgba(160, 180, 208, 0.3)",
   },
   fonts: {
     sans: '"Inter Variable", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
@@ -161,8 +175,8 @@ export const theme = {
   },
   fontSizes: {
     // px-based — UI chrome (labels, badges, buttons)
-    xs: "10px",
-    sm: "11px",
+    xs: "12px",
+    sm: "12px",
     label: "12px",
     base: "13px",
     md: "14px",
@@ -172,7 +186,7 @@ export const theme = {
     dialogTitle: "18px",
     f20: "20px",
     // rem-based — body text (scales with root font size)
-    tiny: "0.7rem",
+    tiny: "0.75rem",
     sub: "0.85rem",
     subLg: "0.9rem",
     body: "0.95rem",

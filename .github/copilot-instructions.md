@@ -1,5 +1,35 @@
 # Copilot Instructions for BlipIt Legends
 
+## GitHub PR Review — BMAD Emulation
+
+When GitHub Copilot is performing a **pull-request code review** on this repository, emulate BMAD review behavior even if the native review surface does not expose agent skills.
+
+**Apply a `bmad-code-review` lens first**, checking for: correctness, regression risk, edge cases, missing tests, migration risk, accessibility, performance, and acceptance-criteria mismatch.
+
+**Then apply a `bmad-party-mode` synthesis step**, activating only personas relevant to the changed files:
+
+| Persona                    | Activates when the diff touches…                                           |
+| -------------------------- | -------------------------------------------------------------------------- |
+| **QA / Test**              | test files, Playwright specs, coverage gaps, regression risk               |
+| **Frontend / UX**          | React components, styled-components, accessibility, responsive layout      |
+| **Architecture**           | module boundaries, state flow, coupling, maintainability                   |
+| **Persistence / Data**     | RxDB schemas, migrations, save/load, export/import, backward compatibility |
+| **Product / PM**           | acceptance criteria, user-visible workflow gaps                            |
+| **Game Simulation**        | baseball rules, simulation logic, stats, game-management behavior          |
+| **Security / Performance** | unsafe inputs, hot paths, heavy re-renders, storage limits                 |
+
+**Output rules:**
+
+- Prefer a few high-signal findings over many trivial comments.
+- Do not claim that a BMAD skill was invoked unless runtime logs explicitly show skill execution.
+- For RxDB, save/load, export/import, league state, player/team identity, or schema changes: explicitly check migration strategy, backward compatibility, reset behavior, and test coverage.
+- For UI changes: explicitly check accessibility (WCAG AA) and mobile/responsive behavior.
+- If no meaningful issue exists in a lane, skip that lane — no filler comments.
+
+> **Note:** Native GitHub PR review uses instruction emulation only. Real BMAD skill execution requires a skill-capable surface (Copilot CLI or Copilot cloud agent). See `docs/copilot-bmad-review.md`.
+
+---
+
 ## Project Overview
 
 **Ballgame** is a **self-playing baseball simulator** built as a React/TypeScript PWA with a **React Router data-router** route-first architecture. The game auto-plays continuously through innings, tracking strikes, balls, outs, bases, and score. Users navigate to `/exhibition/new` to start a game, adjust autoplay speed (slow/normal/fast), or turn on **Manager Mode** to make strategic decisions that influence the simulation. The app is installable on Android and desktop via a Web App Manifest.
@@ -53,6 +83,15 @@ Copilot-specific policy that remains in this file:
 
 ## Agent Auto-Routing
 
+### ⚠️ Mandatory policy — always invoke bmad agents automatically
+
+**Do NOT wait to be asked.** Before writing a single line of code or making any design decision, consult the routing table below and invoke the matching bmad skill or agent via the `skill` tool or `task` tool. This is a standing rule for every session, not a one-time reminder.
+
+- When the routing table points at a **bmad skill** (e.g. `bmad-code-review`, `bmad-party-mode`), call `skill("bmad-<name>")` immediately.
+- When the routing table points at a **task agent** (e.g. `bmad-agent-dev`, `e2e-test-runner`, `ci-workflow`), delegate via `task(agent_type, ...)`.
+- For mixed tasks, follow the full sequence: `bmad-agent-pm` plans → Winston CR sign-off if high-value → Amelia implements → `e2e-test-runner` validates.
+- **Never skip this step because the task "seems small"** — even bug fixes in production code warrant `bmad-agent-dev` (Amelia), and every change to E2E tests routes to `e2e-test-runner`.
+
 Before starting any task, check whether it belongs to a specialist agent. The table below is the authoritative routing guide.
 
 ### Agent Architecture
@@ -64,31 +103,87 @@ Before starting any task, check whether it belongs to a specialist agent. The ta
 
 ### Routing Table
 
-| Trigger / task type                                                                                                                                                                         | Route to                                                    |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Feature planning, PRD creation, sprint planning, epics and stories                                                                                                                          | `bmad-agent-pm` (John) → M1 menu                            |
-| "How does [baseball rule] work?" or "How does the sim implement X rule?"                                                                                                                    | `bmad-agent-pm` (John) → M2 menu                            |
-| "What files change for X?" / "What could break if I do Y?"                                                                                                                                  | `bmad-agent-pm` (John) → M1 menu                            |
-| Any request mentioning: inning, batter, runner, pitch, steal, bunt, walk, extra innings, tiebreak runner, IBB, manager mode, defensive shift, pinch hitter, PRNG replay, save compatibility | `bmad-agent-pm` (John)                                      |
-| Behavior-preserving refactor, rename, extract, modularization                                                                                                                               | `bmad-agent-dev` (Amelia) → SR menu                         |
-| Net-new screen, modal, dialog, copy, design-system addition, accessibility audit, wireframe, "how should this feel / look"                                                                  | `bmad-agent-ux-designer` (Sally) → HR or SD menu            |
-| UI / layout / styled-components / responsive implementation                                                                                                                                 | `bmad-agent-dev` (Amelia) → UI menu                         |
-| Deterministic simulation bug, impossible game state, stat inconsistency — **something is broken**                                                                                           | `bmad-agent-dev` (Amelia) → SC menu                         |
-| Gameplay realism review — **something feels wrong** (outcomes look unrealistic in logs, hit/walk/HR rates are off)                                                                          | `bmad-agent-baseball-manager` (Buck) → RL menu              |
-| Code review on any change                                                                                                                                                                   | `bmad-agent-dev` (Amelia) → invoke `bmad-code-review` skill |
-| High-value change engineering sign-off (P0/P1, PRNG, RxDB schema, broad refactor)                                                                                                           | `bmad-agent-architect` (Winston) → CR menu                  |
-| RxDB schema change, save/load, export/import, `SaveStore` API                                                                                                                               | `bmad-agent-dev` (Amelia) → RX menu → Winston CR sign-off   |
-| GitHub Actions workflow change — CI, Playwright, sharding, artifact uploads                                                                                                                 | `ci-workflow` (operational specialist)                      |
-| E2E test authoring, fixture creation, **visual snapshot baseline regen**                                                                                                                    | `e2e-test-runner` (operational specialist)                  |
-| Live QA against production site (blipit.net)                                                                                                                                                | `playwright-prod` (operational specialist)                  |
-| User persona interview (Casual Watcher, Strategist, Team Builder, Save Curator, Stats Fan, Power User)                                                                                      | `bmad-agent-ux-designer` (Sally) → P1–P6 menus              |
-| Multi-agent deliberation on a cross-cutting question                                                                                                                                        | `bmad-party-mode` skill                                     |
+| Trigger / task type                                                                                                                                                                         | Route to                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Feature planning, PRD creation, sprint planning, epics and stories                                                                                                                          | `bmad-agent-pm` (John) → M1 menu                          |
+| "How does [baseball rule] work?" or "How does the sim implement X rule?"                                                                                                                    | `bmad-agent-pm` (John) → M2 menu                          |
+| "What files change for X?" / "What could break if I do Y?"                                                                                                                                  | `bmad-agent-pm` (John) → M1 menu                          |
+| Any request mentioning: inning, batter, runner, pitch, steal, bunt, walk, extra innings, tiebreak runner, IBB, manager mode, defensive shift, pinch hitter, PRNG replay, save compatibility | `bmad-agent-pm` (John)                                    |
+| Behavior-preserving refactor, rename, extract, modularization                                                                                                                               | `bmad-agent-dev` (Amelia) → SR menu                       |
+| Net-new screen, modal, dialog, copy, design-system addition, accessibility audit, wireframe, "how should this feel / look"                                                                  | `bmad-agent-ux-designer` (Sally) → HR or SD menu          |
+| UI / layout / styled-components / responsive implementation                                                                                                                                 | `bmad-agent-dev` (Amelia) → UI menu                       |
+| Deterministic simulation bug, impossible game state, stat inconsistency — **something is broken**                                                                                           | `bmad-agent-dev` (Amelia) → SC menu                       |
+| Gameplay realism review — **something feels wrong** (outcomes look unrealistic in logs, hit/walk/HR rates are off)                                                                          | `bmad-agent-baseball-manager` (Buck) → RL menu            |
+| Code review on any change                                                                                                                                                                   | See **[Code Review Process](#code-review-process)** below |
+| High-value change engineering sign-off (P0/P1, PRNG, RxDB schema, broad refactor)                                                                                                           | `bmad-agent-architect` (Winston) → CR menu                |
+| RxDB schema change, save/load, export/import, `SaveStore` API                                                                                                                               | `bmad-agent-dev` (Amelia) → RX menu → Winston CR sign-off |
+| GitHub Actions workflow change — CI, Playwright, sharding, artifact uploads                                                                                                                 | `ci-workflow` (operational specialist)                    |
+| E2E test authoring, fixture creation, **visual snapshot baseline regen**                                                                                                                    | `e2e-test-runner` (operational specialist)                |
+| Live QA against production site (blipit.net)                                                                                                                                                | `playwright-prod` (operational specialist)                |
+| User persona interview (Casual Watcher, Strategist, Team Builder, Save Curator, Stats Fan, Power User)                                                                                      | `bmad-agent-ux-designer` (Sally) → P1–P6 menus            |
+| Multi-agent deliberation on a cross-cutting question                                                                                                                                        | `bmad-party-mode` skill                                   |
 
 **E2E execution rule:** All Playwright test execution and visual baseline regeneration routes to `e2e-test-runner` — never regenerate baselines locally. Baselines must be generated inside `mcr.microsoft.com/playwright:v1.58.2-noble`.
 
 **Routing sequence for mixed tasks:** bmad agent plans (John M1) → Winston CR sign-off if high-value → Amelia implements → `e2e-test-runner` validates.
 
 **Design system ownership:** Sally (`bmad-agent-ux-designer`) owns `docs/style-guide.md`. Route to Sally before introducing any new color, font size, spacing token, or component variant.
+
+---
+
+## Code Review Process
+
+When asked to perform a code review — including via the **GitHub "Request Copilot review" PR flow**, a diff review, or any GitHub Copilot Code Review — apply a **BMAD party-mode multi-persona approach** rather than a single generic reviewer.
+
+- **In agent/coding contexts** (tool access available): invoke `bmad-code-review` first, then invoke `bmad-party-mode` to run a multi-persona deliberation on the findings. **Both skills are mandatory — never invoke one without the other.**
+- **In the GitHub PR review context** (no tool access): apply the approach directly by reasoning through each relevant lens in sections 1–4 below and synthesizing the findings yourself.
+
+### 1 — Inspect the diff and activate relevant personas
+
+Read the changed files and select only the personas whose domain is represented:
+
+| Persona                               | Activates when the diff touches…                                                               |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **QA / Test Architect**               | test files, E2E specs, coverage gaps, regression risk, Playwright                              |
+| **Frontend / UI / UX**                | React components, styled-components, accessibility, responsive layout, visual regressions      |
+| **Architecture / Tech Lead**          | module boundaries, state flow, coupling, maintainability, file organization                    |
+| **Persistence / Data**                | RxDB collections, schema changes, migrations, save/load, export/import, backward compatibility |
+| **Product / PM**                      | feature-spec alignment, acceptance criteria, user-facing workflow gaps                         |
+| **Game Simulation / Baseball Domain** | baseball rules, simulation logic, stats, league flow, game-management behavior                 |
+| **Security / Performance**            | auth, user inputs, unsafe patterns, expensive rendering, large loops, storage limits           |
+
+Do not activate a persona if its domain has no representation in the diff.
+
+### 2 — Synthesize into one practical review
+
+Do **not** output role-play dialogue. Combine all persona findings into a single structured review.
+
+**Output format:**
+
+1. **Summary** — one or two sentences on what the change does and whether blocking issues exist.
+2. **Findings** — grouped by severity:
+   - 🔴 **Blocking** — must be fixed before merge
+   - 🟠 **High** — strong recommendation, fix soon
+   - 🟡 **Medium** — notable concern, address if practical
+   - 🔵 **Low / Nit** — minor or stylistic
+
+Each finding must include: _what is wrong_, _why it matters_, _where it appears_ (file + line if possible), _a concrete suggested fix_, and optionally _which persona/lens caught it_.
+
+3. **No blocking issues** — if none exist, say so explicitly before listing any non-blocking suggestions.
+
+### 3 — Persistence / backward-compatibility rule
+
+If the diff touches **any** of: RxDB collections, schema properties/indexes/version, `migrationStrategies`, save/load paths, export/import bundles, league state, or player/team identity fields — the review **must** explicitly assess:
+
+- Whether `version` was bumped and a migration strategy added.
+- Whether existing saved data can be loaded without a reset.
+- Whether test coverage exists for the migration or import path.
+
+### 4 — Scope and quality bar
+
+- Ground every finding in the actual diff and repository context — no speculative concerns.
+- Prefer: actionable defects, missing tests, regression risks, spec drift, migration risks, user-facing issues.
+- Avoid: filler, vague concerns, excessive nitpicks on style already enforced by the linter.
 
 ---
 
@@ -135,7 +230,8 @@ Before starting any task, check whether it belongs to a specialist agent. The ta
 - **Service worker must NOT initialize or use RxDB** — RxDB is window-only. The service worker only handles notifications and lightweight message passing.
 - **`InstructionsModal` visibility** — `display: flex` lives inside `&[open]` in `src/features/help/components/InstructionsModal/styles.ts`. Never move it outside or the native `<dialog>` hidden state will be overridden. Import `InstructionsModal` via `@feat/help/components/InstructionsModal`.
 - **Do NOT use `@vitest/browser` for E2E tests** — `@vitest/browser` (with the Playwright provider) runs component tests _inside_ a real browser, but it cannot do page navigation, multi-step user flows, or visual regression. Use `@playwright/test` (in `e2e/`) for all end-to-end tests. The two test runners serve different purposes and coexist without conflict.
-- **No IIFEs in JSX** — never use `(() => { ... })()` inside JSX. IIFEs create a new function reference on every render causing unnecessary re-renders and unpredictable behaviour. Instead, compute values as `const` variables before the `return` statement and reference them directly in JSX. For non-trivial conditional rendering blocks, extract them into a named sub-component (e.g. `StarterPitcherSelector` in `ExhibitionSetupPage/`) to keep them independently testable.
+- **Playwright MCP localhost bootstrap** — use the `playwright-isolated-browser_*` tools (the `playwright-isolated` MCP server key, configured with `--no-sandbox --isolated`). Start vite preview with `--host 0.0.0.0` (`nohup npx vite preview --port 5173 --host 0.0.0.0 >> vite-preview.log 2>&1 & disown`) then navigate to `http://127.0.0.1:5173` using `playwright-isolated-browser_navigate`. The MCP server key **must** be `"playwright-isolated"` in GitHub repo Copilot settings — the `"playwright"` key collides with the default systemd service and the repo config is ignored. See `docs/e2e-testing.md` § "Starting the preview server for MCP browser automation" for full details.
+- **No IIFEs in JSX** — never use `(() => { ... })()` inside JSX. IIFEs create a new function reference on every render causing unnecessary re-renders and unpredictable behavior. Instead, compute values as `const` variables before the `return` statement and reference them directly in JSX. For non-trivial conditional rendering blocks, extract them into a named sub-component (e.g. `StarterPitcherSelector` in `ExhibitionSetupPage/`) to keep them independently testable.
 - **`SavesModal` no longer has `autoOpen`/`openSavesRequestCount`/`onRequestClose`/`closeLabel` props** — these were removed when "Load Saved Game" became a dedicated `/saves` route. The modal now always closes with a simple `close()`. Do not re-add these props.
 - **`CustomTeamEditor` uses drag-and-drop for all sections** — lineup, bench, and pitchers all use `SortablePlayerRow` with `@dnd-kit/sortable`. There are **no up/down arrow buttons** in the editor. Lineup and bench share one `DndContext` (inside `<div data-testid="lineup-bench-dnd-container">`) so players can be dragged between sections. Pitchers have their own isolated `DndContext`. The `TRANSFER_PLAYER` action (`{ fromSection, toSection, playerId, toIndex }`) in `editorReducer` handles cross-section moves. `PlayerRow` (the old up/down component) is preserved in the file system but is not used in `index.tsx` — do not resurrect it.
 - **`useImportCustomTeams` is the shared hook for all custom-team import flows** — always use it rather than calling `importCustomTeams` directly in components. It handles file upload, paste JSON, clipboard paste, in-flight state, errors, and the two-step duplicate-player confirmation flow. The hook exposes `pendingDuplicateImport`, `confirmDuplicateImport()`, and `cancelDuplicateImport()`.
@@ -147,4 +243,5 @@ Before starting any task, check whether it belongs to a specialist agent. The ta
 - **NewGameDialog mobile compaction** — `NewGameDialog/styles.ts` uses `${mq.mobile}` blocks on every styled component (Dialog, Title, FieldGroup, FieldLabel, Input, Select, SectionLabel, RadioLabel, ResumeButton, Divider, PlayBallButton, SeedHint) to reduce padding/margins so the modal fits without scrolling on phone viewports. `PlayerCustomizationPanel.styles.ts` does the same for `PanelSection`. The Dialog's `max-height` uses `min(96dvh, 820px)` on mobile (vs `90dvh` on desktop) to reclaim browser-chrome space. Never revert these to desktop-only values.
 - **Viewport-safe modal sizing** — always use `dvh` (dynamic viewport height) units, not bare `vh`, for modal `max-height`. `100vh` on mobile browsers can exceed the visible area because it ignores browser chrome (address bar, navigation bar). `dvh` tracks the actual visible viewport. The `responsive-smoke.spec.ts` E2E test verifies the Play Ball button bottom edge is within `viewport.height` on all projects.
 - **`ResumeLabel` span in NewGameDialog** — the "Resume: " prefix inside `ResumeButton` is wrapped in `<ResumeLabel>` (exported from `NewGameDialog/styles.ts`). `ResumeLabel` uses `display: none` inside `${mq.mobile}` so on phone viewports the button shows "▶ {saveName}" (shorter) while desktop still shows "▶ Resume: {saveName}". Do not remove this span or inline the text directly into `ResumeButton`.
+- **`managerModeAllowed` in `GameInner`** — gates the manager-mode toggle in `GameControls`. Formula: `setManagerModeAllowed(seasonGameId == null || managedTeam !== null)`. Exhibition games (no `seasonGameId`) are **always** allowed; league spectator games (`seasonGameId` set, `managedTeam === null`) are blocked. **Never change this to `managedTeam !== null` alone** — that hides the toggle for all exhibition games (regression fixed in PR #260). All four restore paths in `GameInner` (fresh start, auto-restore rxAutoSave, pendingLoadSave, modal-load) must apply this formula consistently. See `docs/architecture.md` § "Manager Mode & Decision System" for the full table.
 - **`responsive-smoke.spec.ts` New Game dialog tests** — three tests guard the no-scroll contract on all viewport projects: (1) Play Ball button bottom edge ≤ viewport height; (2) critical fields (`matchup-mode-select`, `home-team-select`, `away-team-select`, `seed-input`, `play-ball-button`) all have bottom edges within viewport height; (3) `document.documentElement.scrollWidth <= window.innerWidth` (no horizontal overflow). Always keep these passing when touching NewGameDialog layout.

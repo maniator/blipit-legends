@@ -1,5 +1,12 @@
+import type { TeamRecord } from "@feat/customTeams/storage/types";
 import type { State, Strategy } from "@feat/gameplay/context/index";
 import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
+import type {
+  SeasonGameRecord,
+  SeasonPlayerStateRecord,
+  SeasonRecord,
+  SeasonTeamRecord,
+} from "@feat/league/storage/types";
 
 /** Typed setup stored on the save header for deterministic game restore. */
 export interface GameSaveSetup {
@@ -11,6 +18,8 @@ export interface GameSaveSetup {
   awayTeam: string;
   /** Manager/AI decision tuning values at the time of save. Optional for backward compat. */
   decisionValues?: ManagerDecisionValues;
+  /** Set for league season games; absent for exhibition games. */
+  seasonGameId?: string;
 }
 
 /** Scored snapshot stored on the save header for quick display. */
@@ -107,5 +116,49 @@ export interface PortableSaveExport {
   sig: string;
 }
 
-/** @deprecated Use PortableSaveExport for new storage/export code. */
-export type RxdbExportedSave = PortableSaveExport;
+/**
+ * Wire-level union of supported export envelopes.
+ *
+ * - v1 is the legacy single-save envelope. Its shape is identical to
+ *   {@link PortableSaveExport} and the Dexie save store uses that name for the
+ *   backend-neutral spelling.
+ * - v2 is the multi-collection bundle introduced for league exports.
+ */
+export type RxdbExportedSave =
+  | PortableSaveExport
+  | {
+      version: 2;
+      header: V2BundleHeader;
+      /** FNV-1a 32-bit signature of RXDB_EXPORT_KEY_V2 + canonicalJSON(header) */
+      sig: string;
+    };
+
+/**
+ * All persisted collections exported in a v2 bundle.
+ * `customTeams` maps to the `teams` RxDB collection.
+ */
+export interface V2BundleCollections {
+  saves: SaveRecord[];
+  events: EventRecord[];
+  /** Docs from the `teams` collection (custom teams). */
+  customTeams: TeamRecord[];
+  seasons: SeasonRecord[];
+  seasonTeams: SeasonTeamRecord[];
+  seasonGames: SeasonGameRecord[];
+  seasonPlayerState: SeasonPlayerStateRecord[];
+  /** Reserved for future use — always an empty array in Phase 1. */
+  seasonTransactions: unknown[];
+  /** Career game history entries — populated in Phase 2+. */
+  gameHistory: unknown[];
+}
+
+/** Top-level header for a v2 export bundle. */
+export interface V2BundleHeader {
+  /** Epoch ms timestamp when the bundle was exported. */
+  exportedAt: number;
+  /** App version string at export time (from import.meta.env.VITE_APP_VERSION or "unknown"). */
+  appVersion: string;
+  /** Ruleset version used at export time — checked on import. */
+  rulesetVersion: number;
+  collections: V2BundleCollections;
+}

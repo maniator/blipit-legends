@@ -7,6 +7,7 @@ import { useCustomTeams } from "@shared/hooks/useCustomTeams";
 import type { SaveRecord } from "@storage/types";
 
 import { SPEED_STEP_LABELS, SPEED_STEPS } from "./constants";
+import ManagerDecisionValuesPanel from "./ManagerDecisionValuesPanel";
 import ManagerModeControls from "./ManagerModeControls";
 import {
   AutoPlayGroup,
@@ -34,6 +35,8 @@ type Props = {
   onBackToHome?: () => void;
   /** When true, shows a disabled "Saving…" button instead of "New Game". */
   isCommitting?: boolean;
+  /** When false, manager controls are hidden and cannot be enabled (spectator/watch sessions). */
+  managerModeAllowed?: boolean;
 };
 
 const GameControls: React.FunctionComponent<Props> = ({
@@ -42,6 +45,7 @@ const GameControls: React.FunctionComponent<Props> = ({
   onLoadSave,
   onBackToHome,
   isCommitting = false,
+  managerModeAllowed = true,
 }) => {
   const {
     speed,
@@ -197,7 +201,7 @@ const GameControls: React.FunctionComponent<Props> = ({
             onToggleAnnouncementMute={handleToggleAnnouncementMute}
             onToggleAlertMute={handleToggleAlertMute}
           />
-          {gameStarted && (
+          {gameStarted && managerModeAllowed && (
             <ManagerModeControls
               managerMode={managerMode}
               strategy={strategy}
@@ -206,14 +210,19 @@ const GameControls: React.FunctionComponent<Props> = ({
               notifPermission={notifPermission}
               gameStarted={gameStarted}
               gameOver={gameOver}
-              decisionValues={decisionValues}
               onManagerModeChange={handleManagerModeChange}
               onStrategyChange={(e) => setStrategy(e.target.value as Strategy)}
               onManagedTeamChange={(e) => setManagedTeam(Number(e.target.value) === 1 ? 1 : 0)}
               onRequestNotifPermission={handleRequestNotifPermission}
-              onDecisionValuesChange={setDecisionValues}
-              onDecisionValuesReset={resetDecisionValues}
-              onDecisionPanelOpenChange={handleDecisionPanelOpenChange}
+            />
+          )}
+          {gameStarted && (
+            <ManagerDecisionValuesPanel
+              spectatorMode={!managerModeAllowed}
+              values={decisionValues}
+              onChange={setDecisionValues}
+              onReset={resetDecisionValues}
+              onOpenChange={handleDecisionPanelOpenChange}
             />
           )}
         </AutoPlayGroup>

@@ -161,8 +161,10 @@ describe("useImportSave", () => {
 
   describe("handlePasteFromClipboard", () => {
     it("reads clipboard and updates pasteJson", async () => {
-      Object.assign(navigator, {
-        clipboard: { readText: vi.fn().mockResolvedValue('{"clipboard":true}') },
+      Object.defineProperty(navigator, "clipboard", {
+        value: { readText: vi.fn().mockResolvedValue('{"clipboard":true}') },
+        configurable: true,
+        writable: true,
       });
       const { result } = renderImportHook();
       await act(async () => result.current.handlePasteFromClipboard());
@@ -170,8 +172,10 @@ describe("useImportSave", () => {
     });
 
     it("sets error when clipboard read fails", async () => {
-      Object.assign(navigator, {
-        clipboard: { readText: vi.fn().mockRejectedValue(new Error("Permission denied")) },
+      Object.defineProperty(navigator, "clipboard", {
+        value: { readText: vi.fn().mockRejectedValue(new Error("Permission denied")) },
+        configurable: true,
+        writable: true,
       });
       const { result } = renderImportHook();
       await act(async () => result.current.handlePasteFromClipboard());

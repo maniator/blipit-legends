@@ -129,7 +129,7 @@ export const StatsTable = styled.table`
 `;
 
 export const StatsTableTh = styled.th`
-  color: ${({ theme }) => theme.colors.textDisabled};
+  color: ${({ theme }) => theme.colors.textHint};
   font-weight: 600;
   text-align: right;
   padding: ${({ theme }) => theme.spacing.xxs} ${({ theme }) => theme.spacing.xs};

@@ -31,8 +31,16 @@ __pycache__/
 venv/
 
 
+# Playwright MCP session artifacts
+.playwright-mcp/
+localhost-verify.png
+
 #docker tmp files
 .docker*/
 
 # temporary scan directories
 tmp-*/
+
+# QA artifact screenshots and throwaway scripts (only README.md and .md notes are tracked)
+e2e/qa-artifacts/screenshots/
+e2e/qa-artifacts/scripts/

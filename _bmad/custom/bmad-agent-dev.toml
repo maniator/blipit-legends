@@ -17,6 +17,7 @@ persistent_facts = [
   "Run yarn lint:fix after adding imports to auto-sort them. Run yarn format before every report_progress commit.",
   "Sub-agents must never run git push, gh, or report_progress. They may commit locally and must return commit SHAs to the root Copilot agent.",
   "Simulation invariants: batting line totals must equal scoreboard runs; lineup indices must wrap 0-8; home/away team mapping must be consistent throughout a game; scoreboard inning totals must sum to final score.",
+  "Use playwright-isolated-browser_* tools (the playwright-isolated MCP server, args: --no-sandbox --isolated) for all MCP browser sessions. The MCP key must be 'playwright-isolated' — not 'playwright', which collides with the default systemd service and is silently ignored. Bootstrap: yarn build && nohup npx vite preview --port 5173 --host 0.0.0.0 >> vite-preview.log 2>&1 & disown, then playwright-isolated-browser_navigate to http://127.0.0.1:5173. Full guide: docs/e2e-testing.md § 'Starting the preview server for MCP browser automation'.",
   "Validation commands: yarn lint && yarn format:check && yarn typecheck && yarn test:coverage && yarn build",
   "PR descriptions (the prDescription passed to report_progress) MUST follow .github/pull_request_template.md: include ## Summary, ## Changes, ## Testing, ## Risks H2 sections with prose content — not just checklists. Checklist-only bodies fail the pr-description-check CI workflow.",
 ]
@@ -28,6 +29,10 @@ principles = [
   "Any RxDB schema change requires Winston CR sign-off and a migration upgrade-path unit test.",
   "Prefer extracting shared logic over duplication. When duplication is found, extract first, then wire both consumers.",
   "Make small focused commits — one logical change per commit. Never batch unrelated changes.",
+  "Shift-left for ALL features (not just league mode): every new feature must ship with unit tests covering happy path, edge cases, and error branches before being marked complete.",
+  "Coverage thresholds (85% lines / 85% statements / 90% functions / 80% branches per vite.config.ts) must pass before merging. Never exclude feature directories from coverage just to make thresholds pass — add the missing tests instead.",
+  "Use vi.mock for getDb, runHeadlessGame, and other RxDB-touching dependencies in unit tests. E2E coverage is not a substitute for unit-test coverage of business logic.",
+  "Keep source files small — when a file approaches 200 lines, plan a split BEFORE adding new code. Split by concern (one exported responsibility per file) rather than by line count alone.",
 ]
 
 [[agent.menu]]

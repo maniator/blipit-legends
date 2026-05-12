@@ -152,12 +152,12 @@ describe("LineScore", () => {
 
   it("shows FINAL banner when gameOver is true", () => {
     renderWithContext(<LineScore />, makeContextValue({ gameOver: true }));
-    expect(screen.getByText("FINAL")).toBeInTheDocument();
+    expect(screen.getByTestId("game-over-banner")).toBeInTheDocument();
   });
 
   it("does not show FINAL banner when game is in progress", () => {
     renderWithContext(<LineScore />, makeContextValue({ gameOver: false }));
-    expect(screen.queryByText("FINAL")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("game-over-banner")).not.toBeInTheDocument();
   });
 
   it("renders BSO dot groups (B / S / O labels)", () => {
@@ -210,5 +210,37 @@ describe("LineScore", () => {
   it("does not show EXTRA INNINGS banner in inning 9 or earlier", () => {
     renderWithContext(<LineScore />, makeContextValue({ inning: 9, gameOver: false }));
     expect(screen.queryByText("EXTRA INNINGS")).not.toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// F5 BSO accessibility (Story 6.1)
+// ---------------------------------------------------------------------------
+describe("LineScore — BSO accessibility (F5)", () => {
+  it("renders BSO status container with role=status, aria-live=polite, aria-atomic=true", () => {
+    renderWithContext(<LineScore />, makeContextValue({ balls: 2, strikes: 1, outs: 0 }));
+    const status = document.querySelector('[role="status"]');
+    expect(status).toBeInTheDocument();
+    expect(status).toHaveAttribute("aria-live", "polite");
+    expect(status).toHaveAttribute("aria-atomic", "true");
+  });
+
+  it("computes plural aria-label correctly for balls > 1, strikes > 1, outs > 1", () => {
+    renderWithContext(<LineScore />, makeContextValue({ balls: 3, strikes: 2, outs: 1 }));
+    const status = document.querySelector('[role="status"]');
+    expect(status).toHaveAttribute("aria-label", "Count: 3 balls, 2 strikes, 1 out");
+  });
+
+  it("computes singular aria-label for balls=1, strikes=1, outs=1", () => {
+    renderWithContext(<LineScore />, makeContextValue({ balls: 1, strikes: 1, outs: 1 }));
+    const status = document.querySelector('[role="status"]');
+    expect(status).toHaveAttribute("aria-label", "Count: 1 ball, 1 strike, 1 out");
+  });
+
+  it("renders visually-hidden DOM text matching the count so live regions announce reliably", () => {
+    renderWithContext(<LineScore />, makeContextValue({ balls: 2, strikes: 1, outs: 0 }));
+    // The count must exist as actual text in the DOM (not only in aria-label)
+    // so screen readers that watch for text mutations can announce the update.
+    expect(screen.getByText("Count: 2 balls, 1 strike, 0 outs")).toBeInTheDocument();
   });
 });
