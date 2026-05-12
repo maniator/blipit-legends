@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // Capture the props passed to Game so tests can assert on callbacks.
 let capturedGameProps: Record<string, unknown> = {};
@@ -13,7 +13,6 @@ vi.mock("@feat/gameplay/components/Game", () => ({
     return <div data-testid="game-mock" />;
   },
 }));
-
 vi.mock("@feat/gameplay/components/GamePageWrapper", () => ({
   default: ({
     children,
@@ -160,6 +159,10 @@ function renderLeagueGamePage(seasonGameId = "sg-1", ctx = mockCtx) {
 }
 
 describe("LeagueGamePage", () => {
+  beforeEach(() => {
+    capturedGameProps = {};
+  });
+
   it("shows loading fallback initially", () => {
     vi.mocked(getDb).mockResolvedValue(makeDb() as never);
     vi.mocked(buildSeasonGameSetup).mockResolvedValue(mockSetup as never);
