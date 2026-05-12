@@ -167,10 +167,9 @@ export function loadWizardState(): WizardState | null {
     if ((parsed as { _v?: unknown })._v !== 1) return null;
     const state = parsed as WizardState;
     // Back-fill seasonName if loading an older session that pre-dates this field.
-    if (!state.seasonName) {
-      state.seasonName = `Season ${new Date().getFullYear()}`;
-    }
-    return state;
+    return state.seasonName
+      ? state
+      : { ...state, seasonName: `Season ${new Date().getFullYear()}` };
   } catch {
     return null;
   }

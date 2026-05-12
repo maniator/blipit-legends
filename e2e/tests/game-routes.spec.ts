@@ -37,7 +37,7 @@ test.describe("game-routes — exhibition flow", () => {
   test("/game/exhibition shows field and play-by-play log", async ({ page }) => {
     await startGameViaPlayBall(page, { seed: "gr-exhibition-smoke2" });
     await expect(page).toHaveURL(/\/game\/exhibition/, { timeout: 15_000 });
-    await expect(page.getByTestId("baseball-field")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("field-view")).toBeVisible({ timeout: 15_000 });
   });
 });
 
@@ -96,15 +96,20 @@ test.describe("game-routes — save resume flow", () => {
     await expect(page).toHaveURL(/\/game\/exhibition/, { timeout: 15_000 });
     await saveCurrentGame(page);
 
-    // Go home, then open /saves.
+    // Close the saves modal (Escape or backdrop click).
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("saves-modal")).not.toBeVisible({ timeout: 5_000 });
+
+    // Go home.
     await page.getByTestId("back-to-home-button").click();
     await expect(page).toHaveURL("/", { timeout: 10_000 });
 
+    // Open /saves.
     await page.getByTestId("home-load-saves-button").click();
     await expect(page).toHaveURL("/saves", { timeout: 10_000 });
 
-    // Load the save — this should navigate to /game/exhibition.
-    const loadBtn = page.getByRole("button", { name: /load/i }).first();
+    // Load the save — should navigate to /game/exhibition.
+    const loadBtn = page.getByTestId("load-save-button").first();
     await expect(loadBtn).toBeVisible({ timeout: 10_000 });
     await loadBtn.click();
 
