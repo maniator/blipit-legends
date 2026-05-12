@@ -1,9 +1,0 @@
-HTTP/1.1 200 OK
-X-Powered-By: Express
-cache-control: no-cache
-connection: keep-alive
-content-type: text/event-stream
-mcp-session-id: b5e7ee2d-0292-4859-adfd-8536df080b46
-Date: Tue, 12 May 2026 21:06:50 GMT
-Transfer-Encoding: chunked
-
