@@ -12,6 +12,12 @@ export interface AppSessionContextValue {
   hasCareerStats: boolean;
   handleGameSessionStarted: () => void;
   handleGameOver: () => void;
+  /**
+   * Lazily trigger the one-shot RxDB probe for completed games.
+   * Call this when the Home screen mounts so the DB is only initialised when
+   * `hasCareerStats` is actually needed, not on every deep-link entry point.
+   */
+  requestCareerStatsProbe: () => void;
 }
 
 const AppSessionContext = React.createContext<AppSessionContextValue | undefined>(undefined);
@@ -33,14 +39,19 @@ interface AppSessionProviderProps {
 
 /**
  * Provider for app-level session state.
- * Manages hasActiveSession and hasCareerStats, probes DB on mount to check for
- * completed games, and exposes state via useAppSession hook.
+ * Manages hasActiveSession and hasCareerStats.  The RxDB probe for completed
+ * games is **deferred** — it only runs when a consumer calls
+ * `requestCareerStatsProbe()` (typically HomeRoute on mount).  This avoids
+ * initialising RxDB on deep-link entries to `/game/...` or `/leagues/...`
+ * where `hasCareerStats` is never consumed.
  */
 export const AppSessionProvider: React.FunctionComponent<AppSessionProviderProps> = ({
   children,
 }) => {
   const [hasActiveSession, setHasActiveSession] = React.useState(false);
   const [hasCareerStats, setHasCareerStats] = React.useState(false);
+  // Prevents duplicate probes if HomeRoute re-mounts or requestCareerStatsProbe is called twice.
+  const probeFiredRef = React.useRef(false);
 
   const handleGameSessionStarted = React.useCallback(() => {
     setHasActiveSession(true);
@@ -51,28 +62,21 @@ export const AppSessionProvider: React.FunctionComponent<AppSessionProviderProps
     setHasCareerStats(true);
   }, []);
 
-  // Probe DB on mount to check for completed games.
-  React.useEffect(() => {
-    let cancelled = false;
+  const requestCareerStatsProbe = React.useCallback(() => {
+    if (probeFiredRef.current) return;
+    probeFiredRef.current = true;
 
-    async function loadCareerStatsAvailability() {
-      try {
-        const db = await getDb();
-        const anyCompletedGame = await db.completedGames.findOne().exec();
-        if (!cancelled) {
-          // Use functional update so a true set by handleGameOver is never cleared.
-          setHasCareerStats((prev) => prev || Boolean(anyCompletedGame));
-        }
-      } catch {
-        // On DB error, leave hasCareerStats unchanged (don't hide it if it was already true).
-      }
-    }
-
-    void loadCareerStatsAvailability();
-
-    return () => {
-      cancelled = true;
-    };
+    // AppSessionProvider is mounted at RootLayout and stays alive for the full
+    // app lifetime, so we do not need a cancellation guard here.
+    getDb()
+      .then((db) => db.completedGames.findOne().exec())
+      .then((anyCompletedGame) => {
+        // Use functional update so a true set by handleGameOver is never cleared.
+        setHasCareerStats((prev) => prev || Boolean(anyCompletedGame));
+      })
+      .catch(() => {
+        // On DB error, leave hasCareerStats unchanged.
+      });
   }, []);
 
   const value: AppSessionContextValue = React.useMemo(
@@ -81,8 +85,15 @@ export const AppSessionProvider: React.FunctionComponent<AppSessionProviderProps
       hasCareerStats,
       handleGameSessionStarted,
       handleGameOver,
+      requestCareerStatsProbe,
     }),
-    [hasActiveSession, hasCareerStats, handleGameSessionStarted, handleGameOver],
+    [
+      hasActiveSession,
+      hasCareerStats,
+      handleGameSessionStarted,
+      handleGameOver,
+      requestCareerStatsProbe,
+    ],
   );
 
   return <AppSessionContext.Provider value={value}>{children}</AppSessionContext.Provider>;

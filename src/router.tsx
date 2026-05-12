@@ -46,11 +46,17 @@ function LazyRoute({ children }: { children: React.ReactNode }) {
 /** Route element for `/` — reads navigation callbacks from AppShell outlet context. */
 function HomeRoute() {
   const ctx = useOutletContext<AppShellOutletContext>();
-  const { hasActiveSession, hasCareerStats } = useAppSession();
+  const { hasActiveSession, hasCareerStats, requestCareerStatsProbe } = useAppSession();
   const navigate = useNavigate();
 
   const [activeSeasonId, setActiveSeasonId] = React.useState<string | null>(null);
   const [activeSeasonLabel, setActiveSeasonLabel] = React.useState<string | null>(null);
+
+  // Trigger the one-shot RxDB probe for completed games only when Home mounts.
+  // This defers DB initialisation away from deep-link entries (/game/…, /leagues/…).
+  React.useEffect(() => {
+    requestCareerStatsProbe();
+  }, [requestCareerStatsProbe]);
 
   React.useEffect(() => {
     getDb()
