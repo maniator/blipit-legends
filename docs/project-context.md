@@ -93,7 +93,7 @@ yarn build         # Production build to dist/
 | Architecture decision, module boundary                   | `bmad-agent-architect` (Winston)     | AD                     |
 | High-value change engineering sign-off                   | `bmad-agent-architect` (Winston)     | CR                     |
 | Story implementation, feature coding                     | `bmad-agent-dev` (Amelia)            | —                      |
-| Code review                                              | `bmad-agent-dev` (Amelia)            | bmad-code-review skill |
+| Code review on any change                                | `bmad-code-review` skill + `bmad-party-mode` skill | both required, in that order |
 | Simulation correctness bug (broken/impossible state)     | `bmad-agent-dev` (Amelia)            | SC                     |
 | RxDB schema change, migration                            | `bmad-agent-dev` (Amelia)            | RX                     |
 | Safe refactor (behavior-preserving)                      | `bmad-agent-dev` (Amelia)            | SR                     |

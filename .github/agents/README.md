@@ -59,7 +59,7 @@ Sub-agents **must never** run `git push`, `gh`, or `report_progress`. Sub-agents
 | Architecture decision, module boundary               | `bmad-agent-architect` (Winston) → AD menu         |
 | Engineering sign-off on high-value change            | `bmad-agent-architect` (Winston) → CR menu         |
 | Story implementation, feature coding                 | `bmad-agent-dev` (Amelia) → story impl             |
-| Code review                                          | `bmad-agent-dev` (Amelia) → bmad-code-review skill |
+| Code review                                          | `bmad-code-review` skill + `bmad-party-mode` skill (both required, in that order) |
 | Simulation correctness bug (broken/impossible state) | `bmad-agent-dev` (Amelia) → SC menu                |
 | RxDB schema change, migration, SaveStore             | `bmad-agent-dev` (Amelia) → RX menu                |
 | Safe refactor (behavior-preserving)                  | `bmad-agent-dev` (Amelia) → SR menu                |
