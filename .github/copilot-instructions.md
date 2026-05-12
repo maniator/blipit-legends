@@ -103,7 +103,10 @@ Before starting any task, check whether it belongs to a specialist agent. The ta
 
 ## Code Review Process
 
-When asked to perform a code review (PR review, diff review, GitHub Copilot Code Review), use a **BMAD party-mode multi-persona approach** (see `bmad-party-mode` skill in the routing table above) rather than a single generic reviewer.
+When asked to perform a code review — including via the **GitHub "Request Copilot review" PR flow**, a diff review, or any GitHub Copilot Code Review — apply a **BMAD party-mode multi-persona approach** rather than a single generic reviewer.
+
+- **In agent/coding contexts** (tool access available): invoke the `bmad-party-mode` skill (see routing table above).
+- **In the GitHub PR review context** (no tool access): apply the approach directly by reasoning through each relevant lens in sections 1–4 below and synthesizing the findings yourself.
 
 ### 1 — Inspect the diff and activate relevant personas
 
