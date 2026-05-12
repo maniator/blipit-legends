@@ -1,12 +1,38 @@
+import { useGameSessionContext } from "@feat/gameplay/context/index";
 import * as announceModule from "@feat/gameplay/utils/announce";
 import * as loggerModule from "@shared/utils/logger";
 import { renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { makeGameSessionContext } from "@test/testHelpers";
+
 import { useAutoPlayScheduler } from "./useAutoPlayScheduler";
+
+vi.mock("@feat/gameplay/context/index", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@feat/gameplay/context/index")>();
+  return {
+    ...original,
+    useGameSessionContext: vi.fn().mockReturnValue({
+      sessionType: "exhibition",
+      managerModeAllowed: true,
+      disableSave: false,
+      seasonGameId: null,
+      managedTeam: null,
+      sessionReady: true,
+    }),
+  };
+});
 
 beforeEach(() => {
   vi.useFakeTimers();
+  vi.mocked(useGameSessionContext).mockReturnValue({
+    sessionType: "exhibition",
+    managerModeAllowed: true,
+    disableSave: false,
+    seasonGameId: null,
+    managedTeam: null,
+    sessionReady: true,
+  });
 });
 afterEach(() => {
   vi.useRealTimers();
@@ -330,6 +356,18 @@ describe("useAutoPlayScheduler", () => {
     // With instant mode, should fire immediately even at half-inning boundary — no 1500ms pause.
     vi.advanceTimersByTime(1);
     expect(handleClick).toHaveBeenCalled();
+  });
+
+  it("does not call handlePitch when sessionReady=false", () => {
+    vi.mocked(useGameSessionContext).mockReturnValueOnce(
+      makeGameSessionContext({ sessionReady: false }),
+    );
+
+    const handleClick = vi.fn();
+    vi.spyOn(announceModule, "isSpeechPending").mockReturnValue(false);
+    renderScheduler({ gameStarted: true, muted: true, speed: 100, handlePitch: handleClick });
+    vi.advanceTimersByTime(500);
+    expect(handleClick).not.toHaveBeenCalled();
   });
 });
 

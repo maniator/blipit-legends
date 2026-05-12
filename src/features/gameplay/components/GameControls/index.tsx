@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { resolveTeamLabel } from "@feat/customTeams/adapters/customTeamAdapter";
-import { Strategy } from "@feat/gameplay/context/index";
+import { Strategy, useGameSessionContext } from "@feat/gameplay/context/index";
 import { useCustomTeams } from "@shared/hooks/useCustomTeams";
 
 import type { SaveRecord } from "@storage/types";
@@ -31,12 +31,12 @@ type Props = {
   onNewGame?: () => void;
   gameStarted?: boolean;
   onLoadSave?: (slot: SaveRecord) => void;
-  /** Routes back to the Home screen. When provided a "← Home" button is shown. */
+  /** Routes back to the previous screen. When provided, a back button is shown. */
   onBackToHome?: () => void;
+  /** Label for the back button. Defaults to "← Home". */
+  backLabel?: string;
   /** When true, shows a disabled "Saving…" button instead of "New Game". */
   isCommitting?: boolean;
-  /** When false, manager controls are hidden and cannot be enabled (spectator/watch sessions). */
-  managerModeAllowed?: boolean;
 };
 
 const GameControls: React.FunctionComponent<Props> = ({
@@ -44,9 +44,15 @@ const GameControls: React.FunctionComponent<Props> = ({
   gameStarted = false,
   onLoadSave,
   onBackToHome,
+  backLabel = "← Home",
   isCommitting = false,
-  managerModeAllowed = true,
 }) => {
+  const {
+    managerModeAllowed,
+    disableSave,
+    sessionType,
+    managedTeam: sessionManagedTeam,
+  } = useGameSessionContext();
   const {
     speed,
     setSpeed,
@@ -119,7 +125,7 @@ const GameControls: React.FunctionComponent<Props> = ({
             disabled={isCommitting}
             data-testid="back-to-home-button"
           >
-            ← Home
+            {backLabel}
           </Button>
         )}
         {gameOver &&
@@ -133,24 +139,26 @@ const GameControls: React.FunctionComponent<Props> = ({
               New Game
             </Button>
           ))}
-        <React.Suspense
-          fallback={
-            <Button $variant="saves" disabled aria-label="Open saves panel">
-              💾 Saves
-            </Button>
-          }
-        >
-          <SavesModal
-            strategy={strategy}
-            managedTeam={managedTeam}
-            managerMode={managerMode}
-            decisionValues={decisionValues}
-            currentSaveId={currentSaveId}
-            onSaveIdChange={setCurrentSaveId}
-            onLoadSave={onLoadSave}
-            gameStarted={gameStarted}
-          />
-        </React.Suspense>
+        {!disableSave && (
+          <React.Suspense
+            fallback={
+              <Button $variant="saves" disabled aria-label="Open saves panel">
+                💾 Saves
+              </Button>
+            }
+          >
+            <SavesModal
+              strategy={strategy}
+              managedTeam={managedTeam}
+              managerMode={managerMode}
+              decisionValues={decisionValues}
+              currentSaveId={currentSaveId}
+              onSaveIdChange={setCurrentSaveId}
+              onLoadSave={onLoadSave}
+              gameStarted={gameStarted}
+            />
+          </React.Suspense>
+        )}
         <React.Suspense
           fallback={
             <HelpButton disabled aria-label="How to play">
@@ -205,11 +213,16 @@ const GameControls: React.FunctionComponent<Props> = ({
             <ManagerModeControls
               managerMode={managerMode}
               strategy={strategy}
-              managedTeam={managedTeam}
+              managedTeam={
+                sessionType === "league" && sessionManagedTeam !== null
+                  ? sessionManagedTeam
+                  : managedTeam
+              }
               teams={resolvedTeamLabels}
               notifPermission={notifPermission}
               gameStarted={gameStarted}
               gameOver={gameOver}
+              lockManagedTeam={sessionType === "league"}
               onManagerModeChange={handleManagerModeChange}
               onStrategyChange={(e) => setStrategy(e.target.value as Strategy)}
               onManagedTeamChange={(e) => setManagedTeam(Number(e.target.value) === 1 ? 1 : 0)}

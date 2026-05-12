@@ -93,20 +93,6 @@ export type ExhibitionGameSetup = {
    * already call reinitSeed via ExhibitionSetupPage before navigation).
    */
   seed?: string;
-  /**
-   * When true, GameInner will skip creating a mid-game RxDB save slot for this
-   * session. Used for league season games, which are tracked separately via
-   * seasonGames records and should not appear in the general Load Saved Game list.
-   * Career-stats commits still occur via gameInstanceId regardless of this flag.
-   */
-  disableSave?: boolean;
-  /**
-   * When set, GameInner will call `applySeasonGameResult` on game completion to
-   * patch the seasonGames record to 'completed', update standings on seasonTeam
-   * docs, and advance seasons.currentGameDay. Only used for interactively played
-   * league season games; headless games handle this in runHeadlessGame directly.
-   */
-  seasonGameId?: string;
 };
 
 /** Context shape provided by AppShell through the React Router Outlet. */
@@ -114,7 +100,7 @@ export type AppShellOutletContext = {
   onStartGame: (setup: ExhibitionGameSetup) => void;
   /** Called from the saves page when the user picks a save to load. */
   onLoadSave: (slot: SaveRecord) => void;
-  /** Called by GamePage when a game session starts, to update hasActiveSession. */
+  /** Called by GamePage when a game session starts, to update the active-session flag in AppSessionContext. */
   onGameSessionStarted: () => void;
   // Navigation callbacks consumed by route-level page components
   onNewGame: () => void;
@@ -124,11 +110,8 @@ export type AppShellOutletContext = {
   onHelp: () => void;
   onContact?: () => void;
   onCareerStats: () => void;
-  /** True once at least one completed game has been persisted or a game just ended — gates the Career Stats entry. */
-  hasCareerStats: boolean;
   onBackToHome: () => void;
-  hasActiveSession: boolean;
-  /** Called by GameInner (via GamePage/Game) when a game reaches FINAL, so AppShell clears hasActiveSession. */
+  /** Called by GameInner (via GamePage/Game) when a game reaches FINAL, so AppSessionContext clears the active-session flag. */
   onGameOver: () => void;
 };
 

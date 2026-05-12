@@ -2,8 +2,30 @@ import * as React from "react";
 
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes, useOutletContext } from "react-router";
+import { MemoryRouter, Route, Routes, useMatches, useOutletContext } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+let mockHasActiveSession = false;
+let mockHasCareerStats = false;
+
+const mockHandleGameSessionStarted = vi.fn(() => {
+  mockHasActiveSession = true;
+});
+const mockHandleGameOver = vi.fn(() => {
+  mockHasActiveSession = false;
+  mockHasCareerStats = true;
+});
+
+vi.mock("@shared/context/AppSessionContext", () => ({
+  useAppSession: () => ({
+    hasActiveSession: mockHasActiveSession,
+    hasCareerStats: mockHasCareerStats,
+    handleGameSessionStarted: mockHandleGameSessionStarted,
+    handleGameOver: mockHandleGameOver,
+    requestCareerStatsProbe: vi.fn(),
+  }),
+  AppSessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 
 vi.mock("@storage/db", () => ({
   getDb: vi.fn().mockResolvedValue({
@@ -12,6 +34,14 @@ vi.mock("@storage/db", () => ({
     },
   }),
 }));
+
+vi.mock("react-router", async (importOriginal) => {
+  const original = await importOriginal<typeof import("react-router")>();
+  return {
+    ...original,
+    useMatches: vi.fn().mockReturnValue([]),
+  };
+});
 
 import type { AppShellOutletContext } from "./index";
 
@@ -27,7 +57,7 @@ function HomeRouteEl() {
       <button onClick={ctx.onNewGame}>New Game</button>
       <button onClick={ctx.onLoadSaves}>Load Saved Game</button>
       <button onClick={ctx.onManageTeams}>Manage Teams</button>
-      {ctx.hasActiveSession && (
+      {mockHasActiveSession && (
         <button onClick={ctx.onResumeCurrent} data-testid="resume-current-mock">
           Resume
         </button>
@@ -38,7 +68,7 @@ function HomeRouteEl() {
       <button onClick={ctx.onContact} data-testid="contact-mock">
         Contact
       </button>
-      {ctx.hasCareerStats && (
+      {mockHasCareerStats && (
         <button onClick={ctx.onCareerStats} data-testid="career-stats-mock">
           Career Stats
         </button>
@@ -102,7 +132,10 @@ function renderAppShell(initialPath = "/") {
 describe("AppShell", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useMatches).mockReturnValue([]);
     localStorage.clear();
+    mockHasActiveSession = false;
+    mockHasCareerStats = false;
   });
 
   it("does NOT show Career Stats on home when no completed games exist", () => {
@@ -115,17 +148,13 @@ describe("AppShell", () => {
     renderAppShell("/game");
     // Allow any microtasks to flush
     await new Promise((r) => setTimeout(r, 0));
+    // The career-stats DB probe is deferred — it only fires when HomeRoute calls
+    // requestCareerStatsProbe() on mount. On non-home routes no probe should occur.
     expect(getDb).not.toHaveBeenCalled();
   });
 
-  it("shows Career Stats on home when completed games exist", async () => {
-    const { getDb } = await import("@storage/db");
-    vi.mocked(getDb).mockResolvedValueOnce({
-      completedGames: {
-        findOne: vi.fn(() => ({ exec: vi.fn().mockResolvedValue({ id: "g1" }) })),
-      },
-    } as never);
-
+  it("shows Career Stats on home when AppSessionProvider sets hasCareerStats", async () => {
+    mockHasCareerStats = true;
     renderAppShell("/");
     expect(await screen.findByTestId("career-stats-mock")).toBeInTheDocument();
   });
@@ -262,6 +291,16 @@ describe("AppShell", () => {
   });
 
   it("does NOT render the volume bar on the /game route", () => {
+    vi.mocked(useMatches).mockReturnValue([
+      {
+        id: "game",
+        pathname: "/game",
+        params: {},
+        data: undefined,
+        loaderData: undefined,
+        handle: { isGameRoute: true },
+      },
+    ]);
     renderAppShell("/game");
     expect(screen.queryByTestId("app-volume-bar")).not.toBeInTheDocument();
   });

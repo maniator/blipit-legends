@@ -5,6 +5,7 @@ import { generateLeagueTeams } from "@feat/league/autogen/generateLeagueTeams";
 import { createSeason, quickStart } from "@feat/league/storage/leagueStore";
 import { useActiveSeason } from "@feat/leagues/hooks/useActiveSeason";
 import ModalShell from "@shared/components/ModalShell";
+import { BackBtn, PageContainer, PageHeader } from "@shared/components/PageLayout/styles";
 import StatusBanner from "@shared/components/StatusBanner";
 import { appLog } from "@shared/utils/logger";
 import { useNavigate, useSearchParams } from "react-router";
@@ -24,407 +25,17 @@ import {
   saveWizardState,
   wizardReducer,
 } from "../../wizard/wizardReducer";
+import { Step1, Step2, Step3, Step5, Step6 } from "./steps";
 import {
   AbandonDialog,
   AbandonDialogActions,
   ActionButton,
-  CheckboxRow,
+  BlockedActions,
   DangerButton,
-  DisabledBadge,
-  ErrorList,
-  ErrorText,
-  FieldGroup,
-  FieldHint,
-  FieldLabel,
-  FieldSelect,
   FooterActions,
-  RadioOption,
-  RadioRow,
-  RangeInput,
+  PageTitle,
   SecondaryButton,
-  SeedInput,
-  SeedRow,
-  StepContainer,
-  StepTitle,
-  SummaryKey,
-  SummaryTable,
-  SummaryValue,
 } from "./styles";
-
-// ---------------------------------------------------------------------------
-// Step renderers
-// ---------------------------------------------------------------------------
-
-function Step1(): React.ReactElement {
-  return (
-    <StepContainer>
-      <StepTitle>Format &amp; Length</StepTitle>
-      <FieldGroup>
-        <div>
-          <FieldLabel>Preset</FieldLabel>
-          <RadioRow>
-            <RadioOption>
-              <input type="radio" checked readOnly />
-              Mini (8 teams)
-            </RadioOption>
-            <RadioOption style={{ opacity: 0.5 }}>
-              <input type="radio" disabled />
-              Standard <DisabledBadge>Coming soon</DisabledBadge>
-            </RadioOption>
-          </RadioRow>
-        </div>
-        <div>
-          <FieldLabel>Season length</FieldLabel>
-          <RadioRow>
-            <RadioOption>
-              <input type="radio" checked readOnly />
-              Sprint (14 games/team)
-            </RadioOption>
-            <RadioOption style={{ opacity: 0.5 }}>
-              <input type="radio" disabled />
-              Full <DisabledBadge>Coming soon</DisabledBadge>
-            </RadioOption>
-          </RadioRow>
-        </div>
-      </FieldGroup>
-    </StepContainer>
-  );
-}
-
-interface Step2Props {
-  state: WizardState;
-  dispatch: React.Dispatch<Parameters<typeof wizardReducer>[1]>;
-  customTeams: Array<{ id: string; name: string }>;
-  errors: string[];
-}
-
-function Step2({ state, dispatch, customTeams, errors }: Step2Props): React.ReactElement {
-  return (
-    <StepContainer>
-      <StepTitle>Team Setup</StepTitle>
-      <FieldGroup>
-        <div>
-          <FieldLabel>Team mode</FieldLabel>
-          <RadioRow>
-            {(["allAutogen", "mixed", "handpick"] as const).map((mode) => (
-              <RadioOption key={mode}>
-                <input
-                  type="radio"
-                  name="teamMode"
-                  checked={state.teamMode === mode}
-                  onChange={() => dispatch({ type: "SET_TEAM_MODE", mode })}
-                />
-                {mode === "allAutogen" ? "All autogen" : mode === "mixed" ? "Mixed" : "Handpick"}
-              </RadioOption>
-            ))}
-          </RadioRow>
-        </div>
-
-        {state.teamMode !== "allAutogen" && (
-          <div>
-            <FieldLabel>
-              {state.teamMode === "handpick"
-                ? "Select exactly 8 teams"
-                : "Select teams to include (rest auto-generated)"}
-            </FieldLabel>
-            {state.teamMode === "mixed" && (
-              <FieldHint>
-                Handpick at least 1 team and at most 7 teams, then choose your managed team on
-                review.
-              </FieldHint>
-            )}
-            {customTeams.length === 0 ? (
-              <p style={{ margin: 0, fontSize: "12px", opacity: 0.7 }}>
-                No custom teams found. Switch to All autogen.
-              </p>
-            ) : (
-              customTeams.map((team) => (
-                <CheckboxRow key={team.id}>
-                  <input
-                    type="checkbox"
-                    checked={state.selectedTeamIds.includes(team.id)}
-                    onChange={() => dispatch({ type: "TOGGLE_TEAM_SELECT", teamId: team.id })}
-                  />
-                  {team.name}
-                </CheckboxRow>
-              ))
-            )}
-          </div>
-        )}
-
-        {state.teamMode !== "handpick" && (
-          <div>
-            <FieldLabel>Autogen theme</FieldLabel>
-            <RadioRow>
-              {(["classic", "scifi", "whimsical", "mix"] as const).map((theme) => (
-                <RadioOption key={theme}>
-                  <input
-                    type="radio"
-                    name="autogenTheme"
-                    checked={state.autogenTheme === theme}
-                    onChange={() => dispatch({ type: "SET_AUTOGEN_THEME", theme })}
-                  />
-                  {theme.charAt(0).toUpperCase() + theme.slice(1)}
-                </RadioOption>
-              ))}
-            </RadioRow>
-            <div style={{ marginTop: "12px" }}>
-              <FieldLabel>Team parity ({state.autogenParity})</FieldLabel>
-              <SeedRow>
-                <span style={{ fontSize: "12px", opacity: 0.7 }}>Lopsided</span>
-                <RangeInput
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={state.autogenParity}
-                  onChange={(e) =>
-                    dispatch({ type: "SET_AUTOGEN_PARITY", parity: Number(e.target.value) })
-                  }
-                />
-                <span style={{ fontSize: "12px", opacity: 0.7 }}>Balanced</span>
-              </SeedRow>
-            </div>
-            <div style={{ marginTop: "12px" }}>
-              <FieldLabel>Autogen seed</FieldLabel>
-              <SeedRow>
-                <SeedInput value={state.autogenSeed} readOnly aria-label="Autogen seed" />
-                <SecondaryButton
-                  type="button"
-                  onClick={() => dispatch({ type: "REROLL_AUTOGEN_SEED" })}
-                >
-                  Re-roll
-                </SecondaryButton>
-              </SeedRow>
-            </div>
-          </div>
-        )}
-      </FieldGroup>
-      {errors.length > 0 && (
-        <ErrorList role="status" aria-live="polite">
-          {errors.map((err) => (
-            <ErrorText key={err}>⚠ {err}</ErrorText>
-          ))}
-        </ErrorList>
-      )}
-    </StepContainer>
-  );
-}
-
-interface Step3Props {
-  state: WizardState;
-  dispatch: React.Dispatch<Parameters<typeof wizardReducer>[1]>;
-}
-
-function Step3({ state, dispatch }: Step3Props): React.ReactElement {
-  const applyDhPreset = (preset: "universal" | "classic" | "pitchers") => {
-    state.leagues.forEach((_, i) => {
-      const enabled = preset === "universal" ? true : preset === "pitchers" ? false : i === 0;
-      dispatch({ type: "SET_DH", leagueIndex: i, enabled });
-    });
-  };
-
-  return (
-    <StepContainer>
-      <StepTitle>Designated Hitter</StepTitle>
-      <FieldGroup>
-        <div>
-          <FieldLabel>Quick presets</FieldLabel>
-          <RadioRow>
-            <SecondaryButton type="button" onClick={() => applyDhPreset("universal")}>
-              Universal DH
-            </SecondaryButton>
-            <SecondaryButton type="button" onClick={() => applyDhPreset("classic")}>
-              Classic AL/NL
-            </SecondaryButton>
-            <SecondaryButton type="button" onClick={() => applyDhPreset("pitchers")}>
-              Pitchers Hit
-            </SecondaryButton>
-          </RadioRow>
-        </div>
-        {state.leagues.map((league, i) => (
-          <div key={league.id}>
-            <FieldLabel>{league.name} — DH rule</FieldLabel>
-            <RadioRow>
-              <RadioOption>
-                <input
-                  type="radio"
-                  name={`dh_${i}`}
-                  checked={league.dhEnabled}
-                  onChange={() => dispatch({ type: "SET_DH", leagueIndex: i, enabled: true })}
-                />
-                On
-              </RadioOption>
-              <RadioOption>
-                <input
-                  type="radio"
-                  name={`dh_${i}`}
-                  checked={!league.dhEnabled}
-                  onChange={() => dispatch({ type: "SET_DH", leagueIndex: i, enabled: false })}
-                />
-                Off (pitchers hit)
-              </RadioOption>
-            </RadioRow>
-          </div>
-        ))}
-      </FieldGroup>
-    </StepContainer>
-  );
-}
-
-interface Step5Props {
-  state: WizardState;
-  dispatch: React.Dispatch<Parameters<typeof wizardReducer>[1]>;
-  errors: string[];
-}
-
-function Step5({ state, dispatch, errors }: Step5Props): React.ReactElement {
-  return (
-    <StepContainer>
-      <StepTitle>Season Seed</StepTitle>
-      <FieldGroup>
-        <div>
-          <FieldLabel>Master seed</FieldLabel>
-          <SeedRow>
-            <SeedInput
-              value={state.masterSeed}
-              onChange={(e) => dispatch({ type: "SET_MASTER_SEED", seed: e.target.value })}
-              aria-label="Master seed"
-              data-testid="master-seed-input"
-            />
-            <SecondaryButton type="button" onClick={() => dispatch({ type: "REROLL_MASTER_SEED" })}>
-              Re-roll
-            </SecondaryButton>
-          </SeedRow>
-          <p style={{ margin: "8px 0 0", fontSize: "11px", opacity: 0.7 }}>
-            Same seed → identical season schedule and outcomes.
-          </p>
-        </div>
-      </FieldGroup>
-      {errors.length > 0 && (
-        <ErrorList role="status" aria-live="polite">
-          {errors.map((err) => (
-            <ErrorText key={err}>⚠ {err}</ErrorText>
-          ))}
-        </ErrorList>
-      )}
-    </StepContainer>
-  );
-}
-
-interface Step6Props {
-  state: WizardState;
-  dispatch: React.Dispatch<Parameters<typeof wizardReducer>[1]>;
-  onCreateSeason: () => void;
-  creating: boolean;
-  errors: string[];
-  customTeams: Array<{ id: string; name: string }>;
-}
-
-function Step6({
-  state,
-  dispatch,
-  onCreateSeason,
-  creating,
-  errors,
-  customTeams,
-}: Step6Props): React.ReactElement {
-  const teamModeLabel =
-    state.teamMode === "allAutogen"
-      ? "All autogenerated"
-      : state.teamMode === "mixed"
-        ? `Mixed (${state.selectedTeamIds.length} handpicked)`
-        : `Handpicked (${state.selectedTeamIds.length} teams)`;
-
-  // Build team name lookup for the "which team will you manage?" selector.
-  const teamNameById = React.useMemo(() => {
-    const map: Record<string, string> = {};
-    for (const t of customTeams) {
-      map[t.id] = t.name;
-    }
-    return map;
-  }, [customTeams]);
-
-  return (
-    <StepContainer>
-      <StepTitle>Review &amp; Create</StepTitle>
-      <SummaryTable>
-        <SummaryKey>Preset</SummaryKey>
-        <SummaryValue>Mini · Sprint</SummaryValue>
-        <SummaryKey>Leagues</SummaryKey>
-        <SummaryValue>{state.leagueCount}</SummaryValue>
-        <SummaryKey>Teams</SummaryKey>
-        <SummaryValue>{teamModeLabel}</SummaryValue>
-        {state.teamMode !== "handpick" && (
-          <>
-            <SummaryKey>Theme</SummaryKey>
-            <SummaryValue>
-              {state.autogenTheme.charAt(0).toUpperCase() + state.autogenTheme.slice(1)}
-            </SummaryValue>
-          </>
-        )}
-        {state.leagues.map((league) => (
-          <React.Fragment key={league.id}>
-            <SummaryKey>{league.name} DH</SummaryKey>
-            <SummaryValue>{league.dhEnabled ? "On" : "Off"}</SummaryValue>
-          </React.Fragment>
-        ))}
-        <SummaryKey>Master seed</SummaryKey>
-        <SummaryValue>{state.masterSeed || <em>empty</em>}</SummaryValue>
-      </SummaryTable>
-
-      <FieldGroup>
-        <div>
-          <FieldLabel>Which team will you manage?</FieldLabel>
-          {state.teamMode === "allAutogen" ? (
-            <RadioRow>
-              <RadioOption>
-                <input type="radio" checked readOnly />
-                I&apos;ll pick after the season starts (observer mode)
-              </RadioOption>
-            </RadioRow>
-          ) : (
-            <FieldSelect
-              value={state.userCustomTeamId ?? ""}
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_USER_TEAM",
-                  customTeamId: e.target.value || null,
-                })
-              }
-              aria-label="Select your team"
-              data-testid="managed-team-select"
-            >
-              <option value="">— Select a team —</option>
-              {state.selectedTeamIds.map((id) => (
-                <option key={id} value={id}>
-                  {teamNameById[id] ?? id}
-                </option>
-              ))}
-            </FieldSelect>
-          )}
-        </div>
-      </FieldGroup>
-
-      {errors.length > 0 && (
-        <ErrorList aria-live="polite" role="status">
-          {errors.map((err) => (
-            <ErrorText key={err}>⚠ {err}</ErrorText>
-          ))}
-        </ErrorList>
-      )}
-      <div style={{ marginTop: "20px" }}>
-        <ActionButton
-          type="button"
-          onClick={onCreateSeason}
-          disabled={creating || errors.length > 0}
-          data-testid="create-season-button"
-        >
-          {creating ? "Creating…" : "Create Season"}
-        </ActionButton>
-      </div>
-    </StepContainer>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Main wizard component
@@ -509,6 +120,7 @@ function LeagueSetupWizardInner(): React.ReactElement {
         season = await quickStart({
           masterSeed: state.masterSeed,
           autogenSeed: state.autogenSeed,
+          seasonName: state.seasonName.trim() || `Season ${new Date().getFullYear()}`,
           dhEnabled: state.leagues[0]?.dhEnabled ?? true,
           autogenOptions: {
             count: 8,
@@ -547,7 +159,7 @@ function LeagueSetupWizardInner(): React.ReactElement {
               idFactory: { teamId: () => generateTeamId() },
             });
             for (const gen of generated) {
-              await ctStore.createCustomTeam(
+              const actualId = await ctStore.createCustomTeam(
                 {
                   name: gen.name,
                   abbreviation: gen.abbreviation,
@@ -565,13 +177,13 @@ function LeagueSetupWizardInner(): React.ReactElement {
                 },
                 { id: gen.id },
               );
-              allTeamIds.push(gen.id);
+              allTeamIds.push(actualId); // use returned id (may differ from gen.id on reuse)
             }
           }
         }
 
         season = await createSeason({
-          name: "New Season",
+          name: state.seasonName.trim() || `Season ${new Date().getFullYear()}`,
           masterSeed: state.masterSeed,
           preset: "mini",
           seasonLength: "sprint",
@@ -627,24 +239,31 @@ function LeagueSetupWizardInner(): React.ReactElement {
   const title = `New Season — ${stepLabel}`;
 
   if (!loading && activeSeason !== null) {
-    const continueAction = (
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-        <ActionButton type="button" onClick={() => navigate(`/leagues/${activeSeason.id}`)}>
-          Continue current season
-        </ActionButton>
-        <DangerButton type="button" onClick={() => setShowAbandonDialog(true)}>
-          Abandon season
-        </DangerButton>
-      </div>
-    );
-
     return (
       <>
-        <div data-testid="league-setup-wizard" style={{ padding: "24px" }}>
-          <StatusBanner variant="warn" title="Active season in progress" action={continueAction}>
+        <PageContainer data-testid="league-setup-wizard">
+          <PageHeader>
+            <BackBtn
+              type="button"
+              onClick={() => navigate("/leagues")}
+              aria-label="Back to leagues"
+            >
+              ← Leagues
+            </BackBtn>
+          </PageHeader>
+          <PageTitle>New Season</PageTitle>
+          <StatusBanner variant="warn" title="Active season in progress">
             You already have an active season. Finish or abandon it before creating a new one.
           </StatusBanner>
-        </div>
+          <BlockedActions>
+            <ActionButton type="button" onClick={() => navigate(`/leagues/${activeSeason.id}`)}>
+              Continue current season
+            </ActionButton>
+            <DangerButton type="button" onClick={() => setShowAbandonDialog(true)}>
+              Abandon season
+            </DangerButton>
+          </BlockedActions>
+        </PageContainer>
 
         <AbandonDialog
           ref={abandonDialogRef}
@@ -686,7 +305,7 @@ function LeagueSetupWizardInner(): React.ReactElement {
   const stepContent = (() => {
     switch (state.step) {
       case 1:
-        return <Step1 />;
+        return <Step1 state={state} dispatch={dispatch} />;
       case 2:
         return (
           <Step2

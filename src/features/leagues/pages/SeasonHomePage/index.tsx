@@ -1,12 +1,12 @@
 import * as React from "react";
 
+import { resolveDisplayName } from "@feat/customTeams/adapters/customTeamAdapter";
 import { runHeadlessGame } from "@feat/league/sim/runHeadlessGame";
-import { advanceSeason, simulateNextDay } from "@feat/league/storage/leagueStore";
+import { advanceSeason, renameSeason, simulateNextDay } from "@feat/league/storage/leagueStore";
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
 import { deriveStandings } from "@feat/league/utils/deriveStandings";
 import { GameActionBtn } from "@feat/leagues/components/styles";
 import { SeasonContextProvider, useSeasonContext } from "@feat/leagues/context/SeasonContext";
-import { buildSeasonGameSetup } from "@feat/leagues/utils/buildSeasonGameSetup";
 import { getTotalGameDays } from "@feat/leagues/utils/seasonPresets";
 import EmptyState from "@shared/components/EmptyState";
 import { BackBtn, PageContainer, PageHeader } from "@shared/components/PageLayout/styles";
@@ -14,9 +14,6 @@ import { appLog } from "@shared/utils/logger";
 import { nanoid } from "nanoid";
 import { useNavigate, useParams } from "react-router";
 import { useLiveRxQuery } from "rxdb/plugins/react";
-
-import { getDb } from "@storage/db";
-import type { GameLocationState } from "@storage/types";
 
 import {
   AdvanceReadyMsg,
@@ -28,6 +25,10 @@ import {
   NavCardLink,
   NavCardSub,
   NavCardTitle,
+  RenameErrorMsg,
+  RenameIconBtn,
+  RenameInput,
+  RenameRow,
   SeasonMeta,
   SeasonProgress,
   SeasonTitle,
@@ -56,6 +57,11 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
   const [nextGameReady, setNextGameReady] = React.useState(false);
   const [nextGameId, setNextGameId] = React.useState<string | null>(null);
   const [launchingGame, setLaunchingGame] = React.useState(false);
+
+  // Rename state
+  const [renaming, setRenaming] = React.useState(false);
+  const [renameValue, setRenameValue] = React.useState("");
+  const [renameError, setRenameError] = React.useState<string | null>(null);
 
   // Find the user's season team if one is configured.
   const userSeasonTeamId = React.useMemo(() => {
@@ -89,45 +95,48 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
     }
   }, [seasonId, userSeasonTeamId]);
 
-  const handlePlayNextGame = React.useCallback(
-    async (asManager: boolean) => {
-      if (!nextGameId || !seasonId) return;
-      setLaunchingGame(true);
-      try {
-        const db = await getDb();
-        const gameDoc = await db.seasonGames.findOne({ selector: { id: nextGameId } }).exec();
-        if (!gameDoc) throw new Error("Game record not found");
-        const game = gameDoc.toJSON() as unknown as SeasonGameRecord;
-        const [homeTeamDoc, awayTeamDoc] = await Promise.all([
-          db.seasonTeams.findOne({ selector: { id: game.homeSeasonTeamId } }).exec(),
-          db.seasonTeams.findOne({ selector: { id: game.awaySeasonTeamId } }).exec(),
-        ]);
-        if (!homeTeamDoc || !awayTeamDoc) throw new Error("Season team record not found");
-        const homeSeasonTeam = homeTeamDoc.toJSON() as unknown as SeasonTeamRecord;
-        const awaySeasonTeam = awayTeamDoc.toJSON() as unknown as SeasonTeamRecord;
-        // Derive managed side from actual game record (user may be home or away).
-        let managedTeam: 0 | 1 | null = null;
-        if (asManager && userSeasonTeamId) {
-          managedTeam = game.homeSeasonTeamId === userSeasonTeamId ? 1 : 0;
-        }
-        const setup = await buildSeasonGameSetup(
-          db,
-          game,
-          homeSeasonTeam,
-          awaySeasonTeam,
-          managedTeam,
-        );
-        const state: GameLocationState = { pendingGameSetup: setup, pendingLoadSave: null };
-        navigate("/game", { state });
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Unable to launch game. Please try again.";
-        appLog.error("[SeasonHomePage] launch game error:", err);
-        setSimError(msg);
-      } finally {
-        setLaunchingGame(false);
+  const handleBeginRename = React.useCallback(() => {
+    setRenameValue(season?.name ?? "");
+    setRenameError(null);
+    setRenaming(true);
+  }, [season]);
+
+  const handleRenameSave = React.useCallback(async () => {
+    if (!seasonId) return;
+    const trimmed = renameValue.trim();
+    if (!trimmed) {
+      setRenameError("Season name cannot be empty.");
+      return;
+    }
+    const ok = await renameSeason(seasonId, trimmed);
+    if (ok) {
+      setRenaming(false);
+      setRenameError(null);
+    } else {
+      setRenameError("Unable to save. Please try again.");
+    }
+  }, [seasonId, renameValue]);
+
+  const handleRenameKeyDown = React.useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        void handleRenameSave();
+      } else if (e.key === "Escape") {
+        setRenaming(false);
+        setRenameError(null);
       }
     },
-    [nextGameId, seasonId, userSeasonTeamId, navigate],
+    [handleRenameSave],
+  );
+
+  const handlePlayNextGame = React.useCallback(
+    (asManager: boolean) => {
+      if (!nextGameId) return;
+      navigate(`/game/league/${nextGameId}`, {
+        state: { spectatorMode: !asManager },
+      });
+    },
+    [nextGameId, navigate],
   );
 
   const handleAutoSimNextGame = React.useCallback(async () => {
@@ -190,14 +199,16 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
     [completedGames, seasonTeamIds],
   );
 
-  // Build a lookup map: seasonTeamId → customTeamId → team name from rosterSnapshot
+  // Build a lookup map: seasonTeamId → display name from rosterSnapshot
   const teamNameById = React.useMemo(() => {
     const map: Record<string, string> = {};
     for (const t of seasonTeams) {
       const snap = t.rosterSnapshot as Record<string, unknown>;
-      const city = typeof snap.city === "string" && snap.city ? snap.city : "";
       const snapName = typeof snap.name === "string" ? snap.name : t.customTeamId;
-      map[t.id] = city ? `${city} ${snapName}` : snapName;
+      const snapCity = typeof snap.city === "string" ? snap.city : undefined;
+      // Use the shared city-prefix resolver so autogen teams ("City Nickname" in name)
+      // and user-created teams (short name + separate city) both render correctly.
+      map[t.id] = resolveDisplayName(snapCity, snapName);
     }
     return map;
   }, [seasonTeams]);
@@ -246,9 +257,56 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
         </BackBtn>
       </PageHeader>
 
-      <SeasonTitle>
-        {season.name} <StatusChip $status={season.status}>{statusLabel}</StatusChip>
-      </SeasonTitle>
+      {renaming ? (
+        <RenameRow>
+          <RenameInput
+            data-testid="season-rename-input"
+            value={renameValue}
+            maxLength={60}
+            aria-label="Season name"
+            autoFocus
+            onChange={(e) => {
+              setRenameValue(e.target.value);
+              if (renameError) setRenameError(null);
+            }}
+            onKeyDown={handleRenameKeyDown}
+          />
+          <RenameIconBtn
+            type="button"
+            onClick={handleRenameSave}
+            aria-label="Save season name"
+            data-testid="season-rename-save"
+          >
+            ✓
+          </RenameIconBtn>
+          <RenameIconBtn
+            type="button"
+            onClick={() => {
+              setRenaming(false);
+              setRenameError(null);
+            }}
+            aria-label="Cancel rename"
+            data-testid="season-rename-cancel"
+          >
+            ✕
+          </RenameIconBtn>
+          {renameError && <RenameErrorMsg>{renameError}</RenameErrorMsg>}
+        </RenameRow>
+      ) : (
+        <SeasonTitle>
+          {season.name}
+          <StatusChip $status={season.status}>{statusLabel}</StatusChip>
+          <RenameIconBtn
+            type="button"
+            onClick={handleBeginRename}
+            aria-label="Rename season"
+            data-testid="season-rename-btn"
+            title="Rename season"
+          >
+            ✏️
+          </RenameIconBtn>
+        </SeasonTitle>
+      )}
 
       {championName !== null && (
         <ChampionBanner role="status" aria-label="Season champion">
@@ -348,9 +406,7 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
                 <GameActionBtn
                   type="button"
                   $variant="primary"
-                  onClick={() => {
-                    void handlePlayNextGame(true);
-                  }}
+                  onClick={() => handlePlayNextGame(true)}
                   disabled={launchingGame}
                   aria-busy={launchingGame}
                   aria-label={launchingGame ? "Loading game…" : "Play next game in Manager Mode"}
@@ -361,9 +417,7 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
                 <GameActionBtn
                   type="button"
                   $variant="secondary"
-                  onClick={() => {
-                    void handlePlayNextGame(false);
-                  }}
+                  onClick={() => handlePlayNextGame(false)}
                   disabled={launchingGame}
                   aria-busy={launchingGame}
                   aria-label={launchingGame ? "Loading game…" : "Watch next game"}

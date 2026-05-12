@@ -8,6 +8,8 @@ import reducer from "./reducer";
 
 export type { DecisionType, OnePitchModifier } from "./decisionTypes";
 export type { PitcherLogEntry, PlayLogEntry, StrikeoutEntry } from "./gameLogTypes";
+export type { GameSessionContextValue, GameSessionType } from "./GameSessionContext";
+export { GameSessionProvider, useGameSessionContext } from "./GameSessionContext";
 export type { ContextValue, GameAction, State } from "./gameStateTypes";
 export type { LogAction } from "./logReducer";
 export type {
@@ -29,6 +31,14 @@ export const useGameContext = (): ContextValue => {
 
 const initialState: State = createFreshGameState(["A", "B"]);
 
+/**
+ * Provides GameContext (state + dispatch) for the game engine.
+ *
+ * Does NOT provide GameSessionContext — that is the route page's responsibility
+ * (ExhibitionGamePage, LeagueGamePage, GamePage each wrap <Game> in their own
+ * <GameSessionProvider>). Keeping them separate prevents the inner provider
+ * from shadowing the outer route-level session context.
+ */
 export const GameProviderWrapper: React.FunctionComponent<{
   children?: React.ReactNode;
   onDispatch?: (action: GameAction) => void;

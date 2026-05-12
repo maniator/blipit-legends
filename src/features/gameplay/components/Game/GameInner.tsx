@@ -10,7 +10,7 @@ import LineScore from "@feat/gameplay/components/LineScore";
 import PlayerStatsPanel from "@feat/gameplay/components/PlayerStatsPanel";
 import TeamTabBar from "@feat/gameplay/components/TeamTabBar";
 import type { GameAction, Strategy } from "@feat/gameplay/context/index";
-import { useGameContext } from "@feat/gameplay/context/index";
+import { useGameContext, useGameSessionContext } from "@feat/gameplay/context/index";
 import type { ManagerDecisionValues } from "@feat/gameplay/context/managerDecisionValues";
 import {
   getDefaultDecisionValues,
@@ -87,8 +87,10 @@ const findMatchedSave = (saves: SaveRecord[]): SaveRecord | null => {
 interface Props {
   /** Shared buffer populated by GameProviderWrapper's onDispatch callback. */
   actionBufferRef?: React.MutableRefObject<GameAction[]>;
-  /** Routes back to the Home screen in AppShell. */
+  /** Routes back to the previous screen in AppShell. */
   onBackToHome?: () => void;
+  /** Back button label passed through to GameControls; defaults to "← Home". */
+  backLabel?: string;
   /** Called when the in-game New Game button is clicked; navigates to /exhibition/new. */
   onNewGame?: () => void;
   /** Called the first time a real game session starts or a save is loaded. */
@@ -101,6 +103,8 @@ interface Props {
   pendingLoadSave?: SaveRecord | null;
   /** Called after pendingLoadSave is consumed so GamePage can clear it. */
   onConsumePendingLoad?: () => void;
+  /** Called once the game session is ready to auto-play (GamePage only). */
+  onSessionRestored?: (managedTeam: 0 | 1 | null) => void;
   /** Called when the isCommitting state changes (career stats being saved). */
   onSavingStateChange?: (saving: boolean) => void;
   /** Called when the game reaches FINAL so AppShell can clear hasActiveSession. */
@@ -110,12 +114,14 @@ interface Props {
 const GameInner: React.FunctionComponent<Props> = ({
   actionBufferRef: externalBufferRef,
   onBackToHome,
+  backLabel,
   onNewGame,
   onGameSessionStarted,
   pendingGameSetup,
   onConsumeGameSetup,
   pendingLoadSave,
   onConsumePendingLoad,
+  onSessionRestored,
   onSavingStateChange,
   onGameOver,
 }) => {
@@ -137,10 +143,15 @@ const GameInner: React.FunctionComponent<Props> = ({
 
   const [gameKey, setGameKey] = React.useState(0);
   const [gameActive, setGameActive] = React.useState(false);
-  const [managerModeAllowed, setManagerModeAllowed] = React.useState(true);
   const [activeTeam, setActiveTeam] = React.useState<0 | 1>(0);
   // One-time dismissible toast shown when a loaded save's steal threshold is clamped.
   const [showStealClampToast, setShowStealClampToast] = React.useState(false);
+
+  // Read session metadata from context (set by ExhibitionGamePage / LeagueGamePage / GamePage).
+  // managedTeam here replaces the former direct read of pendingGameSetup.managedTeam so that
+  // GameInner has zero direct reads of ExhibitionGameSetup fields other than the data it
+  // truly needs (homeTeam, awayTeam, labels, playerOverrides, seed, disableSave).
+  const { disableSave, managedTeam: sessionManagedTeam } = useGameSessionContext();
 
   // Fallback buffer when rendered without the Game wrapper (e.g. in tests).
   const localBufferRef = React.useRef<GameAction[]>([]);
@@ -149,17 +160,13 @@ const GameInner: React.FunctionComponent<Props> = ({
   // Tracks the RxDB save ID for the current game session.
   const rxSaveIdRef = React.useRef<string | null>(null);
 
-  // Tracks the season game ID for the current session (undefined for exhibition games).
-  // Set when a league season game setup is consumed; cleared on new-game reset.
-  const seasonGameIdRef = React.useRef<string | undefined>(undefined);
-
   // True when the currently-loaded save was already in FINAL state on load.
   // Prevents useGameHistorySync from re-committing stats for a completed game.
   const [wasAlreadyFinalOnLoad, setWasAlreadyFinalOnLoad] = React.useState(false);
 
   useRxdbGameSync(rxSaveIdRef, actionBufferRef, { wasAlreadyFinalOnLoad });
   const { isCommitting } = useGameHistorySync(rxSaveIdRef, wasAlreadyFinalOnLoad);
-  useSeasonGameSync(seasonGameIdRef);
+  useSeasonGameSync();
 
   React.useEffect(() => {
     onSavingStateChange?.(isCommitting);
@@ -220,7 +227,6 @@ const GameInner: React.FunctionComponent<Props> = ({
       },
     });
     setStrategy(setup.strategy);
-    setManagerModeAllowed(setup.seasonGameId == null || setup.managedTeam !== null);
     setManagedTeam(setup.managedTeam ?? 0);
     setManagerMode(setup.managerMode && setup.managedTeam !== null);
     maybeShowStealClampToast(setup.decisionValues, setShowStealClampToast);
@@ -233,6 +239,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     // If the restored save was already FINAL, mark it so history sync skips re-commit.
     setWasAlreadyFinalOnLoad(snap.state.gameOver === true);
     setGameActive(true);
+    onSessionRestored?.(setup.managedTeam ?? null);
     onGameSessionStarted?.();
   }, [
     dispatch,
@@ -244,6 +251,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     setManagerMode,
     setDecisionValues,
     onGameSessionStarted,
+    onSessionRestored,
   ]);
 
   const handleStart = (
@@ -253,13 +261,9 @@ const GameInner: React.FunctionComponent<Props> = ({
     awayTeamLabel: string,
     managedTeam: 0 | 1 | null,
     playerOverrides: PlayerOverrides,
-    seasonGameId?: string,
   ) => {
     // A fresh game is never "already final".
     setWasAlreadyFinalOnLoad(false);
-    // Exhibition games (no seasonGameId) always allow manager mode.
-    // League spectator games (seasonGameId set, managedTeam null) do not allow manager mode.
-    setManagerModeAllowed(seasonGameId == null || managedTeam !== null);
     setManagerMode(managedTeam !== null);
     if (managedTeam !== null) {
       setManagedTeam(managedTeam);
@@ -294,10 +298,10 @@ const GameInner: React.FunctionComponent<Props> = ({
     // Create a new RxDB save for this session (fire-and-forget).
     // currentSeedStr() returns the seed that was already initialized for this
     // page load — it does NOT generate a new one.
-    // Skip for league season games (pendingGameSetup.disableSave === true) —
+    // Skip for league season games (GameSessionContext.disableSave === true) —
     // those are tracked via seasonGames records and must not appear in the
     // general Load Saved Game list. Career stats still commit via gameInstanceId.
-    if (!pendingGameSetup?.disableSave) {
+    if (!disableSave) {
       const setup: GameSaveSetup = {
         strategy,
         managedTeam,
@@ -322,17 +326,16 @@ const GameInner: React.FunctionComponent<Props> = ({
     }
 
     setGameActive(true);
+    onSessionRestored?.(managedTeam);
     onGameSessionStarted?.();
     setGameKey((k) => k + 1);
   };
 
   const handleNewGame = () => {
     rxSaveIdRef.current = null;
-    seasonGameIdRef.current = undefined;
     dispatch({ type: "reset" });
     dispatchLog({ type: "reset" });
     setGameActive(false);
-    setManagerModeAllowed(true);
     setGameKey((k) => k + 1);
     // Navigate to /exhibition/new to start a fresh game.
     // onNewGame is optional only to support isolated unit tests; in production
@@ -361,9 +364,6 @@ const GameInner: React.FunctionComponent<Props> = ({
     // Prevent auto-resume from overwriting this fresh session even if RxDB saves
     // load asynchronously after this effect fires.
     restoredRef.current = true;
-    // Capture the season game ID so useSeasonGameSync can record the result
-    // after the game ends. Clear previous session's ID first.
-    seasonGameIdRef.current = pendingGameSetup.seasonGameId;
     // If the setup carries a seed (e.g. league season games), reinit the PRNG
     // here — at the correct point in the bootstrap sequence — rather than in
     // the utility that builds the setup object.
@@ -375,12 +375,11 @@ const GameInner: React.FunctionComponent<Props> = ({
       pendingGameSetup.awayTeam,
       pendingGameSetup.homeTeamLabel,
       pendingGameSetup.awayTeamLabel,
-      pendingGameSetup.managedTeam,
+      sessionManagedTeam,
       pendingGameSetup.playerOverrides,
-      pendingGameSetup.seasonGameId,
     );
     onConsumeGameSetup?.();
-  }, [pendingGameSetup, onConsumeGameSetup]);
+  }, [pendingGameSetup, onConsumeGameSetup, sessionManagedTeam]);
 
   // Restore game state when AppShell delivers a save loaded from the /saves page.
   const prevPendingLoad = React.useRef<SaveRecord | null>(null);
@@ -411,7 +410,6 @@ const GameInner: React.FunctionComponent<Props> = ({
     });
 
     const setup = pendingLoadSave.setup;
-    setManagerModeAllowed(setup.seasonGameId == null || setup.managedTeam !== null);
     setManagerMode(setup.managerMode && setup.managedTeam !== null);
     setManagedTeam(setup.managedTeam ?? 0);
     setStrategy(setup.strategy);
@@ -426,6 +424,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     // If the loaded save was already FINAL, mark it so history sync skips re-commit.
     setWasAlreadyFinalOnLoad(snap.state.gameOver === true);
     setGameActive(true);
+    onSessionRestored?.(setup.managedTeam ?? null);
     onGameSessionStarted?.();
     onConsumePendingLoad?.();
     return () => {
@@ -441,6 +440,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     setDecisionValues,
     onGameSessionStarted,
     onConsumePendingLoad,
+    onSessionRestored,
   ]);
 
   // ── Modal-triggered save load ─────────────────────────────────────────────
@@ -472,7 +472,6 @@ const GameInner: React.FunctionComponent<Props> = ({
       });
 
       const { setup } = slot;
-      setManagerModeAllowed(setup.seasonGameId == null || setup.managedTeam !== null);
       setManagerMode(setup.managerMode && setup.managedTeam !== null);
       setManagedTeam(setup.managedTeam ?? 0);
       setStrategy(setup.strategy);
@@ -487,6 +486,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       // If the loaded save was already FINAL, mark it so history sync skips re-commit.
       setWasAlreadyFinalOnLoad(snap.state.gameOver === true);
       setGameActive(true); // no-op if already active; triggers scheduler if game was over
+      onSessionRestored?.(setup.managedTeam ?? null);
       onGameSessionStarted?.();
     },
     [
@@ -497,6 +497,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       setStrategy,
       setDecisionValues,
       onGameSessionStarted,
+      onSessionRestored,
     ],
   );
 
@@ -523,8 +524,8 @@ const GameInner: React.FunctionComponent<Props> = ({
           gameStarted={gameActive}
           onLoadSave={handleModalLoad}
           onBackToHome={onBackToHome}
+          backLabel={backLabel}
           isCommitting={isCommitting}
-          managerModeAllowed={managerModeAllowed}
         />
         <GameBody>
           <FieldPanel>

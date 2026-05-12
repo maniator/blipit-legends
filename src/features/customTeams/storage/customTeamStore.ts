@@ -170,17 +170,23 @@ function buildStore(getDbFn: GetDb) {
         // Replacement is only permitted when BOTH teams carry the autogen marker
         // AND the existing team is not locked by an active season. Locked teams
         // (those enrolled in an active season) still throw to preserve data integrity.
+        // TODO(D-01): This reuse path does not verify that the existing team's autogen
+        // marker/roster matches `input` (e.g., different `autogen.baseSeed` values are
+        // silently ignored). The full fingerprint equality check + patch-or-throw contract
+        // is deferred to Block B D-01 (autogen dedup), which introduces the compound index,
+        // fingerprint hash, and `resolveAutogenTeams` return type. Do not add a partial
+        // `baseSeed`-only check here — it would be superseded when D-01 lands and would
+        // diverge from the full fingerprint spec in 01-d01-autogen-dedup-prompt.md.
         if (input.autogen && dup.autogen) {
           const lockedIds = await getLockedTeamIds(db);
           if (!lockedIds.has(dup.id)) {
             appLog.warn(
-              `[customTeamStore] Replacing unlocked autogen team "${dup.name}" (${dup.id}) with new autogen team of the same name.`,
+              `[customTeamStore] Reusing existing unlocked autogen team "${dup.name}" (${dup.id}) instead of replacing.`,
             );
-            await removeTeamPlayerRecords(db, dup.id);
-            await duplicateDoc.remove();
+            return dup.id; // reuse existing team — no deletion, no re-insert
           } else {
             throw new Error(
-              `A team named "${dup.name}" already exists. Team names must be unique.`,
+              `A team named "${dup.name}" already exists and is locked in an active season.`,
             );
           }
         } else {
@@ -297,6 +303,13 @@ function buildStore(getDbFn: GetDb) {
       const db = await getDbFn();
       const doc = await db.teams.findOne(id).exec();
       if (doc) {
+        // Check if team is enrolled in an active season
+        const lockedIds = await getLockedTeamIds(db);
+        if (lockedIds.has(id)) {
+          throw new Error(
+            `Cannot delete team: it is enrolled in an active season. Complete or abandon the season first.`,
+          );
+        }
         // Clean up / detach players first so we never leave orphaned docs pointing
         // at a now-missing teamId.
         if (cascade) {

@@ -70,6 +70,8 @@ export interface CreateSeasonInput {
 export interface QuickStartInput {
   masterSeed: string;
   dhEnabled: boolean;
+  /** Name for the created season. Defaults to `Season ${new Date().getFullYear()}` if omitted. */
+  seasonName?: string;
   /** Optional explicit seed for autogen team generation. Defaults to fnv1a(masterSeed+":autogen:qs"). */
   autogenSeed?: string;
   autogenOptions: {
@@ -191,22 +193,23 @@ function buildStore(getDbFn: GetDb) {
         for (const customTeamId of league.teamIds) {
           // Build a roster snapshot from the stored team doc.
           const teamDoc = await db.teams.findOne(customTeamId).exec();
-          const rosterSnapshot: Record<string, unknown> = {};
-          if (teamDoc) {
-            const hydratedTeam = await populateRoster(
-              db,
-              teamDoc.toJSON() as unknown as TeamRecord,
+          if (!teamDoc) {
+            throw new Error(
+              `createSeason: team "${customTeamId}" not found in the database. Aborting to prevent data corruption.`,
             );
-            rosterSnapshot["id"] = hydratedTeam.id;
-            rosterSnapshot["name"] = hydratedTeam.name;
-            rosterSnapshot["abbreviation"] = hydratedTeam.abbreviation;
-            rosterSnapshot["city"] = hydratedTeam.city;
-            rosterSnapshot["nickname"] = hydratedTeam.nickname;
-            rosterSnapshot["slug"] = hydratedTeam.slug;
-            rosterSnapshot["lineup"] = hydratedTeam.roster.lineup;
-            rosterSnapshot["bench"] = hydratedTeam.roster.bench ?? [];
-            rosterSnapshot["pitchers"] = hydratedTeam.roster.pitchers;
           }
+          const hydratedTeam = await populateRoster(db, teamDoc.toJSON() as unknown as TeamRecord);
+          const rosterSnapshot: Record<string, unknown> = {
+            id: hydratedTeam.id,
+            name: hydratedTeam.name,
+            abbreviation: hydratedTeam.abbreviation,
+            city: hydratedTeam.city,
+            nickname: hydratedTeam.nickname,
+            slug: hydratedTeam.slug,
+            lineup: hydratedTeam.roster.lineup,
+            bench: hydratedTeam.roster.bench ?? [],
+            pitchers: hydratedTeam.roster.pitchers,
+          };
 
           const seasonTeamId = generateSeasonTeamId();
           seasonTeamIdByCustomTeamId[customTeamId] = seasonTeamId;
@@ -312,7 +315,7 @@ function buildStore(getDbFn: GetDb) {
      * containing all generated teams.
      */
     async quickStart(input: QuickStartInput): Promise<SeasonRecord> {
-      const { masterSeed, dhEnabled, autogenOptions, autogenSeed } = input;
+      const { masterSeed, dhEnabled, autogenOptions, autogenSeed, seasonName } = input;
       const db = await getDbFn();
 
       // Use the caller-supplied autogenSeed when provided; otherwise derive a
@@ -341,7 +344,10 @@ function buildStore(getDbFn: GetDb) {
 
       for (const gen of generated) {
         // Use the idFactory-generated ID via the meta.id override.
-        await ctStore.createCustomTeam(
+        // Capture the returned ID: createCustomTeam may return an existing team's
+        // ID when an autogen name collision is detected (reuse path), so gen.id
+        // may never have been inserted.
+        const insertedId = await ctStore.createCustomTeam(
           {
             name: gen.name,
             abbreviation: gen.abbreviation,
@@ -359,15 +365,14 @@ function buildStore(getDbFn: GetDb) {
           },
           { id: gen.id },
         );
-        teamIds.push(gen.id);
+        teamIds.push(insertedId);
       }
 
       // Create a single league spanning all generated teams.
       const leagueId = fnv1a(`${masterSeed}:league:0`);
-      const seasonName = `Quick Start Season`;
 
       return store.createSeason({
-        name: seasonName,
+        name: seasonName?.trim() || `Season ${new Date().getFullYear()}`,
         masterSeed,
         preset: "mini",
         seasonLength: "sprint",
@@ -636,6 +641,24 @@ function buildStore(getDbFn: GetDb) {
       const docs = await db.seasonGames.find({ selector }).exec();
       return docs.map((d) => d.toJSON() as unknown as SeasonGameRecord);
     },
+
+    /**
+     * Renames a season. Trims whitespace; a blank name is rejected (returns false).
+     * No schema bump needed — `name` is already a required string field in v0.
+     */
+    async renameSeason(seasonId: string, newName: string): Promise<boolean> {
+      const trimmed = newName.trim();
+      if (!trimmed) return false;
+      try {
+        const db = await getDbFn();
+        const doc = await db.seasons.findOne(seasonId).exec();
+        if (!doc) return false;
+        await doc.patch({ name: trimmed });
+        return true;
+      } catch {
+        return false;
+      }
+    },
   };
 
   return store;
@@ -660,6 +683,7 @@ export const {
   quickStart,
   advanceSeason,
   recordResult,
+  renameSeason,
   simulateNextDay,
   getActiveSeason,
   getSeasonTeams,

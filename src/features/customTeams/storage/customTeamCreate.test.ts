@@ -250,11 +250,10 @@ describe("createCustomTeam — name uniqueness", () => {
     const secondId = await store.createCustomTeam(
       makeInput({ name: "Rockets", autogen: autogenMarker2 }),
     );
-    expect(secondId).not.toBe(firstId);
+    // After TASK 2: reuse instead of delete — should return same ID
+    expect(secondId).toBe(firstId);
 
-    // Old team should be gone, new one should exist
-    const old = await db.teams.findOne(firstId).exec();
-    expect(old).toBeNull();
+    // Old team should still exist (reused, not deleted)
     const current = await store.getCustomTeam(secondId);
     expect(current?.name).toBe("Rockets");
   });

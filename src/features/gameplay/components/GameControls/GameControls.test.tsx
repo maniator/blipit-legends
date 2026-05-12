@@ -1,13 +1,14 @@
 import * as React from "react";
 
+import type { GameSessionContextValue } from "@feat/gameplay/context/GameSessionContext";
 import type { ContextValue } from "@feat/gameplay/context/index";
-import { GameContext } from "@feat/gameplay/context/index";
+import { GameContext, GameSessionProvider } from "@feat/gameplay/context/index";
 import { useCustomTeams } from "@shared/hooks/useCustomTeams";
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeContextValue } from "@test/testHelpers";
+import { makeContextValue, makeGameSessionContext } from "@test/testHelpers";
 
 import GameControls from ".";
 
@@ -55,8 +56,16 @@ vi.mock("@feat/customTeams/storage/customTeamStore", () => ({
   makeCustomTeamStore: vi.fn(),
 }));
 
-const renderWithContext = (ui: React.ReactElement, ctx: ContextValue = makeContextValue()) =>
-  render(<GameContext.Provider value={ctx}>{ui}</GameContext.Provider>);
+const renderWithContext = (
+  ui: React.ReactElement,
+  ctx: ContextValue = makeContextValue(),
+  sessionCtx: GameSessionContextValue = makeGameSessionContext(),
+) =>
+  render(
+    <GameSessionProvider value={sessionCtx}>
+      <GameContext.Provider value={ctx}>{ui}</GameContext.Provider>
+    </GameSessionProvider>,
+  );
 
 describe("GameControls", () => {
   beforeEach(() => {
@@ -88,12 +97,20 @@ describe("GameControls", () => {
   });
 
   it("does NOT show Manager Mode checkbox when managerModeAllowed=false", () => {
-    renderWithContext(<GameControls gameStarted managerModeAllowed={false} />);
+    renderWithContext(
+      <GameControls gameStarted />,
+      makeContextValue(),
+      makeGameSessionContext({ managerModeAllowed: false }),
+    );
     expect(screen.queryByRole("checkbox", { name: /manager mode/i })).not.toBeInTheDocument();
   });
 
   it("shows Decision Tuning toggle in spectator mode (managerModeAllowed=false, gameStarted=true)", () => {
-    renderWithContext(<GameControls gameStarted managerModeAllowed={false} />);
+    renderWithContext(
+      <GameControls gameStarted />,
+      makeContextValue(),
+      makeGameSessionContext({ managerModeAllowed: false }),
+    );
     expect(screen.getByTestId("manager-decision-tuning-toggle")).toBeInTheDocument();
     expect(screen.getByTestId("manager-decision-tuning-toggle").textContent).toMatch(
       /Simulation Style/,
@@ -101,7 +118,11 @@ describe("GameControls", () => {
   });
 
   it("shows Decision Tuning toggle in manager mode (managerModeAllowed=true, gameStarted=true)", () => {
-    renderWithContext(<GameControls gameStarted managerModeAllowed={true} />);
+    renderWithContext(
+      <GameControls gameStarted />,
+      makeContextValue(),
+      makeGameSessionContext({ managerModeAllowed: true }),
+    );
     expect(screen.getByTestId("manager-decision-tuning-toggle")).toBeInTheDocument();
     expect(screen.getByTestId("manager-decision-tuning-toggle").textContent).toMatch(
       /Decision Tuning/,
@@ -262,6 +283,27 @@ describe("GameControls", () => {
   it("does NOT show pause/play button when game is over", () => {
     renderWithContext(<GameControls gameStarted />, makeContextValue({ gameOver: true }));
     expect(screen.queryByTestId("pause-play-button")).not.toBeInTheDocument();
+  });
+
+  describe("Saves button visibility", () => {
+    it("shows Saves button when disableSave=false", () => {
+      renderWithContext(
+        <GameControls gameStarted />,
+        makeContextValue(),
+        makeGameSessionContext({ disableSave: false }),
+      );
+      // SavesModal is lazy — the fallback button should be present until it loads
+      expect(screen.getByRole("button", { name: /open saves panel/i })).toBeInTheDocument();
+    });
+
+    it("hides Saves button when disableSave=true (league session)", () => {
+      renderWithContext(
+        <GameControls gameStarted />,
+        makeContextValue(),
+        makeGameSessionContext({ disableSave: true, sessionType: "league" }),
+      );
+      expect(screen.queryByRole("button", { name: /open saves panel/i })).not.toBeInTheDocument();
+    });
   });
 
   it("pause button shows Resume label when game is paused", () => {

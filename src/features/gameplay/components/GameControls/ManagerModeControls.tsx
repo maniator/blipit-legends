@@ -6,7 +6,7 @@ import { useGameContext } from "@feat/gameplay/context/index";
 import { Strategy } from "@feat/gameplay/context/index";
 import { useTeamWithRoster } from "@shared/hooks/useTeamWithRoster";
 
-import { NotifBadge, Select, SubButton, ToggleLabel } from "./styles";
+import { LockedTeamDisplay, NotifBadge, Select, SubButton, ToggleLabel } from "./styles";
 
 type Props = {
   managerMode: boolean;
@@ -16,6 +16,9 @@ type Props = {
   notifPermission: NotificationPermission | "unavailable";
   gameStarted?: boolean;
   gameOver?: boolean;
+  /** When true, the managed-team selector is hidden and the team name is shown
+   * as read-only text. Used for league games where the managed team is fixed. */
+  lockManagedTeam?: boolean;
   onManagerModeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onStrategyChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   onManagedTeamChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -88,6 +91,7 @@ const ManagerModeControls: React.FunctionComponent<Props> = ({
   notifPermission,
   gameStarted = false,
   gameOver = false,
+  lockManagedTeam = false,
   onManagerModeChange,
   onStrategyChange,
   onManagedTeamChange,
@@ -107,10 +111,24 @@ const ManagerModeControls: React.FunctionComponent<Props> = ({
       <>
         <ToggleLabel>
           Team
-          <Select value={managedTeam} onChange={onManagedTeamChange}>
-            <option value={0}>{teams[0]}</option>
-            <option value={1}>{teams[1]}</option>
-          </Select>
+          {lockManagedTeam ? (
+            <LockedTeamDisplay
+              data-testid="managed-team-display"
+              aria-disabled="true"
+              aria-label={`Managing: ${teams[managedTeam]} (locked)`}
+            >
+              {teams[managedTeam]}
+            </LockedTeamDisplay>
+          ) : (
+            <Select
+              value={managedTeam}
+              onChange={onManagedTeamChange}
+              data-testid="manager-mode-team-select"
+            >
+              <option value={0}>{teams[0]}</option>
+              <option value={1}>{teams[1]}</option>
+            </Select>
+          )}
         </ToggleLabel>
         <ToggleLabel>
           Strategy

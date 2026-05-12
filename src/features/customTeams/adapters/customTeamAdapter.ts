@@ -12,11 +12,35 @@ export function customTeamToGameId(team: TeamWithRoster): string {
 }
 
 /**
- * Returns the display name for a custom team (city + name, or just name).
+ * Resolves a display name from a city + short name pair using the same
+ * city-prefix logic applied across the app:
+ * - If `name` already starts with `"<city> "`, return `name` as-is (autogen
+ *   teams store the full display name in `name`).
+ * - If `city` is present, return `"<city> <name>"`.
+ * - Otherwise return `name`.
+ *
+ * Extracted so the rule is maintained in one place: `customTeamToDisplayName`,
+ * `resolveTeamLabel`, and `SeasonHomePage.teamNameById` all delegate to this.
+ */
+export function resolveDisplayName(city: string | undefined, name: string): string {
+  if (city && name.startsWith(`${city} `)) return name;
+  if (city) return `${city} ${name}`;
+  return name;
+}
+
+/**
+ * Returns the display name for a custom team.
+ *
+ * For autogen teams the `name` field already stores the full display name
+ * ("Galena Jaguars") while `city` is stored separately ("Galena").  Prepending
+ * `city` again would produce "Galena Galena Jaguars".  To avoid this we check
+ * whether `name` already begins with the city prefix — if it does, we return
+ * `name` directly; otherwise we prepend `city`.  This approach does not rely on
+ * `nickname`, which may differ from `name` in ways that would produce incorrect
+ * labels (e.g. `nickname = "Rox"`, `name = "Rockets"` → "Houston Rox").
  */
 export function customTeamToDisplayName(team: TeamWithRoster): string {
-  if (team.city) return `${team.city} ${team.name}`;
-  return team.name;
+  return resolveDisplayName(team.city, team.name);
 }
 
 /**
@@ -54,11 +78,11 @@ export function customTeamToAbbreviation(
  */
 export function resolveTeamLabel(
   gameId: string,
-  teams: Pick<TeamRecord, "id" | "name" | "city" | "abbreviation">[],
+  teams: Pick<TeamRecord, "id" | "name" | "city" | "abbreviation" | "nickname">[],
 ): string {
   const doc = teams.find((t) => t.id === gameId);
   if (!doc) return "Unknown Team";
-  return doc.city ? `${doc.city} ${doc.name}` : doc.name;
+  return resolveDisplayName(doc.city, doc.name);
 }
 
 /**
