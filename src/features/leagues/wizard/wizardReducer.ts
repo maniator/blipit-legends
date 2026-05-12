@@ -11,6 +11,8 @@ export interface WizardState {
   step: 1 | 2 | 3 | 5 | 6;
   preset: "mini";
   seasonLength: "sprint";
+  /** User-chosen name for the season. Defaults to "Season <year>". */
+  seasonName: string;
   leagueCount: 1 | 2;
   leagues: WizardLeague[];
   teamMode: "handpick" | "mixed" | "allAutogen";
@@ -38,6 +40,7 @@ export type WizardAction =
   | { type: "NEXT_STEP" }
   | { type: "PREV_STEP" }
   | { type: "SET_USER_TEAM"; customTeamId: string | null }
+  | { type: "SET_SEASON_NAME"; name: string }
   | { type: "RESET" };
 
 const STEP_ORDER: Array<WizardState["step"]> = [1, 2, 3, 5, 6];
@@ -50,6 +53,7 @@ export function makeInitialState(): WizardState {
     step: 1,
     preset: "mini",
     seasonLength: "sprint",
+    seasonName: `Season ${new Date().getFullYear()}`,
     leagueCount: 1,
     leagues: DEFAULT_LEAGUES,
     teamMode: "mixed",
@@ -140,6 +144,9 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     case "SET_USER_TEAM": {
       return { ...state, userCustomTeamId: action.customTeamId };
     }
+    case "SET_SEASON_NAME": {
+      return { ...state, seasonName: action.name };
+    }
     case "RESET": {
       return makeInitialState();
     }
@@ -158,7 +165,12 @@ export function loadWizardState(): WizardState | null {
     const parsed = JSON.parse(raw) as unknown;
     if (typeof parsed !== "object" || parsed === null) return null;
     if ((parsed as { _v?: unknown })._v !== 1) return null;
-    return parsed as WizardState;
+    const state = parsed as WizardState;
+    // Back-fill seasonName if loading an older session that pre-dates this field.
+    if (!state.seasonName) {
+      state.seasonName = `Season ${new Date().getFullYear()}`;
+    }
+    return state;
   } catch {
     return null;
   }

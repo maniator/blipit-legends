@@ -235,3 +235,37 @@ export const GameActionRow = styled.div`
   flex-wrap: wrap;
   margin-top: ${({ theme }) => theme.spacing.xs};
 `;
+
+/** Inline text input for editing the season name on SeasonHomePage. */
+export const RenameInput = styled.input`
+  font-size: ${({ theme }) => theme.fontSizes.h1};
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.textPrimary};
+  background: ${({ theme }) => theme.colors.bgFormAlpha15};
+  border: 1px solid ${({ theme }) => theme.colors.accentPrimary};
+  border-radius: ${({ theme }) => theme.radii.sm};
+  padding: 0 ${({ theme }) => theme.spacing.xs};
+  min-width: 0;
+  flex: 1;
+  max-width: 420px;
+
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 1px;
+  }
+`;
+
+/** Small icon button used for the rename pencil trigger. */
+export const RenameIconBtn = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: ${({ theme }) => theme.fontSizes.body};
+  padding: 0 ${({ theme }) => theme.spacing.xs};
+  color: ${({ theme }) => theme.colors.textHint};
+  line-height: 1;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.textPrimary};
+  }
+`;

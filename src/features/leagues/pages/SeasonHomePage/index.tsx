@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { runHeadlessGame } from "@feat/league/sim/runHeadlessGame";
-import { advanceSeason, simulateNextDay } from "@feat/league/storage/leagueStore";
+import { advanceSeason, renameSeason, simulateNextDay } from "@feat/league/storage/leagueStore";
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
 import { deriveStandings } from "@feat/league/utils/deriveStandings";
 import { GameActionBtn } from "@feat/leagues/components/styles";
@@ -24,6 +24,8 @@ import {
   NavCardLink,
   NavCardSub,
   NavCardTitle,
+  RenameIconBtn,
+  RenameInput,
   SeasonMeta,
   SeasonProgress,
   SeasonTitle,
@@ -52,6 +54,11 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
   const [nextGameReady, setNextGameReady] = React.useState(false);
   const [nextGameId, setNextGameId] = React.useState<string | null>(null);
   const [launchingGame, setLaunchingGame] = React.useState(false);
+
+  // Rename state
+  const [renaming, setRenaming] = React.useState(false);
+  const [renameValue, setRenameValue] = React.useState("");
+  const [renameError, setRenameError] = React.useState<string | null>(null);
 
   // Find the user's season team if one is configured.
   const userSeasonTeamId = React.useMemo(() => {
@@ -84,6 +91,38 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
       setSimulating(false);
     }
   }, [seasonId, userSeasonTeamId]);
+
+  const handleBeginRename = React.useCallback(() => {
+    setRenameValue(season?.name ?? "");
+    setRenameError(null);
+    setRenaming(true);
+  }, [season]);
+
+  const handleRenameKeyDown = React.useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Escape") {
+        setRenaming(false);
+        setRenameError(null);
+      }
+    },
+    [],
+  );
+
+  const handleRenameSave = React.useCallback(async () => {
+    if (!seasonId) return;
+    const trimmed = renameValue.trim();
+    if (!trimmed) {
+      setRenameError("Season name cannot be empty.");
+      return;
+    }
+    const ok = await renameSeason(seasonId, trimmed);
+    if (ok) {
+      setRenaming(false);
+      setRenameError(null);
+    } else {
+      setRenameError("Unable to save. Please try again.");
+    }
+  }, [seasonId, renameValue]);
 
   const handlePlayNextGame = React.useCallback(
     (_asManager: boolean) => {
@@ -211,7 +250,57 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
       </PageHeader>
 
       <SeasonTitle>
-        {season.name} <StatusChip $status={season.status}>{statusLabel}</StatusChip>
+        {renaming ? (
+          <>
+            <RenameInput
+              data-testid="season-rename-input"
+              value={renameValue}
+              maxLength={60}
+              aria-label="Season name"
+              autoFocus
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={handleRenameKeyDown}
+            />
+            <RenameIconBtn
+              type="button"
+              onClick={handleRenameSave}
+              aria-label="Save season name"
+              data-testid="season-rename-save"
+            >
+              ✓
+            </RenameIconBtn>
+            <RenameIconBtn
+              type="button"
+              onClick={() => {
+                setRenaming(false);
+                setRenameError(null);
+              }}
+              aria-label="Cancel rename"
+              data-testid="season-rename-cancel"
+            >
+              ✕
+            </RenameIconBtn>
+            {renameError && (
+              <span role="alert" style={{ fontSize: "0.75rem", color: "inherit" }}>
+                {renameError}
+              </span>
+            )}
+          </>
+        ) : (
+          <>
+            {season.name}
+            <StatusChip $status={season.status}>{statusLabel}</StatusChip>
+            <RenameIconBtn
+              type="button"
+              onClick={handleBeginRename}
+              aria-label="Rename season"
+              data-testid="season-rename-btn"
+              title="Rename season"
+            >
+              ✏️
+            </RenameIconBtn>
+          </>
+        )}
       </SeasonTitle>
 
       {championName !== null && (

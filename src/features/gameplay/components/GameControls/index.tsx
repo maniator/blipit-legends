@@ -44,7 +44,8 @@ const GameControls: React.FunctionComponent<Props> = ({
   onBackToHome,
   isCommitting = false,
 }) => {
-  const { managerModeAllowed } = useGameSessionContext();
+  const { managerModeAllowed, sessionType, managedTeam: sessionManagedTeam } =
+    useGameSessionContext();
   const {
     speed,
     setSpeed,
@@ -203,11 +204,16 @@ const GameControls: React.FunctionComponent<Props> = ({
             <ManagerModeControls
               managerMode={managerMode}
               strategy={strategy}
-              managedTeam={managedTeam}
+              managedTeam={
+                sessionType === "league" && sessionManagedTeam !== null
+                  ? sessionManagedTeam
+                  : managedTeam
+              }
               teams={resolvedTeamLabels}
               notifPermission={notifPermission}
               gameStarted={gameStarted}
               gameOver={gameOver}
+              lockManagedTeam={sessionType === "league"}
               onManagerModeChange={handleManagerModeChange}
               onStrategyChange={(e) => setStrategy(e.target.value as Strategy)}
               onManagedTeamChange={(e) => setManagedTeam(Number(e.target.value) === 1 ? 1 : 0)}

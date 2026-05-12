@@ -1,7 +1,5 @@
 import * as React from "react";
 
-import type { GameSessionContextValue } from "./GameSessionContext";
-import { GameSessionProvider } from "./GameSessionContext";
 import type { ContextValue, GameAction, State } from "./gameStateTypes";
 import { createFreshGameState } from "./initialState";
 import type { LogAction } from "./logReducer";
@@ -33,15 +31,14 @@ export const useGameContext = (): ContextValue => {
 
 const initialState: State = createFreshGameState(["A", "B"]);
 
-const defaultGameSessionValue: GameSessionContextValue = {
-  sessionType: "exhibition",
-  managerModeAllowed: true,
-  disableSave: false,
-  seasonGameId: null,
-  managedTeam: null,
-  sessionReady: true,
-};
-
+/**
+ * Provides GameContext (state + dispatch) for the game engine.
+ *
+ * Does NOT provide GameSessionContext — that is the route page's responsibility
+ * (ExhibitionGamePage, LeagueGamePage, GamePage each wrap <Game> in their own
+ * <GameSessionProvider>). Keeping them separate prevents the inner provider
+ * from shadowing the outer route-level session context.
+ */
 export const GameProviderWrapper: React.FunctionComponent<{
   children?: React.ReactNode;
   onDispatch?: (action: GameAction) => void;
@@ -85,17 +82,15 @@ export const GameProviderWrapper: React.FunctionComponent<{
   }, []);
 
   return (
-    <GameSessionProvider value={defaultGameSessionValue}>
-      <GameContext.Provider
-        value={{
-          ...state,
-          dispatch,
-          log: logState.announcements,
-          dispatchLog: injectingDispatch,
-        }}
-      >
-        {children}
-      </GameContext.Provider>
-    </GameSessionProvider>
+    <GameContext.Provider
+      value={{
+        ...state,
+        dispatch,
+        log: logState.announcements,
+        dispatchLog: injectingDispatch,
+      }}
+    >
+      {children}
+    </GameContext.Provider>
   );
 };
