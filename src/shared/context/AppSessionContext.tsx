@@ -76,12 +76,18 @@ export const AppSessionProvider: React.FunctionComponent<AppSessionProviderProps
     getDb()
       .then((db) => db.completedGames.findOne().exec())
       .then((anyCompletedGame) => {
-        // Only mark probe as permanently fired after a successful result so a
-        // transient DB failure doesn't permanently block future retries.
-        probeFiredRef.current = true;
-        probeInFlightRef.current = false;
-        // Use functional update so a true set by handleGameOver is never cleared.
-        setHasCareerStats((prev) => prev || Boolean(anyCompletedGame));
+        if (anyCompletedGame) {
+          // Games exist: lock the probe permanently so we don't query on every
+          // subsequent Home mount. handleGameOver also sets this to true.
+          probeFiredRef.current = true;
+          probeInFlightRef.current = false;
+          setHasCareerStats(true);
+        } else {
+          // No games found yet — clear in-flight so the next Home-mount probe
+          // can check again (games may be created later via season headless sims
+          // or other non-interactive paths). Leave probeFiredRef false.
+          probeInFlightRef.current = false;
+        }
       })
       .catch(() => {
         // On DB error: clear in-flight so next Home mount can retry, but leave

@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { resolveDisplayName } from "@feat/customTeams/adapters/customTeamAdapter";
 import { runHeadlessGame } from "@feat/league/sim/runHeadlessGame";
 import { advanceSeason, renameSeason, simulateNextDay } from "@feat/league/storage/leagueStore";
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
@@ -198,15 +199,16 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
     [completedGames, seasonTeamIds],
   );
 
-  // Build a lookup map: seasonTeamId → customTeamId → team name from rosterSnapshot
+  // Build a lookup map: seasonTeamId → display name from rosterSnapshot
   const teamNameById = React.useMemo(() => {
     const map: Record<string, string> = {};
     for (const t of seasonTeams) {
       const snap = t.rosterSnapshot as Record<string, unknown>;
-      // After the fix, snap.name already includes the full display name (city + nickname),
-      // so we don't prepend city. Fall back to customTeamId if name is missing.
       const snapName = typeof snap.name === "string" ? snap.name : t.customTeamId;
-      map[t.id] = snapName;
+      const snapCity = typeof snap.city === "string" ? snap.city : undefined;
+      // Use the shared city-prefix resolver so autogen teams ("City Nickname" in name)
+      // and user-created teams (short name + separate city) both render correctly.
+      map[t.id] = resolveDisplayName(snapCity, snapName);
     }
     return map;
   }, [seasonTeams]);

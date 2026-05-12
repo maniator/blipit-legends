@@ -12,6 +12,23 @@ export function customTeamToGameId(team: TeamWithRoster): string {
 }
 
 /**
+ * Resolves a display name from a city + short name pair using the same
+ * city-prefix logic applied across the app:
+ * - If `name` already starts with `"<city> "`, return `name` as-is (autogen
+ *   teams store the full display name in `name`).
+ * - If `city` is present, return `"<city> <name>"`.
+ * - Otherwise return `name`.
+ *
+ * Extracted so the rule is maintained in one place: `customTeamToDisplayName`,
+ * `resolveTeamLabel`, and `SeasonHomePage.teamNameById` all delegate to this.
+ */
+export function resolveDisplayName(city: string | undefined, name: string): string {
+  if (city && name.startsWith(`${city} `)) return name;
+  if (city) return `${city} ${name}`;
+  return name;
+}
+
+/**
  * Returns the display name for a custom team.
  *
  * For autogen teams the `name` field already stores the full display name
@@ -23,9 +40,7 @@ export function customTeamToGameId(team: TeamWithRoster): string {
  * labels (e.g. `nickname = "Rox"`, `name = "Rockets"` → "Houston Rox").
  */
 export function customTeamToDisplayName(team: TeamWithRoster): string {
-  if (team.city && team.name.startsWith(`${team.city} `)) return team.name;
-  if (team.city) return `${team.city} ${team.name}`;
-  return team.name;
+  return resolveDisplayName(team.city, team.name);
 }
 
 /**
@@ -67,13 +82,7 @@ export function resolveTeamLabel(
 ): string {
   const doc = teams.find((t) => t.id === gameId);
   if (!doc) return "Unknown Team";
-  // Mirrors the logic in customTeamToDisplayName: return `name` directly when
-  // it already starts with the city prefix (autogen teams store the full display
-  // name in `name`), otherwise prepend city.  Avoids double-city rendering and
-  // does not rely on the `nickname` field.
-  if (doc.city && doc.name.startsWith(`${doc.city} `)) return doc.name;
-  if (doc.city) return `${doc.city} ${doc.name}`;
-  return doc.name;
+  return resolveDisplayName(doc.city, doc.name);
 }
 
 /**
