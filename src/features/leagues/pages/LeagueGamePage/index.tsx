@@ -125,7 +125,7 @@ const LeagueGamePage: React.FunctionComponent = () => {
       navigate("/leagues", { replace: true });
     }, 2000);
     return () => clearTimeout(timer);
-  }, [fetchState, navigate]);
+  }, [fetchState.status, navigate]);
 
   // onConsumeGameSetup is called by Game when the initial setup has been applied.
   // pendingGameSetup is driven by fetchState.setup (not a ref), so this is a no-op.
