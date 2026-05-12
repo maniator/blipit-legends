@@ -109,6 +109,11 @@ const moveItem = <T>(arr: T[], from: number, to: number): T[] => {
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
   switch (action.type) {
     case "SET_FIELD":
+      // When the user manually edits the team name, clear any generated nickname
+      // so customTeamToDisplayName falls back to city+name (not city+nickname).
+      if (action.field === "name") {
+        return { ...state, name: action.value, nickname: "", error: "" };
+      }
       return { ...state, [action.field]: action.value, error: "" };
     case "UPDATE_PLAYER": {
       // Use EditorPlayer[] cast so the spread works uniformly across all sections.

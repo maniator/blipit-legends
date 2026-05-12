@@ -70,7 +70,7 @@ export interface CreateSeasonInput {
 export interface QuickStartInput {
   masterSeed: string;
   dhEnabled: boolean;
-  /** Name for the created season. Defaults to "Quick Start Season" if omitted. */
+  /** Name for the created season. Defaults to `Season ${new Date().getFullYear()}` if omitted. */
   seasonName?: string;
   /** Optional explicit seed for autogen team generation. Defaults to fnv1a(masterSeed+":autogen:qs"). */
   autogenSeed?: string;

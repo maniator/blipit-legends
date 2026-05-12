@@ -64,18 +64,21 @@ export const AppSessionProvider: React.FunctionComponent<AppSessionProviderProps
 
   const requestCareerStatsProbe = React.useCallback(() => {
     if (probeFiredRef.current) return;
-    probeFiredRef.current = true;
 
     // AppSessionProvider is mounted at RootLayout and stays alive for the full
     // app lifetime, so we do not need a cancellation guard here.
     getDb()
       .then((db) => db.completedGames.findOne().exec())
       .then((anyCompletedGame) => {
+        // Only mark probe as fired after a successful result so a transient
+        // DB failure doesn't permanently block future retries.
+        probeFiredRef.current = true;
         // Use functional update so a true set by handleGameOver is never cleared.
         setHasCareerStats((prev) => prev || Boolean(anyCompletedGame));
       })
       .catch(() => {
-        // On DB error, leave hasCareerStats unchanged.
+        // On DB error, leave hasCareerStats unchanged and keep probeFiredRef
+        // false so the next Home mount can retry.
       });
   }, []);
 
