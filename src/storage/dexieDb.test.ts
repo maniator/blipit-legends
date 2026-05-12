@@ -1,16 +1,24 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { createDexieDb, deleteDexieDb } from "./dexieDb";
+import { type BallgameDexieDb, createDexieDb, deleteDexieDb } from "./dexieDb";
 
 const TEST_DB_NAME = "ballgame-dexie-test";
 
 describe("BallgameDexieDb", () => {
+  let db: BallgameDexieDb | null = null;
+
   afterEach(async () => {
+    // Close the per-test handle before deleting the DB so an open connection
+    // can't block Dexie.delete() and make cleanup flaky across environments.
+    if (db) {
+      db.close();
+      db = null;
+    }
     await deleteDexieDb(TEST_DB_NAME);
   });
 
   it("opens the v1 Dexie schema with all expected tables", async () => {
-    const db = createDexieDb(TEST_DB_NAME);
+    db = createDexieDb(TEST_DB_NAME);
 
     await db.open();
 
@@ -26,7 +34,7 @@ describe("BallgameDexieDb", () => {
   });
 
   it("creates the indexes needed by current storage queries", async () => {
-    const db = createDexieDb(TEST_DB_NAME);
+    db = createDexieDb(TEST_DB_NAME);
 
     await db.open();
 

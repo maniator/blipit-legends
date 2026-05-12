@@ -52,7 +52,11 @@ export const closeDexieDb = async (): Promise<void> => {
 };
 
 export const deleteDexieDb = async (name = DEXIE_DB_NAME): Promise<void> => {
-  if (dexieDb && name === DEXIE_DB_NAME) {
+  // Close the in-process singleton if it matches the name being deleted.
+  // Compare against the singleton's actual name (not the default constant) so
+  // singletons created with a custom name via getDexieDb/createDexieDb are
+  // also closed and don't block Dexie.delete().
+  if (dexieDb && dexieDb.name === name) {
     dexieDb.close();
     dexieDb = null;
   }

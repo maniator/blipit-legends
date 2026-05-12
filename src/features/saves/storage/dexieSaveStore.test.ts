@@ -197,4 +197,170 @@ describe("DexieSaveStore", () => {
       store.importSave(JSON.stringify({ version: 1, header, events, sig })),
     ).rejects.toThrow("not installed on this device");
   });
+
+  it("replaces the event log when re-importing over an existing save id", async () => {
+    await db.teams.bulkPut([makeTeam("ct_home"), makeTeam("ct_away")]);
+    const saveId = await store.createSave(makeSetup({ seed: "replace" }));
+    // Seed the existing save with a longer event log than the bundle we'll import.
+    await store.appendEvents(saveId, [
+      { type: "stale-a", at: 0, payload: {} },
+      { type: "stale-b", at: 1, payload: {} },
+      { type: "stale-c", at: 2, payload: {} },
+    ]);
+    expect(await db.events.where("saveId").equals(saveId).count()).toBe(3);
+
+    const header = (await db.saves.get(saveId))!;
+    const replacementEvents = [
+      {
+        id: `${saveId}:0`,
+        saveId,
+        idx: 0,
+        at: 100,
+        type: "fresh",
+        payload: { result: "single" },
+        ts: 100,
+        schemaVersion: 1,
+      },
+    ];
+    const sig = fnv1a(
+      PORTABLE_SAVE_EXPORT_KEY + JSON.stringify({ header, events: replacementEvents }),
+    );
+
+    await store.importSave(JSON.stringify({ version: 1, header, events: replacementEvents, sig }));
+
+    const remaining = await db.events.where("saveId").equals(saveId).sortBy("idx");
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]).toMatchObject({ id: `${saveId}:0`, type: "fresh", idx: 0 });
+  });
+
+  it("rejects an import whose event log has a mismatched saveId", async () => {
+    await db.teams.bulkPut([makeTeam("ct_home"), makeTeam("ct_away")]);
+    const header = {
+      id: "save-x",
+      name: "Save X",
+      seed: "x",
+      homeTeamId: "ct_home",
+      awayTeamId: "ct_away",
+      createdAt: 0,
+      updatedAt: 0,
+      progressIdx: -1,
+      setup: makeSetup().setup,
+      schemaVersion: 1,
+    };
+    const events = [
+      {
+        id: "save-x:0",
+        saveId: "save-y", // wrong: doesn't match header.id
+        idx: 0,
+        at: 0,
+        type: "pitch",
+        payload: {},
+        ts: 0,
+        schemaVersion: 1,
+      },
+    ];
+    const sig = fnv1a(PORTABLE_SAVE_EXPORT_KEY + JSON.stringify({ header, events }));
+
+    await expect(
+      store.importSave(JSON.stringify({ version: 1, header, events, sig })),
+    ).rejects.toThrow("malformed");
+  });
+
+  it("rejects an import whose event log has non-contiguous indices", async () => {
+    await db.teams.bulkPut([makeTeam("ct_home"), makeTeam("ct_away")]);
+    const header = {
+      id: "save-gap",
+      name: "Save Gap",
+      seed: "g",
+      homeTeamId: "ct_home",
+      awayTeamId: "ct_away",
+      createdAt: 0,
+      updatedAt: 0,
+      progressIdx: -1,
+      setup: makeSetup().setup,
+      schemaVersion: 1,
+    };
+    const events = [
+      {
+        id: "save-gap:0",
+        saveId: "save-gap",
+        idx: 0,
+        at: 0,
+        type: "pitch",
+        payload: {},
+        ts: 0,
+        schemaVersion: 1,
+      },
+      {
+        id: "save-gap:2", // gap at idx 1
+        saveId: "save-gap",
+        idx: 2,
+        at: 0,
+        type: "pitch",
+        payload: {},
+        ts: 0,
+        schemaVersion: 1,
+      },
+    ];
+    const sig = fnv1a(PORTABLE_SAVE_EXPORT_KEY + JSON.stringify({ header, events }));
+
+    await expect(
+      store.importSave(JSON.stringify({ version: 1, header, events, sig })),
+    ).rejects.toThrow("contiguous");
+  });
+
+  it("rejects an import whose event id does not match its idx", async () => {
+    await db.teams.bulkPut([makeTeam("ct_home"), makeTeam("ct_away")]);
+    const header = {
+      id: "save-badid",
+      name: "Save BadId",
+      seed: "b",
+      homeTeamId: "ct_home",
+      awayTeamId: "ct_away",
+      createdAt: 0,
+      updatedAt: 0,
+      progressIdx: -1,
+      setup: makeSetup().setup,
+      schemaVersion: 1,
+    };
+    const events = [
+      {
+        id: "save-badid:99", // doesn't match `${saveId}:${idx}` for idx=0
+        saveId: "save-badid",
+        idx: 0,
+        at: 0,
+        type: "pitch",
+        payload: {},
+        ts: 0,
+        schemaVersion: 1,
+      },
+    ];
+    const sig = fnv1a(PORTABLE_SAVE_EXPORT_KEY + JSON.stringify({ header, events }));
+
+    await expect(
+      store.importSave(JSON.stringify({ version: 1, header, events, sig })),
+    ).rejects.toThrow("does not match save and index");
+  });
+
+  it("rejects an import whose events field is not an array", async () => {
+    await db.teams.bulkPut([makeTeam("ct_home"), makeTeam("ct_away")]);
+    const header = {
+      id: "save-nonarray",
+      name: "Save NonArray",
+      seed: "n",
+      homeTeamId: "ct_home",
+      awayTeamId: "ct_away",
+      createdAt: 0,
+      updatedAt: 0,
+      progressIdx: -1,
+      setup: makeSetup().setup,
+      schemaVersion: 1,
+    };
+    const events = "not-an-array" as unknown;
+    const sig = fnv1a(PORTABLE_SAVE_EXPORT_KEY + JSON.stringify({ header, events }));
+
+    await expect(
+      store.importSave(JSON.stringify({ version: 1, header, events, sig })),
+    ).rejects.toThrow("events must be an array");
+  });
 });
