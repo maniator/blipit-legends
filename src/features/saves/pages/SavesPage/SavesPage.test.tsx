@@ -12,6 +12,7 @@ vi.mock("@shared/context/AppSessionContext", () => ({
     hasCareerStats: false,
     handleGameSessionStarted: vi.fn(),
     handleGameOver: vi.fn(),
+    requestCareerStatsProbe: vi.fn(),
   })),
   AppSessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));

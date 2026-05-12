@@ -22,6 +22,7 @@ vi.mock("@shared/context/AppSessionContext", () => ({
     hasCareerStats: mockHasCareerStats,
     handleGameSessionStarted: mockHandleGameSessionStarted,
     handleGameOver: mockHandleGameOver,
+    requestCareerStatsProbe: vi.fn(),
   }),
   AppSessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
@@ -147,7 +148,9 @@ describe("AppShell", () => {
     renderAppShell("/game");
     // Allow any microtasks to flush
     await new Promise((r) => setTimeout(r, 0));
-    // AppSessionProvider probes DB on mount regardless of route, so skip this test
+    // The career-stats DB probe is deferred — it only fires when HomeRoute calls
+    // requestCareerStatsProbe() on mount. On non-home routes no probe should occur.
+    expect(getDb).not.toHaveBeenCalled();
   });
 
   it("shows Career Stats on home when AppSessionProvider sets hasCareerStats", async () => {
