@@ -3,7 +3,7 @@ import * as React from "react";
 import VolumeControls from "@feat/gameplay/components/GameControls/VolumeControls";
 import { useHomeScreenMusic } from "@feat/gameplay/hooks/useHomeScreenMusic";
 import { useVolumeControls } from "@feat/gameplay/hooks/useVolumeControls";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { Outlet, useLocation, useMatches, useNavigate } from "react-router";
 
 import { getDb } from "@storage/db";
 import type { AppShellOutletContext, ExhibitionGameSetup, SaveRecord } from "@storage/types";
@@ -15,16 +15,16 @@ export type { AppShellOutletContext, ExhibitionGameSetup, GameLocationState } fr
 const AppShell: React.FunctionComponent = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const matches = useMatches();
 
   // True only once a real game session has been started or loaded — gates Resume.
   const [hasActiveSession, setHasActiveSession] = React.useState(false);
   // True once at least one completed game has been persisted or a game just ended — gates Career Stats.
   const [hasCareerStats, setHasCareerStats] = React.useState(false);
 
-  const isGameRoute =
-    location.pathname === "/game" ||
-    location.pathname === "/game/exhibition" ||
-    location.pathname.startsWith("/game/league/");
+  const isGameRoute = matches.some(
+    (m) => (m.handle as { isGameRoute?: boolean } | null)?.isGameRoute === true,
+  );
 
   const volume = useVolumeControls();
   // Pass alertVolume = 0 on /game to stop music (game has its own audio: fanfare, chimes, stretch).
@@ -108,10 +108,11 @@ const AppShell: React.FunctionComponent = () => {
     navigate("/stats");
   }, [navigate]);
 
-  /** Called from /exhibition/new — navigates to /game/exhibition with the setup as location state. */
+  /** Called from /exhibition/new — stores the setup in sessionStorage and navigates to /game/exhibition. */
   const handleStartFromExhibition = React.useCallback(
     (setup: ExhibitionGameSetup) => {
-      navigate("/game/exhibition", { state: { pendingGameSetup: setup } });
+      sessionStorage.setItem("pendingExhibitionSetup", JSON.stringify(setup));
+      navigate("/game/exhibition");
     },
     [navigate],
   );

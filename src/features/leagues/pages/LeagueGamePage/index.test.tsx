@@ -20,6 +20,24 @@ vi.mock("@storage/db", () => ({
   getDb: vi.fn(),
 }));
 
+vi.mock("@feat/gameplay/utils/gameSessionDerive", () => ({
+  deriveLeagueSession: vi.fn().mockReturnValue({
+    sessionType: "league",
+    managerModeAllowed: false,
+    disableSave: true,
+    seasonGameId: "sg-1",
+    managedTeam: null,
+    sessionReady: true,
+  }),
+}));
+vi.mock("@feat/gameplay/context/index", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@feat/gameplay/context/index")>();
+  return {
+    ...original,
+    GameSessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  };
+});
+
 import { buildSeasonGameSetup } from "@feat/leagues/utils/buildSeasonGameSetup";
 
 import { getDb } from "@storage/db";
@@ -115,9 +133,9 @@ function makeMockDb(overrides: DbOverrides = {}) {
   };
 }
 
-function renderLeagueGamePage(seasonGameId = "sg-1", state: unknown = null, ctx = mockCtx) {
+function renderLeagueGamePage(seasonGameId = "sg-1", ctx = mockCtx) {
   return render(
-    <MemoryRouter initialEntries={[{ pathname: `/game/league/${seasonGameId}`, state }]}>
+    <MemoryRouter initialEntries={[{ pathname: `/game/league/${seasonGameId}` }]}>
       <Routes>
         <Route element={<Outlet context={ctx} />}>
           <Route path="/game/league/:seasonGameId" element={<LeagueGamePage />} />
@@ -185,12 +203,12 @@ describe("LeagueGamePage", () => {
     });
   });
 
-  it("calls buildSeasonGameSetup with managedTeam null when state has managedTeam: null", async () => {
-    const db = makeDb();
+  it("calls buildSeasonGameSetup with managedTeam null when season has no userCustomTeamId", async () => {
+    const db = makeDb(); // default: userCustomTeamId: null
     vi.mocked(getDb).mockResolvedValue(db as never);
     vi.mocked(buildSeasonGameSetup).mockResolvedValue(mockSetup as never);
 
-    renderLeagueGamePage("sg-1", { managedTeam: null });
+    renderLeagueGamePage("sg-1");
 
     await waitFor(() => {
       expect(screen.getByTestId("game-mock")).toBeInTheDocument();
@@ -205,14 +223,13 @@ describe("LeagueGamePage", () => {
     );
   });
 
-  it("derives managedTeam from season.userCustomTeamId when state has no managedTeam key", async () => {
+  it("derives managedTeam from season.userCustomTeamId", async () => {
     const seasonRecord = { id: "season-1", userCustomTeamId: "ct-home" };
     const db = makeDb({ season: seasonRecord });
     vi.mocked(getDb).mockResolvedValue(db as never);
     vi.mocked(buildSeasonGameSetup).mockResolvedValue(mockSetup as never);
 
-    // No managedTeam key in state — LeagueGamePage should derive managedTeamIdx = 1 (home)
-    renderLeagueGamePage("sg-1", {});
+    renderLeagueGamePage("sg-1");
 
     await waitFor(() => {
       expect(screen.getByTestId("game-mock")).toBeInTheDocument();

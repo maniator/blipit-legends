@@ -30,6 +30,8 @@ type Props = {
   pendingLoadSave?: SaveRecord | null;
   /** Called after pendingLoadSave is consumed so GamePage can clear it. */
   onConsumePendingLoad?: () => void;
+  /** Called once the game session is ready to auto-play (GamePage only). */
+  onSessionRestored?: (managedTeam: 0 | 1 | null) => void;
   /** Called when the career stats commit state changes (saving/done). */
   onSavingStateChange?: (saving: boolean) => void;
   /** Called when the game reaches FINAL so AppShell can clear hasActiveSession. */
@@ -44,6 +46,7 @@ const Game: React.FunctionComponent<Props> = ({
   onConsumeGameSetup,
   pendingLoadSave,
   onConsumePendingLoad,
+  onSessionRestored,
   onSavingStateChange,
   onGameOver,
 }) => {
@@ -122,6 +125,7 @@ const Game: React.FunctionComponent<Props> = ({
           onConsumeGameSetup={onConsumeGameSetup}
           pendingLoadSave={pendingLoadSave}
           onConsumePendingLoad={onConsumePendingLoad}
+          onSessionRestored={onSessionRestored}
           onSavingStateChange={onSavingStateChange}
           onGameOver={onGameOver}
         />

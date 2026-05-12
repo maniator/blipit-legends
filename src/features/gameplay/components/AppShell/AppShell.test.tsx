@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes, useOutletContext } from "react-router";
+import { MemoryRouter, Route, Routes, useMatches, useOutletContext } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@storage/db", () => ({
@@ -12,6 +12,14 @@ vi.mock("@storage/db", () => ({
     },
   }),
 }));
+
+vi.mock("react-router", async (importOriginal) => {
+  const original = await importOriginal<typeof import("react-router")>();
+  return {
+    ...original,
+    useMatches: vi.fn().mockReturnValue([]),
+  };
+});
 
 import type { AppShellOutletContext } from "./index";
 
@@ -102,6 +110,7 @@ function renderAppShell(initialPath = "/") {
 describe("AppShell", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useMatches).mockReturnValue([]);
     localStorage.clear();
   });
 
@@ -262,6 +271,9 @@ describe("AppShell", () => {
   });
 
   it("does NOT render the volume bar on the /game route", () => {
+    vi.mocked(useMatches).mockReturnValue([
+      { id: "game", pathname: "/game", params: {}, data: undefined, handle: { isGameRoute: true } },
+    ]);
     renderAppShell("/game");
     expect(screen.queryByTestId("app-volume-bar")).not.toBeInTheDocument();
   });

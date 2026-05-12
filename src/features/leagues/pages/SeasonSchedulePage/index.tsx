@@ -67,8 +67,8 @@ const SeasonSchedulePageInner: React.FunctionComponent = () => {
   }, [season, seasonTeams]);
 
   const handleLaunchGame = React.useCallback(
-    (game: SeasonGameRecord, managedTeam: 0 | 1 | null) => {
-      navigate(`/game/league/${game.id}`, { state: { managedTeam } });
+    (game: SeasonGameRecord, _managedTeam: 0 | 1 | null) => {
+      navigate(`/game/league/${game.id}`);
     },
     [navigate],
   );

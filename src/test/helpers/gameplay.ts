@@ -1,3 +1,4 @@
+import type { GameSessionContextValue } from "@feat/gameplay/context/GameSessionContext";
 import type {
   ContextValue,
   Handedness,
@@ -157,3 +158,15 @@ export const makeReducer = () => {
   };
   return { reducer: reducerFactory(dispatch), logs };
 };
+
+export const makeGameSessionContext = (
+  overrides: Partial<GameSessionContextValue> = {},
+): GameSessionContextValue => ({
+  sessionType: "exhibition",
+  managerModeAllowed: true,
+  disableSave: false,
+  seasonGameId: null,
+  managedTeam: null,
+  sessionReady: true,
+  ...overrides,
+});

@@ -1,45 +1,34 @@
 import * as React from "react";
 
 import Game from "@feat/gameplay/components/Game";
-import {
-  Navigate,
-  useBeforeUnload,
-  useBlocker,
-  useLocation,
-  useNavigate,
-  useOutletContext,
-} from "react-router";
+import { GameSessionProvider } from "@feat/gameplay/context/index";
+import { deriveExhibitionSession } from "@feat/gameplay/utils/gameSessionDerive";
+import { Navigate, useBeforeUnload, useBlocker, useNavigate, useOutletContext } from "react-router";
 
 import type { AppShellOutletContext, ExhibitionGameSetup } from "@storage/types";
 
 import { SavingBanner } from "./styles";
 
-type ExhibitionGameLocationState = {
-  pendingGameSetup?: ExhibitionGameSetup;
-} | null;
-
 const ExhibitionGamePage: React.FunctionComponent = () => {
   const ctx = useOutletContext<AppShellOutletContext>();
-  const location = useLocation();
   const navigate = useNavigate();
 
-  const gameState = location.state as ExhibitionGameLocationState;
-  const pendingSetupRef = React.useRef<ExhibitionGameSetup | null>(
-    gameState?.pendingGameSetup ?? null,
-  );
-
-  const hasClearedStateRef = React.useRef(false);
-
-  React.useEffect(() => {
-    // Clear location state after capturing it so the URL stays clean and a
-    // hard refresh (which would lose the state) correctly redirects to setup.
-    // hasClearedStateRef ensures this runs only once even if location.state
-    // changes again during the session (e.g. from a subsequent replace).
-    if (!hasClearedStateRef.current && location.state) {
-      hasClearedStateRef.current = true;
-      navigate("/game/exhibition", { replace: true, state: null });
+  // Read the pending setup from sessionStorage once on first render.
+  // Using a ref-guarded read so it only fires once, even in Strict Mode.
+  const hasReadStorageRef = React.useRef(false);
+  const pendingSetupRef = React.useRef<ExhibitionGameSetup | null>(null);
+  if (!hasReadStorageRef.current) {
+    hasReadStorageRef.current = true;
+    const setupJson = sessionStorage.getItem("pendingExhibitionSetup");
+    if (setupJson) {
+      sessionStorage.removeItem("pendingExhibitionSetup");
+      try {
+        pendingSetupRef.current = JSON.parse(setupJson) as ExhibitionGameSetup;
+      } catch {
+        pendingSetupRef.current = null;
+      }
     }
-  }, [location.state, navigate]);
+  }
 
   const handleConsumeSetup = React.useCallback(() => {
     pendingSetupRef.current = null;
@@ -79,17 +68,19 @@ const ExhibitionGamePage: React.FunctionComponent = () => {
 
   return (
     <>
-      <Game
-        onBackToHome={ctx.onBackToHome}
-        onNewGame={handleNewGame}
-        onGameSessionStarted={ctx.onGameSessionStarted}
-        pendingGameSetup={pendingSetupRef.current}
-        onConsumeGameSetup={handleConsumeSetup}
-        pendingLoadSave={null}
-        onConsumePendingLoad={handleConsumePendingLoad}
-        onSavingStateChange={setIsCommitting}
-        onGameOver={ctx.onGameOver}
-      />
+      <GameSessionProvider value={deriveExhibitionSession(pendingSetupRef.current)}>
+        <Game
+          onBackToHome={ctx.onBackToHome}
+          onNewGame={handleNewGame}
+          onGameSessionStarted={ctx.onGameSessionStarted}
+          pendingGameSetup={pendingSetupRef.current}
+          onConsumeGameSetup={handleConsumeSetup}
+          pendingLoadSave={null}
+          onConsumePendingLoad={handleConsumePendingLoad}
+          onSavingStateChange={setIsCommitting}
+          onGameOver={ctx.onGameOver}
+        />
+      </GameSessionProvider>
       {blocker.state === "blocked" && (
         <SavingBanner role="status" aria-live="polite" data-testid="saving-stats-banner">
           💾 Saving stats… Navigation will continue automatically.

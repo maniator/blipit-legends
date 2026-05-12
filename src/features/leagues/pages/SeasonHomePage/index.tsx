@@ -86,14 +86,9 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
   }, [seasonId, userSeasonTeamId]);
 
   const handlePlayNextGame = React.useCallback(
-    (asManager: boolean) => {
+    (_asManager: boolean) => {
       if (!nextGameId) return;
-      if (asManager) {
-        // Pass no managedTeam — LeagueGamePage derives it from season.userCustomTeamId.
-        navigate(`/game/league/${nextGameId}`, { state: {} });
-      } else {
-        navigate(`/game/league/${nextGameId}`, { state: { managedTeam: null } });
-      }
+      navigate(`/game/league/${nextGameId}`);
     },
     [nextGameId, navigate],
   );

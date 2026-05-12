@@ -1,6 +1,8 @@
 import * as React from "react";
 
 import Game from "@feat/gameplay/components/Game";
+import type { GameSessionContextValue } from "@feat/gameplay/context/index";
+import { GameSessionProvider } from "@feat/gameplay/context/index";
 import {
   useBeforeUnload,
   useBlocker,
@@ -42,6 +44,31 @@ const GamePage: React.FunctionComponent = () => {
     }
   }, [location.state, navigate]);
 
+  // Session metadata for the game. sessionReady starts false when the session
+  // must auto-resume from RxDB (no pendingLoad) so the scheduler waits until
+  // onSessionRestored flips it to true. If a save is already queued via
+  // pendingLoadRef, sessionReady starts true since the session is known up front.
+  const [sessionCtx, setSessionCtx] = React.useState<GameSessionContextValue>(() => {
+    const load = pendingLoadRef.current;
+    return {
+      sessionType: "exhibition",
+      managerModeAllowed: load != null ? load.setup.managedTeam !== null : true,
+      disableSave: false,
+      seasonGameId: null,
+      managedTeam: load?.setup.managedTeam ?? null,
+      sessionReady: load != null,
+    };
+  });
+
+  const handleSessionRestored = React.useCallback((managedTeam: 0 | 1 | null) => {
+    setSessionCtx((prev) => ({
+      ...prev,
+      managerModeAllowed: managedTeam !== null,
+      managedTeam,
+      sessionReady: true,
+    }));
+  }, []);
+
   const handleConsumeSetup = React.useCallback(() => {
     pendingSetupRef.current = null;
   }, []);
@@ -82,17 +109,20 @@ const GamePage: React.FunctionComponent = () => {
 
   return (
     <>
-      <Game
-        onBackToHome={ctx.onBackToHome}
-        onNewGame={handleNewGame}
-        onGameSessionStarted={ctx.onGameSessionStarted}
-        pendingGameSetup={pendingSetupRef.current}
-        onConsumeGameSetup={handleConsumeSetup}
-        pendingLoadSave={pendingLoadRef.current}
-        onConsumePendingLoad={handleConsumeLoad}
-        onSavingStateChange={setIsCommitting}
-        onGameOver={ctx.onGameOver}
-      />
+      <GameSessionProvider value={sessionCtx}>
+        <Game
+          onBackToHome={ctx.onBackToHome}
+          onNewGame={handleNewGame}
+          onGameSessionStarted={ctx.onGameSessionStarted}
+          pendingGameSetup={pendingSetupRef.current}
+          onConsumeGameSetup={handleConsumeSetup}
+          pendingLoadSave={pendingLoadRef.current}
+          onConsumePendingLoad={handleConsumeLoad}
+          onSessionRestored={handleSessionRestored}
+          onSavingStateChange={setIsCommitting}
+          onGameOver={ctx.onGameOver}
+        />
+      </GameSessionProvider>
       {blocker.state === "blocked" && (
         <SavingBanner role="status" aria-live="polite" data-testid="saving-stats-banner">
           💾 Saving stats… Navigation will continue automatically.
