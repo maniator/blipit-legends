@@ -104,6 +104,19 @@ describe("customTeamToDisplayName", () => {
     const team = makeTeam({ name: "Eagles", city: "Austin", nickname: "Eagles" });
     expect(customTeamToDisplayName(team)).toBe("Austin Eagles");
   });
+
+  it("returns city + name (not city + nickname) when nickname is empty string — post-Generate-Defaults name edit", () => {
+    // After a user clicks Generate Random then edits the name field,
+    // editorReducer clears nickname to "". The saved team has city but nickname=""
+    // so the display must fall back to city + name, not the stale nickname.
+    const team = makeTeam({ name: "Original Name", city: "Atlanta", nickname: "" });
+    expect(customTeamToDisplayName(team)).toBe("Atlanta Original Name");
+  });
+
+  it("returns city + name (not city + nickname) when nickname is undefined", () => {
+    const team = makeTeam({ name: "Original Name", city: "Atlanta", nickname: undefined });
+    expect(customTeamToDisplayName(team)).toBe("Atlanta Original Name");
+  });
 });
 
 describe("customTeamToLineupOrder", () => {

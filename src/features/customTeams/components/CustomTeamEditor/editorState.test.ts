@@ -1,3 +1,5 @@
+import { customTeamToDisplayName } from "@feat/customTeams/adapters/customTeamAdapter";
+import { generateDefaultCustomTeamDraft } from "@feat/customTeams/generation/generateDefaultTeam";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -888,5 +890,66 @@ describe("validateEditorState — player name uniqueness", () => {
       bench: [makePlayer("Bench Player", "1B")],
     };
     expect(validateEditorState(state)).toBe("");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Generate Defaults → edit name → display name pipeline
+//
+// This integration test exercises the full chain that broke in CI:
+//   1. APPLY_DRAFT (Generate Random clicked) — sets city + nickname
+//   2. SET_FIELD name (user types custom name) — must clear nickname
+//   3. customTeamToDisplayName on the saved team — must return city + name
+//
+// If any of the three links break (adapter logic, reducer logic, or the
+// connection between them) this test catches it before E2E runs.
+// ---------------------------------------------------------------------------
+describe("Generate Defaults + edit name — display name round-trip (shift-left regression)", () => {
+  it("displays user-typed name (not generated nickname) after clicking Generate Random then editing the name", () => {
+    const draft = generateDefaultCustomTeamDraft(42);
+
+    // Step 1: Apply the generated draft (city + nickname set by Generate Random)
+    let state = editorReducer(initEditorState(), { type: "APPLY_DRAFT", draft });
+    expect(state.nickname).toBe(draft.nickname);
+    expect(state.city).toBe(draft.city);
+
+    // Step 2: User edits the name field — nickname must be cleared
+    state = editorReducer(state, { type: "SET_FIELD", field: "name", value: "Original Name" });
+    expect(state.name).toBe("Original Name");
+    expect(state.nickname).toBe("");
+
+    // Step 3: Simulate saving — the stored team has city but empty nickname
+    // customTeamToDisplayName must return "City Original Name", NOT "City Nickname"
+    const savedTeamShape = {
+      name: state.name,
+      city: state.city,
+      nickname: state.nickname || undefined,
+      roster: { lineup: [], bench: [], pitchers: [] },
+    };
+    const displayName = customTeamToDisplayName(
+      savedTeamShape as Parameters<typeof customTeamToDisplayName>[0],
+    );
+    expect(displayName).toBe(`${state.city} Original Name`);
+    expect(displayName).toContain("Original Name");
+  });
+
+  it("preserves generated nickname (city + nickname) when user does NOT edit the name", () => {
+    const draft = generateDefaultCustomTeamDraft(99);
+    const state = editorReducer(initEditorState(), { type: "APPLY_DRAFT", draft });
+
+    // No SET_FIELD — nickname stays as generated
+    expect(state.nickname).toBe(draft.nickname);
+
+    const savedTeamShape = {
+      name: state.name,
+      city: state.city,
+      nickname: state.nickname || undefined,
+      roster: { lineup: [], bench: [], pitchers: [] },
+    };
+    const displayName = customTeamToDisplayName(
+      savedTeamShape as Parameters<typeof customTeamToDisplayName>[0],
+    );
+    // Autogen draft: name === nickname, both set — display is city + nickname
+    expect(displayName).toBe(`${draft.city} ${draft.nickname}`);
   });
 });
