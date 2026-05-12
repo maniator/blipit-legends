@@ -69,12 +69,15 @@ This is not two theming systems — it is CSS doing what CSS uniquely does (pre-
 
 ```
 index.html
-└─ <head> inline script (synchronous, ~5 lines)
-     Reads localStorage("themeMode") or "dark"
-     Sets document.documentElement.data-theme="dark|light"
+└─ <html data-theme="dark">              ← static default closes the parse→script gap
+└─ <head>
+     ├─ inline script (FIRST element — before Vite-injected <link rel="stylesheet">)
+     │    Reads localStorage("themeMode") or "dark"
+     │    Sets document.documentElement.data-theme="dark|light"
+     └─ … rest of head
 
 src/index.scss
-└─ :root[data-theme="dark"] { --color-bg: #07111e; --color-text: #fff; ... }
+└─ :root { --color-bg: #07111e; --color-text: #fff; ... }  ← bare :root = dark defaults
 └─ :root[data-theme="light"] { --color-bg: #f5f0e8; --color-text: #1a2340; ... }
 └─ body { background: var(--color-bg); color: var(--color-text); }
 
@@ -91,6 +94,8 @@ src/shared/theme/
 ├─ light.ts    lightTheme object (new — Sally's token spec)
 └─ cssVars.ts  generateCssVars(theme) → CSSProperties for :root (4–6 vars only)
 ```
+
+> **CSS var strategy — dark as baseline:** Define the 4–6 root-level vars on bare `:root {}` using dark values, then override only in `:root[data-theme="light"]`. This means dark mode requires no attribute at all — any gap (pre-script execution, blocked `localStorage`, cached HTML shell) automatically renders dark. Light mode requires the explicit `data-theme="light"` attribute. This is strictly safer than defining both attribute-scoped variants (`:root[data-theme="dark"]` + `:root[data-theme="light"]`), because with two attribute variants the vars are empty until the attribute is set, which produces a white/transparent flash on every cold load.
 
 ### Token Structure
 
@@ -207,16 +212,17 @@ Adding a persistent app header/nav bar solely to house a theme toggle is out of 
 
 ### Toggle Control Design
 
-| Concern         | Requirement                                                                                             |
-| --------------- | ------------------------------------------------------------------------------------------------------- |
-| v1 control type | Two-state: Light / Dark                                                                                 |
-| v2 upgrade      | Add System as third state                                                                               |
-| Accessible name | `aria-label="Switch to light mode"` or `"Switch to dark mode"` (reflects the _result_ of the click)     |
-| Keyboard        | Toggle on Space/Enter; tab-focusable                                                                    |
-| Focus ring      | Visible in both themes — 2px solid, 2px offset minimum (WCAG 2.2 Focus Appearance)                      |
-| Touch target    | Minimum 44×44px (WCAG 2.5.5 Target Size)                                                                |
-| Motion          | Theme transition animation (if any) must be wrapped in `@media (prefers-reduced-motion: no-preference)` |
-| Icon            | Sun (`☀` / `🌞`) for Light, Moon (`🌙`) for Dark — icon-only button must have accessible label          |
+| Concern         | Requirement                                                                                                                                                                       |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| v1 control type | Two-state: Light / Dark                                                                                                                                                           |
+| v2 upgrade      | Add System as third state                                                                                                                                                         |
+| Accessible name | `aria-label="Switch to light mode"` or `"Switch to dark mode"` (reflects the _result_ of the click)                                                                               |
+| Keyboard        | Toggle on Space/Enter; tab-focusable                                                                                                                                              |
+| Focus ring      | Visible in both themes — 2px solid, 2px offset minimum (WCAG 2.2 Focus Appearance)                                                                                                |
+| Touch target    | Minimum 44×44px (WCAG 2.5.5 Target Size)                                                                                                                                          |
+| Motion          | Theme transition animation (if any) must be wrapped in `@media (prefers-reduced-motion: no-preference)`                                                                           |
+| Icon            | Sun (`☀` / `🌞`) for Light, Moon (`🌙`) for Dark — icon-only button must have accessible label                                                                                    |
+| PWA theme-color | `useThemePreference` must update `<meta name="theme-color">` dynamically on toggle (dark: `#0F1E34`, light: `#F5F0E8`) — otherwise mobile browser chrome stays dark in light mode |
 
 ---
 
@@ -238,23 +244,66 @@ Adding a persistent app header/nav bar solely to house a theme toggle is out of 
 
 The inline script in `src/index.html` is the canonical solution. It is synchronous, tiny, and architecturally justified:
 
+**Three-layer zero-flash guarantee** (all three must be present—each eliminates a different failure mode):
+
+**Layer 1 — Static default attribute on `<html>`** (`index.html`):
+
 ```html
-<head>
-  <script>
-    (function () {
-      try {
-        var mode = JSON.parse(localStorage.getItem("themeMode"));
-        document.documentElement.setAttribute("data-theme", mode === "light" ? "light" : "dark");
-      } catch (e) {}
-    })();
-  </script>
-  <!-- rest of head -->
-</head>
+<html lang="en" data-theme="dark"></html>
 ```
+
+This closes the micro-window between HTML parse start and inline script execution. Even before any JavaScript runs, the dark CSS rules apply.
+
+**Layer 2 — Inline script as first element in `<head>`** (`index.html`):
+
+```html
+<html lang="en" data-theme="dark">
+  <head>
+    <script>
+      (function () {
+        try {
+          var mode = JSON.parse(localStorage.getItem("themeMode"));
+          document.documentElement.setAttribute("data-theme", mode === "light" ? "light" : "dark");
+        } catch (e) {}
+      })();
+    </script>
+    <!-- All other <meta>, <link>, <script> tags follow -->
+  </head>
+</html>
+```
+
+The script **must be the first element in `<head>`**, before any `<link rel="stylesheet">` tags (including those Vite injects at build time). If a CSS link is parsed before this script runs, the browser may paint one frame with the wrong theme as CSS evaluates before the attribute is set.
 
 The try/catch handles both blocked `localStorage` environments (private browsing, strict settings) and any `JSON.parse` failure on corrupt data. The fallback is dark mode (the current experience).
 
 The localStorage key must exactly match what `useLocalStorage("themeMode", "dark")` writes. The `usehooks-ts` library stores values as **JSON-encoded strings** — the raw stored value is `'"light"'` or `'"dark"'` (a JSON string with inner quotes). The `JSON.parse` call unwraps this so the comparison `=== "light"` works correctly. **Do not** compare `localStorage.getItem(...)` directly to `"light"` — it will always evaluate as falsy and fall back to dark mode.
+
+**Layer 3 — CSS vars defined on bare `:root {}` with dark defaults** (`src/index.scss`):
+
+```scss
+/* Dark values as unconditional defaults */
+:root {
+  --color-bg: #07111e;
+  --color-text: #fff;
+  --color-surface: #0f1e34;
+  /* … all FOWTM-critical vars … */
+}
+
+/* Light mode overrides the defaults */
+:root[data-theme="light"] {
+  --color-bg: #f5f0e8;
+  --color-text: #1a2340;
+  --color-surface: #ffffff;
+}
+
+/* Do NOT define a :root[data-theme="dark"] block — dark is the baseline */
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+```
+
+If the vars were defined only inside `[data-theme]`-scoped rules, they would be empty during any gap where the attribute is absent (Layer 1 or 2 failure, blocked script), causing `var(--color-bg)` to resolve to `initial` (transparent/white) — a white flash on dark-preference loads. Bare `:root {}` defaults ensure dark mode renders correctly regardless of attribute state.
 
 ---
 
@@ -364,15 +413,16 @@ Baseline generation for `theme-light` must be run inside the `mcr.microsoft.com/
 - Create `src/shared/theme/light.ts` as stub (placeholder values) — enough to satisfy the interface
 - Update `src/index.tsx` to use `useThemePreference` hook, pass `resolvedTheme` to ThemeProvider
 - Create `src/shared/hooks/useThemePreference.ts` with `useLocalStorage("themeMode", "dark")`
-- Migrate `src/index.scss` globals to CSS custom properties (body background, base text color)
-- Add blocking inline script to `src/index.html` for FOWTM prevention
+- Migrate `src/index.scss` globals to CSS custom properties (body background, base text color) using the **bare `:root {}` dark defaults pattern** (not attribute-scoped rules — see §5 FOWTM Layer 3)
+- Add FOWTM prevention to `src/index.html`: (a) `data-theme="dark"` attribute on `<html>`, (b) inline script as the **first element in `<head>`** before any `<link rel="stylesheet">`
 - Write `useThemePreference.test.ts`, extend `theme.contrast.test.ts`, add `theme.parity.test.ts`
 
 **Acceptance Criteria:**
 
 - All existing E2E visual snapshots pass (dark theme renders identically to today)
 - `yarn build` and `yarn test` pass with no regressions
-- No flash of wrong theme on cold load in dark mode
+- No flash of wrong theme on cold load with dark preference (verified manually and via E2E cold-start test)
+- No white flash on cold load when script is blocked (bare `:root {}` fallback ensures dark colors appear regardless)
 - TypeScript enforces completeness — light/dark objects must implement `AppTheme`
 
 **Explicitly Not In Stage A:**
@@ -385,7 +435,7 @@ Baseline generation for `theme-light` must be run inside the `mcr.microsoft.com/
 **Files Likely Touched:**
 
 ```
-src/index.html                        (+ inline script)
+src/index.html                        (+ data-theme="dark" on <html>, inline script first in <head>)
 src/index.scss                        (globals → CSS vars)
 src/index.tsx                         (ThemeProvider wiring)
 src/shared/theme.ts                   (refactor/split)
@@ -403,6 +453,8 @@ src/shared/theme.parity.test.ts       (new)
 - `dark.ts` value copy must be exact — any accidental token rename breaks styled-components access
 - TypeScript compile-time errors if `AppTheme` shape doesn't match `styled.d.ts`
 - SCSS global migration could affect snapshot layout
+- Inline script placement: if Vite's HTML plugin reorders head elements at build time, move the script outside the plugin's injection zone or use a Vite HTML plugin hook to guarantee first position
+- Verify `data-theme="dark"` static attribute does not conflict with any existing test or E2E selector
 
 ---
 
@@ -442,6 +494,7 @@ src/shared/theme.parity.test.ts       (new)
 - Implement theme toggle in GameControls settings cluster
 - Wire to `useThemePreference` hook
 - Both toggles sync to the same localStorage key
+- `useThemePreference` must update `<meta name="theme-color">` dynamically on toggle (dark: `#0F1E34`, light: `#F5F0E8`) so mobile browser chrome reflects the active theme
 - Verify FOWTM prevention works in both E2E environments
 - Write integration test: toggle in HomeScreen, reload, verify theme persists
 
@@ -451,6 +504,7 @@ src/shared/theme.parity.test.ts       (new)
 - Preference persists across page reload and browser/app relaunch (cross-reinstall persistence is out of scope — PWA uninstall typically clears `localStorage`)
 - WCAG 2.2 AA accessible label (`aria-label` reflects result of click)
 - No FOWTM on load — verified in CI
+- PWA `theme-color` meta updates correctly on toggle (mobile browser chrome matches active theme)
 - All existing dark-mode snapshots still pass
 - `yarn lint`, `yarn typecheck` pass
 

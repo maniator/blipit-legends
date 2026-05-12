@@ -16,8 +16,8 @@
 - [ ] Create `src/shared/hooks/useThemePreference.ts` using `useLocalStorage("themeMode", "dark")`
 - [ ] Update `src/index.tsx` — pass `resolvedTheme` from hook to `ThemeProvider`
 - [ ] Migrate `src/index.scss` body/`*` globals to CSS custom properties (`var(--color-bg)`, `var(--color-text)`)
-- [ ] Add CSS var blocks `[data-theme="dark"]` / `[data-theme="light"]` to `index.scss`
-- [ ] Add blocking inline script to `<head>` of `src/index.html` (FOWTM prevention)
+- [ ] Add CSS vars to `index.scss`: bare `:root {}` block with **dark values as defaults** + `:root[data-theme="light"]` overrides (no `[data-theme="dark"]` block — dark is the baseline)
+- [ ] Add FOWTM prevention to `src/index.html`: (a) `data-theme="dark"` attribute on `<html>`, (b) inline script as **first element in `<head>`** before any other tags
 - [ ] Update `src/styled.d.ts` if `AppTheme` shape changes
 - [ ] Write `src/shared/hooks/useThemePreference.test.ts`
 - [ ] Extend `src/shared/theme.contrast.test.ts` to cover both themes
@@ -56,8 +56,9 @@
 - [ ] Keyboard: tab-focusable, Space/Enter activates
 - [ ] Focus ring visible in both themes (2px solid, 2px offset)
 - [ ] Theme transition animation wrapped in `@media (prefers-reduced-motion: no-preference)`
+- [ ] `useThemePreference` updates `<meta name="theme-color">` dynamically (dark: `#0F1E34`, light: `#F5F0E8`)
 - [ ] Write integration test: toggle → reload → verify persistence
-- [ ] **Gate: all existing dark-mode snapshots still pass; toggle accessible; `yarn lint` and `yarn typecheck` pass**
+- [ ] **Gate: all existing dark-mode snapshots still pass; toggle accessible; PWA `theme-color` correct; `yarn lint` and `yarn typecheck` pass**
 
 ---
 
