@@ -145,7 +145,7 @@ const GameInner: React.FunctionComponent<Props> = ({
   const [showStealClampToast, setShowStealClampToast] = React.useState(false);
 
   // Read session metadata from context (set by ExhibitionGamePage / LeagueGamePage).
-  const { disableSave, seasonGameId } = useGameSessionContext();
+  const { disableSave } = useGameSessionContext();
 
   // Fallback buffer when rendered without the Game wrapper (e.g. in tests).
   const localBufferRef = React.useRef<GameAction[]>([]);
