@@ -166,4 +166,54 @@ describe("ManagerModeControls", () => {
     );
     expect(screen.queryByRole("button", { name: /substitution/i })).toBeNull();
   });
+
+  describe("lockManagedTeam", () => {
+    it("shows team name as read-only text (no selector) when lockManagedTeam is true", () => {
+      render(
+        <ManagerModeControls
+          {...defaultProps}
+          managerMode={true}
+          lockManagedTeam={true}
+          managedTeam={0}
+        />,
+      );
+      // Selector should be hidden
+      expect(screen.queryByTestId("manager-mode-team-select")).toBeNull();
+      // Read-only display should show the team name
+      expect(screen.getByTestId("managed-team-display")).toBeTruthy();
+      expect(screen.getByTestId("managed-team-display").textContent).toBe("Yankees");
+    });
+
+    it("marks the locked team display as aria-disabled — regression for missing a11y attribute", () => {
+      render(
+        <ManagerModeControls
+          {...defaultProps}
+          managerMode={true}
+          lockManagedTeam={true}
+          managedTeam={1}
+        />,
+      );
+      const display = screen.getByTestId("managed-team-display");
+      expect(display.getAttribute("aria-disabled")).toBe("true");
+    });
+
+    it("provides an aria-label describing the locked team", () => {
+      render(
+        <ManagerModeControls
+          {...defaultProps}
+          managerMode={true}
+          lockManagedTeam={true}
+          managedTeam={0}
+        />,
+      );
+      const display = screen.getByTestId("managed-team-display");
+      expect(display.getAttribute("aria-label")).toMatch(/yankees/i);
+    });
+
+    it("shows the team selector (not locked display) when lockManagedTeam is false", () => {
+      render(<ManagerModeControls {...defaultProps} managerMode={true} lockManagedTeam={false} />);
+      expect(screen.getByTestId("manager-mode-team-select")).toBeTruthy();
+      expect(screen.queryByTestId("managed-team-display")).toBeNull();
+    });
+  });
 });

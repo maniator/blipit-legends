@@ -12,9 +12,16 @@ export function customTeamToGameId(team: TeamWithRoster): string {
 }
 
 /**
- * Returns the display name for a custom team (city + name, or just name).
+ * Returns the display name for a custom team.
+ *
+ * For autogen teams the `name` field already stores the full display name
+ * ("Galena Jaguars") and `nickname` is set separately.  Prepending `city`
+ * again would produce "Galena Galena Jaguars", so when both `city` and
+ * `nickname` are present we construct the label from those two fields instead.
+ * When only `city` is available we fall back to "city + name".
  */
 export function customTeamToDisplayName(team: TeamWithRoster): string {
+  if (team.city && team.nickname) return `${team.city} ${team.nickname}`;
   if (team.city) return `${team.city} ${team.name}`;
   return team.name;
 }

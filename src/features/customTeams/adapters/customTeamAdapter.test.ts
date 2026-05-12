@@ -81,12 +81,28 @@ describe("customTeamToGameId", () => {
 });
 
 describe("customTeamToDisplayName", () => {
-  it("returns city + name when city is set", () => {
+  it("returns city + name when city is set but nickname is absent", () => {
     expect(customTeamToDisplayName(makeTeam())).toBe("Austin Eagles");
   });
 
   it("returns just name when city is absent", () => {
     expect(customTeamToDisplayName(makeTeam({ city: undefined }))).toBe("Eagles");
+  });
+
+  it("returns city + nickname (not city + name) when both city and nickname are set — regression for autogen double-city bug", () => {
+    // Autogen teams store `name` as the full display name ("Galena Jaguars") AND
+    // set `city` separately ("Galena"). The old code returned "Galena Galena Jaguars".
+    const autogenTeam = makeTeam({
+      name: "Galena Jaguars",
+      city: "Galena",
+      nickname: "Jaguars",
+    });
+    expect(customTeamToDisplayName(autogenTeam)).toBe("Galena Jaguars");
+  });
+
+  it("returns city + nickname for a user-created team that has all three fields", () => {
+    const team = makeTeam({ name: "Eagles", city: "Austin", nickname: "Eagles" });
+    expect(customTeamToDisplayName(team)).toBe("Austin Eagles");
   });
 });
 
