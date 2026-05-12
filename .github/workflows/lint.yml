@@ -56,9 +56,15 @@ jobs:
           set -euo pipefail
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           EXCEPTIONS_FILE=".github/empty-commit-exceptions.txt"
+          # Prefer the base-branch version of the exceptions file to prevent PR authors
+          # from self-allowlisting by adding their own SHA in the same PR.
+          # Fall back to the working-tree copy only when the file is being introduced
+          # for the first time (bootstrap case — file not yet in base).
+          BASE_EXCEPTIONS=$(git show "${BASE_SHA}:${EXCEPTIONS_FILE}" 2>/dev/null \
+            || cat "$EXCEPTIONS_FILE" 2>/dev/null || true)
           FOUND=""
           for sha in $(git log "${BASE_SHA}..HEAD" --no-merges --format="%H"); do
-            if [ -f "$EXCEPTIONS_FILE" ] && grep -qF "$sha" "$EXCEPTIONS_FILE"; then
+            if echo "$BASE_EXCEPTIONS" | grep -qxF "$sha"; then
               continue
             fi
             if [ -z "$(git diff-tree --no-commit-id -r "$sha")" ]; then

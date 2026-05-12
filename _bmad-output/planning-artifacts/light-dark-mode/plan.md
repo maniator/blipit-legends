@@ -71,7 +71,7 @@ This is not two theming systems — it is CSS doing what CSS uniquely does (pre-
 index.html
 └─ <html data-theme="dark">              ← static default closes the parse→script gap
 └─ <head>
-     ├─ inline script (FIRST element — before Vite-injected <link rel="stylesheet">)
+     ├─ inline script (before any <link rel="stylesheet"> / <style> tags)
      │    Reads localStorage("themeMode") or "dark"
      │    Sets document.documentElement.data-theme="dark|light"
      └─ … rest of head
@@ -254,7 +254,7 @@ The inline script in `src/index.html` is the canonical solution. It is synchrono
 
 This closes the micro-window between HTML parse start and inline script execution. Even before any JavaScript runs, the dark CSS rules apply.
 
-**Layer 2 — Inline script as first element in `<head>`** (`index.html`):
+**Layer 2 — Inline script before any stylesheet tags** (`index.html`):
 
 ```html
 <html lang="en" data-theme="dark">
@@ -432,7 +432,7 @@ Baseline generation for `theme-light` must be run inside the `mcr.microsoft.com/
 - Update `src/index.tsx` to use `useThemePreference` hook, pass `resolvedTheme` to ThemeProvider
 - Create `src/shared/hooks/useThemePreference.ts` with `useLocalStorage("themeMode", "dark")`
 - Migrate `src/index.scss` globals to CSS custom properties (body background, base text color) using the **bare `:root {}` dark defaults pattern** (not attribute-scoped rules — see §5 FOWTM Layer 3)
-- Add FOWTM prevention to `src/index.html`: (a) `data-theme="dark"` attribute on `<html>`, (b) inline script as the **first element in `<head>`** before any `<link rel="stylesheet">`
+- Add FOWTM prevention to `src/index.html`: (a) `data-theme="dark"` attribute on `<html>`, (b) inline script placed **before any `<link rel="stylesheet">` / `<style>` tags** (meta tags may precede it)
 - Write `useThemePreference.test.ts`, extend `theme.contrast.test.ts`, add `theme.parity.test.ts`
 
 **Acceptance Criteria:**
