@@ -3,9 +3,9 @@ import * as React from "react";
 import VolumeControls from "@feat/gameplay/components/GameControls/VolumeControls";
 import { useHomeScreenMusic } from "@feat/gameplay/hooks/useHomeScreenMusic";
 import { useVolumeControls } from "@feat/gameplay/hooks/useVolumeControls";
-import { Outlet, useLocation, useMatches, useNavigate } from "react-router";
+import { useAppSession } from "@shared/context/AppSessionContext";
+import { Outlet, useMatches, useNavigate } from "react-router";
 
-import { getDb } from "@storage/db";
 import type { AppShellOutletContext, ExhibitionGameSetup, SaveRecord } from "@storage/types";
 
 import { AppVolumeBar } from "./styles";
@@ -14,13 +14,8 @@ export type { AppShellOutletContext, ExhibitionGameSetup, GameLocationState } fr
 
 const AppShell: React.FunctionComponent = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const matches = useMatches();
-
-  // True only once a real game session has been started or loaded — gates Resume.
-  const [hasActiveSession, setHasActiveSession] = React.useState(false);
-  // True once at least one completed game has been persisted or a game just ended — gates Career Stats.
-  const [hasCareerStats, setHasCareerStats] = React.useState(false);
+  const { handleGameSessionStarted, handleGameOver } = useAppSession();
 
   const isGameRoute = matches.some(
     (m) => (m.handle as { isGameRoute?: boolean } | null)?.isGameRoute === true,
@@ -29,43 +24,6 @@ const AppShell: React.FunctionComponent = () => {
   const volume = useVolumeControls();
   // Pass alertVolume = 0 on /game to stop music (game has its own audio: fanfare, chimes, stretch).
   useHomeScreenMusic(isGameRoute ? 0 : volume.alertVolume);
-
-  const handleGameSessionStarted = React.useCallback(() => {
-    setHasActiveSession(true);
-  }, []);
-
-  const handleGameOver = React.useCallback(() => {
-    setHasActiveSession(false);
-    // A finished game writes career history; reveal Career Stats immediately.
-    setHasCareerStats(true);
-  }, []);
-
-  // Only probe the DB when the user is on the home route to avoid initializing
-  // RxDB on every deep-link (e.g. /game, /help).
-  React.useEffect(() => {
-    if (location.pathname !== "/") return;
-
-    let cancelled = false;
-
-    async function loadCareerStatsAvailability() {
-      try {
-        const db = await getDb();
-        const anyCompletedGame = await db.completedGames.findOne().exec();
-        if (!cancelled) {
-          // Use functional update so a true set by handleGameOver is never cleared.
-          setHasCareerStats((prev) => prev || Boolean(anyCompletedGame));
-        }
-      } catch {
-        // On DB error, leave hasCareerStats unchanged (don't hide it if it was already true).
-      }
-    }
-
-    void loadCareerStatsAvailability();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [location.pathname]);
 
   const handleResumeCurrent = React.useCallback(() => {
     navigate("/game");
@@ -129,9 +87,7 @@ const AppShell: React.FunctionComponent = () => {
       onHelp: handleHelp,
       onContact: handleContact,
       onCareerStats: handleCareerStats,
-      hasCareerStats,
       onBackToHome: handleBackToHome,
-      hasActiveSession,
       onGameOver: handleGameOver,
     }),
     [
@@ -145,9 +101,7 @@ const AppShell: React.FunctionComponent = () => {
       handleHelp,
       handleContact,
       handleCareerStats,
-      hasCareerStats,
       handleBackToHome,
-      hasActiveSession,
       handleGameOver,
     ],
   );
