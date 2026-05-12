@@ -69,7 +69,11 @@ const AppShell: React.FunctionComponent = () => {
   /** Called from /exhibition/new — stores the setup in sessionStorage and navigates to /game/exhibition. */
   const handleStartFromExhibition = React.useCallback(
     (setup: ExhibitionGameSetup) => {
-      sessionStorage.setItem("pendingExhibitionSetup", JSON.stringify(setup));
+      try {
+        sessionStorage.setItem("pendingExhibitionSetup", JSON.stringify(setup));
+      } catch {
+        // Storage quota exceeded — navigate anyway; ExhibitionGamePage will redirect to setup.
+      }
       navigate("/game/exhibition");
     },
     [navigate],

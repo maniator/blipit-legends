@@ -25,7 +25,7 @@ export const useSeasonGameSync = (): void => {
   const { seasonGameId } = useGameSessionContext();
 
   const committedRef = React.useRef(false);
-  const prevSeasonGameIdRef = React.useRef<string | null | undefined>(undefined);
+  const prevSeasonGameIdRef = React.useRef<string | null>(null);
 
   // Reset committed flag whenever the season game ID changes (new game session).
   React.useEffect(() => {
@@ -34,7 +34,7 @@ export const useSeasonGameSync = (): void => {
       prevSeasonGameIdRef.current = current;
       committedRef.current = false;
     }
-  });
+  }, [seasonGameId]);
 
   React.useEffect(() => {
     if (!gameOver) return;
