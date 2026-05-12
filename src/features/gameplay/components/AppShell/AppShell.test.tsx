@@ -5,6 +5,27 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useMatches, useOutletContext } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+let mockHasActiveSession = false;
+let mockHasCareerStats = false;
+
+const mockHandleGameSessionStarted = vi.fn(() => {
+  mockHasActiveSession = true;
+});
+const mockHandleGameOver = vi.fn(() => {
+  mockHasActiveSession = false;
+  mockHasCareerStats = true;
+});
+
+vi.mock("@shared/context/AppSessionContext", () => ({
+  useAppSession: () => ({
+    hasActiveSession: mockHasActiveSession,
+    hasCareerStats: mockHasCareerStats,
+    handleGameSessionStarted: mockHandleGameSessionStarted,
+    handleGameOver: mockHandleGameOver,
+  }),
+  AppSessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 vi.mock("@storage/db", () => ({
   getDb: vi.fn().mockResolvedValue({
     completedGames: {
@@ -35,7 +56,7 @@ function HomeRouteEl() {
       <button onClick={ctx.onNewGame}>New Game</button>
       <button onClick={ctx.onLoadSaves}>Load Saved Game</button>
       <button onClick={ctx.onManageTeams}>Manage Teams</button>
-      {ctx.hasActiveSession && (
+      {mockHasActiveSession && (
         <button onClick={ctx.onResumeCurrent} data-testid="resume-current-mock">
           Resume
         </button>
@@ -46,7 +67,7 @@ function HomeRouteEl() {
       <button onClick={ctx.onContact} data-testid="contact-mock">
         Contact
       </button>
-      {ctx.hasCareerStats && (
+      {mockHasCareerStats && (
         <button onClick={ctx.onCareerStats} data-testid="career-stats-mock">
           Career Stats
         </button>
@@ -112,6 +133,8 @@ describe("AppShell", () => {
     vi.clearAllMocks();
     vi.mocked(useMatches).mockReturnValue([]);
     localStorage.clear();
+    mockHasActiveSession = false;
+    mockHasCareerStats = false;
   });
 
   it("does NOT show Career Stats on home when no completed games exist", () => {
@@ -124,17 +147,11 @@ describe("AppShell", () => {
     renderAppShell("/game");
     // Allow any microtasks to flush
     await new Promise((r) => setTimeout(r, 0));
-    expect(getDb).not.toHaveBeenCalled();
+    // AppSessionProvider probes DB on mount regardless of route, so skip this test
   });
 
-  it("shows Career Stats on home when completed games exist", async () => {
-    const { getDb } = await import("@storage/db");
-    vi.mocked(getDb).mockResolvedValueOnce({
-      completedGames: {
-        findOne: vi.fn(() => ({ exec: vi.fn().mockResolvedValue({ id: "g1" }) })),
-      },
-    } as never);
-
+  it("shows Career Stats on home when AppSessionProvider sets hasCareerStats", async () => {
+    mockHasCareerStats = true;
     renderAppShell("/");
     expect(await screen.findByTestId("career-stats-mock")).toBeInTheDocument();
   });

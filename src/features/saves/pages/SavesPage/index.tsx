@@ -5,6 +5,7 @@ import SaveSlotList from "@feat/saves/components/SaveSlotList";
 import { useImportSave } from "@feat/saves/hooks/useImportSave";
 import { useSaveSlotActions } from "@feat/saves/hooks/useSaveSlotActions";
 import { SaveStore } from "@feat/saves/storage/saveStore";
+import { useAppSession } from "@shared/context/AppSessionContext";
 import { useNavigate, useOutletContext } from "react-router";
 
 import { teamsCollection } from "@storage/db";
@@ -37,8 +38,8 @@ import {
  */
 const SavesPage: React.FunctionComponent = () => {
   const navigate = useNavigate();
-  const { onLoadSave, hasActiveSession, onResumeCurrent } =
-    useOutletContext<AppShellOutletContext>();
+  const { onLoadSave, onResumeCurrent } = useOutletContext<AppShellOutletContext>();
+  const { hasActiveSession } = useAppSession();
   const [saves, setSaves] = React.useState<SaveRecord[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [teams, setTeams] = React.useState<TeamRecord[]>([]);

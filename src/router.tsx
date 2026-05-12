@@ -7,6 +7,7 @@ import HomeScreen from "@feat/gameplay/components/HomeScreen";
 import RootLayout from "@feat/gameplay/components/RootLayout";
 import { resetStaleInProgressGames } from "@feat/league/sim/resetStaleGames";
 import { getTotalGameDays } from "@feat/leagues/utils/seasonPresets";
+import { useAppSession } from "@shared/context/AppSessionContext";
 import { appLog } from "@shared/utils/logger";
 import {
   createBrowserRouter,
@@ -45,6 +46,7 @@ function LazyRoute({ children }: { children: React.ReactNode }) {
 /** Route element for `/` — reads navigation callbacks from AppShell outlet context. */
 function HomeRoute() {
   const ctx = useOutletContext<AppShellOutletContext>();
+  const { hasActiveSession, hasCareerStats } = useAppSession();
   const navigate = useNavigate();
 
   const [activeSeasonId, setActiveSeasonId] = React.useState<string | null>(null);
@@ -76,10 +78,10 @@ function HomeRoute() {
       onNewGame={ctx.onNewGame}
       onLoadSaves={ctx.onLoadSaves}
       onManageTeams={ctx.onManageTeams}
-      onResumeCurrent={ctx.hasActiveSession ? ctx.onResumeCurrent : undefined}
+      onResumeCurrent={hasActiveSession ? ctx.onResumeCurrent : undefined}
       onHelp={ctx.onHelp}
       onContact={ctx.onContact}
-      onCareerStats={ctx.hasCareerStats ? ctx.onCareerStats : undefined}
+      onCareerStats={hasCareerStats ? ctx.onCareerStats : undefined}
       activeSeasonId={activeSeasonId}
       activeSeasonLabel={activeSeasonLabel}
       onContinueSeason={
@@ -93,7 +95,8 @@ function HomeRoute() {
 /** Route element for `/teams`, `/teams/new`, `/teams/:teamId/edit`. */
 function TeamsRoute() {
   const ctx = useOutletContext<AppShellOutletContext>();
-  return <ManageTeamsScreen onBack={ctx.onBackToHome} hasActiveGame={ctx.hasActiveSession} />;
+  const { hasActiveSession } = useAppSession();
+  return <ManageTeamsScreen onBack={ctx.onBackToHome} hasActiveGame={hasActiveSession} />;
 }
 
 /**
