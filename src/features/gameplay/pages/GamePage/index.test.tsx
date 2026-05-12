@@ -47,6 +47,15 @@ vi.mock("@feat/gameplay/components/Game", () => ({
   ),
 }));
 
+// Mock the GamePageWrapper component
+vi.mock("@feat/gameplay/components/GamePageWrapper", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@feat/gameplay/components/GamePageWrapper")>();
+  // Return the actual component so it uses the mocked useBlocker/useBeforeUnload
+  return {
+    default: actual.default,
+  };
+});
+
 import type { AppShellOutletContext } from "@feat/gameplay/components/AppShell";
 
 import GamePage from "./index";

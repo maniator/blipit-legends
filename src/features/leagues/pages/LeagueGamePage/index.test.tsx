@@ -8,6 +8,14 @@ vi.mock("@feat/gameplay/components/Game", () => ({
   default: () => <div data-testid="game-mock" />,
 }));
 
+vi.mock("@feat/gameplay/components/GamePageWrapper", () => ({
+  default: ({
+    children,
+  }: {
+    children: (onSavingStateChange: (saving: boolean) => void) => React.ReactNode;
+  }) => <>{children(() => {})}</>,
+}));
+
 vi.mock("@feat/gameplay/components/AppLoadingFallback", () => ({
   default: ({ label }: { label: string }) => <div data-testid="loading-fallback">{label}</div>,
 }));
