@@ -9,6 +9,7 @@ import {
   FieldGroup,
   FieldHint,
   FieldLabel,
+  HintText,
   RadioOption,
   RadioRow,
   RangeInput,
@@ -62,9 +63,7 @@ export function Step2({ state, dispatch, customTeams, errors }: Step2Props): Rea
               </FieldHint>
             )}
             {customTeams.length === 0 ? (
-              <p style={{ margin: 0, fontSize: "12px", opacity: 0.7 }}>
-                No custom teams found. Switch to All autogen.
-              </p>
+              <HintText>No custom teams found. Switch to All autogen.</HintText>
             ) : (
               customTeams.map((team) => (
                 <CheckboxRow key={team.id}>
