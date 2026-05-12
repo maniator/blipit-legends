@@ -63,6 +63,10 @@ export const AppSessionProvider: React.FunctionComponent<AppSessionProviderProps
   const handleGameOver = React.useCallback(() => {
     setHasActiveSession(false);
     setHasCareerStats(true);
+    // Lock the probe so the next Home mount doesn't issue an unnecessary RxDB
+    // query — a game just ended, so career stats are definitely available.
+    probeFiredRef.current = true;
+    probeInFlightRef.current = false;
   }, []);
 
   const requestCareerStatsProbe = React.useCallback(() => {

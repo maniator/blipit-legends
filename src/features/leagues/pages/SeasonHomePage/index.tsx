@@ -265,7 +265,10 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
             maxLength={60}
             aria-label="Season name"
             autoFocus
-            onChange={(e) => setRenameValue(e.target.value)}
+            onChange={(e) => {
+              setRenameValue(e.target.value);
+              if (renameError) setRenameError(null);
+            }}
             onKeyDown={handleRenameKeyDown}
           />
           <RenameIconBtn
