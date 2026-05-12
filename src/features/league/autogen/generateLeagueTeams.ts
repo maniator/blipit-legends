@@ -438,10 +438,13 @@ export function generateLeagueTeams(options: GenerateLeagueTeamsOptions): Genera
     if (usedNicknames.has(nickname)) nickname = `${nickname} ${teamIndex + 1}`;
     usedNicknames.add(nickname);
 
-    // `name` stores the full display name (city + nickname) to match how
-    // user-created custom teams work (the name field stores the full team name).
-    // This makes the dedup key (nameLowercase) properly unique — two teams with
-    // the same nickname but different cities won't collide.
+    // `name` stores the full display name (city + nickname) for autogen teams.
+    // This intentionally diverges from the user-created team contract (where `name`
+    // is the short name only) because it makes the dedup key (nameLowercase) properly
+    // unique — two teams with the same nickname but different cities won't collide.
+    // `customTeamToDisplayName` and `resolveTeamLabel` handle this via a startsWith
+    // check: if `name` already begins with `city + " "`, it is returned directly to
+    // avoid double-city rendering ("Galena Galena Jaguars" → "Galena Jaguars").
     const name = `${city} ${nickname}`;
 
     const strength = teamStrength(rng, parity);
