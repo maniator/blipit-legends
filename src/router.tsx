@@ -7,6 +7,7 @@ import HomeScreen from "@feat/gameplay/components/HomeScreen";
 import RootLayout from "@feat/gameplay/components/RootLayout";
 import { resetStaleInProgressGames } from "@feat/league/sim/resetStaleGames";
 import { getTotalGameDays } from "@feat/leagues/utils/seasonPresets";
+import { useAppSession } from "@shared/context/AppSessionContext";
 import { appLog } from "@shared/utils/logger";
 import {
   createBrowserRouter,
@@ -21,9 +22,11 @@ import type { AppShellOutletContext, SeasonRecord } from "@storage/types";
 
 const CareerStatsPage = React.lazy(() => import("@feat/careerStats/pages/CareerStatsPage"));
 const ContactPage = React.lazy(() => import("@feat/contact/pages/ContactPage"));
+const ExhibitionGamePage = React.lazy(() => import("@feat/exhibition/pages/ExhibitionGamePage"));
 const ExhibitionSetupPage = React.lazy(() => import("@feat/exhibition/pages/ExhibitionSetupPage"));
 const GamePage = React.lazy(() => import("@feat/gameplay/pages/GamePage"));
 const HelpPage = React.lazy(() => import("@feat/help/pages/HelpPage"));
+const LeagueGamePage = React.lazy(() => import("@feat/leagues/pages/LeagueGamePage"));
 const LeagueSetupWizard = React.lazy(() => import("@feat/leagues/pages/LeagueSetupWizard"));
 const LeaguesHubPage = React.lazy(() => import("@feat/leagues/pages/LeaguesHubPage"));
 const PlayerCareerPage = React.lazy(() => import("@feat/careerStats/pages/PlayerCareerPage"));
@@ -43,10 +46,17 @@ function LazyRoute({ children }: { children: React.ReactNode }) {
 /** Route element for `/` — reads navigation callbacks from AppShell outlet context. */
 function HomeRoute() {
   const ctx = useOutletContext<AppShellOutletContext>();
+  const { hasActiveSession, hasCareerStats, requestCareerStatsProbe } = useAppSession();
   const navigate = useNavigate();
 
   const [activeSeasonId, setActiveSeasonId] = React.useState<string | null>(null);
   const [activeSeasonLabel, setActiveSeasonLabel] = React.useState<string | null>(null);
+
+  // Trigger the one-shot RxDB probe for completed games only when Home mounts.
+  // This defers DB initialisation away from deep-link entries (/game/…, /leagues/…).
+  React.useEffect(() => {
+    requestCareerStatsProbe();
+  }, [requestCareerStatsProbe]);
 
   React.useEffect(() => {
     getDb()
@@ -74,10 +84,10 @@ function HomeRoute() {
       onNewGame={ctx.onNewGame}
       onLoadSaves={ctx.onLoadSaves}
       onManageTeams={ctx.onManageTeams}
-      onResumeCurrent={ctx.hasActiveSession ? ctx.onResumeCurrent : undefined}
+      onResumeCurrent={hasActiveSession ? ctx.onResumeCurrent : undefined}
       onHelp={ctx.onHelp}
       onContact={ctx.onContact}
-      onCareerStats={ctx.hasCareerStats ? ctx.onCareerStats : undefined}
+      onCareerStats={hasCareerStats ? ctx.onCareerStats : undefined}
       activeSeasonId={activeSeasonId}
       activeSeasonLabel={activeSeasonLabel}
       onContinueSeason={
@@ -91,7 +101,8 @@ function HomeRoute() {
 /** Route element for `/teams`, `/teams/new`, `/teams/:teamId/edit`. */
 function TeamsRoute() {
   const ctx = useOutletContext<AppShellOutletContext>();
-  return <ManageTeamsScreen onBack={ctx.onBackToHome} hasActiveGame={ctx.hasActiveSession} />;
+  const { hasActiveSession } = useAppSession();
+  return <ManageTeamsScreen onBack={ctx.onBackToHome} hasActiveGame={hasActiveSession} />;
 }
 
 /**
@@ -131,7 +142,25 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { index: true, element: <HomeRoute /> },
-          { path: "game", element: <GameRoute /> },
+          { path: "game", handle: { isGameRoute: true }, element: <GameRoute /> },
+          {
+            path: "game/exhibition",
+            handle: { isGameRoute: true },
+            element: (
+              <LazyRoute>
+                <ExhibitionGamePage />
+              </LazyRoute>
+            ),
+          },
+          {
+            path: "game/league/:seasonGameId",
+            handle: { isGameRoute: true },
+            element: (
+              <LazyRoute>
+                <LeagueGamePage />
+              </LazyRoute>
+            ),
+          },
           { path: "teams", element: <TeamsRoute /> },
           { path: "teams/new", element: <TeamsRoute /> },
           {

@@ -1,13 +1,10 @@
 import * as React from "react";
 
 import Game from "@feat/gameplay/components/Game";
-import {
-  useBeforeUnload,
-  useBlocker,
-  useLocation,
-  useNavigate,
-  useOutletContext,
-} from "react-router";
+import GamePageWrapper from "@feat/gameplay/components/GamePageWrapper";
+import type { GameSessionContextValue } from "@feat/gameplay/context/index";
+import { GameSessionProvider } from "@feat/gameplay/context/index";
+import { useLocation, useNavigate, useOutletContext } from "react-router";
 
 import type {
   AppShellOutletContext,
@@ -15,8 +12,6 @@ import type {
   GameLocationState,
   SaveRecord,
 } from "@storage/types";
-
-import { SavingBanner } from "./styles";
 
 const GamePage: React.FunctionComponent = () => {
   const ctx = useOutletContext<AppShellOutletContext>();
@@ -42,6 +37,41 @@ const GamePage: React.FunctionComponent = () => {
     }
   }, [location.state, navigate]);
 
+  // Session metadata for the game. sessionReady starts false when the session
+  // must auto-resume from RxDB (no pendingLoad, no pendingSetup) so the scheduler
+  // waits until onSessionRestored flips it to true. If a save or setup is already
+  // queued, sessionReady starts true since the session is known up front.
+  const [sessionCtx, setSessionCtx] = React.useState<GameSessionContextValue>(() => {
+    const load = pendingLoadRef.current;
+    const setup = pendingSetupRef.current;
+    return {
+      sessionType: "exhibition",
+      // Exhibition route: manager-mode toggle is always available.
+      // Formula: `seasonGameId == null || managedTeam !== null`; seasonGameId is always
+      // null here so this is unconditionally true, even for "Watch" save loads.
+      managerModeAllowed: true,
+      disableSave: false,
+      seasonGameId: null,
+      // Seed managedTeam from whichever source is available first: a pending new-game
+      // setup carries the user's Play/Watch intent; a pending save load carries the
+      // intent from when the game was originally created.
+      managedTeam: setup?.managedTeam ?? load?.setup.managedTeam ?? null,
+      sessionReady: load != null || setup != null,
+    };
+  });
+
+  const handleSessionRestored = React.useCallback((managedTeam: 0 | 1 | null) => {
+    setSessionCtx((prev) => ({
+      ...prev,
+      // Exhibition route: manager-mode toggle is always available regardless of whether
+      // the session started as "Watch" (managedTeam: null). The formula is
+      // `seasonGameId == null || managedTeam !== null`; here seasonGameId is always null.
+      managerModeAllowed: true,
+      managedTeam,
+      sessionReady: true,
+    }));
+  }, []);
+
   const handleConsumeSetup = React.useCallback(() => {
     pendingSetupRef.current = null;
   }, []);
@@ -54,51 +84,25 @@ const GamePage: React.FunctionComponent = () => {
     navigate("/exhibition/new");
   }, [navigate]);
 
-  const [isCommitting, setIsCommitting] = React.useState(false);
-
-  const blocker = useBlocker(isCommitting);
-
-  // When a navigation attempt occurs while isCommitting is true, the blocker
-  // captures it and enters "blocked" state. The blocker predicate alone won't
-  // auto-proceed — we must call blocker.proceed() once the commit finishes so
-  // the deferred navigation can continue.
-  React.useEffect(() => {
-    if (blocker.state === "blocked" && !isCommitting) {
-      blocker.proceed?.();
-    }
-  }, [blocker, isCommitting]);
-
-  useBeforeUnload(
-    React.useCallback(
-      (event) => {
-        if (isCommitting) {
-          event.preventDefault();
-          event.returnValue = "";
-        }
-      },
-      [isCommitting],
-    ),
-  );
-
   return (
-    <>
-      <Game
-        onBackToHome={ctx.onBackToHome}
-        onNewGame={handleNewGame}
-        onGameSessionStarted={ctx.onGameSessionStarted}
-        pendingGameSetup={pendingSetupRef.current}
-        onConsumeGameSetup={handleConsumeSetup}
-        pendingLoadSave={pendingLoadRef.current}
-        onConsumePendingLoad={handleConsumeLoad}
-        onSavingStateChange={setIsCommitting}
-        onGameOver={ctx.onGameOver}
-      />
-      {blocker.state === "blocked" && (
-        <SavingBanner role="status" aria-live="polite" data-testid="saving-stats-banner">
-          💾 Saving stats… Navigation will continue automatically.
-        </SavingBanner>
+    <GamePageWrapper>
+      {(onSavingStateChange) => (
+        <GameSessionProvider value={sessionCtx}>
+          <Game
+            onBackToHome={ctx.onBackToHome}
+            onNewGame={handleNewGame}
+            onGameSessionStarted={ctx.onGameSessionStarted}
+            pendingGameSetup={pendingSetupRef.current}
+            onConsumeGameSetup={handleConsumeSetup}
+            pendingLoadSave={pendingLoadRef.current}
+            onConsumePendingLoad={handleConsumeLoad}
+            onSessionRestored={handleSessionRestored}
+            onSavingStateChange={onSavingStateChange}
+            onGameOver={ctx.onGameOver}
+          />
+        </GameSessionProvider>
       )}
-    </>
+    </GamePageWrapper>
   );
 };
 

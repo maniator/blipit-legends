@@ -18,6 +18,8 @@ import { DbResetNotice, LoadingScreen } from "./styles";
 
 type Props = {
   onBackToHome?: () => void;
+  /** Back button label passed through to GameControls; defaults to "← Home". */
+  backLabel?: string;
   /** Called when the in-game New Game button is clicked; navigates to /exhibition/new. */
   onNewGame?: () => void;
   /** Called the first time a real game session starts or a save is loaded. */
@@ -30,6 +32,8 @@ type Props = {
   pendingLoadSave?: SaveRecord | null;
   /** Called after pendingLoadSave is consumed so GamePage can clear it. */
   onConsumePendingLoad?: () => void;
+  /** Called once the game session is ready to auto-play (GamePage only). */
+  onSessionRestored?: (managedTeam: 0 | 1 | null) => void;
   /** Called when the career stats commit state changes (saving/done). */
   onSavingStateChange?: (saving: boolean) => void;
   /** Called when the game reaches FINAL so AppShell can clear hasActiveSession. */
@@ -38,12 +42,14 @@ type Props = {
 
 const Game: React.FunctionComponent<Props> = ({
   onBackToHome,
+  backLabel,
   onNewGame,
   onGameSessionStarted,
   pendingGameSetup,
   onConsumeGameSetup,
   pendingLoadSave,
   onConsumePendingLoad,
+  onSessionRestored,
   onSavingStateChange,
   onGameOver,
 }) => {
@@ -116,12 +122,14 @@ const Game: React.FunctionComponent<Props> = ({
         <GameInner
           actionBufferRef={actionBufferRef}
           onBackToHome={onBackToHome}
+          backLabel={backLabel}
           onNewGame={onNewGame}
           onGameSessionStarted={onGameSessionStarted}
           pendingGameSetup={pendingGameSetup}
           onConsumeGameSetup={onConsumeGameSetup}
           pendingLoadSave={pendingLoadSave}
           onConsumePendingLoad={onConsumePendingLoad}
+          onSessionRestored={onSessionRestored}
           onSavingStateChange={onSavingStateChange}
           onGameOver={onGameOver}
         />

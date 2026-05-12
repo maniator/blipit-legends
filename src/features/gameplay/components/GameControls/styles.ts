@@ -153,6 +153,22 @@ export const Select = styled.select`
   font-family: inherit;
 `;
 
+/**
+ * Read-only team display shown in place of the team <Select> when the managed
+ * team is locked (league sessions). Mirrors the visual footprint of <Select>
+ * but with muted text and no pointer so users understand the field is fixed.
+ */
+export const LockedTeamDisplay = styled.span`
+  background: ${({ theme }) => theme.colors.bgInputSm};
+  border: 1px solid ${({ theme }) => theme.colors.borderSubtle};
+  color: ${({ theme }) => theme.colors.textMuted};
+  border-radius: ${({ theme }) => theme.radii.lg};
+  padding: ${({ theme }) => theme.spacing.s3} ${({ theme }) => theme.spacing.s6};
+  font-size: ${({ theme }) => theme.fontSizes.base};
+  font-family: inherit;
+  user-select: none;
+`;
+
 export const SpeedRow = styled.div`
   display: inline-flex;
   align-items: center;
