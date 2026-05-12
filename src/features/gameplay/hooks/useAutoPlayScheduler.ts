@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { DecisionType } from "@feat/gameplay/context/index";
+import { DecisionType, useGameSessionContext } from "@feat/gameplay/context/index";
 import { isSpeechPending } from "@feat/gameplay/utils/announce";
 import { appLog } from "@shared/utils/logger";
 
@@ -44,6 +44,7 @@ export const useAutoPlayScheduler = ({
   // This ref is LOCAL to this hook (not passed between hooks), so it's not cross-hook mutation.
   const prevInningRef = React.useRef(inning);
   const prevAtBatRef = React.useRef(atBat);
+  const { sessionReady } = useGameSessionContext();
 
   // Stabilize the pitch callback so the scheduler effect does not restart on every render.
   // handlePitch closes over currentState (recreated every pitch), so putting it in the effect
@@ -54,6 +55,7 @@ export const useAutoPlayScheduler = ({
   handlePitchRef.current = handlePitch;
 
   React.useEffect(() => {
+    if (!sessionReady) return;
     if (!gameStarted) return;
     if (gameOver) return;
     if (paused) return;
@@ -132,6 +134,7 @@ export const useAutoPlayScheduler = ({
       clearTimeout(timerId);
     };
   }, [
+    sessionReady,
     gameStarted,
     pendingDecision,
     managerMode,

@@ -133,9 +133,10 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { index: true, element: <HomeRoute /> },
-          { path: "game", element: <GameRoute /> },
+          { path: "game", handle: { isGameRoute: true }, element: <GameRoute /> },
           {
             path: "game/exhibition",
+            handle: { isGameRoute: true },
             element: (
               <LazyRoute>
                 <ExhibitionGamePage />
@@ -144,6 +145,7 @@ export const router = createBrowserRouter([
           },
           {
             path: "game/league/:seasonGameId",
+            handle: { isGameRoute: true },
             element: (
               <LazyRoute>
                 <LeagueGamePage />

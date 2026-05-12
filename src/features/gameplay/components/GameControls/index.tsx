@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { resolveTeamLabel } from "@feat/customTeams/adapters/customTeamAdapter";
-import { Strategy } from "@feat/gameplay/context/index";
+import { Strategy, useGameSessionContext } from "@feat/gameplay/context/index";
 import { useCustomTeams } from "@shared/hooks/useCustomTeams";
 
 import type { SaveRecord } from "@storage/types";
@@ -35,8 +35,6 @@ type Props = {
   onBackToHome?: () => void;
   /** When true, shows a disabled "Saving…" button instead of "New Game". */
   isCommitting?: boolean;
-  /** When false, manager controls are hidden and cannot be enabled (spectator/watch sessions). */
-  managerModeAllowed?: boolean;
 };
 
 const GameControls: React.FunctionComponent<Props> = ({
@@ -45,8 +43,8 @@ const GameControls: React.FunctionComponent<Props> = ({
   onLoadSave,
   onBackToHome,
   isCommitting = false,
-  managerModeAllowed = true,
 }) => {
+  const { managerModeAllowed } = useGameSessionContext();
   const {
     speed,
     setSpeed,

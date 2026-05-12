@@ -2,36 +2,25 @@ import * as React from "react";
 
 import AppLoadingFallback from "@feat/gameplay/components/AppLoadingFallback";
 import Game from "@feat/gameplay/components/Game";
+import { GameSessionProvider } from "@feat/gameplay/context/index";
+import { deriveLeagueSession } from "@feat/gameplay/utils/gameSessionDerive";
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
 import { buildSeasonGameSetup } from "@feat/leagues/utils/buildSeasonGameSetup";
-import { useLocation, useNavigate, useOutletContext, useParams } from "react-router";
+import { useNavigate, useOutletContext, useParams } from "react-router";
 
 import { getDb } from "@storage/db";
 import type { AppShellOutletContext, ExhibitionGameSetup, SeasonRecord } from "@storage/types";
 
-type LeagueGameLocationState = {
-  managedTeam?: 0 | 1 | null;
-} | null;
-
 type FetchState =
   | { status: "loading" }
-  | { status: "ready"; setup: ExhibitionGameSetup; seasonId: string }
+  | { status: "ready"; setup: ExhibitionGameSetup; seasonId: string; managedTeamIdx: 0 | 1 | null }
   | { status: "error"; message: string }
   | { status: "not_found" };
 
 const LeagueGamePage: React.FunctionComponent = () => {
   const ctx = useOutletContext<AppShellOutletContext>();
   const navigate = useNavigate();
-  const location = useLocation();
   const { seasonGameId } = useParams<{ seasonGameId: string }>();
-
-  const locationState = location.state as LeagueGameLocationState;
-  // Use explicit key-presence check so managedTeam: null (watch) is distinguished
-  // from managedTeam: undefined (not set — LeagueGamePage derives from season).
-  // locationState may be null (no state passed) or undefined (useLocation default),
-  // so != null intentionally guards both cases.
-  const managedTeamFromState: 0 | 1 | null | undefined =
-    locationState != null && "managedTeam" in locationState ? locationState.managedTeam : undefined;
 
   const [fetchState, setFetchState] = React.useState<FetchState>({ status: "loading" });
 
@@ -72,9 +61,7 @@ const LeagueGamePage: React.FunctionComponent = () => {
         const awaySeasonTeam = awayTeamDoc.toJSON() as unknown as SeasonTeamRecord;
 
         let managedTeamIdx: 0 | 1 | null = null;
-        if (managedTeamFromState !== undefined) {
-          managedTeamIdx = managedTeamFromState ?? null;
-        } else if (seasonDoc) {
+        if (seasonDoc) {
           const season = seasonDoc.toJSON() as unknown as SeasonRecord;
           if (season.userCustomTeamId) {
             if (homeSeasonTeam.customTeamId === season.userCustomTeamId) {
@@ -95,7 +82,7 @@ const LeagueGamePage: React.FunctionComponent = () => {
 
         if (!cancelled) {
           setupRef.current = setup;
-          setFetchState({ status: "ready", setup, seasonId: game.seasonId });
+          setFetchState({ status: "ready", setup, seasonId: game.seasonId, managedTeamIdx });
         }
       } catch (err: unknown) {
         if (!cancelled) {
@@ -110,7 +97,7 @@ const LeagueGamePage: React.FunctionComponent = () => {
     return () => {
       cancelled = true;
     };
-  }, [seasonGameId, managedTeamFromState]);
+  }, [seasonGameId]);
 
   // Auto-redirect after not_found or error
   React.useEffect(() => {
@@ -153,16 +140,18 @@ const LeagueGamePage: React.FunctionComponent = () => {
   }
 
   return (
-    <Game
-      onBackToHome={ctx.onBackToHome}
-      onNewGame={handleNewGame}
-      onGameSessionStarted={ctx.onGameSessionStarted}
-      pendingGameSetup={fetchState.setup}
-      onConsumeGameSetup={handleConsumeSetup}
-      pendingLoadSave={null}
-      onConsumePendingLoad={handleConsumePendingLoad}
-      onGameOver={ctx.onGameOver}
-    />
+    <GameSessionProvider value={deriveLeagueSession(seasonGameId!, fetchState.managedTeamIdx)}>
+      <Game
+        onBackToHome={ctx.onBackToHome}
+        onNewGame={handleNewGame}
+        onGameSessionStarted={ctx.onGameSessionStarted}
+        pendingGameSetup={fetchState.setup}
+        onConsumeGameSetup={handleConsumeSetup}
+        pendingLoadSave={null}
+        onConsumePendingLoad={handleConsumePendingLoad}
+        onGameOver={ctx.onGameOver}
+      />
+    </GameSessionProvider>
   );
 };
 

@@ -1,8 +1,8 @@
 import * as React from "react";
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Mock useBlocker and useBeforeUnload — these require a data router which is
 // not available in MemoryRouter.
@@ -20,6 +20,25 @@ vi.mock("react-router", async (importOriginal) => {
 vi.mock("@feat/gameplay/components/Game", () => ({
   default: () => <div data-testid="game-mock" />,
 }));
+
+// GameSessionProvider reads from context; mock it so tests don't need a real provider.
+vi.mock("@feat/gameplay/utils/gameSessionDerive", () => ({
+  deriveExhibitionSession: vi.fn().mockReturnValue({
+    sessionType: "exhibition",
+    managerModeAllowed: true,
+    disableSave: false,
+    seasonGameId: null,
+    managedTeam: null,
+    sessionReady: true,
+  }),
+}));
+vi.mock("@feat/gameplay/context/index", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@feat/gameplay/context/index")>();
+  return {
+    ...original,
+    GameSessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  };
+});
 
 import type { AppShellOutletContext } from "@feat/gameplay/components/AppShell";
 
@@ -41,13 +60,9 @@ const mockCtx: AppShellOutletContext = {
   hasCareerStats: false,
 };
 
-function renderExhibitionGamePage(
-  initialPath = "/game/exhibition",
-  state: unknown = null,
-  ctx = mockCtx,
-) {
+function renderExhibitionGamePage(initialPath = "/game/exhibition", ctx = mockCtx) {
   return render(
-    <MemoryRouter initialEntries={[{ pathname: initialPath, state }]}>
+    <MemoryRouter initialEntries={[{ pathname: initialPath }]}>
       <Routes>
         <Route element={<Outlet context={ctx} />}>
           <Route path="/game/exhibition" element={<ExhibitionGamePage />} />
@@ -72,26 +87,25 @@ const minimalSetup = {
   },
 };
 
+afterEach(() => {
+  sessionStorage.clear();
+});
+
 describe("ExhibitionGamePage", () => {
-  it("renders the Game component when pendingGameSetup is in location state", () => {
-    renderExhibitionGamePage("/game/exhibition", { pendingGameSetup: minimalSetup });
+  it("renders the Game component when pendingGameSetup is in sessionStorage", () => {
+    sessionStorage.setItem("pendingExhibitionSetup", JSON.stringify(minimalSetup));
+    renderExhibitionGamePage();
     expect(screen.getByTestId("game-mock")).toBeInTheDocument();
   });
 
-  it("redirects to /exhibition/new when location state has no pendingGameSetup", () => {
-    renderExhibitionGamePage("/game/exhibition", null);
+  it("redirects to /exhibition/new when sessionStorage has no pendingGameSetup", () => {
+    renderExhibitionGamePage();
     expect(screen.queryByTestId("game-mock")).not.toBeInTheDocument();
     expect(screen.getByTestId("exhibition-new-page")).toBeInTheDocument();
   });
 
-  it("does not render Game when pendingGameSetup is absent from state object", () => {
-    renderExhibitionGamePage("/game/exhibition", {});
-    expect(screen.queryByTestId("game-mock")).not.toBeInTheDocument();
-  });
-
   it("renders without crashing when given a valid setup", () => {
-    expect(() =>
-      renderExhibitionGamePage("/game/exhibition", { pendingGameSetup: minimalSetup }),
-    ).not.toThrow();
+    sessionStorage.setItem("pendingExhibitionSetup", JSON.stringify(minimalSetup));
+    expect(() => renderExhibitionGamePage()).not.toThrow();
   });
 });
