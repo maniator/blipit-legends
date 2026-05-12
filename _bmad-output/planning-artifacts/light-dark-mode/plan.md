@@ -243,7 +243,7 @@ The inline script in `src/index.html` is the canonical solution. It is synchrono
   <script>
     (function () {
       try {
-        var mode = localStorage.getItem("themeMode");
+        var mode = JSON.parse(localStorage.getItem("themeMode"));
         document.documentElement.setAttribute("data-theme", mode === "light" ? "light" : "dark");
       } catch (e) {}
     })();
@@ -252,9 +252,9 @@ The inline script in `src/index.html` is the canonical solution. It is synchrono
 </head>
 ```
 
-The try/catch handles environments where `localStorage` is blocked (private browsing, strict settings). The fallback is dark mode (the current experience).
+The try/catch handles both blocked `localStorage` environments (private browsing, strict settings) and any `JSON.parse` failure on corrupt data. The fallback is dark mode (the current experience).
 
-The localStorage key must exactly match what `useLocalStorage("themeMode", "dark")` writes. The `usehooks-ts` library stores values as JSON, so the key value will be the JSON string `"light"` or `"dark"`. The inline script should parse accordingly or compare string equality.
+The localStorage key must exactly match what `useLocalStorage("themeMode", "dark")` writes. The `usehooks-ts` library stores values as **JSON-encoded strings** — the raw stored value is `'"light"'` or `'"dark"'` (a JSON string with inner quotes). The `JSON.parse` call unwraps this so the comparison `=== "light"` works correctly. **Do not** compare `localStorage.getItem(...)` directly to `"light"` — it will always evaluate as falsy and fall back to dark mode.
 
 ---
 
@@ -448,7 +448,7 @@ src/shared/theme.parity.test.ts       (new)
 **Acceptance Criteria (UX/QA):**
 
 - Toggle visible and reachable in ≤ 2 taps/clicks from HomeScreen and GamePage
-- Preference persists across page reload and app reinstall
+- Preference persists across page reload and browser/app relaunch (cross-reinstall persistence is out of scope — PWA uninstall typically clears `localStorage`)
 - WCAG 2.2 AA accessible label (`aria-label` reflects result of click)
 - No FOWTM on load — verified in CI
 - All existing dark-mode snapshots still pass

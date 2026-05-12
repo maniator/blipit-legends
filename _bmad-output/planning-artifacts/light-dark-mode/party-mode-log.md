@@ -165,7 +165,7 @@ No dispute required resolution.
 
 ## Unresolved / Watch Items
 
-1. **`usehooks-ts` JSON encoding** — inline script must correctly compare stored value. `useLocalStorage` stores as `'"dark"'` (JSON-encoded). Inline script should use `JSON.parse()` or compare against `'"dark"'` not `"dark"`. Verify before Stage A ships.
+1. ~~**`usehooks-ts` JSON encoding** — inline script must correctly compare stored value.~~ **Resolved:** The inline script in `plan.md` now uses `JSON.parse(localStorage.getItem("themeMode"))` to correctly unwrap the JSON-encoded `'"light"'` / `'"dark"'` values that `usehooks-ts` `useLocalStorage` writes.
 
 2. **Orange contrast on parchment** — exact contrast ratio for `#FF9A1F` on `#F5F0E8` needs tool verification (estimated ~2.8:1, below 4.5:1). `brand.orangeText: "#D4800A"` is the mitigation — verify it achieves 4.5:1 in Stage B token spec.
 
