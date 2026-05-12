@@ -1,5 +1,5 @@
 ---
-applyTo: "**/*.{ts,tsx,js,jsx,css,scss,md,yml,yaml,json}"
+applyTo: "**/*.{ts,tsx,js,jsx,html,css,scss,md,yml,yaml,json}"
 excludeAgent: "cloud-agent"
 ---
 
