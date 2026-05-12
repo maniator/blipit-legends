@@ -119,7 +119,7 @@ Read the changed files and select only the personas whose domain is represented:
 | **Architecture / Tech Lead**          | module boundaries, state flow, coupling, maintainability, file organization                    |
 | **Persistence / Data**                | RxDB collections, schema changes, migrations, save/load, export/import, backward compatibility |
 | **Product / PM**                      | feature-spec alignment, acceptance criteria, user-facing workflow gaps                         |
-| **Game Simulation / Baseball Domain** | baseball rules, simulation logic, stats, league flow, game-management behaviour                |
+| **Game Simulation / Baseball Domain** | baseball rules, simulation logic, stats, league flow, game-management behavior                 |
 | **Security / Performance**            | auth, user inputs, unsafe patterns, expensive rendering, large loops, storage limits           |
 
 Do not activate a persona if its domain has no representation in the diff.
