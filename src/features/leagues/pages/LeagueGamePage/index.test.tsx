@@ -2,12 +2,17 @@ import * as React from "react";
 
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+
+// Capture the props passed to Game so tests can assert on callbacks.
+let capturedGameProps: Record<string, unknown> = {};
 
 vi.mock("@feat/gameplay/components/Game", () => ({
-  default: () => <div data-testid="game-mock" />,
+  default: (props: Record<string, unknown>) => {
+    capturedGameProps = props;
+    return <div data-testid="game-mock" />;
+  },
 }));
-
 vi.mock("@feat/gameplay/components/GamePageWrapper", () => ({
   default: ({
     children,
@@ -154,6 +159,10 @@ function renderLeagueGamePage(seasonGameId = "sg-1", ctx = mockCtx) {
 }
 
 describe("LeagueGamePage", () => {
+  beforeEach(() => {
+    capturedGameProps = {};
+  });
+
   it("shows loading fallback initially", () => {
     vi.mocked(getDb).mockResolvedValue(makeDb() as never);
     vi.mocked(buildSeasonGameSetup).mockResolvedValue(mockSetup as never);
@@ -248,5 +257,40 @@ describe("LeagueGamePage", () => {
       expect.anything(),
       1, // home = index 1
     );
+  });
+
+  describe("back navigation", () => {
+    it("passes backLabel='← Schedule' to Game", async () => {
+      const db = makeDb();
+      vi.mocked(getDb).mockResolvedValue(db as never);
+      vi.mocked(buildSeasonGameSetup).mockResolvedValue(mockSetup as never);
+
+      renderLeagueGamePage("sg-1");
+
+      await waitFor(() => {
+        expect(screen.getByTestId("game-mock")).toBeInTheDocument();
+      });
+
+      expect(capturedGameProps.backLabel).toBe("← Schedule");
+    });
+
+    it("onBackToHome navigates to /leagues/:seasonId/schedule after fetch", async () => {
+      const db = makeDb();
+      vi.mocked(getDb).mockResolvedValue(db as never);
+      vi.mocked(buildSeasonGameSetup).mockResolvedValue(mockSetup as never);
+
+      renderLeagueGamePage("sg-1");
+
+      await waitFor(() => {
+        expect(screen.getByTestId("game-mock")).toBeInTheDocument();
+      });
+
+      expect(typeof capturedGameProps.onBackToHome).toBe("function");
+      (capturedGameProps.onBackToHome as () => void)();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("schedule-page")).toBeInTheDocument();
+      });
+    });
   });
 });

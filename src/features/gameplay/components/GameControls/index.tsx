@@ -31,8 +31,10 @@ type Props = {
   onNewGame?: () => void;
   gameStarted?: boolean;
   onLoadSave?: (slot: SaveRecord) => void;
-  /** Routes back to the Home screen. When provided a "← Home" button is shown. */
+  /** Routes back to the previous screen. When provided, a back button is shown. */
   onBackToHome?: () => void;
+  /** Label for the back button. Defaults to "← Home". */
+  backLabel?: string;
   /** When true, shows a disabled "Saving…" button instead of "New Game". */
   isCommitting?: boolean;
 };
@@ -42,10 +44,12 @@ const GameControls: React.FunctionComponent<Props> = ({
   gameStarted = false,
   onLoadSave,
   onBackToHome,
+  backLabel = "← Home",
   isCommitting = false,
 }) => {
   const {
     managerModeAllowed,
+    disableSave,
     sessionType,
     managedTeam: sessionManagedTeam,
   } = useGameSessionContext();
@@ -121,7 +125,7 @@ const GameControls: React.FunctionComponent<Props> = ({
             disabled={isCommitting}
             data-testid="back-to-home-button"
           >
-            ← Home
+            {backLabel}
           </Button>
         )}
         {gameOver &&
@@ -135,24 +139,26 @@ const GameControls: React.FunctionComponent<Props> = ({
               New Game
             </Button>
           ))}
-        <React.Suspense
-          fallback={
-            <Button $variant="saves" disabled aria-label="Open saves panel">
-              💾 Saves
-            </Button>
-          }
-        >
-          <SavesModal
-            strategy={strategy}
-            managedTeam={managedTeam}
-            managerMode={managerMode}
-            decisionValues={decisionValues}
-            currentSaveId={currentSaveId}
-            onSaveIdChange={setCurrentSaveId}
-            onLoadSave={onLoadSave}
-            gameStarted={gameStarted}
-          />
-        </React.Suspense>
+        {!disableSave && (
+          <React.Suspense
+            fallback={
+              <Button $variant="saves" disabled aria-label="Open saves panel">
+                💾 Saves
+              </Button>
+            }
+          >
+            <SavesModal
+              strategy={strategy}
+              managedTeam={managedTeam}
+              managerMode={managerMode}
+              decisionValues={decisionValues}
+              currentSaveId={currentSaveId}
+              onSaveIdChange={setCurrentSaveId}
+              onLoadSave={onLoadSave}
+              gameStarted={gameStarted}
+            />
+          </React.Suspense>
+        )}
         <React.Suspense
           fallback={
             <HelpButton disabled aria-label="How to play">

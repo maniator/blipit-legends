@@ -87,8 +87,10 @@ const findMatchedSave = (saves: SaveRecord[]): SaveRecord | null => {
 interface Props {
   /** Shared buffer populated by GameProviderWrapper's onDispatch callback. */
   actionBufferRef?: React.MutableRefObject<GameAction[]>;
-  /** Routes back to the Home screen in AppShell. */
+  /** Routes back to the previous screen in AppShell. */
   onBackToHome?: () => void;
+  /** Back button label passed through to GameControls; defaults to "← Home". */
+  backLabel?: string;
   /** Called when the in-game New Game button is clicked; navigates to /exhibition/new. */
   onNewGame?: () => void;
   /** Called the first time a real game session starts or a save is loaded. */
@@ -112,6 +114,7 @@ interface Props {
 const GameInner: React.FunctionComponent<Props> = ({
   actionBufferRef: externalBufferRef,
   onBackToHome,
+  backLabel,
   onNewGame,
   onGameSessionStarted,
   pendingGameSetup,
@@ -521,6 +524,7 @@ const GameInner: React.FunctionComponent<Props> = ({
           gameStarted={gameActive}
           onLoadSave={handleModalLoad}
           onBackToHome={onBackToHome}
+          backLabel={backLabel}
           isCommitting={isCommitting}
         />
         <GameBody>

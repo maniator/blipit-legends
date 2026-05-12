@@ -250,6 +250,19 @@ export const HintText = styled.p`
   opacity: 0.7;
 `;
 
+export const PageTitle = styled.h1`
+  font-size: ${({ theme }) => theme.fontSizes.h1};
+  color: ${({ theme }) => theme.colors.textPrimary};
+  margin: 0 0 ${({ theme }) => theme.spacing.xl};
+`;
+
+export const BlockedActions = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
+  margin-top: ${({ theme }) => theme.spacing.lg};
+`;
+
 /** Wrapper for a step's primary action button with top spacing. */
 export const ActionRow = styled.div`
   margin-top: ${({ theme }) => theme.spacing.xl};
