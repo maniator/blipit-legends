@@ -100,13 +100,6 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
     setRenaming(true);
   }, [season]);
 
-  const handleRenameKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Escape") {
-      setRenaming(false);
-      setRenameError(null);
-    }
-  }, []);
-
   const handleRenameSave = React.useCallback(async () => {
     if (!seasonId) return;
     const trimmed = renameValue.trim();
@@ -122,6 +115,18 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
       setRenameError("Unable to save. Please try again.");
     }
   }, [seasonId, renameValue]);
+
+  const handleRenameKeyDown = React.useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        void handleRenameSave();
+      } else if (e.key === "Escape") {
+        setRenaming(false);
+        setRenameError(null);
+      }
+    },
+    [handleRenameSave],
+  );
 
   const handlePlayNextGame = React.useCallback(
     (_asManager: boolean) => {
