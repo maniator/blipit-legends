@@ -170,6 +170,13 @@ function buildStore(getDbFn: GetDb) {
         // Replacement is only permitted when BOTH teams carry the autogen marker
         // AND the existing team is not locked by an active season. Locked teams
         // (those enrolled in an active season) still throw to preserve data integrity.
+        // TODO(D-01): This reuse path does not verify that the existing team's autogen
+        // marker/roster matches `input` (e.g., different `autogen.baseSeed` values are
+        // silently ignored). The full fingerprint equality check + patch-or-throw contract
+        // is deferred to Block B D-01 (autogen dedup), which introduces the compound index,
+        // fingerprint hash, and `resolveAutogenTeams` return type. Do not add a partial
+        // `baseSeed`-only check here — it would be superseded when D-01 lands and would
+        // diverge from the full fingerprint spec in 01-d01-autogen-dedup-prompt.md.
         if (input.autogen && dup.autogen) {
           const lockedIds = await getLockedTeamIds(db);
           if (!lockedIds.has(dup.id)) {
