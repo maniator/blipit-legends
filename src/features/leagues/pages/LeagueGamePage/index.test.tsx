@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Capture the props passed to Game so tests can assert on callbacks.
 let capturedGameProps: Record<string, unknown> = {};
