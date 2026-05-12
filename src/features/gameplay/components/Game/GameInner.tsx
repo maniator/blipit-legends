@@ -295,7 +295,7 @@ const GameInner: React.FunctionComponent<Props> = ({
     // Create a new RxDB save for this session (fire-and-forget).
     // currentSeedStr() returns the seed that was already initialized for this
     // page load — it does NOT generate a new one.
-    // Skip for league season games (pendingGameSetup.disableSave === true) —
+    // Skip for league season games (GameSessionContext.disableSave === true) —
     // those are tracked via seasonGames records and must not appear in the
     // general Load Saved Game list. Career stats still commit via gameInstanceId.
     if (!disableSave) {
