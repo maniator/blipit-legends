@@ -191,23 +191,27 @@ describe("buildSeasonGameSetup", () => {
     expect(setup.playerOverrides.awayPitchers).toHaveLength(1);
   });
 
-  it("throws if home team doc is missing from the DB", async () => {
+  it("falls back to rosterSnapshot if home team doc is missing from the DB", async () => {
     const badHomeSeasonTeam = makeSeasonTeamRecord("st-home", "season-1", "nonexistent-team-id");
     const awaySeasonTeam = makeSeasonTeamRecord("st-away", "season-1", awayCustomTeamId);
     const game = makeSeasonGameRecord("st-home", "st-away");
 
-    await expect(
-      buildSeasonGameSetup(db, game, badHomeSeasonTeam, awaySeasonTeam, null),
-    ).rejects.toThrow(/nonexistent-team-id/);
+    // Should not throw — falls back to rosterSnapshot.
+    const setup = await buildSeasonGameSetup(db, game, badHomeSeasonTeam, awaySeasonTeam, null);
+    expect(setup).toBeDefined();
+    // rosterSnapshot contains name: "TestTeam" in makeSeasonTeamRecord
+    expect(setup.homeTeamLabel).toBe("TestTeam");
   });
 
-  it("throws if away team doc is missing from the DB", async () => {
+  it("falls back to rosterSnapshot if away team doc is missing from the DB", async () => {
     const homeSeasonTeam = makeSeasonTeamRecord("st-home", "season-1", homeCustomTeamId);
     const badAwaySeasonTeam = makeSeasonTeamRecord("st-away", "season-1", "nonexistent-team-id");
     const game = makeSeasonGameRecord("st-home", "st-away");
 
-    await expect(
-      buildSeasonGameSetup(db, game, homeSeasonTeam, badAwaySeasonTeam, null),
-    ).rejects.toThrow(/nonexistent-team-id/);
+    // Should not throw — falls back to rosterSnapshot.
+    const setup = await buildSeasonGameSetup(db, game, homeSeasonTeam, badAwaySeasonTeam, null);
+    expect(setup).toBeDefined();
+    // rosterSnapshot contains name: "TestTeam" in makeSeasonTeamRecord
+    expect(setup.awayTeamLabel).toBe("TestTeam");
   });
 });

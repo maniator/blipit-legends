@@ -547,7 +547,7 @@ function LeagueSetupWizardInner(): React.ReactElement {
               idFactory: { teamId: () => generateTeamId() },
             });
             for (const gen of generated) {
-              await ctStore.createCustomTeam(
+              const actualId = await ctStore.createCustomTeam(
                 {
                   name: gen.name,
                   abbreviation: gen.abbreviation,
@@ -565,7 +565,7 @@ function LeagueSetupWizardInner(): React.ReactElement {
                 },
                 { id: gen.id },
               );
-              allTeamIds.push(gen.id);
+              allTeamIds.push(actualId); // use returned id (may differ from gen.id on reuse)
             }
           }
         }

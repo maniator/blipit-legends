@@ -201,6 +201,19 @@ describe("createSeason", () => {
       .exec();
     expect(pitcherStates).toHaveLength(8);
   });
+
+  it("createSeason throws if a teamId in input is not found in DB", async () => {
+    const teamIds = ["ct_valid"];
+    await insertTeam(db, "ct_valid", "Valid Team");
+    await insertTeamPlayerFixtures(db, "ct_valid");
+
+    // Add a non-existent team ID
+    const invalidInput = makeSeasonInput([...teamIds, "ct_does_not_exist"]);
+
+    await expect(store.createSeason(invalidInput)).rejects.toThrow(
+      /team "ct_does_not_exist" not found/,
+    );
+  });
 });
 
 describe("recordResult", () => {

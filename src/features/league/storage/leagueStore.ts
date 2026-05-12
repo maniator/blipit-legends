@@ -191,22 +191,23 @@ function buildStore(getDbFn: GetDb) {
         for (const customTeamId of league.teamIds) {
           // Build a roster snapshot from the stored team doc.
           const teamDoc = await db.teams.findOne(customTeamId).exec();
-          const rosterSnapshot: Record<string, unknown> = {};
-          if (teamDoc) {
-            const hydratedTeam = await populateRoster(
-              db,
-              teamDoc.toJSON() as unknown as TeamRecord,
+          if (!teamDoc) {
+            throw new Error(
+              `createSeason: team "${customTeamId}" not found in the database. Aborting to prevent data corruption.`,
             );
-            rosterSnapshot["id"] = hydratedTeam.id;
-            rosterSnapshot["name"] = hydratedTeam.name;
-            rosterSnapshot["abbreviation"] = hydratedTeam.abbreviation;
-            rosterSnapshot["city"] = hydratedTeam.city;
-            rosterSnapshot["nickname"] = hydratedTeam.nickname;
-            rosterSnapshot["slug"] = hydratedTeam.slug;
-            rosterSnapshot["lineup"] = hydratedTeam.roster.lineup;
-            rosterSnapshot["bench"] = hydratedTeam.roster.bench ?? [];
-            rosterSnapshot["pitchers"] = hydratedTeam.roster.pitchers;
           }
+          const hydratedTeam = await populateRoster(db, teamDoc.toJSON() as unknown as TeamRecord);
+          const rosterSnapshot: Record<string, unknown> = {
+            id: hydratedTeam.id,
+            name: hydratedTeam.name,
+            abbreviation: hydratedTeam.abbreviation,
+            city: hydratedTeam.city,
+            nickname: hydratedTeam.nickname,
+            slug: hydratedTeam.slug,
+            lineup: hydratedTeam.roster.lineup,
+            bench: hydratedTeam.roster.bench ?? [],
+            pitchers: hydratedTeam.roster.pitchers,
+          };
 
           const seasonTeamId = generateSeasonTeamId();
           seasonTeamIdByCustomTeamId[customTeamId] = seasonTeamId;
