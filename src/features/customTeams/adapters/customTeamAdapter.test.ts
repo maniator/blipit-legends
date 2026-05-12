@@ -89,9 +89,9 @@ describe("customTeamToDisplayName", () => {
     expect(customTeamToDisplayName(makeTeam({ city: undefined }))).toBe("Eagles");
   });
 
-  it("returns city + nickname (not city + name) when both city and nickname are set — regression for autogen double-city bug", () => {
+  it("returns name directly (not city + name) when name already starts with city — regression for autogen double-city bug", () => {
     // Autogen teams store `name` as the full display name ("Galena Jaguars") AND
-    // set `city` separately ("Galena"). The old code returned "Galena Galena Jaguars".
+    // set `city` separately ("Galena"). Old logic returned "Galena Galena Jaguars".
     const autogenTeam = makeTeam({
       name: "Galena Jaguars",
       city: "Galena",
@@ -100,9 +100,16 @@ describe("customTeamToDisplayName", () => {
     expect(customTeamToDisplayName(autogenTeam)).toBe("Galena Jaguars");
   });
 
-  it("returns city + nickname for a user-created team that has all three fields", () => {
+  it("returns city + name when name does not start with city (user-created team, all fields set)", () => {
     const team = makeTeam({ name: "Eagles", city: "Austin", nickname: "Eagles" });
     expect(customTeamToDisplayName(team)).toBe("Austin Eagles");
+  });
+
+  it("returns city + name (not city + nickname) when nickname differs from name suffix", () => {
+    // name="Rockets", city="Houston", nickname="Rox" — the nickname should NOT
+    // override name. The correct display is "Houston Rockets", not "Houston Rox".
+    const team = makeTeam({ name: "Rockets", city: "Houston", nickname: "Rox" });
+    expect(customTeamToDisplayName(team)).toBe("Houston Rockets");
   });
 
   it("returns city + name (not city + nickname) when nickname is empty string — post-Generate-Defaults name edit", () => {
@@ -116,6 +123,14 @@ describe("customTeamToDisplayName", () => {
   it("returns city + name (not city + nickname) when nickname is undefined", () => {
     const team = makeTeam({ name: "Original Name", city: "Atlanta", nickname: undefined });
     expect(customTeamToDisplayName(team)).toBe("Atlanta Original Name");
+  });
+
+  it("returns city + name (not name alone) when city and name are identical", () => {
+    // Edge case: city="Austin", name="Austin" — name doesn't start with "Austin "
+    // (no trailing space), so we fall through to city + name = "Austin Austin".
+    // This is the correct behavior for a team that happens to share name and city.
+    const team = makeTeam({ name: "Austin", city: "Austin", nickname: undefined });
+    expect(customTeamToDisplayName(team)).toBe("Austin Austin");
   });
 });
 
@@ -412,7 +427,7 @@ describe("resolveTeamLabel", () => {
     expect(resolveTeamLabel("ct-hyphen-id", teams)).toBe("Test Rockets");
   });
 
-  it("returns city + nickname (not city + name) when both city and nickname are set — regression for autogen double-city bug", () => {
+  it("returns name directly (not city + name) when name already starts with city — regression for autogen double-city bug", () => {
     // Autogen teams store `name` as the full display name ("Canton Krakens") AND
     // set `city` and `nickname` separately. Old code returned "Canton Canton Krakens".
     const teams = [
@@ -425,6 +440,14 @@ describe("resolveTeamLabel", () => {
       },
     ];
     expect(resolveTeamLabel("ct_autogen", teams)).toBe("Canton Krakens");
+  });
+
+  it("returns city + name (not city + nickname) when nickname differs from name suffix", () => {
+    // nickname="Rox" should not override name="Rockets" — correct label is "Houston Rockets".
+    const teams = [
+      { ...makeTeam(), id: "ct_test", city: "Houston", name: "Rockets", nickname: "Rox" },
+    ];
+    expect(resolveTeamLabel("ct_test", teams)).toBe("Houston Rockets");
   });
 });
 

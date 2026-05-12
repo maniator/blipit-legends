@@ -15,13 +15,15 @@ export function customTeamToGameId(team: TeamWithRoster): string {
  * Returns the display name for a custom team.
  *
  * For autogen teams the `name` field already stores the full display name
- * ("Galena Jaguars") and `nickname` is set separately.  Prepending `city`
- * again would produce "Galena Galena Jaguars", so when both `city` and
- * `nickname` are present we construct the label from those two fields instead.
- * When only `city` is available we fall back to "city + name".
+ * ("Galena Jaguars") while `city` is stored separately ("Galena").  Prepending
+ * `city` again would produce "Galena Galena Jaguars".  To avoid this we check
+ * whether `name` already begins with the city prefix — if it does, we return
+ * `name` directly; otherwise we prepend `city`.  This approach does not rely on
+ * `nickname`, which may differ from `name` in ways that would produce incorrect
+ * labels (e.g. `nickname = "Rox"`, `name = "Rockets"` → "Houston Rox").
  */
 export function customTeamToDisplayName(team: TeamWithRoster): string {
-  if (team.city && team.nickname) return `${team.city} ${team.nickname}`;
+  if (team.city && team.name.startsWith(`${team.city} `)) return team.name;
   if (team.city) return `${team.city} ${team.name}`;
   return team.name;
 }
@@ -65,10 +67,11 @@ export function resolveTeamLabel(
 ): string {
   const doc = teams.find((t) => t.id === gameId);
   if (!doc) return "Unknown Team";
-  // Mirrors the logic in customTeamToDisplayName: prefer city+nickname when
-  // both are present so autogen teams ("Galena Jaguars") are not doubled to
-  // "Galena Galena Jaguars" when the name field already contains the city.
-  if (doc.city && doc.nickname) return `${doc.city} ${doc.nickname}`;
+  // Mirrors the logic in customTeamToDisplayName: return `name` directly when
+  // it already starts with the city prefix (autogen teams store the full display
+  // name in `name`), otherwise prepend city.  Avoids double-city rendering and
+  // does not rely on the `nickname` field.
+  if (doc.city && doc.name.startsWith(`${doc.city} `)) return doc.name;
   if (doc.city) return `${doc.city} ${doc.name}`;
   return doc.name;
 }

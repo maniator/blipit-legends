@@ -38,11 +38,12 @@ const GamePage: React.FunctionComponent = () => {
   }, [location.state, navigate]);
 
   // Session metadata for the game. sessionReady starts false when the session
-  // must auto-resume from RxDB (no pendingLoad) so the scheduler waits until
-  // onSessionRestored flips it to true. If a save is already queued via
-  // pendingLoadRef, sessionReady starts true since the session is known up front.
+  // must auto-resume from RxDB (no pendingLoad, no pendingSetup) so the scheduler
+  // waits until onSessionRestored flips it to true. If a save or setup is already
+  // queued, sessionReady starts true since the session is known up front.
   const [sessionCtx, setSessionCtx] = React.useState<GameSessionContextValue>(() => {
     const load = pendingLoadRef.current;
+    const setup = pendingSetupRef.current;
     return {
       sessionType: "exhibition",
       // Exhibition route: manager-mode toggle is always available.
@@ -51,8 +52,11 @@ const GamePage: React.FunctionComponent = () => {
       managerModeAllowed: true,
       disableSave: false,
       seasonGameId: null,
-      managedTeam: load?.setup.managedTeam ?? null,
-      sessionReady: load != null,
+      // Seed managedTeam from whichever source is available first: a pending new-game
+      // setup carries the user's Play/Watch intent; a pending save load carries the
+      // intent from when the game was originally created.
+      managedTeam: setup?.managedTeam ?? load?.setup.managedTeam ?? null,
+      sessionReady: load != null || setup != null,
     };
   });
 
