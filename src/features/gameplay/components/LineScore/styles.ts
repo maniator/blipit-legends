@@ -153,6 +153,21 @@ export const ExtraInningsBanner = styled.div`
   margin-left: auto;
 `;
 
+/**
+ * Visually hides text from sighted users while keeping it in the DOM for
+ * screen readers. Used inside aria-live regions so DOM text changes trigger
+ * reliable announcements (changing aria-label alone is not always announced).
+ */
+export const SrOnly = styled.span`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+`;
+
 export const GameOverBanner = styled.div`
   background: ${({ theme }) => theme.colors.bgDanger};
   color: ${({ theme }) => theme.colors.textPrimary};

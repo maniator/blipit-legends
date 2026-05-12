@@ -12,6 +12,7 @@ import {
   Dot,
   ExtraInningsBanner,
   GameOverBanner,
+  SrOnly,
   Table,
   Td,
   TeamFullLabel,
@@ -132,6 +133,7 @@ const LineScore: React.FunctionComponent = () => {
         aria-atomic="true"
         aria-label={`Count: ${balls} ball${balls !== 1 ? "s" : ""}, ${strikes} strike${strikes !== 1 ? "s" : ""}, ${outs} out${outs !== 1 ? "s" : ""}`}
       >
+        <SrOnly>{`Count: ${balls} ball${balls !== 1 ? "s" : ""}, ${strikes} strike${strikes !== 1 ? "s" : ""}, ${outs} out${outs !== 1 ? "s" : ""}`}</SrOnly>
         <BsoGroup>
           B
           {[0, 1, 2].map((i) => (

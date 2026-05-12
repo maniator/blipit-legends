@@ -236,4 +236,11 @@ describe("LineScore — BSO accessibility (F5)", () => {
     const status = document.querySelector('[role="status"]');
     expect(status).toHaveAttribute("aria-label", "Count: 1 ball, 1 strike, 1 out");
   });
+
+  it("renders visually-hidden DOM text matching the count so live regions announce reliably", () => {
+    renderWithContext(<LineScore />, makeContextValue({ balls: 2, strikes: 1, outs: 0 }));
+    // The count must exist as actual text in the DOM (not only in aria-label)
+    // so screen readers that watch for text mutations can announce the update.
+    expect(screen.getByText("Count: 2 balls, 1 strike, 0 outs")).toBeInTheDocument();
+  });
 });
