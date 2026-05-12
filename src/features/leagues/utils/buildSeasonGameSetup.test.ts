@@ -168,16 +168,6 @@ describe("buildSeasonGameSetup", () => {
     expect(reinitSeed).not.toHaveBeenCalled();
   });
 
-  it("sets disableSave: true so league games do not create general-purpose save slots", async () => {
-    const homeSeasonTeam = makeSeasonTeamRecord("st-home", "season-1", homeCustomTeamId);
-    const awaySeasonTeam = makeSeasonTeamRecord("st-away", "season-1", awayCustomTeamId);
-    const game = makeSeasonGameRecord("st-home", "st-away");
-
-    const setup = await buildSeasonGameSetup(db, game, homeSeasonTeam, awaySeasonTeam, null);
-
-    expect(setup.disableSave).toBe(true);
-  });
-
   it("includes playerOverrides with lineup orders matching roster", async () => {
     const homeSeasonTeam = makeSeasonTeamRecord("st-home", "season-1", homeCustomTeamId);
     const awaySeasonTeam = makeSeasonTeamRecord("st-away", "season-1", awayCustomTeamId);

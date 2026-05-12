@@ -93,22 +93,6 @@ export type ExhibitionGameSetup = {
    * already call reinitSeed via ExhibitionSetupPage before navigation).
    */
   seed?: string;
-  /**
-   * When true, GameInner will skip creating a mid-game RxDB save slot for this
-   * session. Used for league season games, which are tracked separately via
-   * seasonGames records and should not appear in the general Load Saved Game list.
-   * Career-stats commits still occur via gameInstanceId regardless of this flag.
-   * @deprecated This field is no longer consumed by GameInner. GameSessionContext.disableSave (derived at the route level via deriveLeagueSession/deriveExhibitionSession) is the authoritative source.
-   */
-  disableSave?: boolean;
-  /**
-   * When set, GameInner will call `applySeasonGameResult` on game completion to
-   * patch the seasonGames record to 'completed', update standings on seasonTeam
-   * docs, and advance seasons.currentGameDay. Only used for interactively played
-   * league season games; headless games handle this in runHeadlessGame directly.
-   * @deprecated This field is no longer consumed by GameInner or useSeasonGameSync. GameSessionContext.seasonGameId (derived at the route level via deriveLeagueSession) is the authoritative source.
-   */
-  seasonGameId?: string;
 };
 
 /** Context shape provided by AppShell through the React Router Outlet. */
