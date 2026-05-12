@@ -5,6 +5,7 @@ import { useHomeScreenMusic } from "@feat/gameplay/hooks/useHomeScreenMusic";
 import { useVolumeControls } from "@feat/gameplay/hooks/useVolumeControls";
 import { useAppSession } from "@shared/context/AppSessionContext";
 import { Outlet, useMatches, useNavigate } from "react-router";
+import { useSessionStorage } from "usehooks-ts";
 
 import type { AppShellOutletContext, ExhibitionGameSetup, SaveRecord } from "@storage/types";
 
@@ -16,6 +17,10 @@ const AppShell: React.FunctionComponent = () => {
   const navigate = useNavigate();
   const matches = useMatches();
   const { handleGameSessionStarted, handleGameOver } = useAppSession();
+  const [, setPendingExhibitionSetup] = useSessionStorage<ExhibitionGameSetup | null>(
+    "pendingExhibitionSetup",
+    null,
+  );
 
   const isGameRoute = matches.some(
     (m) => (m.handle as { isGameRoute?: boolean } | null)?.isGameRoute === true,
@@ -69,14 +74,10 @@ const AppShell: React.FunctionComponent = () => {
   /** Called from /exhibition/new — stores the setup in sessionStorage and navigates to /game/exhibition. */
   const handleStartFromExhibition = React.useCallback(
     (setup: ExhibitionGameSetup) => {
-      try {
-        sessionStorage.setItem("pendingExhibitionSetup", JSON.stringify(setup));
-      } catch {
-        // Storage quota exceeded — navigate anyway; ExhibitionGamePage will redirect to setup.
-      }
+      setPendingExhibitionSetup(setup);
       navigate("/game/exhibition");
     },
-    [navigate],
+    [navigate, setPendingExhibitionSetup],
   );
 
   const outletContext: AppShellOutletContext = React.useMemo(
