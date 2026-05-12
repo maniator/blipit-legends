@@ -21,6 +21,15 @@ vi.mock("@feat/gameplay/components/Game", () => ({
   default: () => <div data-testid="game-mock" />,
 }));
 
+// Mock the GamePageWrapper component
+vi.mock("@feat/gameplay/components/GamePageWrapper", () => ({
+  default: ({
+    children,
+  }: {
+    children: (onSavingStateChange: (saving: boolean) => void) => React.ReactNode;
+  }) => <>{children(() => {})}</>,
+}));
+
 // GameSessionProvider reads from context; mock it so tests don't need a real provider.
 vi.mock("@feat/gameplay/utils/gameSessionDerive", () => ({
   deriveExhibitionSession: vi.fn().mockReturnValue({

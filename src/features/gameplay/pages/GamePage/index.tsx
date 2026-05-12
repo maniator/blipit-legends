@@ -1,15 +1,10 @@
 import * as React from "react";
 
 import Game from "@feat/gameplay/components/Game";
+import GamePageWrapper from "@feat/gameplay/components/GamePageWrapper";
 import type { GameSessionContextValue } from "@feat/gameplay/context/index";
 import { GameSessionProvider } from "@feat/gameplay/context/index";
-import {
-  useBeforeUnload,
-  useBlocker,
-  useLocation,
-  useNavigate,
-  useOutletContext,
-} from "react-router";
+import { useLocation, useNavigate, useOutletContext } from "react-router";
 
 import type {
   AppShellOutletContext,
@@ -17,8 +12,6 @@ import type {
   GameLocationState,
   SaveRecord,
 } from "@storage/types";
-
-import { SavingBanner } from "./styles";
 
 const GamePage: React.FunctionComponent = () => {
   const ctx = useOutletContext<AppShellOutletContext>();
@@ -81,54 +74,25 @@ const GamePage: React.FunctionComponent = () => {
     navigate("/exhibition/new");
   }, [navigate]);
 
-  const [isCommitting, setIsCommitting] = React.useState(false);
-
-  const blocker = useBlocker(isCommitting);
-
-  // When a navigation attempt occurs while isCommitting is true, the blocker
-  // captures it and enters "blocked" state. The blocker predicate alone won't
-  // auto-proceed — we must call blocker.proceed() once the commit finishes so
-  // the deferred navigation can continue.
-  React.useEffect(() => {
-    if (blocker.state === "blocked" && !isCommitting) {
-      blocker.proceed?.();
-    }
-  }, [blocker, isCommitting]);
-
-  useBeforeUnload(
-    React.useCallback(
-      (event) => {
-        if (isCommitting) {
-          event.preventDefault();
-          event.returnValue = "";
-        }
-      },
-      [isCommitting],
-    ),
-  );
-
   return (
-    <>
-      <GameSessionProvider value={sessionCtx}>
-        <Game
-          onBackToHome={ctx.onBackToHome}
-          onNewGame={handleNewGame}
-          onGameSessionStarted={ctx.onGameSessionStarted}
-          pendingGameSetup={pendingSetupRef.current}
-          onConsumeGameSetup={handleConsumeSetup}
-          pendingLoadSave={pendingLoadRef.current}
-          onConsumePendingLoad={handleConsumeLoad}
-          onSessionRestored={handleSessionRestored}
-          onSavingStateChange={setIsCommitting}
-          onGameOver={ctx.onGameOver}
-        />
-      </GameSessionProvider>
-      {blocker.state === "blocked" && (
-        <SavingBanner role="status" aria-live="polite" data-testid="saving-stats-banner">
-          💾 Saving stats… Navigation will continue automatically.
-        </SavingBanner>
+    <GamePageWrapper>
+      {(onSavingStateChange) => (
+        <GameSessionProvider value={sessionCtx}>
+          <Game
+            onBackToHome={ctx.onBackToHome}
+            onNewGame={handleNewGame}
+            onGameSessionStarted={ctx.onGameSessionStarted}
+            pendingGameSetup={pendingSetupRef.current}
+            onConsumeGameSetup={handleConsumeSetup}
+            pendingLoadSave={pendingLoadRef.current}
+            onConsumePendingLoad={handleConsumeLoad}
+            onSessionRestored={handleSessionRestored}
+            onSavingStateChange={onSavingStateChange}
+            onGameOver={ctx.onGameOver}
+          />
+        </GameSessionProvider>
       )}
-    </>
+    </GamePageWrapper>
   );
 };
 

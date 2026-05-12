@@ -2,6 +2,7 @@ import * as React from "react";
 
 import AppLoadingFallback from "@feat/gameplay/components/AppLoadingFallback";
 import Game from "@feat/gameplay/components/Game";
+import GamePageWrapper from "@feat/gameplay/components/GamePageWrapper";
 import { GameSessionProvider } from "@feat/gameplay/context/index";
 import { deriveLeagueSession } from "@feat/gameplay/utils/gameSessionDerive";
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
@@ -140,18 +141,23 @@ const LeagueGamePage: React.FunctionComponent = () => {
   }
 
   return (
-    <GameSessionProvider value={deriveLeagueSession(seasonGameId!, fetchState.managedTeamIdx)}>
-      <Game
-        onBackToHome={ctx.onBackToHome}
-        onNewGame={handleNewGame}
-        onGameSessionStarted={ctx.onGameSessionStarted}
-        pendingGameSetup={fetchState.setup}
-        onConsumeGameSetup={handleConsumeSetup}
-        pendingLoadSave={null}
-        onConsumePendingLoad={handleConsumePendingLoad}
-        onGameOver={ctx.onGameOver}
-      />
-    </GameSessionProvider>
+    <GamePageWrapper>
+      {(onSavingStateChange) => (
+        <GameSessionProvider value={deriveLeagueSession(seasonGameId!, fetchState.managedTeamIdx)}>
+          <Game
+            onBackToHome={ctx.onBackToHome}
+            onNewGame={handleNewGame}
+            onGameSessionStarted={ctx.onGameSessionStarted}
+            pendingGameSetup={fetchState.setup}
+            onConsumeGameSetup={handleConsumeSetup}
+            pendingLoadSave={null}
+            onConsumePendingLoad={handleConsumePendingLoad}
+            onSavingStateChange={onSavingStateChange}
+            onGameOver={ctx.onGameOver}
+          />
+        </GameSessionProvider>
+      )}
+    </GamePageWrapper>
   );
 };
 
