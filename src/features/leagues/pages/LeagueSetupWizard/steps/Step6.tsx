@@ -55,7 +55,7 @@ export function Step6({
       <StepTitle>Review &amp; Create</StepTitle>
       <SummaryTable>
         <SummaryKey>Season name</SummaryKey>
-        <SummaryValue>{state.seasonName || <em>unnamed</em>}</SummaryValue>
+        <SummaryValue>{state.seasonName.trim() || <em>unnamed</em>}</SummaryValue>
         <SummaryKey>Preset</SummaryKey>
         <SummaryValue>Mini · Sprint</SummaryValue>
         <SummaryKey>Leagues</SummaryKey>
