@@ -55,11 +55,27 @@ import {
 // Step renderers
 // ---------------------------------------------------------------------------
 
-function Step1(): React.ReactElement {
+interface Step1Props {
+  state: WizardState;
+  dispatch: React.Dispatch<Parameters<typeof wizardReducer>[1]>;
+}
+
+function Step1({ state, dispatch }: Step1Props): React.ReactElement {
   return (
     <StepContainer>
       <StepTitle>Format &amp; Length</StepTitle>
       <FieldGroup>
+        <div>
+          <FieldLabel htmlFor="season-name-input">Season name</FieldLabel>
+          <SeedInput
+            id="season-name-input"
+            data-testid="season-name-input"
+            value={state.seasonName}
+            maxLength={60}
+            aria-label="Season name"
+            onChange={(e) => dispatch({ type: "SET_SEASON_NAME", name: e.target.value })}
+          />
+        </div>
         <div>
           <FieldLabel>Preset</FieldLabel>
           <RadioRow>
@@ -509,6 +525,7 @@ function LeagueSetupWizardInner(): React.ReactElement {
         season = await quickStart({
           masterSeed: state.masterSeed,
           autogenSeed: state.autogenSeed,
+          seasonName: state.seasonName || `Season ${new Date().getFullYear()}`,
           dhEnabled: state.leagues[0]?.dhEnabled ?? true,
           autogenOptions: {
             count: 8,
@@ -571,7 +588,7 @@ function LeagueSetupWizardInner(): React.ReactElement {
         }
 
         season = await createSeason({
-          name: "New Season",
+          name: state.seasonName || `Season ${new Date().getFullYear()}`,
           masterSeed: state.masterSeed,
           preset: "mini",
           seasonLength: "sprint",
@@ -686,7 +703,7 @@ function LeagueSetupWizardInner(): React.ReactElement {
   const stepContent = (() => {
     switch (state.step) {
       case 1:
-        return <Step1 />;
+        return <Step1 state={state} dispatch={dispatch} />;
       case 2:
         return (
           <Step2

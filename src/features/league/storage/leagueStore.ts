@@ -70,6 +70,8 @@ export interface CreateSeasonInput {
 export interface QuickStartInput {
   masterSeed: string;
   dhEnabled: boolean;
+  /** Name for the created season. Defaults to "Quick Start Season" if omitted. */
+  seasonName?: string;
   /** Optional explicit seed for autogen team generation. Defaults to fnv1a(masterSeed+":autogen:qs"). */
   autogenSeed?: string;
   autogenOptions: {
@@ -313,7 +315,7 @@ function buildStore(getDbFn: GetDb) {
      * containing all generated teams.
      */
     async quickStart(input: QuickStartInput): Promise<SeasonRecord> {
-      const { masterSeed, dhEnabled, autogenOptions, autogenSeed } = input;
+      const { masterSeed, dhEnabled, autogenOptions, autogenSeed, seasonName } = input;
       const db = await getDbFn();
 
       // Use the caller-supplied autogenSeed when provided; otherwise derive a
@@ -365,10 +367,9 @@ function buildStore(getDbFn: GetDb) {
 
       // Create a single league spanning all generated teams.
       const leagueId = fnv1a(`${masterSeed}:league:0`);
-      const seasonName = `Quick Start Season`;
 
       return store.createSeason({
-        name: seasonName,
+        name: seasonName ?? `Season ${new Date().getFullYear()}`,
         masterSeed,
         preset: "mini",
         seasonLength: "sprint",
@@ -637,6 +638,20 @@ function buildStore(getDbFn: GetDb) {
       const docs = await db.seasonGames.find({ selector }).exec();
       return docs.map((d) => d.toJSON() as unknown as SeasonGameRecord);
     },
+
+    /**
+     * Renames a season. Trims whitespace; a blank name is rejected (returns false).
+     * No schema bump needed — `name` is already a required string field in v0.
+     */
+    async renameSeason(seasonId: string, newName: string): Promise<boolean> {
+      const trimmed = newName.trim();
+      if (!trimmed) return false;
+      const db = await getDbFn();
+      const doc = await db.seasons.findOne(seasonId).exec();
+      if (!doc) return false;
+      await doc.patch({ name: trimmed });
+      return true;
+    },
   };
 
   return store;
@@ -661,6 +676,7 @@ export const {
   quickStart,
   advanceSeason,
   recordResult,
+  renameSeason,
   simulateNextDay,
   getActiveSeason,
   getSeasonTeams,

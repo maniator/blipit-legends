@@ -13,7 +13,12 @@ import { act, fireEvent, render, renderHook, screen } from "@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { SaveRecord } from "@storage/types";
-import { makeContextValue, makeGameSessionContext, makeState } from "@test/testHelpers";
+import {
+  GameProviderWithSession,
+  makeContextValue,
+  makeGameSessionContext,
+  makeState,
+} from "@test/testHelpers";
 
 import Game from ".";
 import GameInner from "./GameInner";
@@ -198,9 +203,9 @@ describe("GameInner — auto-save resume", () => {
     const onGameSessionStarted = vi.fn();
     await act(async () => {
       render(
-        <GameProviderWrapper>
+        <GameProviderWithSession>
           <GameInner onGameSessionStarted={onGameSessionStarted} />
-        </GameProviderWrapper>,
+        </GameProviderWithSession>,
       );
     });
     // Auto-restore fires onGameSessionStarted without any dialog interaction
@@ -224,9 +229,9 @@ describe("GameInner — auto-save resume", () => {
     const onGameSessionStarted = vi.fn();
     await act(async () => {
       render(
-        <GameProviderWrapper>
+        <GameProviderWithSession>
           <GameInner onGameSessionStarted={onGameSessionStarted} />
-        </GameProviderWrapper>,
+        </GameProviderWithSession>,
       );
     });
     expect(onGameSessionStarted).not.toHaveBeenCalled();
@@ -245,9 +250,9 @@ describe("GameInner — auto-save resume", () => {
     });
     await act(async () => {
       render(
-        <GameProviderWrapper>
+        <GameProviderWithSession>
           <GameInner />
-        </GameProviderWrapper>,
+        </GameProviderWithSession>,
       );
     });
     expect(rngModule.restoreSeed).toHaveBeenCalledWith(SEED_STR);
@@ -281,9 +286,9 @@ describe("GameInner — auto-save resume", () => {
     };
     const onGameSessionStarted = vi.fn();
     render(
-      <GameProviderWrapper>
+      <GameProviderWithSession>
         <GameInner pendingGameSetup={pendingSetup} onGameSessionStarted={onGameSessionStarted} />
-      </GameProviderWrapper>,
+      </GameProviderWithSession>,
     );
     await act(async () => {});
     expect(mockCreateSave).toHaveBeenCalled();
@@ -294,7 +299,11 @@ describe("GameInner — auto-save resume", () => {
 describe("Game", () => {
   it("renders the full game without crashing", async () => {
     await act(async () => {
-      render(<Game />);
+      render(
+        <GameSessionProvider value={makeGameSessionContext()}>
+          <Game />
+        </GameSessionProvider>,
+      );
     });
     expect(screen.getByTestId("scoreboard")).toBeInTheDocument();
   });
@@ -545,7 +554,11 @@ describe("Game — DbResetNotice", () => {
   it("shows the reset notice when wasDbReset returns true", async () => {
     vi.spyOn(await import("@storage/db"), "wasDbReset").mockReturnValue(true);
     await act(async () => {
-      render(<Game />);
+      render(
+        <GameSessionProvider value={makeGameSessionContext()}>
+          <Game />
+        </GameSessionProvider>,
+      );
     });
     expect(screen.getByTestId("db-reset-notice")).toBeInTheDocument();
   });
@@ -553,7 +566,11 @@ describe("Game — DbResetNotice", () => {
   it("hides the notice after clicking the dismiss button", async () => {
     vi.spyOn(await import("@storage/db"), "wasDbReset").mockReturnValue(true);
     await act(async () => {
-      render(<Game />);
+      render(
+        <GameSessionProvider value={makeGameSessionContext()}>
+          <Game />
+        </GameSessionProvider>,
+      );
     });
     const notice = screen.getByTestId("db-reset-notice");
     expect(notice).toBeInTheDocument();
@@ -564,7 +581,11 @@ describe("Game — DbResetNotice", () => {
   it("does not show the notice when wasDbReset returns false", async () => {
     vi.spyOn(await import("@storage/db"), "wasDbReset").mockReturnValue(false);
     await act(async () => {
-      render(<Game />);
+      render(
+        <GameSessionProvider value={makeGameSessionContext()}>
+          <Game />
+        </GameSessionProvider>,
+      );
     });
     expect(screen.queryByTestId("db-reset-notice")).not.toBeInTheDocument();
   });
@@ -573,7 +594,11 @@ describe("Game — DbResetNotice", () => {
     sessionStorage.setItem("db-reset-dismissed", "1");
     vi.spyOn(await import("@storage/db"), "wasDbReset").mockReturnValue(true);
     await act(async () => {
-      render(<Game />);
+      render(
+        <GameSessionProvider value={makeGameSessionContext()}>
+          <Game />
+        </GameSessionProvider>,
+      );
     });
     expect(screen.queryByTestId("db-reset-notice")).not.toBeInTheDocument();
   });
@@ -581,7 +606,11 @@ describe("Game — DbResetNotice", () => {
   it("dismiss sets sessionStorage so notice stays gone on remount", async () => {
     vi.spyOn(await import("@storage/db"), "wasDbReset").mockReturnValue(true);
     await act(async () => {
-      render(<Game />);
+      render(
+        <GameSessionProvider value={makeGameSessionContext()}>
+          <Game />
+        </GameSessionProvider>,
+      );
     });
     fireEvent.click(screen.getByRole("button", { name: /dismiss notice/i }));
     expect(sessionStorage.getItem("db-reset-dismissed")).toBe("1");
@@ -606,9 +635,9 @@ describe("GameInner — pendingGameSetup prop (Exhibition Setup page auto-start)
   it("auto-starts the game when pendingGameSetup is provided", () => {
     const onConsumeGameSetup = vi.fn();
     render(
-      <GameProviderWrapper>
+      <GameProviderWithSession>
         <GameInner pendingGameSetup={pendingSetup} onConsumeGameSetup={onConsumeGameSetup} />
-      </GameProviderWrapper>,
+      </GameProviderWithSession>,
     );
     // onConsumeGameSetup must be called to clear the pending setup
     expect(onConsumeGameSetup).toHaveBeenCalled();
@@ -620,9 +649,9 @@ describe("GameInner — pendingGameSetup prop (Exhibition Setup page auto-start)
     const onConsumeGameSetup = vi.fn();
     act(() => {
       render(
-        <GameProviderWrapper>
+        <GameProviderWithSession>
           <GameInner pendingGameSetup={pendingSetup} onConsumeGameSetup={onConsumeGameSetup} />
-        </GameProviderWrapper>,
+        </GameProviderWithSession>,
       );
     });
     expect(onConsumeGameSetup).toHaveBeenCalledTimes(1);
@@ -631,16 +660,16 @@ describe("GameInner — pendingGameSetup prop (Exhibition Setup page auto-start)
   it("does not auto-start twice for the same pendingGameSetup reference", () => {
     const onConsumeGameSetup = vi.fn();
     const { rerender } = render(
-      <GameProviderWrapper>
+      <GameProviderWithSession>
         <GameInner pendingGameSetup={pendingSetup} onConsumeGameSetup={onConsumeGameSetup} />
-      </GameProviderWrapper>,
+      </GameProviderWithSession>,
     );
     // Rerender with the same object reference — should NOT fire again
     act(() => {
       rerender(
-        <GameProviderWrapper>
+        <GameProviderWithSession>
           <GameInner pendingGameSetup={pendingSetup} onConsumeGameSetup={onConsumeGameSetup} />
-        </GameProviderWrapper>,
+        </GameProviderWithSession>,
       );
     });
     expect(onConsumeGameSetup).toHaveBeenCalledTimes(1);
@@ -674,9 +703,9 @@ describe("GameInner — pendingGameSetup prop (Exhibition Setup page auto-start)
     const onGameSessionStarted = vi.fn();
     await act(async () => {
       render(
-        <GameProviderWrapper>
+        <GameProviderWithSession>
           <GameInner pendingGameSetup={pendingSetup} onGameSessionStarted={onGameSessionStarted} />
-        </GameProviderWrapper>,
+        </GameProviderWithSession>,
       );
     });
 

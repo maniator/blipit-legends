@@ -144,8 +144,11 @@ const GameInner: React.FunctionComponent<Props> = ({
   // One-time dismissible toast shown when a loaded save's steal threshold is clamped.
   const [showStealClampToast, setShowStealClampToast] = React.useState(false);
 
-  // Read session metadata from context (set by ExhibitionGamePage / LeagueGamePage).
-  const { disableSave } = useGameSessionContext();
+  // Read session metadata from context (set by ExhibitionGamePage / LeagueGamePage / GamePage).
+  // managedTeam here replaces the former direct read of pendingGameSetup.managedTeam so that
+  // GameInner has zero direct reads of ExhibitionGameSetup fields other than the data it
+  // truly needs (homeTeam, awayTeam, labels, playerOverrides, seed, disableSave).
+  const { disableSave, managedTeam: sessionManagedTeam } = useGameSessionContext();
 
   // Fallback buffer when rendered without the Game wrapper (e.g. in tests).
   const localBufferRef = React.useRef<GameAction[]>([]);
@@ -369,7 +372,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       pendingGameSetup.awayTeam,
       pendingGameSetup.homeTeamLabel,
       pendingGameSetup.awayTeamLabel,
-      pendingGameSetup.managedTeam,
+      sessionManagedTeam,
       pendingGameSetup.playerOverrides,
     );
     onConsumeGameSetup?.();
