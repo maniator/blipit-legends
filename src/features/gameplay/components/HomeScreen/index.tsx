@@ -39,7 +39,12 @@ const HomeScreen: React.FunctionComponent<Props> = ({
 }) => (
   <HomeContainer data-testid="home-screen">
     <HomeLogo>
-      <img src="/images/blipit.svg" alt="BlipIt Baseball Legends" />
+      <img
+        src="/images/blipit-512.png"
+        srcSet="/images/blipit-192.png 192w, /images/blipit-512.png 512w"
+        sizes="(max-width: 768px) 110px, 200px"
+        alt="BlipIt Baseball Legends"
+      />
     </HomeLogo>
     <HomeSubtitle>Self-playing baseball simulator</HomeSubtitle>
 

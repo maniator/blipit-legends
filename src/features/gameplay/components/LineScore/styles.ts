@@ -102,7 +102,7 @@ export const DividerTd = styled.td`
 export const BsoRow = styled.div`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.s14};
+  column-gap: ${({ theme }) => theme.spacing.s14};
   padding: ${({ theme }) => theme.spacing.s6} ${({ theme }) => theme.spacing.sm}
     ${({ theme }) => theme.spacing.xs};
   background: ${({ theme }) => theme.colors.bgGame};
@@ -122,13 +122,26 @@ export const BsoGroup = styled.div`
   gap: ${({ theme }) => theme.spacing.s5};
 `;
 
-export const Dot = styled.span<{ $on: boolean; $color: string }>`
+const getBsoActiveColor = (
+  $type: "ball" | "strike" | "out",
+  theme: { colors: { bsoBall: string; bsoStrike: string; bsoOut: string } },
+): string => {
+  if ($type === "ball") return theme.colors.bsoBall;
+  if ($type === "strike") return theme.colors.bsoStrike;
+  return theme.colors.bsoOut;
+};
+
+export const Dot = styled.span<{ $on: boolean; $type: "ball" | "strike" | "out" }>`
   display: inline-block;
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: ${({ $on, $color, theme }) => ($on ? $color : theme.colors.borderLineScore)};
-  border: 1px solid ${({ $on, $color, theme }) => ($on ? $color : theme.colors.borderLineScoreOff)};
+  background: ${({ $on, $type, theme }) =>
+    $on ? getBsoActiveColor($type, theme) : theme.colors.borderLineScore};
+  border: 1px solid
+    ${({ $on, $type, theme }) =>
+      $on ? getBsoActiveColor($type, theme) : theme.colors.borderLineScoreOff};
+  box-shadow: ${({ $on, theme }) => ($on ? `inset 0 0 0 1px ${theme.colors.bsoDotInset}` : "none")};
 `;
 
 export const ExtraInningsBanner = styled.div`
@@ -139,6 +152,21 @@ export const ExtraInningsBanner = styled.div`
   padding: ${({ theme }) => theme.spacing.xxs} ${({ theme }) => theme.spacing.sm};
   letter-spacing: ${({ theme }) => theme.letterSpacing.widest};
   margin-left: auto;
+`;
+
+/**
+ * Visually hides text from sighted users while keeping it in the DOM for
+ * screen readers. Used inside aria-live regions so DOM text changes trigger
+ * reliable announcements (changing aria-label alone is not always announced).
+ */
+export const SrOnly = styled.span`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 `;
 
 export const GameOverBanner = styled.div`

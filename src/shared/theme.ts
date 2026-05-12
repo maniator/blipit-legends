@@ -48,7 +48,7 @@ export const theme = {
     textSemiLight: "#bbbbbb",
     textLight: "#cccccc",
     textDisabled: "#555555",
-    textDimmer: "#6B7785",
+    textDimmer: "#8a9aaa",
     textDropdown: "#dddddd",
     textHint: "#6e88b1",
     textLink: "#aaccff",
@@ -62,7 +62,7 @@ export const theme = {
     textFaint: "#a0b4d0",
     textModalLink: "#7a9abf",
     textReadOnly: "#8899bb",
-    textNavMid: "#5577aa",
+    textNavMid: "#7798cc",
     textAccent: "#FF9A1F",
     textTeamInfo: "#C99A2E",
 
@@ -89,6 +89,8 @@ export const theme = {
     bsoBall: "#44cc88",
     bsoStrike: "#F2C14E",
     bsoOut: "#ff7070",
+    /** Inner box-shadow on active BSO dots for grayscale/CVD distinguishability. */
+    bsoDotInset: "rgba(0, 0, 0, 0.35)",
 
     // Countdown bar states
     countdownWarn: "#FF9A1F",
@@ -173,8 +175,8 @@ export const theme = {
   },
   fontSizes: {
     // px-based — UI chrome (labels, badges, buttons)
-    xs: "10px",
-    sm: "11px",
+    xs: "12px",
+    sm: "12px",
     label: "12px",
     base: "13px",
     md: "14px",
@@ -184,7 +186,7 @@ export const theme = {
     dialogTitle: "18px",
     f20: "20px",
     // rem-based — body text (scales with root font size)
-    tiny: "0.7rem",
+    tiny: "0.75rem",
     sub: "0.85rem",
     subLg: "0.9rem",
     body: "0.95rem",

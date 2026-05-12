@@ -48,3 +48,40 @@ describe("Sprint 1 contrast guardrails (Story 3.1)", () => {
     expect(contrast(theme.colors.textScore, theme.colors.bgGame)).toBeGreaterThanOrEqual(7);
   });
 });
+
+describe("Sprint 2 Tier-2 contrast guardrails (Story 9.1)", () => {
+  it("textDimmer meets WCAG AA (≥4.5:1) on all primary dark surfaces", () => {
+    expect(contrast(theme.colors.textDimmer, theme.colors.bgSurface)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(theme.colors.textDimmer, theme.colors.bgGame)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(theme.colors.textDimmer, theme.colors.bgDeep)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("textNavMid meets WCAG AA (≥4.5:1) on all primary dark surfaces", () => {
+    expect(contrast(theme.colors.textNavMid, theme.colors.bgSurface)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(theme.colors.textNavMid, theme.colors.bgGame)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(theme.colors.textNavMid, theme.colors.bgDeep)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe("Sprint 2 font-size minimum guardrails (Story 8.1)", () => {
+  const MIN_PX = 12;
+  const ROOT_FONT_PX = 16;
+
+  const toPx = (value: string): number => {
+    if (value.endsWith("px")) return parseFloat(value);
+    if (value.endsWith("rem")) return parseFloat(value) * ROOT_FONT_PX;
+    return NaN;
+  };
+
+  it("fontSizes.xs is at least 12px", () => {
+    expect(toPx(theme.fontSizes.xs)).toBeGreaterThanOrEqual(MIN_PX);
+  });
+
+  it("fontSizes.sm is at least 12px", () => {
+    expect(toPx(theme.fontSizes.sm)).toBeGreaterThanOrEqual(MIN_PX);
+  });
+
+  it("fontSizes.tiny resolves to at least 12px at 16px root", () => {
+    expect(toPx(theme.fontSizes.tiny)).toBeGreaterThanOrEqual(MIN_PX);
+  });
+});

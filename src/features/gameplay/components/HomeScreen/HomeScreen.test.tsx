@@ -209,3 +209,26 @@ describe("HomeScreen", () => {
     expect(screen.queryByTestId("home-browse-leagues-button")).not.toBeInTheDocument();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Story 7.1 — F2: logo uses PNG srcset (no SVG raster wrapper)
+// ---------------------------------------------------------------------------
+describe("HomeScreen — logo PNG srcset (F2)", () => {
+  const noop = vi.fn();
+
+  it("renders the logo as a PNG img (not SVG)", () => {
+    render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} />);
+    const img = screen.getByRole("img", { name: /blipit baseball legends/i });
+    expect(img.getAttribute("src")).toMatch(/\.png$/i);
+    expect(img.getAttribute("src")).not.toMatch(/\.svg$/i);
+  });
+
+  it("logo img has srcSet with 192w and 512w PNG variants", () => {
+    render(<HomeScreen onNewGame={noop} onLoadSaves={noop} onManageTeams={noop} />);
+    const img = screen.getByRole("img", { name: /blipit baseball legends/i });
+    const srcSet = img.getAttribute("srcset") ?? "";
+    expect(srcSet).toContain("192w");
+    expect(srcSet).toContain("512w");
+    expect(srcSet).not.toContain(".svg");
+  });
+});

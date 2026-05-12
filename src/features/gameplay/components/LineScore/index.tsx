@@ -12,6 +12,7 @@ import {
   Dot,
   ExtraInningsBanner,
   GameOverBanner,
+  SrOnly,
   Table,
   Td,
   TeamFullLabel,
@@ -87,6 +88,7 @@ const LineScore: React.FunctionComponent = () => {
   const inningCols = Array.from({ length: totalInnings }, (_, i) => i + 1);
   const hits = (team: 0 | 1) =>
     playLog.filter((e) => e.team === team && e.event !== Hit.Walk).length;
+  const countText = `Count: ${balls} ball${balls !== 1 ? "s" : ""}, ${strikes} strike${strikes !== 1 ? "s" : ""}, ${outs} out${outs !== 1 ? "s" : ""}`;
 
   return (
     <Wrapper data-testid="scoreboard">
@@ -126,23 +128,24 @@ const LineScore: React.FunctionComponent = () => {
           ))}
         </tbody>
       </Table>
-      <BsoRow>
+      <BsoRow role="status" aria-live="polite" aria-atomic="true" aria-label={countText}>
+        <SrOnly>{countText}</SrOnly>
         <BsoGroup>
           B
           {[0, 1, 2].map((i) => (
-            <Dot key={i} $on={i < balls} $color="#4caf50" />
+            <Dot key={i} $on={i < balls} $type="ball" />
           ))}
         </BsoGroup>
         <BsoGroup>
           S
           {[0, 1].map((i) => (
-            <Dot key={i} $on={i < strikes} $color="#f5c842" />
+            <Dot key={i} $on={i < strikes} $type="strike" />
           ))}
         </BsoGroup>
         <BsoGroup>
           O
           {[0, 1].map((i) => (
-            <Dot key={i} $on={i < outs} $color="#e05050" />
+            <Dot key={i} $on={i < outs} $type="out" />
           ))}
         </BsoGroup>
         {inning > 9 && !gameOver && <ExtraInningsBanner>EXTRA INNINGS</ExtraInningsBanner>}
