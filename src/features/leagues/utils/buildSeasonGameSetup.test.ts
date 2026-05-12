@@ -28,6 +28,7 @@ let db: BallgameDb;
 let homeCustomTeamId: string;
 let awayCustomTeamId: string;
 
+/** Minimal snapshot used when the team doc exists in the DB (snapshot fields don't matter). */
 const makeSeasonTeamRecord = (
   id: string,
   seasonId: string,
@@ -38,6 +39,43 @@ const makeSeasonTeamRecord = (
   leagueId: "league-1",
   customTeamId,
   rosterSnapshot: { name: "TestTeam", city: "" } as Record<string, unknown>,
+  wins: 0,
+  losses: 0,
+  ties: 0,
+  runDifferential: 0,
+});
+
+/**
+ * Season team record with a rosterSnapshot that includes a minimal but valid
+ * lineup (9 batters) and pitchers (1 pitcher) so the snapshot-fallback path
+ * in teamFromSnapshot does not throw.
+ */
+const makeSeasonTeamRecordWithSnapshot = (
+  id: string,
+  seasonId: string,
+  customTeamId: string,
+): SeasonTeamRecord => ({
+  id,
+  seasonId,
+  leagueId: "league-1",
+  customTeamId,
+  rosterSnapshot: {
+    name: "TestTeam",
+    city: "",
+    lineup: [
+      makePlayer({ name: "B1" }),
+      makePlayer({ name: "B2" }),
+      makePlayer({ name: "B3" }),
+      makePlayer({ name: "B4" }),
+      makePlayer({ name: "B5" }),
+      makePlayer({ name: "B6" }),
+      makePlayer({ name: "B7" }),
+      makePlayer({ name: "B8" }),
+      makePlayer({ name: "B9" }),
+    ],
+    bench: [],
+    pitchers: [makePlayer({ name: "P1", role: "pitcher" })],
+  } as Record<string, unknown>,
   wins: 0,
   losses: 0,
   ties: 0,
@@ -168,16 +206,6 @@ describe("buildSeasonGameSetup", () => {
     expect(reinitSeed).not.toHaveBeenCalled();
   });
 
-  it("sets disableSave: true so league games do not create general-purpose save slots", async () => {
-    const homeSeasonTeam = makeSeasonTeamRecord("st-home", "season-1", homeCustomTeamId);
-    const awaySeasonTeam = makeSeasonTeamRecord("st-away", "season-1", awayCustomTeamId);
-    const game = makeSeasonGameRecord("st-home", "st-away");
-
-    const setup = await buildSeasonGameSetup(db, game, homeSeasonTeam, awaySeasonTeam, null);
-
-    expect(setup.disableSave).toBe(true);
-  });
-
   it("includes playerOverrides with lineup orders matching roster", async () => {
     const homeSeasonTeam = makeSeasonTeamRecord("st-home", "season-1", homeCustomTeamId);
     const awaySeasonTeam = makeSeasonTeamRecord("st-away", "season-1", awayCustomTeamId);
@@ -191,23 +219,69 @@ describe("buildSeasonGameSetup", () => {
     expect(setup.playerOverrides.awayPitchers).toHaveLength(1);
   });
 
-  it("throws if home team doc is missing from the DB", async () => {
-    const badHomeSeasonTeam = makeSeasonTeamRecord("st-home", "season-1", "nonexistent-team-id");
+  it("falls back to rosterSnapshot if home team doc is missing from the DB", async () => {
+    const badHomeSeasonTeam = makeSeasonTeamRecordWithSnapshot(
+      "st-home",
+      "season-1",
+      "nonexistent-team-id",
+    );
+    const awaySeasonTeam = makeSeasonTeamRecord("st-away", "season-1", awayCustomTeamId);
+    const game = makeSeasonGameRecord("st-home", "st-away");
+
+    // Should not throw — snapshot includes valid lineup and pitchers.
+    const setup = await buildSeasonGameSetup(db, game, badHomeSeasonTeam, awaySeasonTeam, null);
+    expect(setup).toBeDefined();
+    // rosterSnapshot contains name: "TestTeam" in makeSeasonTeamRecordWithSnapshot
+    expect(setup.homeTeamLabel).toBe("TestTeam");
+  });
+
+  it("falls back to rosterSnapshot if away team doc is missing from the DB", async () => {
+    const homeSeasonTeam = makeSeasonTeamRecord("st-home", "season-1", homeCustomTeamId);
+    const badAwaySeasonTeam = makeSeasonTeamRecordWithSnapshot(
+      "st-away",
+      "season-1",
+      "nonexistent-team-id",
+    );
+    const game = makeSeasonGameRecord("st-home", "st-away");
+
+    // Should not throw — snapshot includes valid lineup and pitchers.
+    const setup = await buildSeasonGameSetup(db, game, homeSeasonTeam, badAwaySeasonTeam, null);
+    expect(setup).toBeDefined();
+    // rosterSnapshot contains name: "TestTeam" in makeSeasonTeamRecordWithSnapshot
+    expect(setup.awayTeamLabel).toBe("TestTeam");
+  });
+
+  it("throws if rosterSnapshot has empty lineup when team doc is missing", async () => {
+    const badHomeSeasonTeam: SeasonTeamRecord = {
+      ...makeSeasonTeamRecord("st-home", "season-1", "nonexistent-team-id"),
+      rosterSnapshot: {
+        name: "EmptyLineup",
+        lineup: [],
+        pitchers: [makePlayer({ name: "P1", role: "pitcher" })],
+      } as Record<string, unknown>,
+    };
     const awaySeasonTeam = makeSeasonTeamRecord("st-away", "season-1", awayCustomTeamId);
     const game = makeSeasonGameRecord("st-home", "st-away");
 
     await expect(
       buildSeasonGameSetup(db, game, badHomeSeasonTeam, awaySeasonTeam, null),
-    ).rejects.toThrow(/nonexistent-team-id/);
+    ).rejects.toThrow("empty lineup");
   });
 
-  it("throws if away team doc is missing from the DB", async () => {
-    const homeSeasonTeam = makeSeasonTeamRecord("st-home", "season-1", homeCustomTeamId);
-    const badAwaySeasonTeam = makeSeasonTeamRecord("st-away", "season-1", "nonexistent-team-id");
+  it("throws if rosterSnapshot has no pitchers when team doc is missing", async () => {
+    const badHomeSeasonTeam: SeasonTeamRecord = {
+      ...makeSeasonTeamRecord("st-home", "season-1", "nonexistent-team-id"),
+      rosterSnapshot: {
+        name: "NoPitchers",
+        lineup: [makePlayer({ name: "B1" })],
+        pitchers: [],
+      } as Record<string, unknown>,
+    };
+    const awaySeasonTeam = makeSeasonTeamRecord("st-away", "season-1", awayCustomTeamId);
     const game = makeSeasonGameRecord("st-home", "st-away");
 
     await expect(
-      buildSeasonGameSetup(db, game, homeSeasonTeam, badAwaySeasonTeam, null),
-    ).rejects.toThrow(/nonexistent-team-id/);
+      buildSeasonGameSetup(db, game, badHomeSeasonTeam, awaySeasonTeam, null),
+    ).rejects.toThrow("no pitchers");
   });
 });

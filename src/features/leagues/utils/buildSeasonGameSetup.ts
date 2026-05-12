@@ -18,9 +18,58 @@ import {
 } from "@feat/customTeams/adapters/customTeamAdapter";
 import { populateRoster } from "@feat/customTeams/storage/customTeamRosterPersistence";
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
+import { appLog } from "@shared/utils/logger";
 
 import type { BallgameDb } from "@storage/db";
-import type { ExhibitionGameSetup, TeamRecord } from "@storage/types";
+import type { ExhibitionGameSetup, TeamPlayer, TeamRecord, TeamWithRoster } from "@storage/types";
+
+/**
+ * Helper to reconstruct a TeamWithRoster from a rosterSnapshot when the team
+ * doc is missing from the database (legacy data or deleted team).
+ *
+ * Throws if the snapshot is missing a non-empty `lineup` or `pitchers` array —
+ * a game setup with an empty roster would fail in the engine with a confusing
+ * error; it is safer to surface the problem here with a clear message.
+ */
+function teamFromSnapshot(customTeamId: string, snapshot: Record<string, unknown>): TeamWithRoster {
+  const lineup = Array.isArray(snapshot.lineup) ? (snapshot.lineup as TeamPlayer[]) : [];
+  const pitchers = Array.isArray(snapshot.pitchers) ? (snapshot.pitchers as TeamPlayer[]) : [];
+
+  if (lineup.length === 0) {
+    throw new Error(
+      `[buildSeasonGameSetup] rosterSnapshot for team "${customTeamId}" has an empty lineup. ` +
+        `Cannot build a valid game setup without batters.`,
+    );
+  }
+  if (pitchers.length === 0) {
+    throw new Error(
+      `[buildSeasonGameSetup] rosterSnapshot for team "${customTeamId}" has no pitchers. ` +
+        `Cannot build a valid game setup without a pitcher.`,
+    );
+  }
+
+  const now = new Date().toISOString();
+  const name = typeof snapshot.name === "string" ? snapshot.name : customTeamId;
+  return {
+    id: typeof snapshot.id === "string" ? snapshot.id : customTeamId,
+    schemaVersion: 1,
+    createdAt: now,
+    updatedAt: now,
+    name,
+    nameLowercase: name.toLowerCase(),
+    abbreviation: typeof snapshot.abbreviation === "string" ? snapshot.abbreviation : undefined,
+    city: typeof snapshot.city === "string" ? snapshot.city : undefined,
+    nickname: typeof snapshot.nickname === "string" ? snapshot.nickname : undefined,
+    slug: typeof snapshot.slug === "string" ? snapshot.slug : undefined,
+    metadata: {},
+    roster: {
+      schemaVersion: 1,
+      lineup,
+      bench: Array.isArray(snapshot.bench) ? (snapshot.bench as TeamPlayer[]) : [],
+      pitchers,
+    },
+  };
+}
 
 export async function buildSeasonGameSetup(
   db: BallgameDb,
@@ -35,16 +84,21 @@ export async function buildSeasonGameSetup(
   ]);
 
   if (!homeDoc || !awayDoc) {
-    throw new Error(
-      `Could not load team docs for game ${game.id}. ` +
-        `home=${homeSeasonTeam.customTeamId} away=${awaySeasonTeam.customTeamId}`,
+    appLog.warn(
+      `[buildSeasonGameSetup] Team doc(s) missing for game ${game.id}. ` +
+        `home=${homeSeasonTeam.customTeamId} found=${!!homeDoc}, ` +
+        `away=${awaySeasonTeam.customTeamId} found=${!!awayDoc}. ` +
+        `Falling back to roster snapshots.`,
     );
   }
 
-  const [homeTeam, awayTeam] = await Promise.all([
-    populateRoster(db, homeDoc.toJSON() as unknown as TeamRecord),
-    populateRoster(db, awayDoc.toJSON() as unknown as TeamRecord),
-  ]);
+  const homeTeam = homeDoc
+    ? await populateRoster(db, homeDoc.toJSON() as unknown as TeamRecord)
+    : teamFromSnapshot(homeSeasonTeam.customTeamId, homeSeasonTeam.rosterSnapshot);
+
+  const awayTeam = awayDoc
+    ? await populateRoster(db, awayDoc.toJSON() as unknown as TeamRecord)
+    : teamFromSnapshot(awaySeasonTeam.customTeamId, awaySeasonTeam.rosterSnapshot);
 
   return {
     homeTeam: homeSeasonTeam.customTeamId,
@@ -54,12 +108,6 @@ export async function buildSeasonGameSetup(
     managedTeam,
     // Pass seed through so GameInner can reinitSeed at the correct point.
     seed: game.derivedSeed,
-    // League season games are tracked via seasonGames records — skip the
-    // general-purpose save slot so they don't appear in Load Saved Game.
-    disableSave: true,
-    // Pass the season game ID so GameInner can mark the game completed in the
-    // seasonGames collection and advance currentGameDay when the game ends.
-    seasonGameId: game.id,
     playerOverrides: {
       away: customTeamToPlayerOverrides(awayTeam),
       home: customTeamToPlayerOverrides(homeTeam),
