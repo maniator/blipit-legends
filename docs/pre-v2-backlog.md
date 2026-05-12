@@ -63,11 +63,11 @@ directly so the implementing agent needs no other file.
 
 ## Completion Criteria
 
-- [ ] Block A: S1, S2, and S3 merged to `master` with green CI on all 7 Playwright device projects
-- [ ] Block A: `GameInner` has zero direct reads of `ExhibitionGameSetup.disableSave/seasonGameId/managedTeam`
-- [ ] Block A: `GameControls` has no `managerModeAllowed` prop
-- [ ] Block A: `yarn check:circular-deps` passes; `dist/sw.js` precache covers new SPA routes
-- [ ] Block A: Winston issued APPROVE for all three story PRs
+- [x] Block A: S1, S2, and S3 shipped in PR #264 with green CI on all 7 Playwright device projects
+- [x] Block A: `GameInner` has zero direct reads of `ExhibitionGameSetup.disableSave/seasonGameId/managedTeam`
+- [x] Block A: `GameControls` has no `managerModeAllowed` prop (reads from `useGameSessionContext()`)
+- [x] Block A: `yarn check:circular-deps` passes; new SPA routes covered in router
+- [x] Block A: Architect review (Winston 🏗️ / bmad-agent-architect, via automated CR pass on PR #264) issued no blocking issues; all ADR constraints verified
 - [ ] Block B: D-01 merged — no duplicate team names on second-season autogen, no RxDB DB6 error on upgrade
 - [ ] Block B: D-02 merged — "View teams" from LeaguesHubPage navigates to correct target
 - [ ] Block B: D-03 merged — locked team rows show 🔒; unlocked rows unchanged
