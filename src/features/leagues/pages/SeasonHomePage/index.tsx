@@ -24,8 +24,10 @@ import {
   NavCardLink,
   NavCardSub,
   NavCardTitle,
+  RenameErrorMsg,
   RenameIconBtn,
   RenameInput,
+  RenameRow,
   SeasonMeta,
   SeasonProgress,
   SeasonTitle,
@@ -98,15 +100,12 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
     setRenaming(true);
   }, [season]);
 
-  const handleRenameKeyDown = React.useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Escape") {
-        setRenaming(false);
-        setRenameError(null);
-      }
-    },
-    [],
-  );
+  const handleRenameKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      setRenaming(false);
+      setRenameError(null);
+    }
+  }, []);
 
   const handleRenameSave = React.useCallback(async () => {
     if (!seasonId) return;
@@ -249,59 +248,53 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
         </BackBtn>
       </PageHeader>
 
-      <SeasonTitle>
-        {renaming ? (
-          <>
-            <RenameInput
-              data-testid="season-rename-input"
-              value={renameValue}
-              maxLength={60}
-              aria-label="Season name"
-              autoFocus
-              onChange={(e) => setRenameValue(e.target.value)}
-              onKeyDown={handleRenameKeyDown}
-            />
-            <RenameIconBtn
-              type="button"
-              onClick={handleRenameSave}
-              aria-label="Save season name"
-              data-testid="season-rename-save"
-            >
-              ✓
-            </RenameIconBtn>
-            <RenameIconBtn
-              type="button"
-              onClick={() => {
-                setRenaming(false);
-                setRenameError(null);
-              }}
-              aria-label="Cancel rename"
-              data-testid="season-rename-cancel"
-            >
-              ✕
-            </RenameIconBtn>
-            {renameError && (
-              <span role="alert" style={{ fontSize: "0.75rem", color: "inherit" }}>
-                {renameError}
-              </span>
-            )}
-          </>
-        ) : (
-          <>
-            {season.name}
-            <StatusChip $status={season.status}>{statusLabel}</StatusChip>
-            <RenameIconBtn
-              type="button"
-              onClick={handleBeginRename}
-              aria-label="Rename season"
-              data-testid="season-rename-btn"
-              title="Rename season"
-            >
-              ✏️
-            </RenameIconBtn>
-          </>
-        )}
-      </SeasonTitle>
+      {renaming ? (
+        <RenameRow>
+          <RenameInput
+            data-testid="season-rename-input"
+            value={renameValue}
+            maxLength={60}
+            aria-label="Season name"
+            autoFocus
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={handleRenameKeyDown}
+          />
+          <RenameIconBtn
+            type="button"
+            onClick={handleRenameSave}
+            aria-label="Save season name"
+            data-testid="season-rename-save"
+          >
+            ✓
+          </RenameIconBtn>
+          <RenameIconBtn
+            type="button"
+            onClick={() => {
+              setRenaming(false);
+              setRenameError(null);
+            }}
+            aria-label="Cancel rename"
+            data-testid="season-rename-cancel"
+          >
+            ✕
+          </RenameIconBtn>
+          {renameError && <RenameErrorMsg>{renameError}</RenameErrorMsg>}
+        </RenameRow>
+      ) : (
+        <SeasonTitle>
+          {season.name}
+          <StatusChip $status={season.status}>{statusLabel}</StatusChip>
+          <RenameIconBtn
+            type="button"
+            onClick={handleBeginRename}
+            aria-label="Rename season"
+            data-testid="season-rename-btn"
+            title="Rename season"
+          >
+            ✏️
+          </RenameIconBtn>
+        </SeasonTitle>
+      )}
 
       {championName !== null && (
         <ChampionBanner role="status" aria-label="Season champion">

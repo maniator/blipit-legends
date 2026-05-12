@@ -239,6 +239,7 @@ export const GameActionRow = styled.div`
 /** Inline text input for editing the season name on SeasonHomePage. */
 export const RenameInput = styled.input`
   font-size: ${({ theme }) => theme.fontSizes.h1};
+  font-family: inherit;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.textPrimary};
   background: ${({ theme }) => theme.colors.bgFormAlpha15};
@@ -255,17 +256,52 @@ export const RenameInput = styled.input`
   }
 `;
 
-/** Small icon button used for the rename pencil trigger. */
+/**
+ * Flex row that holds the RenameInput + save/cancel icon buttons.
+ * Gap is set to 2× the ::before inset (10px) so adjacent hit areas don't overlap.
+ */
+export const RenameRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xl};
+  flex-wrap: wrap;
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+`;
+
+/**
+ * Ghost icon button used for the ✏️ rename trigger and the ✓/✕ save/cancel actions.
+ * position: relative + ::before pseudo-element expands the hit area to ≥ 44px
+ * per the Sprint 1 touch-target policy.
+ */
 export const RenameIconBtn = styled.button`
+  position: relative;
   background: none;
   border: none;
   cursor: pointer;
   font-size: ${({ theme }) => theme.fontSizes.body};
-  padding: 0 ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.xs};
   color: ${({ theme }) => theme.colors.textHint};
   line-height: 1;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -10px;
+  }
 
   &:hover {
     color: ${({ theme }) => theme.colors.textPrimary};
   }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 2px;
+    border-radius: ${({ theme }) => theme.radii.xxs};
+  }
+`;
+
+/** Danger-colored error message for inline rename validation. */
+export const RenameErrorMsg = styled.span.attrs({ role: "alert" })`
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.textDanger};
 `;
