@@ -5,6 +5,18 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+// Mock useAppSession
+vi.mock("@shared/context/AppSessionContext", () => ({
+  useAppSession: vi.fn(() => ({
+    hasActiveSession: false,
+    hasCareerStats: false,
+    handleGameSessionStarted: vi.fn(),
+    handleGameOver: vi.fn(),
+    requestCareerStatsProbe: vi.fn(),
+  })),
+  AppSessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 // Mock SaveStore so tests don't need IndexedDB
 vi.mock("@feat/saves/storage/saveStore", () => ({
   SaveStore: {

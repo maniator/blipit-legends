@@ -19,11 +19,13 @@ interface Props {
 const UpdateBanner: React.FunctionComponent<Props> = ({ onDismiss, onReload }) => (
   <Banner role="alert" data-testid="update-banner">
     <Message>
-      ⚠️ A new version of BlipIt Baseball Legends is available. Running an outdated version may
-      cause unexpected game behavior — reload now to update.
+      <span aria-hidden="true">⚠️ </span>A new version of BlipIt Baseball Legends is available.
+      Running an outdated version may cause unexpected game behavior — reload now to update.
     </Message>
     <Actions>
-      <ReloadButton onClick={onReload}>🔄 Reload app</ReloadButton>
+      <ReloadButton onClick={onReload} aria-label="Reload app">
+        <span aria-hidden="true">🔄</span> Reload app
+      </ReloadButton>
       <DismissButton onClick={onDismiss} aria-label="Dismiss update notice">
         ✕
       </DismissButton>

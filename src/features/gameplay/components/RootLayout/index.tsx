@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { ErrorBoundary } from "@feat/gameplay/components/Game/ErrorBoundary";
 import UpdateBanner from "@shared/components/UpdateBanner";
+import { AppSessionProvider } from "@shared/context/AppSessionContext";
 import { useSeedDemoTeams } from "@shared/hooks/useSeedDemoTeams";
 import { useServiceWorkerUpdate } from "@shared/hooks/useServiceWorkerUpdate";
 import { Outlet } from "react-router";
@@ -22,7 +23,9 @@ const RootLayout: React.FunctionComponent = () => {
 
   return (
     <ErrorBoundary>
-      <Outlet />
+      <AppSessionProvider>
+        <Outlet />
+      </AppSessionProvider>
       {updateAvailable && <UpdateBanner onDismiss={dismiss} onReload={reload} />}
     </ErrorBoundary>
   );
