@@ -100,7 +100,7 @@ export type AppShellOutletContext = {
   onStartGame: (setup: ExhibitionGameSetup) => void;
   /** Called from the saves page when the user picks a save to load. */
   onLoadSave: (slot: SaveRecord) => void;
-  /** Called by GamePage when a game session starts, to update hasActiveSession. */
+  /** Called by GamePage when a game session starts, to update the active-session flag in AppSessionContext. */
   onGameSessionStarted: () => void;
   // Navigation callbacks consumed by route-level page components
   onNewGame: () => void;
@@ -111,7 +111,7 @@ export type AppShellOutletContext = {
   onContact?: () => void;
   onCareerStats: () => void;
   onBackToHome: () => void;
-  /** Called by GameInner (via GamePage/Game) when a game reaches FINAL, so AppShell clears hasActiveSession. */
+  /** Called by GameInner (via GamePage/Game) when a game reaches FINAL, so AppSessionContext clears the active-session flag. */
   onGameOver: () => void;
 };
 

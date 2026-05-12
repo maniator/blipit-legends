@@ -26,8 +26,28 @@ import type { ExhibitionGameSetup, TeamPlayer, TeamRecord, TeamWithRoster } from
 /**
  * Helper to reconstruct a TeamWithRoster from a rosterSnapshot when the team
  * doc is missing from the database (legacy data or deleted team).
+ *
+ * Throws if the snapshot is missing a non-empty `lineup` or `pitchers` array —
+ * a game setup with an empty roster would fail in the engine with a confusing
+ * error; it is safer to surface the problem here with a clear message.
  */
 function teamFromSnapshot(customTeamId: string, snapshot: Record<string, unknown>): TeamWithRoster {
+  const lineup = Array.isArray(snapshot.lineup) ? (snapshot.lineup as TeamPlayer[]) : [];
+  const pitchers = Array.isArray(snapshot.pitchers) ? (snapshot.pitchers as TeamPlayer[]) : [];
+
+  if (lineup.length === 0) {
+    throw new Error(
+      `[buildSeasonGameSetup] rosterSnapshot for team "${customTeamId}" has an empty lineup. ` +
+        `Cannot build a valid game setup without batters.`,
+    );
+  }
+  if (pitchers.length === 0) {
+    throw new Error(
+      `[buildSeasonGameSetup] rosterSnapshot for team "${customTeamId}" has no pitchers. ` +
+        `Cannot build a valid game setup without a pitcher.`,
+    );
+  }
+
   const now = new Date().toISOString();
   const name = typeof snapshot.name === "string" ? snapshot.name : customTeamId;
   return {
@@ -44,9 +64,9 @@ function teamFromSnapshot(customTeamId: string, snapshot: Record<string, unknown
     metadata: {},
     roster: {
       schemaVersion: 1,
-      lineup: Array.isArray(snapshot.lineup) ? (snapshot.lineup as TeamPlayer[]) : [],
+      lineup,
       bench: Array.isArray(snapshot.bench) ? (snapshot.bench as TeamPlayer[]) : [],
-      pitchers: Array.isArray(snapshot.pitchers) ? (snapshot.pitchers as TeamPlayer[]) : [],
+      pitchers,
     },
   };
 }

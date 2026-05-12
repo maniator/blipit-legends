@@ -166,8 +166,10 @@ export function loadWizardState(): WizardState | null {
     if (typeof parsed !== "object" || parsed === null) return null;
     if ((parsed as { _v?: unknown })._v !== 1) return null;
     const state = parsed as WizardState;
-    // Back-fill seasonName if loading an older session that pre-dates this field.
-    return state.seasonName
+    // Back-fill seasonName only when the field is absent from older sessions
+    // (pre-dates this field). An explicitly blank string is a valid user edit
+    // and must not be overwritten.
+    return typeof state.seasonName === "string"
       ? state
       : { ...state, seasonName: `Season ${new Date().getFullYear()}` };
   } catch {
