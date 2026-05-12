@@ -7,10 +7,16 @@ import { GameSessionProvider } from "@feat/gameplay/context/index";
 import { deriveLeagueSession } from "@feat/gameplay/utils/gameSessionDerive";
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
 import { buildSeasonGameSetup } from "@feat/leagues/utils/buildSeasonGameSetup";
-import { useNavigate, useOutletContext, useParams } from "react-router";
+import { useLocation, useNavigate, useOutletContext, useParams } from "react-router";
 
 import { getDb } from "@storage/db";
 import type { AppShellOutletContext, ExhibitionGameSetup, SeasonRecord } from "@storage/types";
+
+/** Route state shape passed by SeasonSchedulePage when launching a league game. */
+interface LeagueGameLocationState {
+  /** When true the user clicked "Watch" — managed-team derivation is skipped. */
+  spectatorMode?: boolean;
+}
 
 type FetchState =
   | { status: "loading" }
@@ -21,11 +27,15 @@ type FetchState =
 const LeagueGamePage: React.FunctionComponent = () => {
   const ctx = useOutletContext<AppShellOutletContext>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { seasonGameId } = useParams<{ seasonGameId: string }>();
 
-  const [fetchState, setFetchState] = React.useState<FetchState>({ status: "loading" });
+  // When the user clicks "Watch" on the schedule, SeasonSchedulePage passes
+  // { spectatorMode: true } in route state. If present and true, we skip
+  // managed-team derivation even when the user has a team in the season.
+  const spectatorMode = Boolean((location.state as LeagueGameLocationState | null)?.spectatorMode);
 
-  const setupRef = React.useRef<ExhibitionGameSetup | null>(null);
+  const [fetchState, setFetchState] = React.useState<FetchState>({ status: "loading" });
 
   React.useEffect(() => {
     if (!seasonGameId) {
@@ -61,8 +71,10 @@ const LeagueGamePage: React.FunctionComponent = () => {
         const homeSeasonTeam = homeTeamDoc.toJSON() as unknown as SeasonTeamRecord;
         const awaySeasonTeam = awayTeamDoc.toJSON() as unknown as SeasonTeamRecord;
 
+        // Derive managed-team index from season context, then override to null
+        // when the user explicitly clicked "Watch" (spectatorMode route state).
         let managedTeamIdx: 0 | 1 | null = null;
-        if (seasonDoc) {
+        if (!spectatorMode && seasonDoc) {
           const season = seasonDoc.toJSON() as unknown as SeasonRecord;
           if (season.userCustomTeamId) {
             if (homeSeasonTeam.customTeamId === season.userCustomTeamId) {
@@ -82,7 +94,6 @@ const LeagueGamePage: React.FunctionComponent = () => {
         );
 
         if (!cancelled) {
-          setupRef.current = setup;
           setFetchState({ status: "ready", setup, seasonId: game.seasonId, managedTeamIdx });
         }
       } catch (err: unknown) {
@@ -98,7 +109,7 @@ const LeagueGamePage: React.FunctionComponent = () => {
     return () => {
       cancelled = true;
     };
-  }, [seasonGameId]);
+  }, [seasonGameId, spectatorMode]);
 
   // Auto-redirect after not_found or error
   React.useEffect(() => {
@@ -116,9 +127,9 @@ const LeagueGamePage: React.FunctionComponent = () => {
     return () => clearTimeout(timer);
   }, [fetchState, navigate]);
 
-  const handleConsumeSetup = React.useCallback(() => {
-    setupRef.current = null;
-  }, []);
+  // onConsumeGameSetup is called by Game when the initial setup has been applied.
+  // pendingGameSetup is driven by fetchState.setup (not a ref), so this is a no-op.
+  const handleConsumeSetup = React.useCallback(() => {}, []);
 
   const handleConsumePendingLoad = React.useCallback(() => {}, []);
 

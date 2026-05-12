@@ -242,3 +242,10 @@ export const AbandonDialogActions = styled.div`
   justify-content: flex-end;
   margin-top: ${({ theme }) => theme.spacing.lg};
 `;
+
+/** Small hint text below form fields — uses the minimum 12px token (xs). */
+export const HintText = styled.p`
+  margin: ${({ theme }) => theme.spacing.sm} 0 0;
+  font-size: ${({ theme }) => theme.fontSizes.xs};
+  opacity: 0.7;
+`;

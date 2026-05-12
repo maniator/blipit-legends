@@ -67,8 +67,12 @@ const SeasonSchedulePageInner: React.FunctionComponent = () => {
   }, [season, seasonTeams]);
 
   const handleLaunchGame = React.useCallback(
-    (game: SeasonGameRecord, _managedTeam: 0 | 1 | null) => {
-      navigate(`/game/league/${game.id}`);
+    (game: SeasonGameRecord, managedTeam: 0 | 1 | null) => {
+      // Pass spectatorMode via route state so LeagueGamePage can override the
+      // managed-team derivation when the user explicitly chose "Watch".
+      navigate(`/game/league/${game.id}`, {
+        state: { spectatorMode: managedTeam === null },
+      });
     },
     [navigate],
   );
