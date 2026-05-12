@@ -78,14 +78,22 @@ describe("generateLeagueTeams", () => {
     },
   );
 
-  it("name field stores only the nickname (not city-prefixed)", () => {
-    const teams = generate("whimsical");
+  it("generates name as 'City Nickname' full display name, not just nickname", () => {
+    const teams = generate("classic");
     for (const team of teams) {
-      // name must equal nickname exactly — no "City Nickname" doubling
-      expect(team.name).toBe(team.nickname);
-      // full display name is reconstructed as city + name by the adapter
-      expect(`${team.city} ${team.name}`).not.toContain(`${team.city} ${team.city}`);
+      // After the fix, name = `${city} ${nickname}`
+      expect(team.name).toBe(`${team.city} ${team.nickname}`);
+      // name must not equal nickname alone
+      expect(team.name).not.toBe(team.nickname);
     }
+  });
+
+  it("all generated teams have unique names (city+nickname combinations)", () => {
+    const teams = generate("whimsical");
+    const names = teams.map((t) => t.name);
+    const nameSet = new Set(names);
+    expect(nameSet.size).toBe(names.length);
+    // Since name = city + nickname, uniqueness implies no two teams share both
   });
 
   it.each<AutogenParity>(["balanced", "mixed", "random"])(

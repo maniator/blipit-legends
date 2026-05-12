@@ -201,6 +201,19 @@ describe("createSeason", () => {
       .exec();
     expect(pitcherStates).toHaveLength(8);
   });
+
+  it("createSeason throws if a teamId in input is not found in DB", async () => {
+    const teamIds = ["ct_valid"];
+    await insertTeam(db, "ct_valid", "Valid Team");
+    await insertTeamPlayerFixtures(db, "ct_valid");
+
+    // Add a non-existent team ID
+    const invalidInput = makeSeasonInput([...teamIds, "ct_does_not_exist"]);
+
+    await expect(store.createSeason(invalidInput)).rejects.toThrow(
+      /team "ct_does_not_exist" not found/,
+    );
+  });
 });
 
 describe("recordResult", () => {
@@ -489,5 +502,59 @@ describe("recordResult fatigue", () => {
 
     expect(homeSpDoc?.pitcherDaysRest).toBe(0);
     expect(awaySpDoc?.pitcherDaysRest).toBe(0);
+  });
+});
+
+describe("renameSeason", () => {
+  const QUICK_START_INPUT = {
+    masterSeed: "rename-tests",
+    autogenSeed: "rename-tests",
+    autogenOptions: { count: 8, theme: "classic" as const, parity: "balanced" as const },
+    dhEnabled: true,
+  };
+
+  it("renames a season and returns true", async () => {
+    const store = makeLeagueStore(() => Promise.resolve(db));
+    const season = await store.quickStart(QUICK_START_INPUT);
+    const result = await store.renameSeason(season.id, "My Custom Name");
+    expect(result).toBe(true);
+    const updated = await store.getActiveSeason();
+    expect(updated?.name).toBe("My Custom Name");
+  });
+
+  it("returns false for blank (whitespace-only) names without modifying the season", async () => {
+    const store = makeLeagueStore(() => Promise.resolve(db));
+    const season = await store.quickStart({
+      ...QUICK_START_INPUT,
+      masterSeed: "rename-blank",
+      autogenSeed: "rename-blank",
+    });
+    const originalName = season.name;
+    const result = await store.renameSeason(season.id, "   ");
+    expect(result).toBe(false);
+    const unchanged = await store.getActiveSeason();
+    expect(unchanged?.name).toBe(originalName);
+  });
+
+  it("returns false when the season does not exist", async () => {
+    const store = makeLeagueStore(() => Promise.resolve(db));
+    const result = await store.renameSeason("s_nonexistent", "Name");
+    expect(result).toBe(false);
+  });
+
+  it("returns false (not throws) when the DB patch throws — regression for unhandled rejection", async () => {
+    // Use a minimal fake DB whose `findOne` returns a doc with a throwing patch,
+    // so the spy doesn't interfere with the real DB or other store calls.
+
+    const fakeDoc = { patch: () => Promise.reject(new Error("simulated write failure")) };
+    const fakeDb = {
+      seasons: {
+        findOne: () => ({ exec: async () => fakeDoc }),
+      },
+    };
+
+    const store = makeLeagueStore(() => Promise.resolve(fakeDb as any));
+    // Should resolve false rather than rejecting.
+    await expect(store.renameSeason("s_fake", "New Name")).resolves.toBe(false);
   });
 });

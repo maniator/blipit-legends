@@ -235,3 +235,68 @@ export const GameActionRow = styled.div`
   flex-wrap: wrap;
   margin-top: ${({ theme }) => theme.spacing.xs};
 `;
+
+/** Inline text input for editing the season name on SeasonHomePage. */
+export const RenameInput = styled.input`
+  font-size: ${({ theme }) => theme.fontSizes.h1};
+  font-family: inherit;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.textPrimary};
+  background: ${({ theme }) => theme.colors.bgFormAlpha15};
+  border: 1px solid ${({ theme }) => theme.colors.accentPrimary};
+  border-radius: ${({ theme }) => theme.radii.sm};
+  padding: 0 ${({ theme }) => theme.spacing.xs};
+  min-width: 0;
+  flex: 1;
+  max-width: 420px;
+
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 1px;
+  }
+`;
+
+/** Flex row that holds the RenameInput + save/cancel icon buttons. */
+export const RenameRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xl};
+  flex-wrap: wrap;
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+`;
+
+/**
+ * Ghost icon button used for the ✏️ rename trigger and the ✓/✕ save/cancel actions.
+ * Fixed 44×44 px footprint via min-width/min-height meets the touch-target policy
+ * without ::before expansion that can overlap adjacent inline elements.
+ */
+export const RenameIconBtn = styled.button`
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: ${({ theme }) => theme.fontSizes.body};
+  padding: ${({ theme }) => theme.spacing.xs};
+  color: ${({ theme }) => theme.colors.textHint};
+  line-height: 1;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.textPrimary};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.accentPrimary};
+    outline-offset: 2px;
+    border-radius: ${({ theme }) => theme.radii.xxs};
+  }
+`;
+
+/** Danger-colored error message for inline rename validation. */
+export const RenameErrorMsg = styled.span.attrs({ role: "alert" })`
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.textDanger};
+`;
