@@ -94,7 +94,7 @@ test.describe("game-routes — save resume flow", () => {
     await page.getByTestId("home-load-saves-button").click();
     await expect(page).toHaveURL("/saves", { timeout: 10_000 });
 
-    // Load the save — AppShell.onLoadSave navigates to /game (legacy exhibition route).
+    // Load the save — AppShell.onLoadSave navigates to /game (exhibition save-resume route).
     const loadBtn = page.getByTestId("load-save-button").first();
     await expect(loadBtn).toBeVisible({ timeout: 10_000 });
     await loadBtn.click();

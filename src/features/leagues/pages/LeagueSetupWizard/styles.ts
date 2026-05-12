@@ -41,14 +41,14 @@ export const RadioOption = styled.label<{ $disabled?: boolean }>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
-  cursor: pointer;
+  cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
   font-size: ${({ theme }) => theme.fontSizes.base};
   color: ${({ theme }) => theme.colors.textBody};
   opacity: ${({ $disabled }) => ($disabled ? 0.5 : 1)};
 
   & input[type="radio"] {
     accent-color: ${({ theme }) => theme.colors.accentPrimary};
-    cursor: pointer;
+    cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
   }
 `;
 

@@ -28,7 +28,8 @@ const AppShell: React.FunctionComponent = () => {
   );
 
   const volume = useVolumeControls();
-  // Pass alertVolume = 0 on /game to stop music (game has its own audio: fanfare, chimes, stretch).
+  // Pass alertVolume = 0 on all game routes (/game, /game/exhibition, /game/league/:seasonGameId)
+  // to stop music (game has its own audio: fanfare, chimes, stretch).
   useHomeScreenMusic(isGameRoute ? 0 : volume.alertVolume);
 
   const handleResumeCurrent = React.useCallback(() => {
