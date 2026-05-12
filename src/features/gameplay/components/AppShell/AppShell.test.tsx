@@ -272,7 +272,14 @@ describe("AppShell", () => {
 
   it("does NOT render the volume bar on the /game route", () => {
     vi.mocked(useMatches).mockReturnValue([
-      { id: "game", pathname: "/game", params: {}, data: undefined, loaderData: undefined, handle: { isGameRoute: true } },
+      {
+        id: "game",
+        pathname: "/game",
+        params: {},
+        data: undefined,
+        loaderData: undefined,
+        handle: { isGameRoute: true },
+      },
     ]);
     renderAppShell("/game");
     expect(screen.queryByTestId("app-volume-bar")).not.toBeInTheDocument();
