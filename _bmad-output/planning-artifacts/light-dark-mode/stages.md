@@ -17,7 +17,7 @@
 - [ ] Update `src/index.tsx` — pass `resolvedTheme` from hook to `ThemeProvider`
 - [ ] Migrate `src/index.scss` body/`*` globals to CSS custom properties (`var(--color-bg)`, `var(--color-text)`)
 - [ ] Add CSS vars to `index.scss`: bare `:root {}` block with **dark values as defaults** + `:root[data-theme="light"]` overrides (no `[data-theme="dark"]` block — dark is the baseline)
-- [ ] Add FOWTM prevention to `src/index.html`: (a) `data-theme="dark"` attribute on `<html>`, (b) inline script as **first element in `<head>`** before any other tags
+- [ ] Add FOWTM prevention to `src/index.html`: (a) `data-theme="dark"` attribute on `<html>`, (b) inline script placed **before any `<link rel="stylesheet">` / `<style>` tags** (not necessarily the very first element — `<meta charset>`, viewport, and SEO meta tags may precede it)
 - [ ] Update `src/styled.d.ts` if `AppTheme` shape changes
 - [ ] Write `src/shared/hooks/useThemePreference.test.ts`
 - [ ] Extend `src/shared/theme.contrast.test.ts` to cover both themes

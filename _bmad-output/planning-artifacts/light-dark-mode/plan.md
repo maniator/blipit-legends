@@ -59,7 +59,7 @@ These two lines bypass the ThemeProvider entirely. Any component that relies on 
 
 ### Recommended: Hybrid (CSS vars at `:root` + ThemeProvider for components)
 
-**Why hybrid:** styled-components ThemeProvider alone does not solve flash-of-wrong-theme (FOWTM). The browser paints before React hydrates, so any preference stored in `localStorage` cannot be read in time — the user sees a flash. CSS custom properties on `:root` can be set by a synchronous inline script in `<head>` before any paint occurs.
+**Why hybrid:** styled-components ThemeProvider alone does not solve flash-of-wrong-theme (FOWTM). The browser paints before the JS bundle executes and React mounts, so any preference stored in `localStorage` cannot be read in time — the user sees a flash. CSS custom properties on `:root` can be set by a synchronous inline script in `<head>` before any paint occurs.
 
 **The scope of CSS vars is intentionally narrow:** only 4–6 root-level vars for body background, base text color, and surface color. All component-level token access remains in the styled-components ThemeProvider.
 
@@ -275,7 +275,7 @@ This closes the micro-window between HTML parse start and inline script executio
 </html>
 ```
 
-The script **must be the first element in `<head>`**, before any `<link rel="stylesheet">` tags (including those Vite injects at build time). If a CSS link is parsed before this script runs, the browser may paint one frame with the wrong theme as CSS evaluates before the attribute is set.
+The script **must appear before any `<link rel="stylesheet">` or `<style>` tags** (including those Vite injects at build time). Placing it before stylesheets is sufficient to prevent FOWTM — it does not need to be the very first element in `<head>`. `<meta charset>`, viewport, SEO, and other `<meta>` tags may precede it. If a CSS link is parsed before this script runs, the browser may paint one frame with the wrong theme as CSS evaluates before the attribute is set.
 
 The try/catch handles both blocked `localStorage` environments (private browsing, strict settings) and any `JSON.parse` failure on corrupt data. The catch block **explicitly sets `data-theme="dark"`** rather than leaving it empty — an empty catch would leave the attribute in whatever state it was in from Layer 1, which is already dark, but an explicit set makes the intent clear and guards against any future reordering of the layers.
 
