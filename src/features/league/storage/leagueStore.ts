@@ -344,7 +344,10 @@ function buildStore(getDbFn: GetDb) {
 
       for (const gen of generated) {
         // Use the idFactory-generated ID via the meta.id override.
-        await ctStore.createCustomTeam(
+        // Capture the returned ID: createCustomTeam may return an existing team's
+        // ID when an autogen name collision is detected (reuse path), so gen.id
+        // may never have been inserted.
+        const insertedId = await ctStore.createCustomTeam(
           {
             name: gen.name,
             abbreviation: gen.abbreviation,
@@ -362,14 +365,14 @@ function buildStore(getDbFn: GetDb) {
           },
           { id: gen.id },
         );
-        teamIds.push(gen.id);
+        teamIds.push(insertedId);
       }
 
       // Create a single league spanning all generated teams.
       const leagueId = fnv1a(`${masterSeed}:league:0`);
 
       return store.createSeason({
-        name: seasonName ?? `Season ${new Date().getFullYear()}`,
+        name: seasonName?.trim() || `Season ${new Date().getFullYear()}`,
         masterSeed,
         preset: "mini",
         seasonLength: "sprint",
