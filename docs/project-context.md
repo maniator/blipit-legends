@@ -82,27 +82,27 @@ yarn build         # Production build to dist/
 
 ### bmad Agents (planning, design, review, implementation)
 
-| Task                                                     | bmad Agent                           | Menu                   |
-| -------------------------------------------------------- | ------------------------------------ | ---------------------- |
-| Feature planning, risk review, implementation sequencing | `bmad-agent-pm` (John)               | M1                     |
-| Baseball rules (MLB vs simulator)                        | `bmad-agent-pm` (John)               | M2                     |
-| PR description review                                    | `bmad-agent-pm` (John)               | PR                     |
-| Engineering sign-off request to architect                | `bmad-agent-pm` (John)               | SL                     |
-| Gameplay realism review (logs look unrealistic)          | `bmad-agent-baseball-manager` (Buck) | RL                     |
-| Post-change realism validation                           | `bmad-agent-baseball-manager` (Buck) | VR                     |
-| Architecture decision, module boundary                   | `bmad-agent-architect` (Winston)     | AD                     |
-| High-value change engineering sign-off                   | `bmad-agent-architect` (Winston)     | CR                     |
-| Story implementation, feature coding                     | `bmad-agent-dev` (Amelia)            | —                      |
-| Code review on any change                                | `bmad-code-review` skill + `bmad-party-mode` skill | both required, in that order |
-| Simulation correctness bug (broken/impossible state)     | `bmad-agent-dev` (Amelia)            | SC                     |
-| RxDB schema change, migration                            | `bmad-agent-dev` (Amelia)            | RX                     |
-| Safe refactor (behavior-preserving)                      | `bmad-agent-dev` (Amelia)            | SR                     |
-| UI/styled-components implementation                      | `bmad-agent-dev` (Amelia)            | UI                     |
-| E2E test authoring                                       | `bmad-agent-dev` (Amelia)            | E2E                    |
-| UX design, wireframes, accessibility                     | `bmad-agent-ux-designer` (Sally)     | HR/SD                  |
-| User persona interview (6 personas)                      | `bmad-agent-ux-designer` (Sally)     | P1–P6                  |
-| Multi-agent deliberation                                 | `bmad-party-mode` skill              | —                      |
-| PRD creation                                             | `bmad-agent-pm` (John)               | bmad-create-prd skill  |
+| Task                                                     | bmad Agent                                                                         | Menu                  |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------- | --------------------- |
+| Feature planning, risk review, implementation sequencing | `bmad-agent-pm` (John)                                                             | M1                    |
+| Baseball rules (MLB vs simulator)                        | `bmad-agent-pm` (John)                                                             | M2                    |
+| PR description review                                    | `bmad-agent-pm` (John)                                                             | PR                    |
+| Engineering sign-off request to architect                | `bmad-agent-pm` (John)                                                             | SL                    |
+| Gameplay realism review (logs look unrealistic)          | `bmad-agent-baseball-manager` (Buck)                                               | RL                    |
+| Post-change realism validation                           | `bmad-agent-baseball-manager` (Buck)                                               | VR                    |
+| Architecture decision, module boundary                   | `bmad-agent-architect` (Winston)                                                   | AD                    |
+| High-value change engineering sign-off                   | `bmad-agent-architect` (Winston)                                                   | CR                    |
+| Story implementation, feature coding                     | `bmad-agent-dev` (Amelia)                                                          | —                     |
+| Code review on any change                                | `bmad-code-review` skill + `bmad-party-mode` skill (both mandatory, in that order) | —                     |
+| Simulation correctness bug (broken/impossible state)     | `bmad-agent-dev` (Amelia)                                                          | SC                    |
+| RxDB schema change, migration                            | `bmad-agent-dev` (Amelia)                                                          | RX                    |
+| Safe refactor (behavior-preserving)                      | `bmad-agent-dev` (Amelia)                                                          | SR                    |
+| UI/styled-components implementation                      | `bmad-agent-dev` (Amelia)                                                          | UI                    |
+| E2E test authoring                                       | `bmad-agent-dev` (Amelia)                                                          | E2E                   |
+| UX design, wireframes, accessibility                     | `bmad-agent-ux-designer` (Sally)                                                   | HR/SD                 |
+| User persona interview (6 personas)                      | `bmad-agent-ux-designer` (Sally)                                                   | P1–P6                 |
+| Multi-agent deliberation                                 | `bmad-party-mode` skill                                                            | —                     |
+| PRD creation                                             | `bmad-agent-pm` (John)                                                             | bmad-create-prd skill |
 
 ### Operational Specialists (kept — non-obvious setup steps)
 

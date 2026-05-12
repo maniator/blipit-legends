@@ -48,29 +48,29 @@ Sub-agents **must never** run `git push`, `gh`, or `report_progress`. Sub-agents
 
 ## Routing Table
 
-| Task                                                 | Agent                                              |
-| ---------------------------------------------------- | -------------------------------------------------- |
-| Feature planning, PRD creation, sprint planning      | `bmad-agent-pm` (John) → M1 menu                   |
-| Baseball rules question (MLB vs simulator)           | `bmad-agent-pm` (John) → M2 menu                   |
-| Risk review / "what could break?"                    | `bmad-agent-pm` (John) → M1 or RF menu             |
-| PR description review                                | `bmad-agent-pm` (John) → PR menu                   |
-| Gameplay realism review (logs look unrealistic)      | `bmad-agent-baseball-manager` (Buck) → RL menu     |
-| Post-change realism validation                       | `bmad-agent-baseball-manager` (Buck) → VR menu     |
-| Architecture decision, module boundary               | `bmad-agent-architect` (Winston) → AD menu         |
-| Engineering sign-off on high-value change            | `bmad-agent-architect` (Winston) → CR menu         |
-| Story implementation, feature coding                 | `bmad-agent-dev` (Amelia) → story impl             |
+| Task                                                 | Agent                                                                             |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Feature planning, PRD creation, sprint planning      | `bmad-agent-pm` (John) → M1 menu                                                  |
+| Baseball rules question (MLB vs simulator)           | `bmad-agent-pm` (John) → M2 menu                                                  |
+| Risk review / "what could break?"                    | `bmad-agent-pm` (John) → M1 or RF menu                                            |
+| PR description review                                | `bmad-agent-pm` (John) → PR menu                                                  |
+| Gameplay realism review (logs look unrealistic)      | `bmad-agent-baseball-manager` (Buck) → RL menu                                    |
+| Post-change realism validation                       | `bmad-agent-baseball-manager` (Buck) → VR menu                                    |
+| Architecture decision, module boundary               | `bmad-agent-architect` (Winston) → AD menu                                        |
+| Engineering sign-off on high-value change            | `bmad-agent-architect` (Winston) → CR menu                                        |
+| Story implementation, feature coding                 | `bmad-agent-dev` (Amelia) → story impl                                            |
 | Code review                                          | `bmad-code-review` skill + `bmad-party-mode` skill (both required, in that order) |
-| Simulation correctness bug (broken/impossible state) | `bmad-agent-dev` (Amelia) → SC menu                |
-| RxDB schema change, migration, SaveStore             | `bmad-agent-dev` (Amelia) → RX menu                |
-| Safe refactor (behavior-preserving)                  | `bmad-agent-dev` (Amelia) → SR menu                |
-| UI/styled-components implementation                  | `bmad-agent-dev` (Amelia) → UI menu                |
-| E2E test authoring, fixture creation                 | `bmad-agent-dev` (Amelia) → E2E menu               |
-| UX design, wireframes, accessibility                 | `bmad-agent-ux-designer` (Sally) → HR/SD menu      |
-| User persona interview (any of 6 personas)           | `bmad-agent-ux-designer` (Sally) → P1–P6 menu      |
-| Multi-agent deliberation on a cross-cutting question | `bmad-party-mode` skill                            |
-| **Visual snapshot baseline regen**                   | **`e2e-test-runner`** ← operational specialist     |
-| **GitHub Actions / CI workflow YAML**                | **`ci-workflow`** ← operational specialist         |
-| **Live QA against blipit.net**                       | **`playwright-prod`** ← operational specialist     |
+| Simulation correctness bug (broken/impossible state) | `bmad-agent-dev` (Amelia) → SC menu                                               |
+| RxDB schema change, migration, SaveStore             | `bmad-agent-dev` (Amelia) → RX menu                                               |
+| Safe refactor (behavior-preserving)                  | `bmad-agent-dev` (Amelia) → SR menu                                               |
+| UI/styled-components implementation                  | `bmad-agent-dev` (Amelia) → UI menu                                               |
+| E2E test authoring, fixture creation                 | `bmad-agent-dev` (Amelia) → E2E menu                                              |
+| UX design, wireframes, accessibility                 | `bmad-agent-ux-designer` (Sally) → HR/SD menu                                     |
+| User persona interview (any of 6 personas)           | `bmad-agent-ux-designer` (Sally) → P1–P6 menu                                     |
+| Multi-agent deliberation on a cross-cutting question | `bmad-party-mode` skill                                                           |
+| **Visual snapshot baseline regen**                   | **`e2e-test-runner`** ← operational specialist                                    |
+| **GitHub Actions / CI workflow YAML**                | **`ci-workflow`** ← operational specialist                                        |
+| **Live QA against blipit.net**                       | **`playwright-prod`** ← operational specialist                                    |
 
 ---
 
