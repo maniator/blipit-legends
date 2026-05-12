@@ -44,8 +44,11 @@ const GameControls: React.FunctionComponent<Props> = ({
   onBackToHome,
   isCommitting = false,
 }) => {
-  const { managerModeAllowed, sessionType, managedTeam: sessionManagedTeam } =
-    useGameSessionContext();
+  const {
+    managerModeAllowed,
+    sessionType,
+    managedTeam: sessionManagedTeam,
+  } = useGameSessionContext();
   const {
     speed,
     setSpeed,

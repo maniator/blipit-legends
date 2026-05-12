@@ -376,7 +376,7 @@ const GameInner: React.FunctionComponent<Props> = ({
       pendingGameSetup.playerOverrides,
     );
     onConsumeGameSetup?.();
-  }, [pendingGameSetup, onConsumeGameSetup]);
+  }, [pendingGameSetup, onConsumeGameSetup, sessionManagedTeam]);
 
   // Restore game state when AppShell delivers a save loaded from the /saves page.
   const prevPendingLoad = React.useRef<SaveRecord | null>(null);

@@ -6,7 +6,7 @@ import { useGameContext } from "@feat/gameplay/context/index";
 import { Strategy } from "@feat/gameplay/context/index";
 import { useTeamWithRoster } from "@shared/hooks/useTeamWithRoster";
 
-import { NotifBadge, Select, SubButton, ToggleLabel } from "./styles";
+import { LockedTeamDisplay, NotifBadge, Select, SubButton, ToggleLabel } from "./styles";
 
 type Props = {
   managerMode: boolean;
@@ -112,7 +112,9 @@ const ManagerModeControls: React.FunctionComponent<Props> = ({
         <ToggleLabel>
           Team
           {lockManagedTeam ? (
-            <span data-testid="managed-team-display">{teams[managedTeam]}</span>
+            <LockedTeamDisplay data-testid="managed-team-display">
+              {teams[managedTeam]}
+            </LockedTeamDisplay>
           ) : (
             <Select
               value={managedTeam}
