@@ -174,13 +174,12 @@ function buildStore(getDbFn: GetDb) {
           const lockedIds = await getLockedTeamIds(db);
           if (!lockedIds.has(dup.id)) {
             appLog.warn(
-              `[customTeamStore] Replacing unlocked autogen team "${dup.name}" (${dup.id}) with new autogen team of the same name.`,
+              `[customTeamStore] Reusing existing unlocked autogen team "${dup.name}" (${dup.id}) instead of replacing.`,
             );
-            await removeTeamPlayerRecords(db, dup.id);
-            await duplicateDoc.remove();
+            return dup.id; // reuse existing team — no deletion, no re-insert
           } else {
             throw new Error(
-              `A team named "${dup.name}" already exists. Team names must be unique.`,
+              `A team named "${dup.name}" already exists and is locked in an active season.`,
             );
           }
         } else {
@@ -297,6 +296,13 @@ function buildStore(getDbFn: GetDb) {
       const db = await getDbFn();
       const doc = await db.teams.findOne(id).exec();
       if (doc) {
+        // Check if team is enrolled in an active season
+        const lockedIds = await getLockedTeamIds(db);
+        if (lockedIds.has(id)) {
+          throw new Error(
+            `Cannot delete team: it is enrolled in an active season. Complete or abandon the season first.`,
+          );
+        }
         // Clean up / detach players first so we never leave orphaned docs pointing
         // at a now-missing teamId.
         if (cascade) {

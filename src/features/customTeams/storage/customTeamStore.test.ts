@@ -126,3 +126,92 @@ describe("customTeamStore lock — active season guard", () => {
     ).resolves.toBeUndefined();
   });
 });
+
+describe("customTeamStore autogen collision — reuse vs delete", () => {
+  it("reuses existing unlocked autogen team when name collision detected — returns existing id, does not delete", async () => {
+    const autogenMarker = {
+      version: 1 as const,
+      theme: "classic" as const,
+      parity: "mixed" as const,
+      baseSeed: "seed_a",
+    };
+    const teamId = await store.createCustomTeam({
+      ...makeTeamInput("Waco Rockets"),
+      autogen: autogenMarker,
+    });
+
+    // Attempt to create another autogen team with the same name.
+    const returnedId = await store.createCustomTeam(
+      {
+        ...makeTeamInput("Waco Rockets"),
+        autogen: autogenMarker,
+      },
+      { id: "ct_new_id" },
+    );
+
+    // Should return the existing team's ID, not the proposed ID.
+    expect(returnedId).toBe(teamId);
+
+    // The team should still exist in the DB.
+    const team = await store.getCustomTeam(teamId);
+    expect(team).not.toBeNull();
+    expect(team?.name).toBe("Waco Rockets");
+
+    // No new team should have been created.
+    const allTeams = await store.listCustomTeams();
+    expect(allTeams).toHaveLength(1);
+  });
+
+  it("throws when colliding autogen team is locked in active season", async () => {
+    const autogenMarker = {
+      version: 1 as const,
+      theme: "classic" as const,
+      parity: "mixed" as const,
+      baseSeed: "seed_b",
+    };
+    const teamId = await store.createCustomTeam({
+      ...makeTeamInput("Locked Rockets"),
+      autogen: autogenMarker,
+    });
+    await insertActiveSeason(teamId);
+
+    await expect(
+      store.createCustomTeam(
+        {
+          ...makeTeamInput("Locked Rockets"),
+          autogen: autogenMarker,
+        },
+        { id: "ct_new_id2" },
+      ),
+    ).rejects.toThrow(/already exists and is locked/);
+  });
+
+  it("does not reuse when existing team is not autogen (throws unique name error instead)", async () => {
+    // Create a user-created (non-autogen) team.
+    await store.createCustomTeam(makeTeamInput("Custom Team"));
+
+    // Attempt to create an autogen team with the same name.
+    await expect(
+      store.createCustomTeam({
+        ...makeTeamInput("Custom Team"),
+        autogen: {
+          version: 1 as const,
+          theme: "classic" as const,
+          parity: "mixed" as const,
+          baseSeed: "seed_c",
+        },
+      }),
+    ).rejects.toThrow(/already exists.*unique/);
+  });
+
+  it("deleteCustomTeam throws when team is in active season", async () => {
+    const teamId = await store.createCustomTeam(makeTeamInput("Season Team"));
+    await insertActiveSeason(teamId);
+
+    await expect(store.deleteCustomTeam(teamId)).rejects.toThrow(/Cannot delete.*active season/);
+
+    // Team should still exist.
+    const team = await store.getCustomTeam(teamId);
+    expect(team).not.toBeNull();
+  });
+});

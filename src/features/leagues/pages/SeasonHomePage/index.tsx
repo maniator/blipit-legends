@@ -158,9 +158,10 @@ const SeasonHomePageInner: React.FunctionComponent = () => {
     const map: Record<string, string> = {};
     for (const t of seasonTeams) {
       const snap = t.rosterSnapshot as Record<string, unknown>;
-      const city = typeof snap.city === "string" && snap.city ? snap.city : "";
+      // After the fix, snap.name already includes the full display name (city + nickname),
+      // so we don't prepend city. Fall back to customTeamId if name is missing.
       const snapName = typeof snap.name === "string" ? snap.name : t.customTeamId;
-      map[t.id] = city ? `${city} ${snapName}` : snapName;
+      map[t.id] = snapName;
     }
     return map;
   }, [seasonTeams]);

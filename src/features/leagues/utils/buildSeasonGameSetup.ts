@@ -18,9 +18,38 @@ import {
 } from "@feat/customTeams/adapters/customTeamAdapter";
 import { populateRoster } from "@feat/customTeams/storage/customTeamRosterPersistence";
 import type { SeasonGameRecord, SeasonTeamRecord } from "@feat/league/storage/types";
+import { appLog } from "@shared/utils/logger";
 
 import type { BallgameDb } from "@storage/db";
-import type { ExhibitionGameSetup, TeamRecord } from "@storage/types";
+import type { ExhibitionGameSetup, TeamPlayer, TeamRecord, TeamWithRoster } from "@storage/types";
+
+/**
+ * Helper to reconstruct a TeamWithRoster from a rosterSnapshot when the team
+ * doc is missing from the database (legacy data or deleted team).
+ */
+function teamFromSnapshot(customTeamId: string, snapshot: Record<string, unknown>): TeamWithRoster {
+  const now = new Date().toISOString();
+  const name = typeof snapshot.name === "string" ? snapshot.name : customTeamId;
+  return {
+    id: typeof snapshot.id === "string" ? snapshot.id : customTeamId,
+    schemaVersion: 1,
+    createdAt: now,
+    updatedAt: now,
+    name,
+    nameLowercase: name.toLowerCase(),
+    abbreviation: typeof snapshot.abbreviation === "string" ? snapshot.abbreviation : undefined,
+    city: typeof snapshot.city === "string" ? snapshot.city : undefined,
+    nickname: typeof snapshot.nickname === "string" ? snapshot.nickname : undefined,
+    slug: typeof snapshot.slug === "string" ? snapshot.slug : undefined,
+    metadata: {},
+    roster: {
+      schemaVersion: 1,
+      lineup: Array.isArray(snapshot.lineup) ? (snapshot.lineup as TeamPlayer[]) : [],
+      bench: Array.isArray(snapshot.bench) ? (snapshot.bench as TeamPlayer[]) : [],
+      pitchers: Array.isArray(snapshot.pitchers) ? (snapshot.pitchers as TeamPlayer[]) : [],
+    },
+  };
+}
 
 export async function buildSeasonGameSetup(
   db: BallgameDb,
@@ -35,16 +64,21 @@ export async function buildSeasonGameSetup(
   ]);
 
   if (!homeDoc || !awayDoc) {
-    throw new Error(
-      `Could not load team docs for game ${game.id}. ` +
-        `home=${homeSeasonTeam.customTeamId} away=${awaySeasonTeam.customTeamId}`,
+    appLog.warn(
+      `[buildSeasonGameSetup] Team doc(s) missing for game ${game.id}. ` +
+        `home=${homeSeasonTeam.customTeamId} found=${!!homeDoc}, ` +
+        `away=${awaySeasonTeam.customTeamId} found=${!!awayDoc}. ` +
+        `Falling back to roster snapshots.`,
     );
   }
 
-  const [homeTeam, awayTeam] = await Promise.all([
-    populateRoster(db, homeDoc.toJSON() as unknown as TeamRecord),
-    populateRoster(db, awayDoc.toJSON() as unknown as TeamRecord),
-  ]);
+  const homeTeam = homeDoc
+    ? await populateRoster(db, homeDoc.toJSON() as unknown as TeamRecord)
+    : teamFromSnapshot(homeSeasonTeam.customTeamId, homeSeasonTeam.rosterSnapshot);
+
+  const awayTeam = awayDoc
+    ? await populateRoster(db, awayDoc.toJSON() as unknown as TeamRecord)
+    : teamFromSnapshot(awaySeasonTeam.customTeamId, awaySeasonTeam.rosterSnapshot);
 
   return {
     homeTeam: homeSeasonTeam.customTeamId,
