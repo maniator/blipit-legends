@@ -45,7 +45,10 @@ const GamePage: React.FunctionComponent = () => {
     const load = pendingLoadRef.current;
     return {
       sessionType: "exhibition",
-      managerModeAllowed: load != null ? load.setup.managedTeam !== null : true,
+      // Exhibition route: manager-mode toggle is always available.
+      // Formula: `seasonGameId == null || managedTeam !== null`; seasonGameId is always
+      // null here so this is unconditionally true, even for "Watch" save loads.
+      managerModeAllowed: true,
       disableSave: false,
       seasonGameId: null,
       managedTeam: load?.setup.managedTeam ?? null,
@@ -56,7 +59,10 @@ const GamePage: React.FunctionComponent = () => {
   const handleSessionRestored = React.useCallback((managedTeam: 0 | 1 | null) => {
     setSessionCtx((prev) => ({
       ...prev,
-      managerModeAllowed: managedTeam !== null,
+      // Exhibition route: manager-mode toggle is always available regardless of whether
+      // the session started as "Watch" (managedTeam: null). The formula is
+      // `seasonGameId == null || managedTeam !== null`; here seasonGameId is always null.
+      managerModeAllowed: true,
       managedTeam,
       sessionReady: true,
     }));

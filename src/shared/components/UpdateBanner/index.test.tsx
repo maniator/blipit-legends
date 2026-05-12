@@ -68,8 +68,11 @@ describe("UpdateBanner", () => {
 
   it("warning emoji in message is aria-hidden so screen readers do not announce it", () => {
     render(<UpdateBanner onDismiss={onDismiss} onReload={onReload} />);
-    const message = document.querySelector("p");
-    const emojiSpan = message?.querySelector("span[aria-hidden]");
+    // The message is the first <p> inside the alert — find it via the role.
+    const alertEl = screen.getByRole("alert");
+    const messageParagraph = alertEl.querySelector("p");
+    expect(messageParagraph).toBeTruthy();
+    const emojiSpan = messageParagraph!.querySelector("span[aria-hidden]");
     expect(emojiSpan).toBeTruthy();
     expect(emojiSpan!.getAttribute("aria-hidden")).toBe("true");
     expect(emojiSpan!.textContent).toMatch(/⚠️/);

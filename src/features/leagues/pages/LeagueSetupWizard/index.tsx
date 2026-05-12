@@ -117,7 +117,7 @@ function LeagueSetupWizardInner(): React.ReactElement {
         season = await quickStart({
           masterSeed: state.masterSeed,
           autogenSeed: state.autogenSeed,
-          seasonName: state.seasonName || `Season ${new Date().getFullYear()}`,
+          seasonName: state.seasonName.trim() || `Season ${new Date().getFullYear()}`,
           dhEnabled: state.leagues[0]?.dhEnabled ?? true,
           autogenOptions: {
             count: 8,
@@ -180,7 +180,7 @@ function LeagueSetupWizardInner(): React.ReactElement {
         }
 
         season = await createSeason({
-          name: state.seasonName || `Season ${new Date().getFullYear()}`,
+          name: state.seasonName.trim() || `Season ${new Date().getFullYear()}`,
           masterSeed: state.masterSeed,
           preset: "mini",
           seasonLength: "sprint",

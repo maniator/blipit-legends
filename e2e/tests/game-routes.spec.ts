@@ -94,7 +94,7 @@ test.describe("game-routes — save resume flow", () => {
     await resetAppState(page);
   });
 
-  test("loading a save from /saves navigates back to /game/exhibition", async ({ page }) => {
+  test("loading a save from /saves navigates back to the game route", async ({ page }) => {
     // Start a game and save it.
     await startGameViaPlayBall(page, { seed: "gr-save-resume" });
     await expect(page).toHaveURL(/\/game\/exhibition/, { timeout: 15_000 });
@@ -112,12 +112,12 @@ test.describe("game-routes — save resume flow", () => {
     await page.getByTestId("home-load-saves-button").click();
     await expect(page).toHaveURL("/saves", { timeout: 10_000 });
 
-    // Load the save — should navigate to /game/exhibition.
+    // Load the save — AppShell.onLoadSave navigates to /game (legacy exhibition route).
     const loadBtn = page.getByTestId("load-save-button").first();
     await expect(loadBtn).toBeVisible({ timeout: 10_000 });
     await loadBtn.click();
 
-    await expect(page).toHaveURL(/\/game\/exhibition/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/\/game/, { timeout: 15_000 });
     await expect(page.getByTestId("scoreboard")).toBeVisible({ timeout: 15_000 });
   });
 });

@@ -646,11 +646,15 @@ function buildStore(getDbFn: GetDb) {
     async renameSeason(seasonId: string, newName: string): Promise<boolean> {
       const trimmed = newName.trim();
       if (!trimmed) return false;
-      const db = await getDbFn();
-      const doc = await db.seasons.findOne(seasonId).exec();
-      if (!doc) return false;
-      await doc.patch({ name: trimmed });
-      return true;
+      try {
+        const db = await getDbFn();
+        const doc = await db.seasons.findOne(seasonId).exec();
+        if (!doc) return false;
+        await doc.patch({ name: trimmed });
+        return true;
+      } catch {
+        return false;
+      }
     },
   };
 

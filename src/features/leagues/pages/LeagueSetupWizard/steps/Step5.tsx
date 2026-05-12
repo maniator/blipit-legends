@@ -7,6 +7,7 @@ import {
   ErrorText,
   FieldGroup,
   FieldLabel,
+  HintText,
   SecondaryButton,
   SeedInput,
   SeedRow,
@@ -38,9 +39,7 @@ export function Step5({ state, dispatch, errors }: Step5Props): React.ReactEleme
               Re-roll
             </SecondaryButton>
           </SeedRow>
-          <p style={{ margin: "8px 0 0", fontSize: "11px", opacity: 0.7 }}>
-            Same seed → identical season schedule and outcomes.
-          </p>
+          <HintText>Same seed → identical season schedule and outcomes.</HintText>
         </div>
       </FieldGroup>
       {errors.length > 0 && (
