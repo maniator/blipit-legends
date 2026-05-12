@@ -114,13 +114,13 @@ jobs:
           gh copilot suggest \
             --target shell \
             "Review this diff using bmad-code-review then bmad-party-mode synthesis. $(cat /tmp/pr.diff)" \
-            | tee "$GITHUB_STEP_SUMMARY"
+            | tee /tmp/bmad-review.md "$GITHUB_STEP_SUMMARY"
 
       - name: Upload review artifact
         uses: actions/upload-artifact@v4
         with:
           name: copilot-bmad-review
-          path: ${{ github.step_summary }}
+          path: /tmp/bmad-review.md
 ```
 
 **Required manual steps before using this workflow:**
