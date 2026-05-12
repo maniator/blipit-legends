@@ -1,7 +1,6 @@
 import * as React from "react";
 
-import type { WizardState } from "../../../wizard/wizardReducer";
-import { wizardReducer } from "../../../wizard/wizardReducer";
+import type { WizardAction, WizardState } from "../../../wizard/wizardReducer";
 import {
   CheckboxRow,
   ErrorList,
@@ -24,7 +23,7 @@ import {
 
 export interface Step2Props {
   state: WizardState;
-  dispatch: React.Dispatch<Parameters<typeof wizardReducer>[1]>;
+  dispatch: React.Dispatch<WizardAction>;
   customTeams: Array<{ id: string; name: string }>;
   errors: string[];
 }

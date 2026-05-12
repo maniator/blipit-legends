@@ -60,18 +60,17 @@ not part of the original S1–S3 scope but were necessary for CI to pass and pro
 
 ## Files Introduced
 
-| File                                                                  | Purpose                                                     |
-| --------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `src/features/gameplay/context/GameSessionContext.tsx`                | New `GameSessionContext` + `GameSessionProvider` hook       |
-| `src/features/gameplay/utils/gameSessionDerive.ts`                    | `deriveExhibitionSession` / `deriveLeagueSession` helpers   |
-| `src/features/exhibition/pages/ExhibitionGamePage/index.tsx`          | New `/game/exhibition` route page                           |
-| `src/features/leagues/pages/LeagueGamePage/index.tsx`                 | New `/game/league/:seasonGameId` route page                 |
-| `src/features/gameplay/components/GameWrapper/GamePageWrapper.tsx`    | Shared navigation-blocking wrapper (eliminates duplication) |
-| `src/shared/context/AppSessionContext.tsx`                            | App-level session context (hasActiveSession, Career Stats)  |
-| `src/shared/hooks/useSessionStorage.ts`                               | Typed `sessionStorage` hook (replaces all raw calls)        |
-| `e2e/tests/game-routes.spec.ts`                                       | Route smoke spec (exhibition, league, save-resume)          |
-| `src/features/gameplay/components/GameControls/LockedTeamDisplay.tsx` | Read-only locked team display for league games              |
-| `src/features/leagues/pages/LeagueSetupWizard/steps/` (5 files)       | Extracted wizard steps (770 → 362 lines in index.tsx)       |
+| File                                                                            | Purpose                                                     |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `src/features/gameplay/context/GameSessionContext.tsx`                          | New `GameSessionContext` + `GameSessionProvider` hook       |
+| `src/features/gameplay/utils/gameSessionDerive.ts`                              | `deriveExhibitionSession` / `deriveLeagueSession` helpers   |
+| `src/features/exhibition/pages/ExhibitionGamePage/index.tsx`                    | New `/game/exhibition` route page                           |
+| `src/features/leagues/pages/LeagueGamePage/index.tsx`                           | New `/game/league/:seasonGameId` route page                 |
+| `src/features/gameplay/components/GamePageWrapper/index.tsx`                    | Shared navigation-blocking wrapper (eliminates duplication) |
+| `src/shared/context/AppSessionContext.tsx`                                      | App-level session context (hasActiveSession, Career Stats)  |
+| `e2e/tests/game-routes.spec.ts`                                                 | Route smoke spec (exhibition, league, save-resume)          |
+| `src/features/gameplay/components/GameControls/styles.ts` (`LockedTeamDisplay`) | Read-only locked team display styled component for league   |
+| `src/features/leagues/pages/LeagueSetupWizard/steps/` (5 files)                 | Extracted wizard steps (770 → 362 lines in index.tsx)       |
 
 ---
 

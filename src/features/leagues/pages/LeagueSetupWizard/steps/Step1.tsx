@@ -1,7 +1,6 @@
 import * as React from "react";
 
-import type { WizardState } from "../../../wizard/wizardReducer";
-import { wizardReducer } from "../../../wizard/wizardReducer";
+import type { WizardAction, WizardState } from "../../../wizard/wizardReducer";
 import {
   DisabledBadge,
   FieldGroup,
@@ -15,7 +14,7 @@ import {
 
 interface Step1Props {
   state: WizardState;
-  dispatch: React.Dispatch<Parameters<typeof wizardReducer>[1]>;
+  dispatch: React.Dispatch<WizardAction>;
 }
 
 export function Step1({ state, dispatch }: Step1Props): React.ReactElement {

@@ -1,6 +1,6 @@
 # Game Session Refactor — Pre-v2 Architecture Work
 
-> Status: **COMPLETE** — PR #264 merged 2026-05-12. All S1–S3 stories shipped; CI green; all completion criteria met.
+> Status: **COMPLETE** — Implemented in PR #264. All S1–S3 stories shipped; CI green; all completion criteria met.
 
 ## Problem
 

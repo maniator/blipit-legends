@@ -1,7 +1,6 @@
 import * as React from "react";
 
-import type { WizardState } from "../../../wizard/wizardReducer";
-import { wizardReducer } from "../../../wizard/wizardReducer";
+import type { WizardAction, WizardState } from "../../../wizard/wizardReducer";
 import {
   ActionButton,
   ActionRow,
@@ -21,7 +20,7 @@ import {
 
 export interface Step6Props {
   state: WizardState;
-  dispatch: React.Dispatch<Parameters<typeof wizardReducer>[1]>;
+  dispatch: React.Dispatch<WizardAction>;
   onCreateSeason: () => void;
   creating: boolean;
   errors: string[];

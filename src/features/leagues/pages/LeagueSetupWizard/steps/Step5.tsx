@@ -1,7 +1,6 @@
 import * as React from "react";
 
-import type { WizardState } from "../../../wizard/wizardReducer";
-import { wizardReducer } from "../../../wizard/wizardReducer";
+import type { WizardAction, WizardState } from "../../../wizard/wizardReducer";
 import {
   ErrorList,
   ErrorText,
@@ -17,7 +16,7 @@ import {
 
 export interface Step5Props {
   state: WizardState;
-  dispatch: React.Dispatch<Parameters<typeof wizardReducer>[1]>;
+  dispatch: React.Dispatch<WizardAction>;
   errors: string[];
 }
 

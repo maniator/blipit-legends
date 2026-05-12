@@ -1,7 +1,6 @@
 import * as React from "react";
 
-import type { WizardState } from "../../../wizard/wizardReducer";
-import { wizardReducer } from "../../../wizard/wizardReducer";
+import type { WizardAction, WizardState } from "../../../wizard/wizardReducer";
 import {
   FieldGroup,
   FieldLabel,
@@ -14,7 +13,7 @@ import {
 
 export interface Step3Props {
   state: WizardState;
-  dispatch: React.Dispatch<Parameters<typeof wizardReducer>[1]>;
+  dispatch: React.Dispatch<WizardAction>;
 }
 
 export function Step3({ state, dispatch }: Step3Props): React.ReactElement {
