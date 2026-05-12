@@ -31,8 +31,10 @@ type Props = {
   onNewGame?: () => void;
   gameStarted?: boolean;
   onLoadSave?: (slot: SaveRecord) => void;
-  /** Routes back to the Home screen. When provided a "← Home" button is shown. */
+  /** Routes back to the previous screen. When provided, a back button is shown. */
   onBackToHome?: () => void;
+  /** Label for the back button. Defaults to "← Home". */
+  backLabel?: string;
   /** When true, shows a disabled "Saving…" button instead of "New Game". */
   isCommitting?: boolean;
 };
@@ -42,10 +44,12 @@ const GameControls: React.FunctionComponent<Props> = ({
   gameStarted = false,
   onLoadSave,
   onBackToHome,
+  backLabel = "← Home",
   isCommitting = false,
 }) => {
   const {
     managerModeAllowed,
+    disableSave,
     sessionType,
     managedTeam: sessionManagedTeam,
   } = useGameSessionContext();
@@ -84,8 +88,6 @@ const GameControls: React.FunctionComponent<Props> = ({
     resolveTeamLabel(teams[1], customTeamDocs),
   ];
   const speedIndex = Math.max(0, (SPEED_STEPS as readonly number[]).indexOf(speed));
-
-  const backLabel = sessionType === "league" ? "← Schedule" : "← Home";
 
   // Auto-pause the simulation while the Decision Tuning bottom-sheet is open
   // on mobile (where it covers the field and the pause button), then restore
@@ -137,7 +139,7 @@ const GameControls: React.FunctionComponent<Props> = ({
               New Game
             </Button>
           ))}
-        {sessionType !== "league" && (
+        {!disableSave && (
           <React.Suspense
             fallback={
               <Button $variant="saves" disabled aria-label="Open saves panel">

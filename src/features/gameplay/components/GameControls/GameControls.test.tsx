@@ -285,6 +285,27 @@ describe("GameControls", () => {
     expect(screen.queryByTestId("pause-play-button")).not.toBeInTheDocument();
   });
 
+  describe("Saves button visibility", () => {
+    it("shows Saves button when disableSave=false", () => {
+      renderWithContext(
+        <GameControls gameStarted />,
+        makeContextValue(),
+        makeGameSessionContext({ disableSave: false }),
+      );
+      // SavesModal is lazy — the fallback button should be present until it loads
+      expect(screen.getByRole("button", { name: /open saves panel/i })).toBeInTheDocument();
+    });
+
+    it("hides Saves button when disableSave=true (league session)", () => {
+      renderWithContext(
+        <GameControls gameStarted />,
+        makeContextValue(),
+        makeGameSessionContext({ disableSave: true, sessionType: "league" }),
+      );
+      expect(screen.queryByRole("button", { name: /open saves panel/i })).not.toBeInTheDocument();
+    });
+  });
+
   it("pause button shows Resume label when game is paused", () => {
     renderWithContext(<GameControls gameStarted />, makeContextValue({ gameOver: false }));
     const btn = screen.getByTestId("pause-play-button");
