@@ -98,7 +98,7 @@ export type ExhibitionGameSetup = {
    * session. Used for league season games, which are tracked separately via
    * seasonGames records and should not appear in the general Load Saved Game list.
    * Career-stats commits still occur via gameInstanceId regardless of this flag.
-   * @deprecated Use GameSessionContext.disableSave instead. This field is read by GameInner via GameSessionContext.
+   * @deprecated This field is no longer consumed by GameInner. GameSessionContext.disableSave (derived at the route level via deriveLeagueSession/deriveExhibitionSession) is the authoritative source.
    */
   disableSave?: boolean;
   /**
@@ -106,7 +106,7 @@ export type ExhibitionGameSetup = {
    * patch the seasonGames record to 'completed', update standings on seasonTeam
    * docs, and advance seasons.currentGameDay. Only used for interactively played
    * league season games; headless games handle this in runHeadlessGame directly.
-   * @deprecated Use GameSessionContext.seasonGameId instead. This field is read by useSeasonGameSync via GameSessionContext.
+   * @deprecated This field is no longer consumed by GameInner or useSeasonGameSync. GameSessionContext.seasonGameId (derived at the route level via deriveLeagueSession) is the authoritative source.
    */
   seasonGameId?: string;
 };

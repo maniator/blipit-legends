@@ -927,7 +927,7 @@ describe("Generate Defaults + edit name — display name round-trip (shift-left 
       roster: { lineup: [], bench: [], pitchers: [] },
     };
     const displayName = customTeamToDisplayName(
-      savedTeamShape as Parameters<typeof customTeamToDisplayName>[0],
+      savedTeamShape as unknown as Parameters<typeof customTeamToDisplayName>[0],
     );
     expect(displayName).toBe(`${state.city} Original Name`);
     expect(displayName).toContain("Original Name");
@@ -947,7 +947,7 @@ describe("Generate Defaults + edit name — display name round-trip (shift-left 
       roster: { lineup: [], bench: [], pitchers: [] },
     };
     const displayName = customTeamToDisplayName(
-      savedTeamShape as Parameters<typeof customTeamToDisplayName>[0],
+      savedTeamShape as unknown as Parameters<typeof customTeamToDisplayName>[0],
     );
     // Autogen draft: name === nickname, both set — display is city + nickname
     expect(displayName).toBe(`${draft.city} ${draft.nickname}`);
