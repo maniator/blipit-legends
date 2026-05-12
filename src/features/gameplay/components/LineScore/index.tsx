@@ -88,6 +88,7 @@ const LineScore: React.FunctionComponent = () => {
   const inningCols = Array.from({ length: totalInnings }, (_, i) => i + 1);
   const hits = (team: 0 | 1) =>
     playLog.filter((e) => e.team === team && e.event !== Hit.Walk).length;
+  const countText = `Count: ${balls} ball${balls !== 1 ? "s" : ""}, ${strikes} strike${strikes !== 1 ? "s" : ""}, ${outs} out${outs !== 1 ? "s" : ""}`;
 
   return (
     <Wrapper data-testid="scoreboard">
@@ -127,13 +128,8 @@ const LineScore: React.FunctionComponent = () => {
           ))}
         </tbody>
       </Table>
-      <BsoRow
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        aria-label={`Count: ${balls} ball${balls !== 1 ? "s" : ""}, ${strikes} strike${strikes !== 1 ? "s" : ""}, ${outs} out${outs !== 1 ? "s" : ""}`}
-      >
-        <SrOnly>{`Count: ${balls} ball${balls !== 1 ? "s" : ""}, ${strikes} strike${strikes !== 1 ? "s" : ""}, ${outs} out${outs !== 1 ? "s" : ""}`}</SrOnly>
+      <BsoRow role="status" aria-live="polite" aria-atomic="true" aria-label={countText}>
+        <SrOnly>{countText}</SrOnly>
         <BsoGroup>
           B
           {[0, 1, 2].map((i) => (

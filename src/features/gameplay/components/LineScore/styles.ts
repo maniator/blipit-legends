@@ -122,24 +122,25 @@ export const BsoGroup = styled.div`
   gap: ${({ theme }) => theme.spacing.s5};
 `;
 
+const getBsoActiveColor = (
+  $type: "ball" | "strike" | "out",
+  theme: { colors: { bsoBall: string; bsoStrike: string; bsoOut: string } },
+): string => {
+  if ($type === "ball") return theme.colors.bsoBall;
+  if ($type === "strike") return theme.colors.bsoStrike;
+  return theme.colors.bsoOut;
+};
+
 export const Dot = styled.span<{ $on: boolean; $type: "ball" | "strike" | "out" }>`
   display: inline-block;
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: ${({ $on, $type, theme }) => {
-    if (!$on) return theme.colors.borderLineScore;
-    if ($type === "ball") return theme.colors.bsoBall;
-    if ($type === "strike") return theme.colors.bsoStrike;
-    return theme.colors.bsoOut;
-  }};
+  background: ${({ $on, $type, theme }) =>
+    $on ? getBsoActiveColor($type, theme) : theme.colors.borderLineScore};
   border: 1px solid
-    ${({ $on, $type, theme }) => {
-      if (!$on) return theme.colors.borderLineScoreOff;
-      if ($type === "ball") return theme.colors.bsoBall;
-      if ($type === "strike") return theme.colors.bsoStrike;
-      return theme.colors.bsoOut;
-    }};
+    ${({ $on, $type, theme }) =>
+      $on ? getBsoActiveColor($type, theme) : theme.colors.borderLineScoreOff};
   box-shadow: ${({ $on, theme }) => ($on ? `inset 0 0 0 1px ${theme.colors.bsoDotInset}` : "none")};
 `;
 
