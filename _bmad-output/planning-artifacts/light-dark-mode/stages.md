@@ -55,7 +55,7 @@
 - [ ] Touch target ≥ 44×44px on mobile
 - [ ] Keyboard: tab-focusable, Space/Enter activates
 - [ ] Focus ring visible in both themes (2px solid, 2px offset)
-- [ ] Theme transition animation wrapped in `@media (prefers-reduced-motion: no-preference)`
+- [ ] Theme transition uses `data-theme-transitioning` attribute on `<html>` (scoped to toggle window only — never `body *` globally, which would also fire on in-game updates)
 - [ ] `useThemePreference` updates `<meta name="theme-color">` dynamically (dark: `#0F1E34`, light: `#F5F0E8`)
 - [ ] Write integration test: toggle → reload → verify persistence
 - [ ] **Gate: all existing dark-mode snapshots still pass; toggle accessible; PWA `theme-color` correct; `yarn lint` and `yarn typecheck` pass**

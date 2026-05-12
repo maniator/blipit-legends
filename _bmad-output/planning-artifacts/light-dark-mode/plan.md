@@ -264,7 +264,10 @@ This closes the micro-window between HTML parse start and inline script executio
         try {
           var mode = JSON.parse(localStorage.getItem("themeMode"));
           document.documentElement.setAttribute("data-theme", mode === "light" ? "light" : "dark");
-        } catch (e) {}
+        } catch (e) {
+          // JSON.parse failure or blocked localStorage — fall back to dark (the static default)
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
       })();
     </script>
     <!-- All other <meta>, <link>, <script> tags follow -->
@@ -274,7 +277,7 @@ This closes the micro-window between HTML parse start and inline script executio
 
 The script **must be the first element in `<head>`**, before any `<link rel="stylesheet">` tags (including those Vite injects at build time). If a CSS link is parsed before this script runs, the browser may paint one frame with the wrong theme as CSS evaluates before the attribute is set.
 
-The try/catch handles both blocked `localStorage` environments (private browsing, strict settings) and any `JSON.parse` failure on corrupt data. The fallback is dark mode (the current experience).
+The try/catch handles both blocked `localStorage` environments (private browsing, strict settings) and any `JSON.parse` failure on corrupt data. The catch block **explicitly sets `data-theme="dark"`** rather than leaving it empty — an empty catch would leave the attribute in whatever state it was in from Layer 1, which is already dark, but an explicit set makes the intent clear and guards against any future reordering of the layers.
 
 The localStorage key must exactly match what `useLocalStorage("themeMode", "dark")` writes. The `usehooks-ts` library stores values as **JSON-encoded strings** — the raw stored value is `'"light"'` or `'"dark"'` (a JSON string with inner quotes). The `JSON.parse` call unwraps this so the comparison `=== "light"` works correctly. **Do not** compare `localStorage.getItem(...)` directly to `"light"` — it will always evaluate as falsy and fall back to dark mode.
 
@@ -334,24 +337,39 @@ Both themes must have visible focus rings. Current dark-mode focus should be aud
 
 ### Motion
 
-Any theme-transition animation must be gated on `prefers-reduced-motion: no-preference`. Suggested transition when motion is allowed:
+Any theme-transition animation must be gated on `prefers-reduced-motion: no-preference`. Applying `transition` to `body *` would also trigger on every ordinary in-game UI update — not just theme switches — causing performance issues and distracting flicker in the game loop. Scope transitions to a short-lived CSS class applied only during the toggle.
+
+**Recommended approach: toggling class on `<html>`**
+
+`useThemePreference` adds `data-theme-transitioning` to `document.documentElement` immediately before writing the new `data-theme`, then removes it after a 200ms timeout:
+
+```ts
+// Inside useThemePreference setMode():
+document.documentElement.setAttribute("data-theme-transitioning", "");
+document.documentElement.setAttribute("data-theme", next);
+setTimeout(() => document.documentElement.removeAttribute("data-theme-transitioning"), 200);
+```
 
 ```css
-body,
-body * {
+/* Transitions fire ONLY during the 200 ms window after a manual toggle */
+:root[data-theme-transitioning],
+:root[data-theme-transitioning] * {
   transition:
     background-color 200ms ease,
     color 200ms ease,
     border-color 200ms ease;
 }
 
+/* Honor prefers-reduced-motion — disable even the scoped transition */
 @media (prefers-reduced-motion: reduce) {
-  body,
-  body * {
+  :root[data-theme-transitioning],
+  :root[data-theme-transitioning] * {
     transition: none;
   }
 }
 ```
+
+This way the game-loop renders (base fills, log rows, countboard updates) are never slowed by a global transition rule. Transition only touches surfaces that change as a direct result of a theme switch.
 
 ---
 
