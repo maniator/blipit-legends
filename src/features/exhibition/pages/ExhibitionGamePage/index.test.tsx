@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -17,8 +17,13 @@ vi.mock("react-router", async (importOriginal) => {
 });
 
 // Mock the heavy Game component — ExhibitionGamePage is a thin routing adapter.
+// Expose onSessionRestored so tests can simulate RxDB auto-restore completing.
+let capturedOnSessionRestored: ((managedTeam: 0 | 1 | null) => void) | undefined;
 vi.mock("@feat/gameplay/components/Game", () => ({
-  default: () => <div data-testid="game-mock" />,
+  default: ({ onSessionRestored }: { onSessionRestored?: (managedTeam: 0 | 1 | null) => void }) => {
+    capturedOnSessionRestored = onSessionRestored;
+    return <div data-testid="game-mock" />;
+  },
 }));
 
 // Mock the GamePageWrapper component
@@ -30,17 +35,6 @@ vi.mock("@feat/gameplay/components/GamePageWrapper", () => ({
   }) => <>{children(() => {})}</>,
 }));
 
-// GameSessionProvider reads from context; mock it so tests don't need a real provider.
-vi.mock("@feat/gameplay/utils/gameSessionDerive", () => ({
-  deriveExhibitionSession: vi.fn().mockReturnValue({
-    sessionType: "exhibition",
-    managerModeAllowed: true,
-    disableSave: false,
-    seasonGameId: null,
-    managedTeam: null,
-    sessionReady: true,
-  }),
-}));
 vi.mock("@feat/gameplay/context/index", async (importOriginal) => {
   const original = await importOriginal<typeof import("@feat/gameplay/context/index")>();
   return {
@@ -96,6 +90,7 @@ const minimalSetup = {
 
 afterEach(() => {
   sessionStorage.clear();
+  capturedOnSessionRestored = undefined;
 });
 
 describe("ExhibitionGamePage", () => {
@@ -105,14 +100,27 @@ describe("ExhibitionGamePage", () => {
     expect(screen.getByTestId("game-mock")).toBeInTheDocument();
   });
 
-  it("redirects to /exhibition/new when sessionStorage has no pendingGameSetup", () => {
+  it("renders the Game component even when sessionStorage has no pendingGameSetup (auto-restore path)", () => {
+    // No entry in sessionStorage — simulates page refresh or deep-link.
+    // The component should NOT redirect; instead it renders <Game> and lets
+    // GameInner attempt auto-restore from RxDB.
     renderExhibitionGamePage();
-    expect(screen.queryByTestId("game-mock")).not.toBeInTheDocument();
-    expect(screen.getByTestId("exhibition-new-page")).toBeInTheDocument();
+    expect(screen.getByTestId("game-mock")).toBeInTheDocument();
   });
 
   it("renders without crashing when given a valid setup", () => {
     sessionStorage.setItem("pendingExhibitionSetup", JSON.stringify(minimalSetup));
     expect(() => renderExhibitionGamePage()).not.toThrow();
+  });
+
+  it("exposes onSessionRestored to Game for RxDB auto-restore completion", () => {
+    renderExhibitionGamePage();
+    // Simulate GameInner calling onSessionRestored after auto-restoring from RxDB.
+    expect(capturedOnSessionRestored).toBeDefined();
+    act(() => {
+      capturedOnSessionRestored!(1);
+    });
+    // If we get here without throwing, the session context update succeeded.
+    expect(screen.getByTestId("game-mock")).toBeInTheDocument();
   });
 });
