@@ -31,6 +31,10 @@ const ExhibitionGamePage: React.FunctionComponent = () => {
   const hasClearedStateRef = React.useRef(false);
 
   React.useEffect(() => {
+    // Clear location state after capturing it so the URL stays clean and a
+    // hard refresh (which would lose the state) correctly redirects to setup.
+    // hasClearedStateRef ensures this runs only once even if location.state
+    // changes again during the session (e.g. from a subsequent replace).
     if (!hasClearedStateRef.current && location.state) {
       hasClearedStateRef.current = true;
       navigate("/game/exhibition", { replace: true, state: null });
