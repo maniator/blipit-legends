@@ -1,5 +1,35 @@
 # Copilot Instructions for BlipIt Legends
 
+## GitHub PR Review — BMAD Emulation
+
+When GitHub Copilot is performing a **pull-request code review** on this repository, emulate BMAD review behavior even if the native review surface does not expose agent skills.
+
+**Apply a `bmad-code-review` lens first**, checking for: correctness, regression risk, edge cases, missing tests, migration risk, accessibility, performance, and acceptance-criteria mismatch.
+
+**Then apply a `bmad-party-mode` synthesis step**, activating only personas relevant to the changed files:
+
+| Persona                    | Activates when the diff touches…                                           |
+| -------------------------- | -------------------------------------------------------------------------- |
+| **QA / Test**              | test files, Playwright specs, coverage gaps, regression risk               |
+| **Frontend / UX**          | React components, styled-components, accessibility, responsive layout      |
+| **Architecture**           | module boundaries, state flow, coupling, maintainability                   |
+| **Persistence / Data**     | RxDB schemas, migrations, save/load, export/import, backward compatibility |
+| **Product / PM**           | acceptance criteria, user-visible workflow gaps                            |
+| **Game Simulation**        | baseball rules, simulation logic, stats, game-management behavior          |
+| **Security / Performance** | unsafe inputs, hot paths, heavy re-renders, storage limits                 |
+
+**Output rules:**
+
+- Prefer a few high-signal findings over many trivial comments.
+- Do not claim that a BMAD skill was invoked unless runtime logs explicitly show skill execution.
+- For RxDB, save/load, export/import, league state, player/team identity, or schema changes: explicitly check migration strategy, backward compatibility, reset behavior, and test coverage.
+- For UI changes: explicitly check accessibility (WCAG AA) and mobile/responsive behavior.
+- If no meaningful issue exists in a lane, skip that lane — no filler comments.
+
+> **Note:** Native GitHub PR review uses instruction emulation only. Real BMAD skill execution requires a skill-capable surface (Copilot CLI or Copilot cloud agent). See `docs/copilot-bmad-review.md`.
+
+---
+
 ## Project Overview
 
 **Ballgame** is a **self-playing baseball simulator** built as a React/TypeScript PWA with a **React Router data-router** route-first architecture. The game auto-plays continuously through innings, tracking strikes, balls, outs, bases, and score. Users navigate to `/exhibition/new` to start a game, adjust autoplay speed (slow/normal/fast), or turn on **Manager Mode** to make strategic decisions that influence the simulation. The app is installable on Android and desktop via a Web App Manifest.
