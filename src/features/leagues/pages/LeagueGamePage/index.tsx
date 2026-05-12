@@ -133,13 +133,15 @@ const LeagueGamePage: React.FunctionComponent = () => {
 
   const handleConsumePendingLoad = React.useCallback(() => {}, []);
 
+  const fetchedSeasonId = fetchState.status === "ready" ? fetchState.seasonId : null;
+
   const handleNewGame = React.useCallback(() => {
-    if (fetchState.status === "ready") {
-      navigate(`/leagues/${fetchState.seasonId}/schedule`);
-    } else {
-      navigate("/leagues");
-    }
-  }, [fetchState, navigate]);
+    navigate(fetchedSeasonId ? `/leagues/${fetchedSeasonId}/schedule` : "/leagues");
+  }, [fetchedSeasonId, navigate]);
+
+  const handleBackToLeague = React.useCallback(() => {
+    navigate(fetchedSeasonId ? `/leagues/${fetchedSeasonId}/schedule` : "/leagues");
+  }, [fetchedSeasonId, navigate]);
 
   if (fetchState.status === "loading") {
     return <AppLoadingFallback label="Loading game…" />;
@@ -156,7 +158,7 @@ const LeagueGamePage: React.FunctionComponent = () => {
       {(onSavingStateChange) => (
         <GameSessionProvider value={deriveLeagueSession(seasonGameId!, fetchState.managedTeamIdx)}>
           <Game
-            onBackToHome={ctx.onBackToHome}
+            onBackToHome={handleBackToLeague}
             onNewGame={handleNewGame}
             onGameSessionStarted={ctx.onGameSessionStarted}
             pendingGameSetup={fetchState.setup}

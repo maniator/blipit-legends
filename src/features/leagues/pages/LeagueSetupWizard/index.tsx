@@ -5,6 +5,7 @@ import { generateLeagueTeams } from "@feat/league/autogen/generateLeagueTeams";
 import { createSeason, quickStart } from "@feat/league/storage/leagueStore";
 import { useActiveSeason } from "@feat/leagues/hooks/useActiveSeason";
 import ModalShell from "@shared/components/ModalShell";
+import { BackBtn, PageContainer, PageHeader } from "@shared/components/PageLayout/styles";
 import StatusBanner from "@shared/components/StatusBanner";
 import { appLog } from "@shared/utils/logger";
 import { useNavigate, useSearchParams } from "react-router";
@@ -29,8 +30,10 @@ import {
   AbandonDialog,
   AbandonDialogActions,
   ActionButton,
+  BlockedActions,
   DangerButton,
   FooterActions,
+  PageTitle,
   SecondaryButton,
 } from "./styles";
 
@@ -236,24 +239,31 @@ function LeagueSetupWizardInner(): React.ReactElement {
   const title = `New Season — ${stepLabel}`;
 
   if (!loading && activeSeason !== null) {
-    const continueAction = (
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-        <ActionButton type="button" onClick={() => navigate(`/leagues/${activeSeason.id}`)}>
-          Continue current season
-        </ActionButton>
-        <DangerButton type="button" onClick={() => setShowAbandonDialog(true)}>
-          Abandon season
-        </DangerButton>
-      </div>
-    );
-
     return (
       <>
-        <div data-testid="league-setup-wizard" style={{ padding: "24px" }}>
-          <StatusBanner variant="warn" title="Active season in progress" action={continueAction}>
+        <PageContainer data-testid="league-setup-wizard">
+          <PageHeader>
+            <BackBtn
+              type="button"
+              onClick={() => navigate("/leagues")}
+              aria-label="Back to leagues"
+            >
+              ← Leagues
+            </BackBtn>
+          </PageHeader>
+          <PageTitle>New Season</PageTitle>
+          <StatusBanner variant="warn" title="Active season in progress">
             You already have an active season. Finish or abandon it before creating a new one.
           </StatusBanner>
-        </div>
+          <BlockedActions>
+            <ActionButton type="button" onClick={() => navigate(`/leagues/${activeSeason.id}`)}>
+              Continue current season
+            </ActionButton>
+            <DangerButton type="button" onClick={() => setShowAbandonDialog(true)}>
+              Abandon season
+            </DangerButton>
+          </BlockedActions>
+        </PageContainer>
 
         <AbandonDialog
           ref={abandonDialogRef}

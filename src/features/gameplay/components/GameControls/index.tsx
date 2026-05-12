@@ -85,6 +85,8 @@ const GameControls: React.FunctionComponent<Props> = ({
   ];
   const speedIndex = Math.max(0, (SPEED_STEPS as readonly number[]).indexOf(speed));
 
+  const backLabel = sessionType === "league" ? "← Schedule" : "← Home";
+
   // Auto-pause the simulation while the Decision Tuning bottom-sheet is open
   // on mobile (where it covers the field and the pause button), then restore
   // the prior pause state on close. On desktop the panel is small and inline,
@@ -121,7 +123,7 @@ const GameControls: React.FunctionComponent<Props> = ({
             disabled={isCommitting}
             data-testid="back-to-home-button"
           >
-            ← Home
+            {backLabel}
           </Button>
         )}
         {gameOver &&
@@ -135,24 +137,26 @@ const GameControls: React.FunctionComponent<Props> = ({
               New Game
             </Button>
           ))}
-        <React.Suspense
-          fallback={
-            <Button $variant="saves" disabled aria-label="Open saves panel">
-              💾 Saves
-            </Button>
-          }
-        >
-          <SavesModal
-            strategy={strategy}
-            managedTeam={managedTeam}
-            managerMode={managerMode}
-            decisionValues={decisionValues}
-            currentSaveId={currentSaveId}
-            onSaveIdChange={setCurrentSaveId}
-            onLoadSave={onLoadSave}
-            gameStarted={gameStarted}
-          />
-        </React.Suspense>
+        {sessionType !== "league" && (
+          <React.Suspense
+            fallback={
+              <Button $variant="saves" disabled aria-label="Open saves panel">
+                💾 Saves
+              </Button>
+            }
+          >
+            <SavesModal
+              strategy={strategy}
+              managedTeam={managedTeam}
+              managerMode={managerMode}
+              decisionValues={decisionValues}
+              currentSaveId={currentSaveId}
+              onSaveIdChange={setCurrentSaveId}
+              onLoadSave={onLoadSave}
+              gameStarted={gameStarted}
+            />
+          </React.Suspense>
+        )}
         <React.Suspense
           fallback={
             <HelpButton disabled aria-label="How to play">
