@@ -1,6 +1,6 @@
 # Game Session Refactor — Pre-v2 Architecture Work
 
-> Status: **PLANNED** — implement this epic immediately after League v1 merges and before any v2 scope begins.
+> Status: **COMPLETE** — PR #264 merged 2026-05-12. All S1–S3 stories shipped; CI green; all completion criteria met.
 
 ## Problem
 
