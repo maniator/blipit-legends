@@ -12,22 +12,13 @@
 
 import { expect, test } from "@playwright/test";
 
-import {
-  createAutogenSeason,
-  resetAppState,
-  saveCurrentGame,
-  startGameViaPlayBall,
-} from "../utils/helpers";
+import { createAutogenSeason, saveCurrentGame, startGameViaPlayBall } from "../utils/helpers";
 
 // ---------------------------------------------------------------------------
 // 1. Exhibition route smoke
 // ---------------------------------------------------------------------------
 
 test.describe("game-routes — exhibition flow", () => {
-  test.beforeEach(async ({ page }) => {
-    await resetAppState(page);
-  });
-
   test("navigates to /game/exhibition after Play Ball", async ({ page }) => {
     await startGameViaPlayBall(page, { seed: "gr-exhibition-smoke" });
     await expect(page).toHaveURL(/\/game\/exhibition/, { timeout: 15_000 });
@@ -46,16 +37,11 @@ test.describe("game-routes — exhibition flow", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("game-routes — league game flow", () => {
-  test.beforeEach(async ({ page }) => {
-    await resetAppState(page);
-  });
-
   test("navigates to /game/league/:seasonGameId after advancing to first user game", async ({
     page,
   }) => {
     // Create an all-autogen managed season via the wizard helper, then
-    // advance until a game is ready.  The helper already clicks "Watch Game"
-    // which should push the route to /game/league/...
+    // advance until a game is ready.  The helper lands on the season home page.
     await createAutogenSeason(page);
 
     // After the season is created we are on /leagues/:id
@@ -90,10 +76,6 @@ test.describe("game-routes — league game flow", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("game-routes — save resume flow", () => {
-  test.beforeEach(async ({ page }) => {
-    await resetAppState(page);
-  });
-
   test("loading a save from /saves navigates back to the game route", async ({ page }) => {
     // Start a game and save it.
     await startGameViaPlayBall(page, { seed: "gr-save-resume" });

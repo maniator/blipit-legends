@@ -249,3 +249,8 @@ export const HintText = styled.p`
   font-size: ${({ theme }) => theme.fontSizes.xs};
   opacity: 0.7;
 `;
+
+/** Wrapper for a step's primary action button with top spacing. */
+export const ActionRow = styled.div`
+  margin-top: ${({ theme }) => theme.spacing.xl};
+`;

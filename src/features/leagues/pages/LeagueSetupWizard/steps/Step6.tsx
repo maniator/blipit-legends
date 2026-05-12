@@ -4,6 +4,7 @@ import type { WizardState } from "../../../wizard/wizardReducer";
 import { wizardReducer } from "../../../wizard/wizardReducer";
 import {
   ActionButton,
+  ActionRow,
   ErrorList,
   ErrorText,
   FieldGroup,
@@ -120,7 +121,7 @@ export function Step6({
           ))}
         </ErrorList>
       )}
-      <div style={{ marginTop: "20px" }}>
+      <ActionRow>
         <ActionButton
           type="button"
           onClick={onCreateSeason}
@@ -129,7 +130,7 @@ export function Step6({
         >
           {creating ? "Creating…" : "Create Season"}
         </ActionButton>
-      </div>
+      </ActionRow>
     </StepContainer>
   );
 }
