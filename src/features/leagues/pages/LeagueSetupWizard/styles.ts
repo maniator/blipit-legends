@@ -1,5 +1,5 @@
 import { mq } from "@shared/utils/mediaQueries";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 
 export const StepContainer = styled.div`
   padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xl};
@@ -37,13 +37,14 @@ export const RadioRow = styled.div`
   flex-wrap: wrap;
 `;
 
-export const RadioOption = styled.label`
+export const RadioOption = styled.label<{ $disabled?: boolean }>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
   cursor: pointer;
   font-size: ${({ theme }) => theme.fontSizes.base};
   color: ${({ theme }) => theme.colors.textBody};
+  opacity: ${({ $disabled }) => ($disabled ? 0.5 : 1)};
 
   & input[type="radio"] {
     accent-color: ${({ theme }) => theme.colors.accentPrimary};
@@ -58,7 +59,7 @@ export const SeedRow = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 
-export const SeedInput = styled.input`
+export const SeedInput = styled.input<{ $fullWidth?: boolean }>`
   background: ${({ theme }) => theme.colors.bgInput};
   border: 1px solid ${({ theme }) => theme.colors.borderForm};
   color: ${({ theme }) => theme.colors.textPrimary};
@@ -66,7 +67,12 @@ export const SeedInput = styled.input`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.s10};
   font-family: inherit;
   font-size: ${({ theme }) => theme.fontSizes.md};
-  flex: 1;
+  flex: ${({ $fullWidth }) => ($fullWidth ? "none" : "1")};
+  ${({ $fullWidth }) =>
+    $fullWidth &&
+    css`
+      width: 100%;
+    `}
 
   ${mq.mobile} {
     padding: ${({ theme }) => theme.spacing.s6} ${({ theme }) => theme.spacing.s10};
@@ -266,4 +272,15 @@ export const BlockedActions = styled.div`
 /** Wrapper for a step's primary action button with top spacing. */
 export const ActionRow = styled.div`
   margin-top: ${({ theme }) => theme.spacing.xl};
+`;
+
+/** Sub-section within a FieldGroup — adds top spacing between related field clusters. */
+export const SubSection = styled.div`
+  margin-top: ${({ theme }) => theme.spacing.md};
+`;
+
+/** Small flanking label for range inputs (e.g. "Lopsided" / "Balanced"). */
+export const RangeLabel = styled.span`
+  font-size: ${({ theme }) => theme.fontSizes.xs};
+  opacity: 0.7;
 `;

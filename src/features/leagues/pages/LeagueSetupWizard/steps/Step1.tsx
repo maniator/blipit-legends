@@ -30,7 +30,7 @@ export function Step1({ state, dispatch }: Step1Props): React.ReactElement {
             data-testid="season-name-input"
             value={state.seasonName}
             maxLength={60}
-            style={{ width: "100%" }}
+            $fullWidth
             aria-label="Season name"
             onChange={(e) => dispatch({ type: "SET_SEASON_NAME", name: e.target.value })}
           />
@@ -42,7 +42,7 @@ export function Step1({ state, dispatch }: Step1Props): React.ReactElement {
               <input type="radio" checked readOnly />
               Mini (8 teams)
             </RadioOption>
-            <RadioOption style={{ opacity: 0.5 }}>
+            <RadioOption $disabled>
               <input type="radio" disabled />
               Standard <DisabledBadge>Coming soon</DisabledBadge>
             </RadioOption>
@@ -55,7 +55,7 @@ export function Step1({ state, dispatch }: Step1Props): React.ReactElement {
               <input type="radio" checked readOnly />
               Sprint (14 games/team)
             </RadioOption>
-            <RadioOption style={{ opacity: 0.5 }}>
+            <RadioOption $disabled>
               <input type="radio" disabled />
               Full <DisabledBadge>Coming soon</DisabledBadge>
             </RadioOption>

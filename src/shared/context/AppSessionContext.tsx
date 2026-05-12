@@ -52,6 +52,9 @@ export const AppSessionProvider: React.FunctionComponent<AppSessionProviderProps
   const [hasCareerStats, setHasCareerStats] = React.useState(false);
   // Prevents duplicate probes if HomeRoute re-mounts or requestCareerStatsProbe is called twice.
   const probeFiredRef = React.useRef(false);
+  // Tracks an in-flight probe so concurrent calls (e.g. StrictMode double-effects) are
+  // deduplicated. Unlike probeFiredRef, this is cleared on failure so retries are allowed.
+  const probeInFlightRef = React.useRef(false);
 
   const handleGameSessionStarted = React.useCallback(() => {
     setHasActiveSession(true);
@@ -63,22 +66,27 @@ export const AppSessionProvider: React.FunctionComponent<AppSessionProviderProps
   }, []);
 
   const requestCareerStatsProbe = React.useCallback(() => {
-    if (probeFiredRef.current) return;
+    // JavaScript is single-threaded: the guard check and the assignment below are
+    // effectively atomic — no concurrent call can interleave between these two lines.
+    if (probeFiredRef.current || probeInFlightRef.current) return;
+    probeInFlightRef.current = true;
 
     // AppSessionProvider is mounted at RootLayout and stays alive for the full
     // app lifetime, so we do not need a cancellation guard here.
     getDb()
       .then((db) => db.completedGames.findOne().exec())
       .then((anyCompletedGame) => {
-        // Only mark probe as fired after a successful result so a transient
-        // DB failure doesn't permanently block future retries.
+        // Only mark probe as permanently fired after a successful result so a
+        // transient DB failure doesn't permanently block future retries.
         probeFiredRef.current = true;
+        probeInFlightRef.current = false;
         // Use functional update so a true set by handleGameOver is never cleared.
         setHasCareerStats((prev) => prev || Boolean(anyCompletedGame));
       })
       .catch(() => {
-        // On DB error, leave hasCareerStats unchanged and keep probeFiredRef
-        // false so the next Home mount can retry.
+        // On DB error: clear in-flight so next Home mount can retry, but leave
+        // probeFiredRef false so the retry is allowed.
+        probeInFlightRef.current = false;
       });
   }, []);
 

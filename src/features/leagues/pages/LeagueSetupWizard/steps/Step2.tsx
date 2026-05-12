@@ -13,11 +13,13 @@ import {
   RadioOption,
   RadioRow,
   RangeInput,
+  RangeLabel,
   SecondaryButton,
   SeedInput,
   SeedRow,
   StepContainer,
   StepTitle,
+  SubSection,
 } from "../styles";
 
 export interface Step2Props {
@@ -95,10 +97,10 @@ export function Step2({ state, dispatch, customTeams, errors }: Step2Props): Rea
                 </RadioOption>
               ))}
             </RadioRow>
-            <div style={{ marginTop: "12px" }}>
+            <SubSection>
               <FieldLabel>Team parity ({state.autogenParity})</FieldLabel>
               <SeedRow>
-                <span style={{ fontSize: "12px", opacity: 0.7 }}>Lopsided</span>
+                <RangeLabel>Lopsided</RangeLabel>
                 <RangeInput
                   type="range"
                   min={0}
@@ -108,10 +110,10 @@ export function Step2({ state, dispatch, customTeams, errors }: Step2Props): Rea
                     dispatch({ type: "SET_AUTOGEN_PARITY", parity: Number(e.target.value) })
                   }
                 />
-                <span style={{ fontSize: "12px", opacity: 0.7 }}>Balanced</span>
+                <RangeLabel>Balanced</RangeLabel>
               </SeedRow>
-            </div>
-            <div style={{ marginTop: "12px" }}>
+            </SubSection>
+            <SubSection>
               <FieldLabel>Autogen seed</FieldLabel>
               <SeedRow>
                 <SeedInput value={state.autogenSeed} readOnly aria-label="Autogen seed" />
@@ -122,7 +124,7 @@ export function Step2({ state, dispatch, customTeams, errors }: Step2Props): Rea
                   Re-roll
                 </SecondaryButton>
               </SeedRow>
-            </div>
+            </SubSection>
           </div>
         )}
       </FieldGroup>
